@@ -1,6 +1,8 @@
 name: CodeQL
 
 # Static analysis of the TypeScript code and of the workflows, on every PR and every week.
+# Code scanning needs a public repository (or GitHub Code Security on a private one): the job is
+# skipped while the repository is private.
 on:
   push:
     branches: ["main"]
@@ -14,8 +16,12 @@ permissions:
 
 jobs:
   analyze:
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
+    # Job permissions replace the workflow ones: checkout needs contents, CodeQL needs actions
     permissions:
+      contents: read
+      actions: read
       security-events: write
     strategy:
       fail-fast: false
