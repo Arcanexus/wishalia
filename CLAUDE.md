@@ -1,0 +1,33 @@
+# wishlist: working rules
+
+Self-hosted family wishlists. Code name `wishlist`; the product name comes from `APP_NAME`.
+
+## Non-negotiable rules
+
+1. **Anti-spoil**: the owner never sees contributions (amounts, names, percentages, history) before
+   they lift the secret. Enforced server side in one function of `packages/domain`, used by every
+   API, with tests. `/manage/*` responses never carry contribution data.
+2. **Separation**: two frontends (`web-app`, `web-public`), two hosts, two API scopes
+   (`/manage`, `/public`). The API is internal, only the frontends call it.
+3. **History**: every action on an item writes an append-only `item_events` row with a visibility
+   (`owner`, `guests`, `sealed`).
+4. **UX**: adding an item takes under 5 seconds on any device (optimistic add, async enrichment).
+
+Priorities, in order: security, ease of use for every age (WCAG 2.2 AA), performance.
+
+## Every change
+
+Update in the same pull request, when concerned: `docs/` (published to the wiki; a new page goes
+into `PAGES` of `.github/scripts/docs_to_wiki.py`), the tests (coverage thresholds in
+`vitest.config.ts`), the Helm chart and `docs/chart-values.md`, the `[Unreleased]` section of
+`CHANGELOG.md`, and `site/` for user-facing features.
+
+## Conventions
+
+- TypeScript strict; business rules as pure functions in `packages/domain`; amounts in cents.
+- Configuration only through environment variables; no secret in code or chart.
+- SvelteKit 3: config lives in `vite.config.ts` (`sveltekit({...})`), `#lib` (package.json `imports`)
+  replaces `$lib`, hooks types come from `@sveltejs/kit/hooks`.
+- Checks: `pnpm format:check && pnpm build && pnpm lint && pnpm typecheck && pnpm coverage`, and
+  `helm lint charts/wishlist`.
+- PR titles start with `[ADD]` or `[FIX]` and link an issue (see the PR template).

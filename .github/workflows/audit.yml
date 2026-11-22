@@ -1,0 +1,30 @@
+name: Dependency audit
+
+# Fails when a production dependency has a known high or critical vulnerability. Runs on the PRs
+# that change the dependencies, and every day for the vulnerabilities published since.
+on:
+  pull_request:
+    paths: ["pnpm-lock.yaml", "**/package.json"]
+  push:
+    branches: ["main"]
+    paths: ["pnpm-lock.yaml", "**/package.json"]
+  schedule:
+    - cron: "41 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Enable pnpm
+        run: corepack enable
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - name: Audit
+        run: pnpm audit --prod --audit-level high

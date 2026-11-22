@@ -1,7 +1,7 @@
 # One Dockerfile for the four images: docker build --build-arg APP=api|worker|web-app|web-public .
 # The build runs on the build machine (no QEMU): the apps are plain JavaScript once built, with no
 # native module, so the output works on every target architecture.
-ARG NODE_VERSION=22
+ARG NODE_VERSION=24
 
 FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS build
 ARG APP

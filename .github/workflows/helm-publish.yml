@@ -1,0 +1,31 @@
+name: Helm Publish
+
+# Publishes the chart as an OCI artifact: oci://ghcr.io/arcanexus/charts/wishlist
+# The chart version and appVersion are taken from the git tag (v1.2.3 -> 1.2.3).
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
+      - name: Check the tag against the versions of the repository
+        run: python3 .github/scripts/release.py "$GITHUB_REF_NAME" > /dev/null
+      - name: Package and push
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          helm lint charts/wishlist
+          helm package charts/wishlist --version "$VERSION" --app-version "$VERSION" -d dist
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u "${{ github.actor }}" --password-stdin
+          helm push "dist/wishlist-${VERSION}.tgz" "oci://ghcr.io/${OWNER,,}/charts"
