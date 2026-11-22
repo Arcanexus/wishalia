@@ -83,6 +83,8 @@ jobs:
           image-ref: scan/${{ matrix.app }}:ci
           severity: CRITICAL,HIGH
           ignore-unfixed: true
+          # Without it, the SARIF report (and the exit code) covers every severity, not only CRITICAL,HIGH
+          limit-severities-for-sarif: true
           exit-code: "1"
           # SARIF for code scanning when the repository is public, a table in the log otherwise
           format: ${{ github.event.repository.private && 'table' || 'sarif' }}
