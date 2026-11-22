@@ -1,0 +1,7 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Only these packages may run install scripts (supply chain: nothing else executes on install)
+onlyBuiltDependencies:
+  - esbuild
