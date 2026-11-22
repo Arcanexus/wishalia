@@ -6,8 +6,8 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [
     sveltekit({
-      // Node server in the Docker image (node build), configured by environment variables
-      adapter: adapter({ envPrefix: "WISHLIST_" }),
+      // Node server in the Docker image (node build): PORT, ORIGIN and the app variables come from the environment
+      adapter: adapter(),
       // Absolute paths: the root Vitest run (pnpm coverage) starts from the repository root
       files: {
         src: fileURLToPath(new URL("src", import.meta.url)),

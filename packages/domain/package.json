@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Pure business rules: amounts, funding, anti-spoil.",
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

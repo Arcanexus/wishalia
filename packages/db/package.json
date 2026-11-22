@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "description": "Drizzle schema, migrations and the PostgreSQL client.",
+  "files": [
+    "dist",
+    "migrations"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

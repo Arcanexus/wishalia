@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Background jobs (pg-boss): item enrichment, price tracking.",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "build": "tsc -p tsconfig.build.json",

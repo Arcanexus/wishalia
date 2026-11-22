@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Fastify API: /manage/* for the owner, /public/* for the share links.",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "build": "tsc -p tsconfig.build.json",
