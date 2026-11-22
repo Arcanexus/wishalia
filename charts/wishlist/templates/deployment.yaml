@@ -1,0 +1,109 @@
+{{- range $component, $def := include "wishlist.components" . | fromYaml }}
+{{- $values := index $.Values $def.values }}
+{{- if $values.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "wishlist.fullname" $ }}-{{ $component }}
+  labels:
+    {{- include "wishlist.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  replicas: {{ $values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "wishlist.selectorLabels" (dict "root" $ "component" $component) | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+        {{- with $.Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "wishlist.labels" $ | nindent 8 }}
+        {{- include "wishlist.selectorLabels" (dict "root" $ "component" $component) | nindent 8 }}
+        {{- with $.Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "wishlist.serviceAccountName" $ }}
+      # No component calls the Kubernetes API
+      automountServiceAccountToken: false
+      {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml $.Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ $component }}
+          image: {{ include "wishlist.image" (dict "root" $ "component" $component) | quote }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml $.Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ $values.port }}
+          env:
+            - name: PORT
+              value: {{ $values.port | quote }}
+            {{- if eq $component "web-public" }}
+            # adapter-node checks the Origin of form posts against it (CSRF)
+            - name: ORIGIN
+              value: {{ printf "https://%s" $.Values.hosts.public | quote }}
+            {{- else if eq $component "web-app" }}
+            - name: ORIGIN
+              value: {{ printf "https://%s" $.Values.hosts.app | quote }}
+            {{- end }}
+            {{- range $name, $value := $values.env }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "wishlist.fullname" $ }}
+            {{- with $.Values.existingSecret }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
+          {{- with $.Values.startupProbe }}
+          startupProbe:
+            httpGet: { path: /healthz, port: http }
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $.Values.livenessProbe }}
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $.Values.readinessProbe }}
+          readinessProbe:
+            httpGet: { path: {{ ternary "/readyz" "/healthz" (eq $component "api") }}, port: http }
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml $values.resources | nindent 12 }}
+          volumeMounts:
+            # The root filesystem is read-only
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+      {{- with $.Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
+{{- end }}

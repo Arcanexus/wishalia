@@ -8,6 +8,9 @@
     "#lib/*": "./src/lib/*"
   },
   "description": "Management app for the owner of the lists (app.<product>.<domain>).",
+  "files": [
+    "build"
+  ],
   "scripts": {
     "dev": "vite dev --port 3003",
     "build": "vite build",

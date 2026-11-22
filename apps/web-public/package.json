@@ -8,6 +8,9 @@
     "#lib/*": "./src/lib/*"
   },
   "description": "Public view of the share links (<product>.<domain>).",
+  "files": [
+    "build"
+  ],
   "scripts": {
     "dev": "vite dev --port 3002",
     "build": "vite build",
