@@ -10,7 +10,7 @@ describe("magicLinkMail", () => {
     expect(mail.to).toBe("a@x.test");
     expect(mail.subject).toBe("Votre lien de connexion à Chut");
     expect(mail.text).toContain(url);
-    expect(mail.html).toContain(url.replace("&", "&#38;"));
+    expect(mail.html).toContain(url.replaceAll("&", "&#38;"));
   });
 
   it("escapes the product name", () => {
