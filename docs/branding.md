@@ -26,6 +26,19 @@ Two themes, each in light and dark. **Neutral** is the default, all year round a
 The app follows the device setting (`prefers-color-scheme`); a button in the header forces light or
 dark, and the choice is remembered.
 
+### Theme settings
+
+Each person manages their themes in the settings of the apps (management app and public view):
+
+- **Theme**: `Automatic` (default: Christmas for a Christmas list or in December, neutral
+  otherwise), `Neutral` or `Christmas`.
+- **Mode**: `Same as my device` (default), `Light` or `Dark`. The header button is a shortcut to
+  this setting.
+
+The choice belongs to the person, not to the list: a guest who prefers the neutral theme never gets
+the Christmas one. It is stored with the account when there is one, and on the device otherwise
+(guests on their nominative link).
+
 Every text colour below meets WCAG 2.2 AA (4.5:1) on the background it is used on. Decorative
 colours (logo ring, ribbon, progress bars) are never used for text.
 
