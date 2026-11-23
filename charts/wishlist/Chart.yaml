@@ -1,0 +1,16 @@
+apiVersion: v2
+name: wishlist
+description: Self-hosted wishlists with events, shared gifts and a strict anti-spoil rule
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/Arcanexus/wishlist
+sources:
+  - https://github.com/Arcanexus/wishlist
+keywords:
+  - wishlist
+  - gifts
+  - self-hosted
+maintainers:
+  - name: Arcanexus
+    url: https://github.com/Arcanexus

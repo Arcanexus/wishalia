@@ -1,0 +1,21 @@
+{{- range $component, $def := include "wishlist.components" . | fromYaml }}
+{{- $values := index $.Values $def.values }}
+{{- if and $values.enabled (ne $component "worker") }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "wishlist.fullname" $ }}-{{ $component }}
+  labels:
+    {{- include "wishlist.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "wishlist.selectorLabels" (dict "root" $ "component" $component) | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ $values.port }}
+      targetPort: http
+{{- end }}
+{{- end }}

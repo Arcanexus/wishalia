@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/build
+**/.svelte-kit
+**/coverage
+**/.turbo
+.git
+.github
+charts
+docs
+site
+*.md
+.env
+.env.*

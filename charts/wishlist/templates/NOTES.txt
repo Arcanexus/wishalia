@@ -1,0 +1,14 @@
+wishlist {{ .Chart.AppVersion }} is deployed.
+
+  Public view:     https://{{ .Values.hosts.public }}
+  Management app:  https://{{ .Values.hosts.app }}
+{{- if not .Values.ingress.enabled }}
+
+The ingress is disabled (ingress.enabled=false). To try the apps locally:
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "wishlist.fullname" . }}-web-public 3000:{{ .Values.webPublic.port }}
+{{- end }}
+{{- if not .Values.existingSecret }}
+
+Warning: existingSecret is empty. The apps need DATABASE_URL and the other secrets of
+docs/configuration.md once the data model ships.
+{{- end }}

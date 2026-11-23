@@ -1,0 +1,112 @@
+name: Docker Build
+
+# Builds the four images on every PR (without pushing), scans them with Trivy, and publishes them
+# to ghcr.io for the main branch and for semver tags (v1.2.3): ghcr.io/arcanexus/wishlist-<app>.
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*.*.*"]
+    # Not for the coverage badge commit; path filters are never applied to tag pushes
+    paths-ignore: [".github/badges/**"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
+  build:
+    runs-on: ubuntu-latest
+    needs: tests
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [api, worker, web-app, web-public]
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Check the tag against the versions of the repository
+        if: startsWith(github.ref, 'refs/tags/')
+        run: python3 .github/scripts/release.py "$GITHUB_REF_NAME" > /dev/null
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}-${{ matrix.app }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+
+      # Built once for the runner architecture and scanned before anything is pushed
+      - name: Build the image to scan
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: scan/${{ matrix.app }}:ci
+          build-args: APP=${{ matrix.app }}
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+      - name: Scan the image (Trivy)
+        # Pinned by commit: a security scanner runs with the job's token
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: scan/${{ matrix.app }}:ci
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          # Without it, the SARIF report (and the exit code) covers every severity, not only CRITICAL,HIGH
+          limit-severities-for-sarif: true
+          exit-code: "1"
+          # SARIF for code scanning when the repository is public, a table in the log otherwise
+          format: ${{ github.event.repository.private && 'table' || 'sarif' }}
+          output: ${{ !github.event.repository.private && format('trivy-{0}.sarif', matrix.app) || '' }}
+
+      - name: Upload the scan to code scanning
+        if: always() && !github.event.repository.private && hashFiles(format('trivy-{0}.sarif', matrix.app)) != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-${{ matrix.app }}.sarif
+          category: trivy-${{ matrix.app }}
+
+      - name: Build and push the multi-arch image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP=${{ matrix.app }}
+            VERSION=${{ steps.meta.outputs.version }}
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}

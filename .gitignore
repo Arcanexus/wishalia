@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+.svelte-kit/
+coverage/
+.turbo/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+/charts/*/charts/
+/charts/*.tgz
+__pycache__/

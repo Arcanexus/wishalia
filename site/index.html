@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>wishlist · self-hosted wishlists that keep the surprise</title>
+    <meta
+      name="description"
+      content="Self-hosted wishlists for a family: events, shared gifts and a strict anti-spoil rule."
+    />
+    <link rel="icon" href="images/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <img src="images/logo.svg" alt="" width="88" height="88" />
+      <h1>wishlist</h1>
+      <p class="tagline">Self-hosted wishlists that keep the surprise.</p>
+      <nav aria-label="Main">
+        <a class="button" href="https://github.com/Arcanexus/wishlist/wiki/Quick-start">Get started</a>
+        <a class="button secondary" href="https://github.com/Arcanexus/wishlist">Source code</a>
+      </nav>
+    </header>
+
+    <main>
+      <section aria-labelledby="features">
+        <h2 id="features">Why wishlist</h2>
+        <ul class="cards">
+          <li>
+            <h3>Nothing spoiled</h3>
+            <p>
+              The owner of a list never sees who gave what, until they lift the secret after the event.
+              Enforced on the server, not hidden in the page.
+            </p>
+          </li>
+          <li>
+            <h3>Gifts together</h3>
+            <p>
+              Several people chip in for one gift, across birthdays and Christmases, with a clear progress
+              bar.
+            </p>
+          </li>
+          <li>
+            <h3>Lists and events</h3>
+            <p>Durable lists, recurring events, book series with the next volume, recurring wishes.</p>
+          </li>
+          <li>
+            <h3>For every age</h3>
+            <p>
+              Large touch targets, no password to remember, an item added in under five seconds from any
+              device.
+            </p>
+          </li>
+          <li>
+            <h3>Fast and light</h3>
+            <p>Little JavaScript, built to stay quick on a modest phone.</p>
+          </li>
+          <li>
+            <h3>Yours</h3>
+            <p>Runs on your own Kubernetes cluster with one Helm chart. Your family's data stays at home.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="install">
+        <h2 id="install">Install</h2>
+        <pre><code>helm install wishlist oci://ghcr.io/arcanexus/charts/wishlist \
+  --set hosts.public=wishlist.example.com \
+  --set hosts.app=app.wishlist.example.com \
+  --set ingress.enabled=true</code></pre>
+        <p>
+          <a href="https://github.com/Arcanexus/wishlist/wiki/Installation">Read the installation guide</a>
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Apache-2.0 · <a href="https://github.com/Arcanexus/wishlist/wiki">Documentation</a> ·
+        <a href="https://github.com/Arcanexus/wishlist/releases">Releases</a>
+      </p>
+    </footer>
+  </body>
+</html>

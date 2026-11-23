@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "wishlist.fullname" . }}
+  labels:
+    {{- include "wishlist.labels" . | nindent 4 }}
+data:
+  APP_NAME: {{ .Values.config.appName | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  # The frontends call the API inside the cluster, server side
+  API_URL: {{ include "wishlist.apiUrl" . | quote }}
+  PUBLIC_ORIGIN: {{ printf "https://%s" .Values.hosts.public | quote }}
+  APP_ORIGIN: {{ printf "https://%s" .Values.hosts.app | quote }}
