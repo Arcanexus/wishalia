@@ -10,11 +10,30 @@
       content="Self-hosted wishlists for a family: events, shared gifts and a strict anti-spoil rule."
     />
     <link rel="icon" href="images/logo.svg" type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Wishalia" />
+    <meta property="og:title" content="Wishalia · self-hosted wishlists that keep the surprise" />
+    <meta
+      property="og:description"
+      content="Self-hosted wishlists for a family: events, shared gifts and a strict anti-spoil rule."
+    />
+    <meta property="og:url" content="https://arcanexus.github.io/wishalia/" />
+    <meta property="og:image" content="https://arcanexus.github.io/wishalia/images/social-preview.png" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="640" />
+    <meta
+      property="og:image:alt"
+      content="The Wishalia logo, five relatives around a gift, and its tagline"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <header class="hero">
-      <img src="images/logo.svg" alt="" width="88" height="88" />
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="images/logo-dark.svg" />
+        <img src="images/logo.svg" alt="" width="88" height="88" />
+      </picture>
       <h1>Wishalia</h1>
       <p class="tagline">Self-hosted wishlists that keep the surprise.</p>
       <nav aria-label="Main">

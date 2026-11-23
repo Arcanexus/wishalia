@@ -17,6 +17,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Social preview image (`docs/images/social-preview.png`, 1280 × 640) for the repository and the
+  website's Open Graph tags, and a dark logo variant used by the README and the website in dark
+  mode.
 - Management API (`/manage/*`): lists, items (quick add from a URL or text, in-place edits, moves,
   received and archived), events (item selection, reveal of the secret) and the history of each
   item. Everything is scoped to its owner (404 otherwise) and never returns contribution data.
