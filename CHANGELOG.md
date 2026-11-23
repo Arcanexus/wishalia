@@ -6,7 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- The product is named **Wishalia**: default `APP_NAME` and chart `config.appName`, README, website,
+  documentation and a new logo (five relatives in a circle around a gift). The code name `wishlist`
+  stays in packages, images, the chart, cookies and metrics, so nothing breaks on upgrade.
+
 ### Added
+
+- [Branding](docs/branding.md): logo, neutral and Christmas palettes in light and dark, fonts.
 
 - Sign-in with Better Auth in the API: OIDC for the owners, passkeys and magic links for the
   family, no password. Invitation only (`OWNER_EMAILS`). A 30-day `__Secure-` session shared by the

@@ -4,7 +4,7 @@ import { loadConfig } from "./config.js";
 
 describe("loadConfig", () => {
   it("has safe defaults", () => {
-    expect(loadConfig({})).toMatchObject({ PORT: 3000, APP_NAME: "wishlist", NODE_ENV: "development" });
+    expect(loadConfig({})).toMatchObject({ PORT: 3000, APP_NAME: "Wishalia", NODE_ENV: "development" });
   });
 
   it("reads the environment", () => {

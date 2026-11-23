@@ -77,7 +77,7 @@ describe("magic link", () => {
     await signIn(t, OWNER_EMAIL);
     const mail = t.mails.at(-1);
     expect(mail?.to).toBe(OWNER_EMAIL);
-    expect(mail?.subject).toContain("wishlist");
+    expect(mail?.subject).toContain("Wishalia");
     expect(mail?.html).toContain('lang="fr"');
   });
 

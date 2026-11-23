@@ -1,6 +1,8 @@
 # wishlist: working rules
 
-Self-hosted family wishlists. Code name `wishlist`; the product name comes from `APP_NAME`.
+Self-hosted family wishlists. Product name **Wishalia** (shown through `APP_NAME`, default `Wishalia`);
+code name `wishlist`, kept in packages, images, chart, cookies (`wishlist.*`) and metrics (`wishlist_`).
+Branding (logo, palettes, fonts, themes): `docs/branding.md`.
 
 ## Non-negotiable rules
 

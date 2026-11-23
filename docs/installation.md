@@ -1,6 +1,6 @@
 # Installation
 
-wishlist ships as four images and one Helm chart, published for every release:
+Wishalia ships as four images and one Helm chart, published for every release:
 
 - images: `ghcr.io/arcanexus/wishlist-{api,worker,web-app,web-public}:<version>` (amd64, arm64)
 - chart: `oci://ghcr.io/arcanexus/charts/wishlist`

@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/images/logo.svg" alt="wishlist logo" width="120">
+  <img src="docs/images/logo.svg" alt="Wishalia logo" width="120">
 </p>
 
-<h1 align="center">wishlist</h1>
+<h1 align="center">Wishalia</h1>
 
 <p align="center">
   <strong>Self-hosted wishlists for a family: events, shared gifts, and a strict anti-spoil rule.</strong>
@@ -25,7 +25,7 @@
 
 ---
 
-wishlist lets a family keep several wishlists, pick items for recurring events (birthdays,
+Wishalia lets a family keep several wishlists, pick items for recurring events (birthdays,
 Christmas), and chip in together for the same gift. Its core promise: **the owner of a list never
 sees who gave what**, until they lift the secret after the event. The rule is enforced on the
 server, not hidden in the page.

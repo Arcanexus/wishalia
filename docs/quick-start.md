@@ -1,6 +1,6 @@
 # Quick start
 
-Run wishlist on your machine with Node.js 22.17+ (24 recommended), pnpm (through Corepack) and Docker.
+Run Wishalia on your machine with Node.js 22.17+ (24 recommended), pnpm (through Corepack) and Docker.
 
 ```sh
 corepack enable

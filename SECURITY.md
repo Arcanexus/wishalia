@@ -1,6 +1,6 @@
 # Security policy
 
-wishlist keeps a family's secrets: who gives what, and how much. The owner of a list must never
+Wishalia keeps a family's secrets: who gives what, and how much. The owner of a list must never
 learn it before they choose to, and nobody outside the family must read the lists. A leak of
 contributions to the owner is treated as a security bug.
 

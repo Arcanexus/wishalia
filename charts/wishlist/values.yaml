@@ -14,7 +14,7 @@ imagePullSecrets: []
 
 config:
   # Display name of the product (the code only knows the code name "wishlist")
-  appName: wishlist
+  appName: Wishalia
   logLevel: info
 
 # Hosts of the two frontends. The public view and the management app are never served by the
