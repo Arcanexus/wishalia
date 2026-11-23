@@ -13,6 +13,8 @@ const listPatch = z
     name: z.string().trim().min(1).max(100),
     position: z.number().int().min(0),
     archived: z.boolean(),
+    /** Forced on everyone who opens the list; null lets each person's theme apply. */
+    theme: z.enum(["neutral", "christmas"]).nullable(),
   })
   .partial()
   .strict();
@@ -63,6 +65,7 @@ export const listRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db }) =>
         ...(patch.name !== undefined ? { name: patch.name } : {}),
         ...(patch.position !== undefined ? { position: patch.position } : {}),
         ...(patch.archived !== undefined ? { archivedAt: patch.archived ? new Date() : null } : {}),
+        ...(patch.theme !== undefined ? { theme: patch.theme } : {}),
       })
       .where(and(eq(schema.wishLists.id, listId), eq(schema.wishLists.ownerId, userId(request))))
       .returning();

@@ -73,6 +73,16 @@ describe("lists", () => {
     expect(names).not.toContain("Jeux");
   });
 
+  it("forces a theme on a list, or lets each person choose", async () => {
+    const list = (await as(owner, "POST", "/lists", { name: "Noël des enfants" })).body;
+    expect(list.theme).toBeNull();
+    expect((await as(owner, "PATCH", `/lists/${list.id}`, { theme: "christmas" })).body.theme).toBe(
+      "christmas",
+    );
+    expect((await as(owner, "PATCH", `/lists/${list.id}`, { theme: null })).body.theme).toBeNull();
+    expect((await as(owner, "PATCH", `/lists/${list.id}`, { theme: "pink" })).status).toBe(400);
+  });
+
   it("refuses an empty name and unknown fields", async () => {
     expect((await as(owner, "POST", "/lists", { name: " " })).status).toBe(400);
     const list = (await as(owner, "POST", "/lists", { name: "X" })).body;

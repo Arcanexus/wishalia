@@ -37,6 +37,7 @@ export function ownerList(row: ListRow, itemCount: number) {
     id: row.id,
     name: row.name,
     position: row.position,
+    theme: row.theme,
     itemCount,
     createdAt: row.createdAt.toISOString(),
     archivedAt: row.archivedAt?.toISOString() ?? null,

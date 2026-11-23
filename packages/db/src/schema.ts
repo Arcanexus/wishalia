@@ -35,6 +35,7 @@ export const eventKind = pgEnum("event_kind", ["birthday", "christmas", "other"]
 export const contributionStatus = pgEnum("contribution_status", ["active", "withdrawn"]);
 export const shareScope = pgEnum("share_scope", ["list", "event"]);
 export const historyVisibility = pgEnum("history_visibility", ["owner", "guests", "sealed"]);
+export const listTheme = pgEnum("list_theme", ["neutral", "christmas"]);
 
 /** An account. Owner of its lists, guest on the others: the role is per list or event. */
 export const users = pgTable("users", {
@@ -143,6 +144,11 @@ export const wishLists = pgTable(
       .references(() => users.id),
     name: text("name").notNull(),
     position: integer("position").notNull().default(0),
+    /**
+     * A theme the owner forces on everyone who opens the list; null lets each person's choice
+     * apply. The light or dark mode always stays personal (docs/branding.md).
+     */
+    theme: listTheme("theme"),
     createdAt: createdAt(),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
   },

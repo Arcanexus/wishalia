@@ -26,12 +26,12 @@ JSON only: `{ "error": "<code>" }`, with `issues` (`path`, `message`) for a `400
 
 ## Lists
 
-| Route                         | Body                           | Answer                                                         |
-| ----------------------------- | ------------------------------ | -------------------------------------------------------------- |
-| `GET /manage/lists`           |                                | The lists in their order, with `itemCount` (open items).       |
-| `POST /manage/lists`          | `name`                         | `201`, the list, placed last.                                  |
-| `PATCH /manage/lists/:id`     | `name`, `position`, `archived` | The list. An archived list leaves `GET /manage/lists`.         |
-| `GET /manage/lists/:id/items` |                                | Its items: open first in their order, then received, archived. |
+| Route                         | Body                                    | Answer                                                                                                                                                                             |
+| ----------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /manage/lists`           |                                         | The lists in their order, with `itemCount` (open items).                                                                                                                           |
+| `POST /manage/lists`          | `name`                                  | `201`, the list, placed last.                                                                                                                                                      |
+| `PATCH /manage/lists/:id`     | `name`, `position`, `archived`, `theme` | The list. An archived list leaves `GET /manage/lists`. `theme` (`neutral`, `christmas` or `null`) is forced on everyone who opens the list; the light or dark mode stays personal. |
+| `GET /manage/lists/:id/items` |                                         | Its items: open first in their order, then received, archived.                                                                                                                     |
 
 ## Items
 

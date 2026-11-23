@@ -12,6 +12,8 @@ All notable changes to this project are documented here. The format follows
   received and archived), events (item selection, reveal of the secret) and the history of each
   item. Everything is scoped to its owner (404 otherwise) and never returns contribution data.
   See [Management API](docs/api.md).
+- A list can force its theme (`neutral` or `christmas`) on everyone who opens it (migration
+  `0003_list_theme`).
 - `@wishlist/domain`: `parseQuickAdd`, `cleanUrl` (tracking parameters removed, only http(s)
   links) and `diffWish` for the history.
 - JSON errors on every route, without internal details in a 500.
