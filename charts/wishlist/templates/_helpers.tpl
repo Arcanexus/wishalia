@@ -52,3 +52,13 @@ web-public: { values: webPublic, exposed: true }
 {{- define "wishlist.apiUrl" -}}
 {{- printf "http://%s-api:%v" (include "wishlist.fullname" .) .Values.api.port }}
 {{- end }}
+
+{{- /* NetworkPolicy ingress rule that lets Prometheus scrape the metrics port (empty when off) */ -}}
+{{- define "wishlist.metricsIngressRule" -}}
+{{- if and .Values.metrics.enabled .Values.metrics.allowFrom }}
+- from:
+    {{- toYaml .Values.metrics.allowFrom | nindent 4 }}
+  ports:
+    - port: metrics
+{{- end }}
+{{- end }}

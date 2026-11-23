@@ -125,6 +125,17 @@ jobs:
             exit 1
           fi
 
+      - name: The metrics stay inside the cluster
+        run: |
+          out=$(helm template t charts/wishlist --set existingSecret=s --set ingress.enabled=true \
+            --set metrics.serviceMonitor.enabled=true)
+          if echo "$out" | yq 'select(.kind == "Ingress")' | grep -q metrics; then
+            echo "::error::the ingress routes to the metrics port"
+            exit 1
+          fi
+          echo "$out" | yq -e 'select(.kind == "ServiceMonitor") | .spec.endpoints[0].port == "metrics"' > /dev/null
+          echo "$out" | yq -e 'select(.kind == "NetworkPolicy" and .metadata.name == "t-wishlist-worker") | .spec.ingress[0].ports[0].port == "metrics"' > /dev/null
+
   scripts:
     runs-on: ubuntu-latest
     steps:

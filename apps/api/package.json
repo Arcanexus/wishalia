@@ -19,6 +19,7 @@
     "@fastify/helmet": "^13.2.0",
     "@wishlist/db": "workspace:*",
     "@wishlist/domain": "workspace:*",
+    "@wishlist/metrics": "workspace:*",
     "fastify": "^5.12.8",
     "zod": "^4.6.7"
   },

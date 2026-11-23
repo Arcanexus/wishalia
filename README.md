@@ -42,6 +42,7 @@ server, not hidden in the page.
 | 👵 **For every age**    | Large touch targets, no password, an item added in under five seconds.  |
 | ⚡ **Light**            | Little JavaScript, quick on a modest phone.                             |
 | 🏠 **Self-hosted**      | Four images, one Helm chart, made for a GitOps homelab.                 |
+| 📈 **Observable**       | Prometheus metrics and a ServiceMonitor, with nothing that spoils.      |
 
 ## Quick start
 
@@ -52,7 +53,8 @@ pnpm dev
 ```
 
 See the [quick start](docs/quick-start.md), the [installation on Kubernetes](docs/installation.md),
-the [architecture](docs/architecture.md) and the [data model](docs/data-model.md).
+the [architecture](docs/architecture.md), the [data model](docs/data-model.md) and
+[monitoring](docs/monitoring.md).
 
 ## Contributing
 

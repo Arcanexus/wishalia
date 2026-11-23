@@ -19,6 +19,7 @@ COPY apps/web-public/package.json apps/web-public/
 COPY packages/config/package.json packages/config/
 COPY packages/db/package.json packages/db/
 COPY packages/domain/package.json packages/domain/
+COPY packages/metrics/package.json packages/metrics/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY . .
@@ -48,7 +49,7 @@ COPY --from=build --chown=root:root /out/ /app/
 RUN if [ -d build ]; then echo build > .entry; else echo dist/main.js > .entry; fi
 
 USER 10001
-EXPOSE 3000
+EXPOSE 3000 9464
 ENV PORT=3000
 # exec: node is PID 1 and receives SIGTERM from Kubernetes
 CMD ["sh", "-c", "exec node \"$(cat .entry)\""]

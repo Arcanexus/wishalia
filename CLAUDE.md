@@ -8,7 +8,11 @@ Self-hosted family wishlists. Code name `wishlist`; the product name comes from 
    they lift the secret. Enforced server side in one function of `packages/domain`, used by every
    API, with tests. `/manage/*` responses never carry contribution data.
 2. **Separation**: two frontends (`web-app`, `web-public`), two hosts, two API scopes
-   (`/manage`, `/public`). The API is internal, only the frontends call it.
+   (`/manage`, `/public`). These scopes are internal, only the frontends call them. The one
+   exception (planned): the public REST API v1 on its own host, authenticated by personal access
+   tokens (hash stored, expiry, rate limit), with `/manage` rights and never any contribution data.
+   Prometheus `/metrics` is on its own port, never on the ingress, and no metric describes
+   contributions.
 3. **History**: every action on an item writes an append-only `item_events` row with a visibility
    (`owner`, `guests`, `sealed`).
 4. **UX**: adding an item takes under 5 seconds on any device (optimistic add, async enrichment).

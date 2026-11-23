@@ -11,6 +11,7 @@ apps/
 packages/
   domain/       pure business rules (amounts, funding, the anti-spoil rule)
   db/           Drizzle schema, versioned migrations, PostgreSQL client
+  metrics/      Prometheus registry and /metrics server, shared by the four components
   config/       shared TypeScript settings
 charts/wishlist Helm chart of the four components
 docs/           this documentation, published to the wiki
@@ -28,7 +29,13 @@ browser ──> ingress ──> web-public ──┐
                    └──> web-app ─────┴──> api ──> PostgreSQL
                                                   ▲
                                        worker ────┘   (jobs in PostgreSQL, pg-boss)
+
+Prometheus ──> :9464/metrics of each component (inside the cluster only)
 ```
+
+A public REST API (v1) for scripts and home automation is planned: on its own host, with personal
+access tokens the owner creates and revokes, the same rights as `/manage` and never any
+contribution data. `/manage` and `/public` stay internal.
 
 ## Choices
 
@@ -40,3 +47,4 @@ browser ──> ingress ──> web-public ──┐
 | Auth       | Better Auth (coming)      | OIDC for the owner, passkeys and magic links for the family, no passwords. |
 | Amounts    | Integers in cents         | No floating point on money.                                                |
 | Deployment | One Helm chart, ArgoCD    | Matches the homelab GitOps flow.                                           |
+| Metrics    | prom-client, own port     | Prometheus standard; a separate port keeps `/metrics` off the ingress.     |

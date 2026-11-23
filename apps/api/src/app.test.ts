@@ -1,6 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { createHttpMetrics, createRegistry } from "@wishlist/metrics";
+
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
 
@@ -49,5 +51,27 @@ describe("security headers", () => {
     expect(response.headers["content-security-policy"]).toContain("frame-ancestors 'none'");
     expect(response.headers["referrer-policy"]).toBe("no-referrer");
     expect(response.headers["x-content-type-options"]).toBe("nosniff");
+  });
+});
+
+describe("metrics", () => {
+  it("records each request under its route pattern, never its URL", async () => {
+    const registry = createRegistry({ component: "api", version: "dev", defaultMetrics: false });
+    const measured = await buildApp(loadConfig({ NODE_ENV: "test" }), {
+      metrics: createHttpMetrics(registry),
+    });
+    try {
+      await measured.inject({ method: "GET", url: "/manage/ping" });
+      await measured.inject({ method: "GET", url: "/no/such/route/secret-token" });
+
+      const text = await registry.metrics();
+      expect(text).toMatch(
+        /_count\{component="api",method="GET",route="\/manage\/ping",status_code="200"\} 1/,
+      );
+      expect(text).toMatch(/_count\{component="api",method="GET",route="unmatched",status_code="404"\} 1/);
+      expect(text).not.toContain("secret-token");
+    } finally {
+      await measured.close();
+    }
   });
 });
