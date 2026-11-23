@@ -7,6 +7,16 @@ Security is the first of the three priorities of the project, before ease of use
 The owner of a list never sees the contributions to their items: no amount, no name, no
 percentage, no history, until they lift the secret after the event. The rule is enforced **on the
 server**, by a single function of `@wishlist/domain` that every API calls, and covered by tests.
+
+| Viewer            | Recognised by                                                                 | Sees the contributions                                                                                           |
+| ----------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Owner             | their session, or the device marker set when they create or copy a share link | only once they lift the secret, possible from the end of the event day plus the reveal delay (3 days by default) |
+| Guest             | a valid share link (not revoked, not expired)                                 | yes, before and after the event                                                                                  |
+| Anonymous visitor | neither                                                                       | yes, folded behind a confirmation click                                                                          |
+
+Owner detection wins: an owner opening their own share link is still the owner. The functions are
+`resolveViewer`, `canSeeContributions` and `canSeeHistoryEntry`; the history visibilities are in
+[Data model](data-model.md).
 It also closes the indirect leaks: page titles and link previews never reflect the state of a list,
 and the owner gets no notification of a contribution.
 
@@ -29,6 +39,8 @@ The API is internal: only the two frontends reach it, server side, and a Network
   that turns off the camera, microphone, location and payment.
 - Cookies: the session shared between the two hosts is `__Secure-` (a `__Host-` cookie cannot be
   shared), `__Host-` is kept for host-only cookies such as CSRF.
+- Share links: only the SHA-256 hash of a token is stored, so a database leak opens no list.
+- History: `item_events` is append-only, enforced by a database trigger.
 - Containers: non-root user 10001, read-only root filesystem, no Linux capability, seccomp
   `RuntimeDefault`, no service account token, no npm in the runtime image.
 - Supply chain: install scripts are allowed for esbuild only; Dependabot, CodeQL, `pnpm audit` and

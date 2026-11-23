@@ -16,10 +16,10 @@ ConfigMap and loads the sensitive ones from `existingSecret`. Nothing is hard-co
 
 ## In the Secret
 
-| Key                                                          | Used from           | Content                                       |
-| ------------------------------------------------------------ | ------------------- | --------------------------------------------- |
-| `DATABASE_URL`                                               | the data model step | `postgres://user:password@host:5432/database` |
-| `S3_ENDPOINT`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET` | the media step      | The S3 bucket of the images.                  |
+| Key                                                          | Used from         | Content                                       |
+| ------------------------------------------------------------ | ----------------- | --------------------------------------------- |
+| `DATABASE_URL`                                               | the migration Job | `postgres://user:password@host:5432/database` |
+| `S3_ENDPOINT`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET` | the media step    | The S3 bucket of the images.                  |
 
 The auth secrets join this table with the auth step. The API refuses to start when a variable is
 invalid, and lists every problem at once.

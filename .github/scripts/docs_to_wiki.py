@@ -37,6 +37,7 @@ PAGES: list[tuple[str, list[tuple[str, str]]]] = [
     ]),
     ("Inside wishlist", [
         ("architecture.md", "Architecture"),
+        ("data-model.md", "Data-model"),
         ("development.md", "Development"),
     ]),
 ]  # fmt: skip

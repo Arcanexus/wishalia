@@ -8,6 +8,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Data model: nine tables (users, lists, items, series, events, event items, contributions, share
+  links, item history) and the first migration. See [Data model](docs/data-model.md).
+- `item_events` is append-only, enforced by a database trigger.
+- Share links store only the SHA-256 hash of their token.
+- `@wishlist/domain`: funding rules (totals, remaining, overshoot, segments per event, item states)
+  and the anti-spoil rule (`resolveViewer`, `canSeeContributions`, `canSeeHistoryEntry`).
+- Demo data (`db:seed`) and the migration entry point of the API image (`node dist/migrate.js`).
+
 - Monorepo (pnpm + Turborepo, TypeScript strict) with four components: the API (Fastify, separate
   `/manage` and `/public` scopes), the worker, the management app and the public view (SvelteKit).
 - `@wishlist/domain`: amounts in cents, parsing of amounts typed the French way (`12,50`).
@@ -15,7 +23,7 @@ All notable changes to this project are documented here. The format follows
 - Generic page titles and link previews on the public view: they never reflect the state of a list.
 - One Dockerfile for the four images (`--build-arg APP=...`), non-root and without npm at run time.
 - Helm chart `charts/wishlist`: four Deployments, two hosts, internal API behind a NetworkPolicy,
-  hardened pods, optional migration Job. See [Chart values](docs/chart-values.md).
+  hardened pods, migration Job. See [Chart values](docs/chart-values.md).
 - CI: format, lint, typecheck, tests with a coverage threshold and badge, chart lint, multi-arch
   images scanned by Trivy, CodeQL, dependency audit, Dependabot, release, chart publication.
 - Documentation in `docs/`, published to the wiki, and the product website on GitHub Pages.

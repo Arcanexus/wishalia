@@ -16,7 +16,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@types/node": "^22.19.0",
+    "@types/node": "^24.19.2",
     "@wishlist/config": "workspace:*",
     "tsx": "^4.23.15"
   }

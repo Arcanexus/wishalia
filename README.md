@@ -31,7 +31,8 @@ sees who gave what**, until they lift the secret after the event. The rule is en
 server, not hidden in the page.
 
 > **Status:** foundation. The four components build, test, ship as images and deploy with the Helm
-> chart. The data model, the API and the screens come next.
+> chart. The data model and the business rules (funding, anti-spoil) are in place and tested; the
+> API and the screens come next.
 
 |                         |                                                                         |
 | ----------------------- | ----------------------------------------------------------------------- |
@@ -50,8 +51,8 @@ docker compose up -d
 pnpm dev
 ```
 
-See the [quick start](docs/quick-start.md), the [installation on Kubernetes](docs/installation.md)
-and the [architecture](docs/architecture.md).
+See the [quick start](docs/quick-start.md), the [installation on Kubernetes](docs/installation.md),
+the [architecture](docs/architecture.md) and the [data model](docs/data-model.md).
 
 ## Contributing
 

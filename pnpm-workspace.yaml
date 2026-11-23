@@ -6,5 +6,7 @@ packages:
 onlyBuiltDependencies:
   - esbuild
 
-# pnpm deploy (Docker images) copies the workspace packages an app depends on, built, into its node_modules
-injectWorkspacePackages: true
+# pnpm deploy (Docker images) copies the built workspace packages an app depends on into its
+# node_modules. Legacy mode: no injected copies in development, where the packages stay symlinked
+# and a rebuild is seen at once.
+forceLegacyDeploy: true

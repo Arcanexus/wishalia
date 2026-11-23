@@ -9,6 +9,13 @@ updates:
       dev-dependencies:
         dependency-type: "development"
         update-types: ["minor", "patch"]
+    ignore:
+      # typescript-eslint and svelte-check do not support TypeScript 7 (the native compiler) yet
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # @types/node follows the Node.js line of .nvmrc and of the images, upgraded on purpose
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "docker"
     directory: "/"
     schedule:

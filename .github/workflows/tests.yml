@@ -111,9 +111,16 @@ jobs:
           helm lint charts/wishlist
           helm lint charts/wishlist --set ingress.enabled=true --set migrations.enabled=true \
             --set existingSecret=wishlist-secrets --set 'ingress.tls[0].secretName=wishlist-tls'
+      - name: The migrations need the Secret
+        run: |
+          if helm template t charts/wishlist; then
+            echo "::error::the chart rendered the migration Job without existingSecret"
+            exit 1
+          fi
+          helm template t charts/wishlist --set migrations.enabled=false > /dev/null
       - name: The two hosts must differ
         run: |
-          if helm template t charts/wishlist --set ingress.enabled=true --set hosts.app=wishlist.example.com; then
+          if helm template t charts/wishlist --set existingSecret=s --set ingress.enabled=true --set hosts.app=wishlist.example.com; then
             echo "::error::the chart rendered with the same host for the public view and the management app"
             exit 1
           fi
