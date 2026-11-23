@@ -1,8 +1,9 @@
 # Management API
 
 The routes of `/manage/*`, which the management app calls server side. The API is internal: these
-routes are not reachable from the internet (see [Architecture](architecture.md)). The public REST
-API v1, with personal access tokens, comes later.
+routes are not reachable from the internet (see [Architecture](architecture.md)). The routes of the
+share links are in [Public view API](public-api.md). The public REST API v1, with personal access
+tokens, comes later.
 
 Every route needs a session (see [Authentication](authentication.md)) and answers `401` without
 one. Everything belongs to an owner: a list, an item or an event of someone else answers `404`,
@@ -16,22 +17,23 @@ secret is lifted (`canSeeHistoryEntry` in `@wishalia/domain`).
 
 JSON only: `{ "error": "<code>" }`, with `issues` (`path`, `message`) for a `400`.
 
-| Status | `error`                                                           | When                                                         |
-| ------ | ----------------------------------------------------------------- | ------------------------------------------------------------ |
-| 400    | `invalid_request`                                                 | A field is missing, invalid or unknown; an id is not a uuid. |
-| 401    | `unauthenticated`                                                 | No valid session.                                            |
-| 404    | `not_found`                                                       | Missing, or someone else's.                                  |
-| 409    | `too_early`, `secret_already_lifted`, `repeatable_never_received` | See the routes below.                                        |
-| 500    | `internal`                                                        | Never with details: they go to the API log.                  |
+| Status | `error`                                                                                 | When                                                         |
+| ------ | --------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 400    | `invalid_request`                                                                       | A field is missing, invalid or unknown; an id is not a uuid. |
+| 401    | `unauthenticated`                                                                       | No valid session.                                            |
+| 404    | `not_found`                                                                             | Missing, or someone else's.                                  |
+| 409    | `too_early`, `secret_already_lifted`, `repeatable_never_received`, `reveal_on_received` | See the routes below.                                        |
+| 500    | `internal`                                                                              | Never with details: they go to the API log.                  |
 
 ## Lists
 
-| Route                         | Body                                    | Answer                                                                                                                                                                             |
-| ----------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /manage/lists`           |                                         | The lists in their order, with `itemCount` (open items).                                                                                                                           |
-| `POST /manage/lists`          | `name`                                  | `201`, the list, placed last.                                                                                                                                                      |
-| `PATCH /manage/lists/:id`     | `name`, `position`, `archived`, `theme` | The list. An archived list leaves `GET /manage/lists`. `theme` (`neutral`, `christmas` or `null`) is forced on everyone who opens the list; the light or dark mode stays personal. |
-| `GET /manage/lists/:id/items` |                                         | Its items: open first in their order, then received, archived.                                                                                                                     |
+| Route                           | Body                                                  | Answer                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /manage/lists`             |                                                       | The lists in their order, with `itemCount` (open items).                                                                                                                                                                                                                                                                     |
+| `POST /manage/lists`            | `name`                                                | `201`, the list, placed last.                                                                                                                                                                                                                                                                                                |
+| `PATCH /manage/lists/:id`       | `name`, `position`, `archived`, `theme`, `revealMode` | The list. An archived list leaves `GET /manage/lists`. `theme` (`neutral`, `christmas` or `null`) is forced on everyone who opens the list; the light or dark mode stays personal. `revealMode` (`received` or `manual`) says how the secret of the contributions without an event lifts, and is frozen once lifted (`409`). |
+| `POST /manage/lists/:id/reveal` |                                                       | `manual` mode only (`409 reveal_on_received` otherwise): lifts that secret, for good.                                                                                                                                                                                                                                        |
+| `GET /manage/lists/:id/items`   |                                                       | Its items: open first in their order, then received, archived.                                                                                                                                                                                                                                                               |
 
 ## Items
 
@@ -82,3 +84,18 @@ Reordering (`position`) writes no entry.
 
 An event says where its secret stands: `revealAvailableAt` (the end of the event day, UTC, plus
 the delay), `canReveal` and `secretLifted`. Lifting the secret is final.
+
+## Share links
+
+| Route                                 | Body                                                                         | Answer                                                                                 |
+| ------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `GET /manage/share-links`             |                                                                              | The links, newest first, with `active`. Never their token.                             |
+| `POST /manage/share-links`            | `scope` (`list` or `event`), `listId` or `eventId`, `audience`, `expiresAt`? | `201`, the link with its `token` and `url`, given once. A past `expiresAt` is a `400`. |
+| `POST /manage/share-links/:id/revoke` |                                                                              | The link, revoked for good. Revoking twice changes nothing.                            |
+| `POST /manage/device-marker`          |                                                                              | `204`. For the "copy the link" button.                                                 |
+
+A link is made for one guest or one group (`audience`, such as « Mamie »), for one list or one
+event. Creating a link, and `POST /manage/device-marker`, set the **device marker**: a cookie
+(`__Secure-wishalia.owner_device`, HttpOnly, 400 days, on `COOKIE_DOMAIN`) holding the owner's id
+signed with `AUTH_SECRET`. The public view recognises the owner by it even without a session, and
+then shows no contribution. What the guests get is in [Public view API](public-api.md).

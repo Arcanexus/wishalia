@@ -75,10 +75,40 @@ export function isSecretLifted(state: RevealState, now: Date): boolean {
   );
 }
 
-/** THE rule. Whether this viewer may see the contributions of this event, now. */
-export function canSeeContributions(viewer: ViewerRole, state: RevealState, now: Date): boolean {
+/**
+ * How the secret of the contributions made without an event lifts, chosen per list (a list is not
+ * always tied to an event):
+ * - `received` (default): when the owner marks the item received, since the gift has arrived;
+ * - `manual`: when the owner lifts the secret of the list, whenever they decide.
+ */
+export type ListRevealMode = "received" | "manual";
+export const DEFAULT_LIST_REVEAL_MODE: ListRevealMode = "received";
+
+/** The secret of a contribution made without an event: kept by its item and its list. */
+export interface ItemSecretState {
+  mode: ListRevealMode;
+  itemReceived: boolean;
+  /** When the owner lifted the secret of the list (`manual` mode), null while it is kept. */
+  listRevealedAt: Date | null;
+}
+
+function isItemSecretLifted(state: ItemSecretState, now: Date): boolean {
+  if (state.mode === "received") return state.itemReceived;
+  return state.listRevealedAt !== null && state.listRevealedAt.getTime() <= now.getTime();
+}
+
+/** What keeps a contribution secret: its event, or its item when it has no event. */
+export type SecretState = RevealState | ItemSecretState;
+
+/** Whether a secret is lifted now, for an event or for an item. */
+export function isLifted(state: SecretState, now: Date): boolean {
+  return "mode" in state ? isItemSecretLifted(state, now) : isSecretLifted(state, now);
+}
+
+/** THE rule. Whether this viewer may see the contributions this secret covers, now. */
+export function canSeeContributions(viewer: ViewerRole, state: SecretState, now: Date): boolean {
   if (viewer === "owner") {
-    return isSecretLifted(state, now);
+    return isLifted(state, now);
   }
   return true;
 }
@@ -95,7 +125,7 @@ export type HistoryVisibility = "owner" | "guests" | "sealed";
 export function canSeeHistoryEntry(
   visibility: HistoryVisibility,
   viewer: ViewerRole,
-  state: RevealState,
+  state: SecretState,
   now: Date,
 ): boolean {
   switch (visibility) {

@@ -8,12 +8,14 @@ The owner of a list never sees the contributions to their items: no amount, no n
 percentage, no history, until they lift the secret after the event. The rule is enforced **on the
 server**, by a single function of `@wishalia/domain` that every API calls, and covered by tests.
 
-| Viewer            | Recognised by                                                                 | Sees the contributions                                                                                           |
-| ----------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Owner             | their session, or the device marker set when they create or copy a share link | only once they lift the secret, possible from the end of the event day plus the reveal delay (3 days by default) |
-| Guest             | a valid share link (not revoked, not expired)                                 | yes, before and after the event                                                                                  |
-| Anonymous visitor | neither                                                                       | yes, folded behind a confirmation click                                                                          |
+| Viewer | Recognised by                                                                 | Sees the contributions                                                                                                                                                                                                                     |
+| ------ | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Owner  | their session, or the device marker set when they create or copy a share link | only once they lift the secret, possible from the end of the event day plus the reveal delay (3 days by default); without an event, as the list says: once they mark the item received (default), or once they lift the secret of the list |
+| Guest  | a valid share link (not revoked, not expired)                                 | yes, before and after the event                                                                                                                                                                                                            |
 
+Without a valid link, the public view shows nothing at all: every `/public` route but a ping
+answers `404`. The device marker is an HMAC of the owner's id with `AUTH_SECRET`, so nobody can
+forge the marker of someone else; changing `AUTH_SECRET` drops every marker and every session.
 Owner detection wins: an owner opening their own share link is still the owner. The functions are
 `resolveViewer`, `canSeeContributions` and `canSeeHistoryEntry`; the history visibilities are in
 [Data model](data-model.md).
@@ -45,7 +47,9 @@ The API is internal: only the two frontends reach it, server side, and a Network
   [Authentication](authentication.md).
 - Ownership: every `/manage` route checks the owner and answers 404 for anything else, so that ids
   cannot be probed. Stored links are cleaned and limited to `http(s)`. Errors never carry details.
-- Share links: only the SHA-256 hash of a token is stored, so a database leak opens no list.
+- Share links: only the SHA-256 hash of a token is stored, so a database leak opens no list. The
+  token travels in a header (`X-Share-Token`) between the public view and the API, never in an API
+  URL. The withdraw key of a contribution is stored the same way.
 - History: `item_events` is append-only, enforced by a database trigger.
 - Metrics: `/metrics` listens on a port of its own that the ingress never routes, and only the
   `metrics.allowFrom` peers may scrape the API and the worker. Labels carry route patterns, never a

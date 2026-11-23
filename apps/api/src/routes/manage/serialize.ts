@@ -38,6 +38,8 @@ export function ownerList(row: ListRow, itemCount: number) {
     name: row.name,
     position: row.position,
     theme: row.theme,
+    revealMode: row.revealMode,
+    secretLifted: row.revealMode === "manual" && row.revealedAt !== null,
     itemCount,
     createdAt: row.createdAt.toISOString(),
     archivedAt: row.archivedAt?.toISOString() ?? null,

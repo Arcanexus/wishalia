@@ -2,11 +2,16 @@ export {
   canRevealSecret,
   canSeeContributions,
   canSeeHistoryEntry,
+  DEFAULT_LIST_REVEAL_MODE,
   DEFAULT_REVEAL_DELAY_DAYS,
+  isLifted,
   isSecretLifted,
   resolveViewer,
   revealAvailableAt,
   type HistoryVisibility,
+  type ItemSecretState,
+  type ListRevealMode,
+  type SecretState,
   type RevealState,
   type ViewerRole,
   type ViewerSignals,
@@ -37,3 +42,11 @@ export {
   type QuickAdd,
   type WishChanges,
 } from "./items.js";
+export {
+  isShareLinkActive,
+  refuseContribution,
+  type ContributableWish,
+  type ContributionRefusal,
+  type ContributionRequest,
+  type ShareLinkState,
+} from "./sharing.js";

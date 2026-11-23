@@ -3,14 +3,22 @@ import type { FastifyPluginAsync } from "fastify";
 
 import type { Auth } from "../../auth/auth.js";
 import { toHeaders } from "../../auth/fastify.js";
+import type { Config } from "../../config.js";
 import { eventRoutes } from "./events.js";
 import { itemRoutes } from "./items.js";
 import { listRoutes } from "./lists.js";
+import { shareLinkRoutes } from "./share-links.js";
 
 /** What the routes of /manage need. `now` is injected so that tests can move the clock. */
 export interface ManageDeps {
   db: Database;
   now: () => Date;
+}
+
+/** What the share links also need: the public origin of their URL and the device marker secret. */
+export interface ShareDeps extends ManageDeps {
+  config: Config;
+  secret: string;
 }
 
 export interface SessionUser {
@@ -31,9 +39,9 @@ declare module "fastify" {
  * needs a session: the guard answers 401 before any handler runs.
  * Rule: no response of this scope ever carries contribution data (spec, section 3).
  */
-export const manageRoutes: FastifyPluginAsync<ManageDeps & { auth: Auth }> = async (
+export const manageRoutes: FastifyPluginAsync<ShareDeps & { auth: Auth }> = async (
   app,
-  { auth, db, now },
+  { auth, config, db, now, secret },
 ) => {
   app.addHook("onRequest", async (request, reply) => {
     request.scope = "manage";
@@ -54,4 +62,5 @@ export const manageRoutes: FastifyPluginAsync<ManageDeps & { auth: Auth }> = asy
   await app.register(listRoutes, { db, now });
   await app.register(itemRoutes, { db, now });
   await app.register(eventRoutes, { db, now });
+  await app.register(shareLinkRoutes, { config, db, now, secret });
 };

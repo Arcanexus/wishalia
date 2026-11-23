@@ -25,6 +25,8 @@ export interface AuthDeps {
   /** Unset: magic links are off (SMTP_URL missing), except in development where they are logged. */
   mailer?: Mailer | undefined;
   log?: (message: string) => void;
+  /** Shared with the device markers; authSecret(config) when left out. */
+  secret?: string;
 }
 
 /**
@@ -35,8 +37,11 @@ export function mayCreateAccount(config: Config, email: string | null | undefine
   return !!email && config.OWNER_EMAILS.includes(email.trim().toLowerCase());
 }
 
-/** The secret of the cookies: AUTH_SECRET, or a throwaway one outside production (loadConfig). */
-function authSecret(config: Config): string {
+/**
+ * The secret of the cookies and of the device markers: AUTH_SECRET, or a throwaway one outside
+ * production (loadConfig requires it there). Computed once per process by buildApp.
+ */
+export function authSecret(config: Config): string {
   return config.AUTH_SECRET ?? randomBytes(32).toString("base64url");
 }
 
@@ -45,7 +50,7 @@ function authSecret(config: Config): string {
  * family, no password at all. The session cookie is `__Secure-` in production and shared by the
  * two hosts through COOKIE_DOMAIN (a `__Host-` cookie cannot carry a Domain).
  */
-export function createAuth({ config, db, mailer, log = () => {} }: AuthDeps) {
+export function createAuth({ config, db, mailer, log = () => {}, secret = authSecret(config) }: AuthDeps) {
   const secure = config.APP_ORIGIN.startsWith("https://");
   const rpID = config.COOKIE_DOMAIN?.replace(/^\./, "") ?? new URL(config.APP_ORIGIN).hostname;
 
@@ -92,7 +97,7 @@ export function createAuth({ config, db, mailer, log = () => {} }: AuthDeps) {
     appName: config.APP_NAME,
     baseURL: config.APP_ORIGIN,
     basePath: AUTH_BASE_PATH,
-    secret: authSecret(config),
+    secret,
     trustedOrigins: [config.APP_ORIGIN, config.PUBLIC_ORIGIN],
     database: drizzleAdapter(db, {
       provider: "pg",

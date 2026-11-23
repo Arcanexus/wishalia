@@ -35,8 +35,8 @@ server, not hidden in the page.
 
 > **Status:** foundation. The four components build, test, ship as images and deploy with the Helm
 > chart. The data model, the business rules (funding, anti-spoil) the sign-in (OIDC, passkeys,
-> magic links) and the management API are in place and tested; the public API and the screens come
-> next.
+> magic links) the management API and the public view API (share links, contributions) are in place and
+> tested; the screens come next.
 
 |                         |                                                                         |
 | ----------------------- | ----------------------------------------------------------------------- |

@@ -6,6 +6,7 @@ import {
   type EditableWish,
   MAX_TITLE_LENGTH,
   parseQuickAdd,
+  type SecretState,
 } from "@wishalia/domain";
 import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
@@ -15,6 +16,7 @@ import { type HistoryEntry, recordHistory, type Tx } from "../../history.js";
 import { first, HttpError, notFound, parse, userId } from "../../http.js";
 import type { ManageDeps } from "./index.js";
 import { DEFAULT_LIST_NAME } from "./lists.js";
+import { itemSecret } from "../../secrets.js";
 import { ownerItem } from "./serialize.js";
 
 const cents = z.number().int().min(0).max(100_000_000);
@@ -240,7 +242,8 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now 
    */
   app.get("/items/:itemId/history", async (request) => {
     const { itemId } = parse(itemParams, request.params);
-    await ownedItem(db, userId(request), itemId);
+    const item = await ownedItem(db, userId(request), itemId);
+    const list = first(await db.select().from(schema.wishLists).where(eq(schema.wishLists.id, item.listId)));
 
     const entries = await db
       .select()
@@ -261,11 +264,15 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now 
 
     return entries
       .filter((entry) => {
-        const event = typeof entry.payload.eventId === "string" ? byId.get(entry.payload.eventId) : undefined;
-        const state = event
+        const eventId = entry.payload.eventId;
+        const event = typeof eventId === "string" ? byId.get(eventId) : undefined;
+        const state: SecretState = event
           ? { eventDate: event.date, revealDelayDays: event.revealDelayDays, revealedAt: event.revealedAt }
-          : // An entry tied to no event can only be shown when it is not sealed
-            { eventDate: "9999-12-31", revealDelayDays: 0, revealedAt: null };
+          : typeof eventId === "string"
+            ? // An event that cannot be found keeps its secret
+              { eventDate: "9999-12-31", revealDelayDays: 0, revealedAt: null }
+            : // A contribution without an event: its item and list keep the secret
+              itemSecret(item, list);
         return canSeeHistoryEntry(entry.visibility, "owner", state, at);
       })
       .map((entry) => ({

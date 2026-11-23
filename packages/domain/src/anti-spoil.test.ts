@@ -4,6 +4,7 @@ import {
   canRevealSecret,
   canSeeContributions,
   canSeeHistoryEntry,
+  isLifted,
   isSecretLifted,
   resolveViewer,
   revealAvailableAt,
@@ -155,5 +156,37 @@ describe("canSeeHistoryEntry", () => {
     expect(canSeeHistoryEntry("sealed", "owner", kept, afterDelay)).toBe(false);
     expect(canSeeHistoryEntry("sealed", "owner", lifted, afterDelay)).toBe(true);
     expect(canSeeHistoryEntry("sealed", "guest", kept, before)).toBe(true);
+  });
+});
+
+describe("the secret of a contribution without an event", () => {
+  const now = new Date("2026-12-01T12:00:00Z");
+  const received = (itemReceived: boolean) => ({
+    mode: "received" as const,
+    itemReceived,
+    listRevealedAt: null,
+  });
+  const manual = (listRevealedAt: Date | null) => ({
+    mode: "manual" as const,
+    itemReceived: true,
+    listRevealedAt,
+  });
+
+  it("by default, hides it from the owner until they mark the item received", () => {
+    expect(canSeeContributions("owner", received(false), now)).toBe(false);
+    expect(canSeeContributions("owner", received(true), now)).toBe(true);
+    expect(isLifted(received(true), now)).toBe(true);
+  });
+
+  it("in manual mode, hides it until the owner lifts the secret of the list, received or not", () => {
+    expect(canSeeContributions("owner", manual(null), now)).toBe(false);
+    expect(canSeeContributions("owner", manual(new Date("2026-12-01T11:00:00Z")), now)).toBe(true);
+    expect(canSeeContributions("owner", manual(new Date("2026-12-02T00:00:00Z")), now)).toBe(false);
+  });
+
+  it("shows it to the guests all along", () => {
+    expect(canSeeContributions("guest", received(false), now)).toBe(true);
+    expect(canSeeHistoryEntry("sealed", "owner", received(false), now)).toBe(false);
+    expect(canSeeHistoryEntry("sealed", "owner", manual(now), now)).toBe(true);
   });
 });
