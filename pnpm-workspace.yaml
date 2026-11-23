@@ -10,3 +10,8 @@ onlyBuiltDependencies:
 # node_modules. Legacy mode: no injected copies in development, where the packages stay symlinked
 # and a rebuild is seen at once.
 forceLegacyDeploy: true
+
+# Optional peers (better-auth lists every framework and adapter it supports) stay out unless a
+# package asks for them: otherwise the API image would carry SvelteKit, Vite and drizzle-kit.
+autoInstallPeers: false
+resolvePeersFromWorkspaceRoot: false
