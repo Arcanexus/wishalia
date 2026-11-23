@@ -13,6 +13,7 @@ versioned migrations of `packages/db/migrations`. Amounts are integers in cents.
 | `event_wishes`       | The items an event selects. An event never owns an item.                                                                                           |
 | `contributions`      | A guest's pledge on an item, within an event or without one: an amount (pool) or copies (unique, quantity). Keeps the SHA-256 of its withdraw key. |
 | `share_links`        | A share link for one list or one event, per guest or group. Only the SHA-256 hash of the token is stored.                                          |
+| `api_tokens`         | A personal access token of the REST API v1: its name, prefix, expiry and read-only flag. Only the SHA-256 hash of the token is stored.             |
 | `item_events`        | The append-only history of every item, with its visibility.                                                                                        |
 | `auth_sessions`      | A signed-in device (Better Auth). Deleting the row signs the device out.                                                                           |
 | `auth_accounts`      | A sign-in method from the OIDC provider. Its OAuth tokens are encrypted; no password is ever stored.                                               |

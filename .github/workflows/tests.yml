@@ -145,6 +145,20 @@ jobs:
           echo "$out" | yq -e 'select(.kind == "ServiceMonitor") | .spec.endpoints[0].port == "metrics"' > /dev/null
           echo "$out" | yq -e 'select(.kind == "NetworkPolicy" and .metadata.name == "t-wishalia-worker") | .spec.ingress[0].ports[0].port == "metrics"' > /dev/null
 
+      - name: The API v1 host only forwards /v1
+        run: |
+          if helm template t charts/wishalia --set existingSecret=s --set ingress.enabled=true \
+            --set hosts.api=app.wishalia.example.com; then
+            echo "::error::the chart let the API v1 share a frontend host"
+            exit 1
+          fi
+          off=$(helm template t charts/wishalia --set existingSecret=s --set ingress.enabled=true)
+          echo "$off" | yq -e 'select(.kind == "Ingress") | .spec.rules | length == 2' > /dev/null
+          on=$(helm template t charts/wishalia --set existingSecret=s --set ingress.enabled=true \
+            --set hosts.api=api.wishalia.example.com)
+          echo "$on" | yq -e 'select(.kind == "Ingress") | .spec.rules[] | select(.host == "api.wishalia.example.com") | (.http.paths | length == 1) and .http.paths[0].path == "/v1"' > /dev/null
+          echo "$on" | yq -e 'select(.kind == "ConfigMap") | .data.API_ORIGIN == "https://api.wishalia.example.com"' > /dev/null
+
   scripts:
     runs-on: ubuntu-latest
     steps:

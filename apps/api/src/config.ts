@@ -57,6 +57,14 @@ const base = z.object({
   /** smtp(s)://user:password@host:port for the magic links (Secret). Unset: no magic link. */
   SMTP_URL: optional,
   MAIL_FROM: optional,
+
+  /**
+   * Public URL of the REST API v1 (https://api.wishalia.example.com), on its own host. Unset: the
+   * API v1 is off. Set by the chart from hosts.api.
+   */
+  API_ORIGIN: z.url().optional(),
+  /** Requests per minute and per personal access token on the API v1. */
+  API_RATE_LIMIT: z.coerce.number().int().min(1).max(100_000).default(120),
 });
 
 const schema = base.superRefine((config, context) => {
@@ -82,8 +90,8 @@ const schema = base.superRefine((config, context) => {
         message: "required in production, 32 characters or more",
       });
     }
-    for (const key of ["APP_ORIGIN", "PUBLIC_ORIGIN"] as const) {
-      if (!config[key].startsWith("https://")) {
+    for (const key of ["APP_ORIGIN", "PUBLIC_ORIGIN", "API_ORIGIN"] as const) {
+      if (config[key] !== undefined && !config[key].startsWith("https://")) {
         context.addIssue({ code: "custom", path: [key], message: "must be https:// in production" });
       }
     }
@@ -100,6 +108,13 @@ const schema = base.superRefine((config, context) => {
         });
       }
     }
+  }
+  if (config.API_ORIGIN && [config.APP_ORIGIN, config.PUBLIC_ORIGIN].includes(config.API_ORIGIN)) {
+    context.addIssue({
+      code: "custom",
+      path: ["API_ORIGIN"],
+      message: "the API v1 needs its own host, apart from the two frontends",
+    });
   }
   if (config.APP_ORIGIN === config.PUBLIC_ORIGIN) {
     context.addIssue({

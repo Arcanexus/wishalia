@@ -35,6 +35,7 @@ PAGES: list[tuple[str, list[tuple[str, str]]]] = [
         ("authentication.md", "Authentication"),
         ("api.md", "Management-API"),
         ("public-api.md", "Public-view-API"),
+        ("rest-api.md", "REST-API"),
         ("chart-values.md", "Chart-values"),
         ("monitoring.md", "Monitoring"),
         ("security.md", "Security"),

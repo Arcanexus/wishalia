@@ -17,6 +17,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- REST API v1 (`/v1/*`) on its own host (`hosts.api`, off by default), for scripts and home
+  automation: personal access tokens made, listed and revoked in `/manage/api-tokens` (hash stored,
+  1 to 365 days, read-only option), the rights of `/manage` without any contribution data, a rate
+  limit per token (`API_RATE_LIMIT`) and an OpenAPI 3.1 description at `/v1/openapi.json`. The
+  ingress forwards `/v1` only on that host, and the API refuses its other routes there. See
+  [REST API v1](docs/rest-api.md).
+- Migration `0005_api_tokens`.
+
 - Share links per guest or group, for a list or an event: created, listed and revoked in
   `/manage/share-links`, with the device marker that recognises the owner without a session.
 - Public view API (`/public/*`): the view of a share link, contributions and reservations (pools

@@ -14,6 +14,8 @@ ConfigMap and loads the sensitive ones from `existingSecret`. Nothing is hard-co
 | `API_URL`                       | web-app, web-public | Internal URL of the API Service.                                                                               |
 | `METRICS_PORT`                  | all                 | `metrics.port` when `metrics.enabled`: the port of `/metrics`. Off (0) when unset.                             |
 | `APP_ORIGIN`, `PUBLIC_ORIGIN`   | all                 | `https://` + `hosts.app` and `hosts.public`. Must differ; https in production.                                 |
+| `API_ORIGIN`                    | api                 | `https://` + `hosts.api`: the REST API v1, on its own host. Unset: the API v1 is off.                          |
+| `API_RATE_LIMIT`                | api                 | `apiV1.rateLimit`: requests a minute and per token on the API v1 (120).                                        |
 | `COOKIE_DOMAIN`                 | api                 | `auth.cookieDomain`, by default `hosts.public` when `hosts.app` is under it: one session for both hosts.       |
 | `OWNER_EMAILS`                  | api                 | `auth.ownerEmails`: who may create an account by themselves. Everyone else is invited.                         |
 | `OIDC_ISSUER`, `OIDC_CLIENT_ID` | api                 | `auth.oidc.*`: the OIDC provider of the owners. Callback URL: `https://<hosts.app>/auth/oauth2/callback/oidc`. |

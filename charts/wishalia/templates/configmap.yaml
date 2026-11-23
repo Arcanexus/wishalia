@@ -11,6 +11,11 @@ data:
   API_URL: {{ include "wishalia.apiUrl" . | quote }}
   PUBLIC_ORIGIN: {{ printf "https://%s" .Values.hosts.public | quote }}
   APP_ORIGIN: {{ printf "https://%s" .Values.hosts.app | quote }}
+  {{- with .Values.hosts.api }}
+  # The REST API v1, on its own host
+  API_ORIGIN: {{ printf "https://%s" . | quote }}
+  API_RATE_LIMIT: {{ $.Values.apiV1.rateLimit | quote }}
+  {{- end }}
   {{- with include "wishalia.cookieDomain" . }}
   # One session for both hosts (__Secure- cookie with a Domain)
   COOKIE_DOMAIN: {{ . | quote }}

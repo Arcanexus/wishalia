@@ -35,8 +35,8 @@ server, not hidden in the page.
 
 > **Status:** foundation. The four components build, test, ship as images and deploy with the Helm
 > chart. The data model, the business rules (funding, anti-spoil) the sign-in (OIDC, passkeys,
-> magic links) the management API and the public view API (share links, contributions) are in place and
-> tested; the screens come next.
+> magic links) the management API, the public view API (share links, contributions) and the REST API v1
+> (personal access tokens, OpenAPI) are in place and tested; the screens come next.
 
 |                         |                                                                         |
 | ----------------------- | ----------------------------------------------------------------------- |
@@ -45,7 +45,7 @@ server, not hidden in the page.
 | 📅 **Lists and events** | Durable lists, recurring events, series of books, recurring wishes.     |
 | 👵 **For every age**    | Large touch targets, no password, an item added in under five seconds.  |
 | ⚡ **Light**            | Little JavaScript, quick on a modest phone.                             |
-| 🏠 **Self-hosted**      | Four images, one Helm chart, made for a GitOps homelab.                 |
+| 🏠 **Self-hosted**      | Four images, one Helm chart, a REST API for home automation.            |
 | 📈 **Observable**       | Prometheus metrics and a ServiceMonitor, with nothing that spoils.      |
 
 ## Quick start

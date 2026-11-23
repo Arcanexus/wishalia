@@ -1,5 +1,6 @@
 {{- if .Values.networkPolicy.enabled }}
-# The API only accepts traffic from the two frontends: it is never exposed outside the cluster.
+# The API only accepts traffic from the two frontends, and from the ingress controller when the API
+# v1 is on (hosts.api): /manage and /public are never exposed outside the cluster.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -20,6 +21,13 @@ spec:
         {{- end }}
       ports:
         - port: http
+    {{- if and .Values.hosts.api .Values.apiV1.allowFrom }}
+    # The REST API v1, through the ingress controller
+    - from:
+        {{- toYaml .Values.apiV1.allowFrom | nindent 8 }}
+      ports:
+        - port: http
+    {{- end }}
     {{- include "wishalia.metricsIngressRule" . | trim | nindent 4 }}
 ---
 # The worker serves no traffic: only its own probes, which the kubelet sends and NetworkPolicies do

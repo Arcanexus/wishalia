@@ -41,11 +41,12 @@ async function pgError(query: Promise<unknown>): Promise<string> {
 }
 
 describe("migrations", () => {
-  it("create the nine tables of the spec and the four of the sign-in", async () => {
+  it("create the nine tables of the spec, the four of the sign-in and the API tokens", async () => {
     const result = await client.query<{ table_name: string }>(
       "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name",
     );
     expect(result.rows.map((row) => row.table_name)).toEqual([
+      "api_tokens",
       "auth_accounts",
       "auth_passkeys",
       "auth_sessions",

@@ -8,7 +8,7 @@ import type { ManageDeps } from "./index.js";
 import { ownerItem, ownerList } from "./serialize.js";
 
 export const listInput = z.object({ name: z.string().trim().min(1).max(100) });
-const listPatch = z
+export const listPatch = z
   .object({
     name: z.string().trim().min(1).max(100),
     position: z.number().int().min(0),

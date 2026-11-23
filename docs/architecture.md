@@ -33,9 +33,10 @@ browser ──> ingress ──> web-public ──┐
 Prometheus ──> :9464/metrics of each component (inside the cluster only)
 ```
 
-A public REST API (v1) for scripts and home automation is planned: on its own host, with personal
-access tokens the owner creates and revokes, the same rights as `/manage` and never any
-contribution data. `/manage` and `/public` stay internal.
+The [REST API v1](rest-api.md), for scripts and home automation, is served by the API on its own
+host when `hosts.api` is set: personal access tokens the owner creates and revokes, the same rights
+as `/manage` (the same routes) and never any contribution data. The ingress forwards `/v1` only, and
+`/manage` and `/public` stay internal.
 
 ## Choices
 
