@@ -35,8 +35,14 @@ Each person manages their themes in the settings of the apps (management app and
 - **Mode**: `Same as my device` (default), `Light` or `Dark`. The header button is a shortcut to
   this setting.
 
-The choice belongs to the person, not to the list: a guest who prefers the neutral theme never gets
-the Christmas one. It is stored with the account when there is one, and on the device otherwise
+The owner of a list can also **force a theme for that list** in the list's settings: `None`
+(default, each person's choice applies), `Neutral` or `Christmas`. A forced theme applies to
+everyone who opens the list, owner and guests, over their own theme setting. The mode always stays
+personal: a forced theme is shown in light or dark according to each person's mode, so nobody loses
+the contrast they need.
+
+Order, from strongest: the list's forced theme, then the person's theme, then `Automatic`. A
+person's settings are stored with their account when there is one, and on the device otherwise
 (guests on their nominative link).
 
 Every text colour below meets WCAG 2.2 AA (4.5:1) on the background it is used on. Decorative

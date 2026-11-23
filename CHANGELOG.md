@@ -15,7 +15,8 @@ All notable changes to this project are documented here. The format follows
 ### Added
 
 - [Branding](docs/branding.md): logo, neutral and Christmas palettes in light and dark, fonts, and
-  the theme settings each person will get (theme and light/dark mode).
+  the theme settings each person will get (theme and light/dark mode) and the theme a list can
+  force.
 
 - Sign-in with Better Auth in the API: OIDC for the owners, passkeys and magic links for the
   family, no password. Invitation only (`OWNER_EMAILS`). A 30-day `__Secure-` session shared by the
