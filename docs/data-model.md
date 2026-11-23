@@ -29,7 +29,7 @@ versioned migrations of `packages/db/migrations`. Amounts are integers in cents.
 
 ## Computed, never stored
 
-"Funded" is always derived from the active contributions, by `@wishlist/domain`:
+"Funded" is always derived from the active contributions, by `@wishalia/domain`:
 
 | Function                                      | Result                                                                                                         |
 | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -51,9 +51,9 @@ The anti-spoil functions are described in [Security](security.md).
 ## Commands
 
 ```sh
-pnpm --filter @wishlist/db db:generate   # a new migration from the schema
-pnpm --filter @wishlist/db db:migrate    # apply the migrations to DATABASE_URL
-pnpm --filter @wishlist/db db:seed       # demo data (refused when NODE_ENV=production)
+pnpm --filter @wishalia/db db:generate   # a new migration from the schema
+pnpm --filter @wishalia/db db:migrate    # apply the migrations to DATABASE_URL
+pnpm --filter @wishalia/db db:seed       # demo data (refused when NODE_ENV=production)
 ```
 
 The schema tests run the real migrations on an in-memory PostgreSQL (PGlite), so the CI needs no

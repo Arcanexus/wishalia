@@ -1,6 +1,6 @@
 import helmet from "@fastify/helmet";
-import type { Database } from "@wishlist/db";
-import type { HttpMetrics } from "@wishlist/metrics";
+import type { Database } from "@wishalia/db";
+import type { HttpMetrics } from "@wishalia/metrics";
 import Fastify, { type FastifyInstance } from "fastify";
 
 import { createAuth } from "./auth/auth.js";

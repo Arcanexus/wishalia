@@ -1,6 +1,6 @@
 /**
  * The data model (spec, section 2). Amounts are integers in cents. "Funded" is never stored: it is
- * computed from the contributions by @wishlist/domain.
+ * computed from the contributions by @wishalia/domain.
  */
 import { sql } from "drizzle-orm";
 import {

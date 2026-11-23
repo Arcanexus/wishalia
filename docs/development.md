@@ -11,7 +11,7 @@
 | `pnpm test`                                         | Vitest, package by package.                                                 |
 | `pnpm coverage`                                     | Vitest on the whole repository with coverage; fails under the thresholds.   |
 | `pnpm format` / `pnpm format:check`                 | Prettier.                                                                   |
-| `pnpm --filter @wishlist/db db:migrate` / `db:seed` | Apply the migrations, load the demo data (see [Data model](data-model.md)). |
+| `pnpm --filter @wishalia/db db:migrate` / `db:seed` | Apply the migrations, load the demo data (see [Data model](data-model.md)). |
 
 ## Rules
 
@@ -25,7 +25,7 @@
 ## Images
 
 ```sh
-docker build --build-arg APP=api -t wishlist-api .
+docker build --build-arg APP=api -t wishalia-api .
 ```
 
 `APP` is `api`, `worker`, `web-app` or `web-public`. The CI builds the four images for amd64 and
@@ -34,7 +34,7 @@ arm64.
 ## Releases
 
 1. Move the `[Unreleased]` section of the CHANGELOG to `[X.Y.Z] - <date>`.
-2. Set the version in `package.json` and in `charts/wishlist/Chart.yaml` (`version` and `appVersion`).
+2. Set the version in `package.json` and in `charts/wishalia/Chart.yaml` (`version` and `appVersion`).
 3. Tag `vX.Y.Z`: the CI checks the versions, publishes the images, the chart and the GitHub Release.
 
 The documentation in `docs/` is published to the wiki on every merge to `main`.

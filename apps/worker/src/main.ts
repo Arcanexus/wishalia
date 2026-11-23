@@ -1,4 +1,4 @@
-import { createRegistry, metricsPort, startMetricsServer } from "@wishlist/metrics";
+import { createRegistry, metricsPort, startMetricsServer } from "@wishalia/metrics";
 
 import { createHealthServer } from "./health.js";
 

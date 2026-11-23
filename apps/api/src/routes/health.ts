@@ -1,4 +1,4 @@
-import { type Database, ping } from "@wishlist/db";
+import { type Database, ping } from "@wishalia/db";
 import type { FastifyPluginAsync } from "fastify";
 
 import type { Config } from "../config.js";

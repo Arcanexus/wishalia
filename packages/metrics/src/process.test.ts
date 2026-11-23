@@ -32,7 +32,7 @@ describe("processMetrics", () => {
     const server = await metrics.start(port, { host: "127.0.0.1" });
     try {
       const text = await (await fetch(`http://127.0.0.1:${port}/metrics`)).text();
-      expect(text).toContain('wishlist_build_info{version="2.0.0",component="web-serve"} 1');
+      expect(text).toContain('wishalia_build_info{version="2.0.0",component="web-serve"} 1');
     } finally {
       await new Promise((done) => server?.close(done));
     }

@@ -7,9 +7,9 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "wishlist.fullname" . }}-migrations
+  name: {{ include "wishalia.fullname" . }}-migrations
   labels:
-    {{- include "wishlist.labels" . | nindent 4 }}
+    {{- include "wishalia.labels" . | nindent 4 }}
     app.kubernetes.io/component: migrations
   annotations:
     helm.sh/hook: pre-install,pre-upgrade
@@ -21,7 +21,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "wishlist.selectorLabels" (dict "root" . "component" "migrations") | nindent 8 }}
+        {{- include "wishalia.selectorLabels" (dict "root" . "component" "migrations") | nindent 8 }}
     spec:
       restartPolicy: Never
       automountServiceAccountToken: false
@@ -33,7 +33,7 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: migrations
-          image: {{ include "wishlist.image" (dict "root" . "component" "api") | quote }}
+          image: {{ include "wishalia.image" (dict "root" . "component" "api") | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["node", "dist/migrate.js"]
           securityContext:

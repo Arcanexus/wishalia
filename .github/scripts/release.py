@@ -1,6 +1,6 @@
 """Checks a release tag and writes the notes of its GitHub Release (run by .github/workflows/release.yml).
 
-The version being prepared is written in package.json and in charts/wishlist/Chart.yaml (version and
+The version being prepared is written in package.json and in charts/wishalia/Chart.yaml (version and
 appVersion). A tag must match it: v1.3.0, or a release candidate v1.3.0-rc.1. A final tag also needs its
 `## [1.3.0] - <date>` section in CHANGELOG.md; the notes of a release candidate come from that section when
 it exists, else from `## [Unreleased]`.
@@ -15,7 +15,7 @@ import sys
 import json
 from pathlib import Path
 
-REPO = "Arcanexus/wishlist"
+REPO = "Arcanexus/wishalia"
 APPS = ("api", "worker", "web-app", "web-public")
 TAG = re.compile(r"v(?P<version>\d+\.\d+\.\d+)(?P<pre>-rc\.\d+)?")
 
@@ -31,7 +31,7 @@ def parse_tag(tag: str) -> tuple[str, bool]:
 def project_versions(root: Path) -> dict[str, str]:
     """The versions written in the repository, by file."""
     package = json.loads((root / "package.json").read_text())["version"]
-    chart = (root / "charts" / "wishlist" / "Chart.yaml").read_text()
+    chart = (root / "charts" / "wishalia" / "Chart.yaml").read_text()
 
     def field(name: str) -> str:
         match = re.search(rf"^{name}:\s*[\"']?([^\"'\s]+)", chart, re.M)
@@ -87,7 +87,7 @@ def notes(tag: str, section: str) -> str:
         f"{section or f'See the [changelog](https://github.com/{REPO}/blob/{tag}/CHANGELOG.md).'}\n\n"
         "## Install\n\n"
         + "".join(f"- Image: `ghcr.io/{REPO.lower()}-{app}:{version}`\n" for app in APPS)
-        + f"- Chart: `helm install wishlist oci://ghcr.io/{owner}/charts/wishlist --version {version}`\n"
+        + f"- Chart: `helm install wishalia oci://ghcr.io/{owner}/charts/wishalia --version {version}`\n"
     )
 
 

@@ -108,42 +108,42 @@ jobs:
       - uses: azure/setup-helm@v5
       - name: Lint chart
         run: |
-          helm lint charts/wishlist
-          helm lint charts/wishlist --set ingress.enabled=true --set migrations.enabled=true \
-            --set existingSecret=wishlist-secrets --set 'ingress.tls[0].secretName=wishlist-tls'
+          helm lint charts/wishalia
+          helm lint charts/wishalia --set ingress.enabled=true --set migrations.enabled=true \
+            --set existingSecret=wishalia-secrets --set 'ingress.tls[0].secretName=wishalia-tls'
       - name: The migrations need the Secret
         run: |
-          if helm template t charts/wishlist; then
+          if helm template t charts/wishalia; then
             echo "::error::the chart rendered the migration Job without existingSecret"
             exit 1
           fi
-          helm template t charts/wishlist --set migrations.enabled=false > /dev/null
+          helm template t charts/wishalia --set migrations.enabled=false > /dev/null
       - name: The two hosts must differ
         run: |
-          if helm template t charts/wishlist --set existingSecret=s --set ingress.enabled=true --set hosts.app=wishlist.example.com; then
+          if helm template t charts/wishalia --set existingSecret=s --set ingress.enabled=true --set hosts.app=wishalia.example.com; then
             echo "::error::the chart rendered with the same host for the public view and the management app"
             exit 1
           fi
 
       - name: The session cookie domain covers both hosts
         run: |
-          if helm template t charts/wishlist --set existingSecret=s --set auth.cookieDomain=other.example.com; then
+          if helm template t charts/wishalia --set existingSecret=s --set auth.cookieDomain=other.example.com; then
             echo "::error::the chart rendered a cookie domain that does not contain the two hosts"
             exit 1
           fi
-          helm template t charts/wishlist --set existingSecret=s --show-only templates/configmap.yaml \
-            | grep -q 'COOKIE_DOMAIN: "wishlist.example.com"'
+          helm template t charts/wishalia --set existingSecret=s --show-only templates/configmap.yaml \
+            | grep -q 'COOKIE_DOMAIN: "wishalia.example.com"'
 
       - name: The metrics stay inside the cluster
         run: |
-          out=$(helm template t charts/wishlist --set existingSecret=s --set ingress.enabled=true \
+          out=$(helm template t charts/wishalia --set existingSecret=s --set ingress.enabled=true \
             --set metrics.serviceMonitor.enabled=true)
           if echo "$out" | yq 'select(.kind == "Ingress")' | grep -q metrics; then
             echo "::error::the ingress routes to the metrics port"
             exit 1
           fi
           echo "$out" | yq -e 'select(.kind == "ServiceMonitor") | .spec.endpoints[0].port == "metrics"' > /dev/null
-          echo "$out" | yq -e 'select(.kind == "NetworkPolicy" and .metadata.name == "t-wishlist-worker") | .spec.ingress[0].ports[0].port == "metrics"' > /dev/null
+          echo "$out" | yq -e 'select(.kind == "NetworkPolicy" and .metadata.name == "t-wishalia-worker") | .spec.ingress[0].ports[0].port == "metrics"' > /dev/null
 
   scripts:
     runs-on: ubuntu-latest

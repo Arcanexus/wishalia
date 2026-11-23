@@ -17,7 +17,7 @@ describe("home page load", () => {
   it("falls back to the code name", async () => {
     vi.stubEnv("APP_NAME", undefined);
     expect(await load({} as LoadEvent)).toMatchObject({
-      meta: { title: "wishlist · une liste de souhaits" },
+      meta: { title: "Wishalia · une liste de souhaits" },
     });
   });
 });

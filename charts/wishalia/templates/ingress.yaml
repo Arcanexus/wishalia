@@ -5,9 +5,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "wishlist.fullname" . }}
+  name: {{ include "wishalia.fullname" . }}
   labels:
-    {{- include "wishlist.labels" . | nindent 4 }}
+    {{- include "wishalia.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -29,7 +29,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ include "wishlist.fullname" $ }}-{{ $component }}
+                name: {{ include "wishalia.fullname" $ }}-{{ $component }}
                 port:
                   name: http
     {{- end }}
