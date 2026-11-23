@@ -27,8 +27,8 @@ describe("loadConfig: auth", () => {
     NODE_ENV: "production",
     DATABASE_URL: "postgres://u:p@db:5432/w",
     AUTH_SECRET: "x".repeat(32),
-    APP_ORIGIN: "https://app.wishlist.example",
-    PUBLIC_ORIGIN: "https://wishlist.example",
+    APP_ORIGIN: "https://app.wishalia.example",
+    PUBLIC_ORIGIN: "https://wishalia.example",
   };
 
   it("accepts a complete production configuration", () => {
@@ -48,8 +48,8 @@ describe("loadConfig: auth", () => {
   });
 
   it("needs a cookie domain that contains both hosts", () => {
-    expect(loadConfig({ ...production, COOKIE_DOMAIN: ".wishlist.example" }).COOKIE_DOMAIN).toBe(
-      ".wishlist.example",
+    expect(loadConfig({ ...production, COOKIE_DOMAIN: ".wishalia.example" }).COOKIE_DOMAIN).toBe(
+      ".wishalia.example",
     );
     expect(() => loadConfig({ ...production, COOKIE_DOMAIN: "other.example" })).toThrow(/COOKIE_DOMAIN/);
   });

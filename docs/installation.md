@@ -2,29 +2,29 @@
 
 Wishalia ships as four images and one Helm chart, published for every release:
 
-- images: `ghcr.io/arcanexus/wishlist-{api,worker,web-app,web-public}:<version>` (amd64, arm64)
-- chart: `oci://ghcr.io/arcanexus/charts/wishlist`
+- images: `ghcr.io/arcanexus/wishalia-{api,worker,web-app,web-public}:<version>` (amd64, arm64)
+- chart: `oci://ghcr.io/arcanexus/charts/wishalia`
 
 ## Prerequisites
 
 - Kubernetes 1.29+ with an ingress controller and TLS certificates (cert-manager or a wildcard).
 - PostgreSQL 16+ (the data model and the job queue both live there).
 - An S3 bucket (MinIO) for the images, from the media step on.
-- Two DNS names: the public view (`wishlist.example.com`) and the management app
-  (`app.wishlist.example.com`). They must differ: the chart refuses to render otherwise.
+- Two DNS names: the public view (`wishalia.example.com`) and the management app
+  (`app.wishalia.example.com`). They must differ: the chart refuses to render otherwise.
 
 ## Install with Helm
 
 ```sh
-helm install wishlist oci://ghcr.io/arcanexus/charts/wishlist \
-  --namespace wishlist --create-namespace \
-  --set hosts.public=wishlist.example.com \
-  --set hosts.app=app.wishlist.example.com \
+helm install wishalia oci://ghcr.io/arcanexus/charts/wishalia \
+  --namespace wishalia --create-namespace \
+  --set hosts.public=wishalia.example.com \
+  --set hosts.app=app.wishalia.example.com \
   --set ingress.enabled=true \
-  --set existingSecret=wishlist-secrets
+  --set existingSecret=wishalia-secrets
 ```
 
-The chart holds no secret value: create `wishlist-secrets` with your secret manager, with at least
+The chart holds no secret value: create `wishalia-secrets` with your secret manager, with at least
 `DATABASE_URL`. Its keys are listed in [Configuration](configuration.md).
 
 ## With ArgoCD
@@ -33,25 +33,25 @@ The chart holds no secret value: create `wishlist-secrets` with your secret mana
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: wishlist
+  name: wishalia
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: ghcr.io/arcanexus/charts
-    chart: wishlist
+    chart: wishalia
     targetRevision: 0.1.0
     helm:
       valuesObject:
         hosts:
-          public: wishlist.example.com
-          app: app.wishlist.example.com
+          public: wishalia.example.com
+          app: app.wishalia.example.com
         ingress:
           enabled: true
-        existingSecret: wishlist-secrets
+        existingSecret: wishalia-secrets
   destination:
     server: https://kubernetes.default.svc
-    namespace: wishlist
+    namespace: wishalia
   syncPolicy:
     automated: { prune: true, selfHeal: true }
     syncOptions: [CreateNamespace=true]

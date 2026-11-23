@@ -1,9 +1,8 @@
 # Branding
 
-The product is called **Wishalia**. `wishlist` stays the code name: repository, packages, images,
-Helm chart, cookies (`wishlist.*`) and metrics (`wishlist_`) keep it, so a rename never breaks a
-running install. The name shown to people comes from `APP_NAME` (chart: `config.appName`), with
-`Wishalia` as the default.
+The product is called **Wishalia**, and so is everything technical: repository, packages
+(`@wishalia/*`), images, Helm chart, cookies (`wishalia.*`) and metrics (`wishalia_`). The name shown
+to people comes from `APP_NAME` (chart: `config.appName`), with `Wishalia` as the default.
 
 ## Logo
 

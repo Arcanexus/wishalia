@@ -1,4 +1,4 @@
-# @wishlist/config
+# @wishalia/config
 
 Shared TypeScript settings for every package and app.
 

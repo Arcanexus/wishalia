@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { escapeHtml, magicLinkMail, smtpMailer } from "./mailer.js";
 
 describe("magicLinkMail", () => {
-  const url = "https://app.wishlist.test/auth/magic-link/verify?token=abc&callbackURL=%2F";
+  const url = "https://app.wishalia.test/auth/magic-link/verify?token=abc&callbackURL=%2F";
 
   it("gives the link in both parts, the HTML one escaped", () => {
     const mail = magicLinkMail("Chut", "a@x.test", url);
@@ -26,7 +26,7 @@ describe("escapeHtml", () => {
 
 describe("smtpMailer", () => {
   it("reports a server it cannot reach", async () => {
-    const mailer = smtpMailer("smtp://127.0.0.1:1", "wishlist <noreply@x.test>");
+    const mailer = smtpMailer("smtp://127.0.0.1:1", "wishalia <noreply@x.test>");
     await expect(mailer.send({ to: "a@x.test", subject: "s", text: "t", html: "h" })).rejects.toThrow();
   });
 });

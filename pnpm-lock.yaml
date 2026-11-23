@@ -56,13 +56,13 @@ importers:
       '@fastify/helmet':
         specifier: ^13.2.0
         version: 13.2.0
-      '@wishlist/db':
+      '@wishalia/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@wishlist/domain':
+      '@wishalia/domain':
         specifier: workspace:*
         version: link:../../packages/domain
-      '@wishlist/metrics':
+      '@wishalia/metrics':
         specifier: workspace:*
         version: link:../../packages/metrics
       better-auth:
@@ -90,7 +90,7 @@ importers:
       '@types/nodemailer':
         specifier: ^8.0.2
         version: 8.0.2
-      '@wishlist/config':
+      '@wishalia/config':
         specifier: workspace:*
         version: link:../../packages/config
       tsx:
@@ -99,7 +99,7 @@ importers:
 
   apps/web-app:
     dependencies:
-      '@wishlist/metrics':
+      '@wishalia/metrics':
         specifier: workspace:*
         version: link:../../packages/metrics
     devDependencies:
@@ -127,7 +127,7 @@ importers:
 
   apps/web-public:
     dependencies:
-      '@wishlist/metrics':
+      '@wishalia/metrics':
         specifier: workspace:*
         version: link:../../packages/metrics
     devDependencies:
@@ -155,14 +155,14 @@ importers:
 
   apps/worker:
     dependencies:
-      '@wishlist/metrics':
+      '@wishalia/metrics':
         specifier: workspace:*
         version: link:../../packages/metrics
     devDependencies:
       '@types/node':
         specifier: ^24.19.2
         version: 24.19.2
-      '@wishlist/config':
+      '@wishalia/config':
         specifier: workspace:*
         version: link:../../packages/config
       tsx:
@@ -186,7 +186,7 @@ importers:
       '@types/node':
         specifier: ^24.19.2
         version: 24.19.2
-      '@wishlist/config':
+      '@wishalia/config':
         specifier: workspace:*
         version: link:../config
       drizzle-kit:
@@ -195,7 +195,7 @@ importers:
 
   packages/domain:
     devDependencies:
-      '@wishlist/config':
+      '@wishalia/config':
         specifier: workspace:*
         version: link:../config
 
@@ -208,7 +208,7 @@ importers:
       '@types/node':
         specifier: ^24.19.2
         version: 24.19.2
-      '@wishlist/config':
+      '@wishalia/config':
         specifier: workspace:*
         version: link:../config
 

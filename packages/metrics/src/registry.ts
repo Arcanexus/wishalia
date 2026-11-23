@@ -1,12 +1,12 @@
 import { collectDefaultMetrics, Gauge, Histogram, Registry } from "prom-client";
 
 /** Prefix of every metric: the code name, which stays when the product gets its brand. */
-export const PREFIX = "wishlist_";
+export const PREFIX = "wishalia_";
 
 export interface RegistryOptions {
   /** api, worker, web-app or web-public: the `component` label of every series. */
   component: string;
-  /** APP_VERSION, exposed by wishlist_build_info. */
+  /** APP_VERSION, exposed by wishalia_build_info. */
   version: string;
   /** Collect the Node.js process metrics (CPU, memory, event loop, GC). True by default. */
   defaultMetrics?: boolean;

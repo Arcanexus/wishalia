@@ -9,8 +9,8 @@ This PR [adds/removes/fixes/replaces] the [feature/bug/etc].
 
 ## Checklist
 
-- [ ] 📖 Read the Contributing Guide: [https://github.com/Arcanexus/wishlist/blob/main/CONTRIBUTING.md](https://github.com/Arcanexus/wishlist/blob/main/CONTRIBUTING.md).
-- [ ] 📖 Read the Code of Conduct: [https://github.com/Arcanexus/wishlist/blob/main/CODE_OF_CONDUCT.md](https://github.com/Arcanexus/wishlist/blob/main/CODE_OF_CONDUCT.md).
+- [ ] 📖 Read the Contributing Guide: [https://github.com/Arcanexus/wishalia/blob/main/CONTRIBUTING.md](https://github.com/Arcanexus/wishalia/blob/main/CONTRIBUTING.md).
+- [ ] 📖 Read the Code of Conduct: [https://github.com/Arcanexus/wishalia/blob/main/CODE_OF_CONDUCT.md](https://github.com/Arcanexus/wishalia/blob/main/CODE_OF_CONDUCT.md).
 - [ ] 👷‍♀️ Create small PRs. In most cases, this will be possible.
 - [ ] ⚠️ The Pull Request must be linked to an opened Issue
 - [ ] 📝 The title must begin with :

@@ -9,18 +9,18 @@
 </p>
 
 <p align="center">
-  <a href="https://arcanexus.github.io/wishlist/"><strong>Website</strong></a> ·
-  <a href="https://github.com/Arcanexus/wishlist/wiki"><strong>Documentation</strong></a> ·
-  <a href="https://github.com/Arcanexus/wishlist/releases"><strong>Releases</strong></a>
+  <a href="https://arcanexus.github.io/wishalia/"><strong>Website</strong></a> ·
+  <a href="https://github.com/Arcanexus/wishalia/wiki"><strong>Documentation</strong></a> ·
+  <a href="https://github.com/Arcanexus/wishalia/releases"><strong>Releases</strong></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Arcanexus/wishlist/releases"><img src="https://img.shields.io/github/v/release/Arcanexus/wishlist?include_prereleases&sort=semver&label=version" alt="Latest version"></a>
-  <a href="https://github.com/Arcanexus/wishlist/actions/workflows/docker-publish.yml"><img src="https://github.com/Arcanexus/wishlist/actions/workflows/docker-publish.yml/badge.svg?branch=main" alt="Build"></a>
-  <a href="https://github.com/Arcanexus/wishlist/actions/workflows/tests.yml"><img src="https://github.com/Arcanexus/wishlist/actions/workflows/tests.yml/badge.svg?branch=main" alt="Tests"></a>
-  <a href="https://github.com/Arcanexus/wishlist/actions/workflows/tests.yml"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Arcanexus/wishlist/main/.github/badges/coverage.json" alt="Coverage"></a>
-  <a href="https://github.com/Arcanexus/wishlist/actions/workflows/codeql.yml"><img src="https://github.com/Arcanexus/wishlist/actions/workflows/codeql.yml/badge.svg?branch=main" alt="CodeQL"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/Arcanexus/wishlist" alt="License"></a>
+  <a href="https://github.com/Arcanexus/wishalia/releases"><img src="https://img.shields.io/github/v/release/Arcanexus/wishalia?include_prereleases&sort=semver&label=version" alt="Latest version"></a>
+  <a href="https://github.com/Arcanexus/wishalia/actions/workflows/docker-publish.yml"><img src="https://github.com/Arcanexus/wishalia/actions/workflows/docker-publish.yml/badge.svg?branch=main" alt="Build"></a>
+  <a href="https://github.com/Arcanexus/wishalia/actions/workflows/tests.yml"><img src="https://github.com/Arcanexus/wishalia/actions/workflows/tests.yml/badge.svg?branch=main" alt="Tests"></a>
+  <a href="https://github.com/Arcanexus/wishalia/actions/workflows/tests.yml"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Arcanexus/wishalia/main/.github/badges/coverage.json" alt="Coverage"></a>
+  <a href="https://github.com/Arcanexus/wishalia/actions/workflows/codeql.yml"><img src="https://github.com/Arcanexus/wishalia/actions/workflows/codeql.yml/badge.svg?branch=main" alt="CodeQL"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Arcanexus/wishalia" alt="License"></a>
 </p>
 
 ---

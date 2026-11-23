@@ -1,11 +1,11 @@
-import { schema } from "@wishlist/db";
+import { schema } from "@wishalia/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { loadConfig } from "../config.js";
 import { createTestApp, lastLink, OWNER_EMAIL, signIn, type TestApp } from "../test/app.js";
 import { createAuth, mayCreateAccount } from "./auth.js";
 
-const ORIGIN = { origin: "https://app.wishlist.test", "content-type": "application/json" };
+const ORIGIN = { origin: "https://app.wishalia.test", "content-type": "application/json" };
 let t: TestApp;
 
 beforeAll(async () => {
@@ -108,16 +108,16 @@ describe("magic link", () => {
 describe("session cookie", () => {
   it("is __Secure-, HttpOnly and SameSite=Lax over https", async () => {
     const cookie = await signInCookieHeader(t);
-    expect(cookie).toMatch(/^__Secure-wishlist\.session_token=/);
+    expect(cookie).toMatch(/^__Secure-wishalia\.session_token=/);
     expect(cookie).toMatch(/HttpOnly/i);
     expect(cookie).toMatch(/SameSite=Lax/i);
     expect(cookie).not.toMatch(/Domain=/i);
   });
 
   it("is shared by the two hosts with COOKIE_DOMAIN", async () => {
-    const shared = await createTestApp({ COOKIE_DOMAIN: "wishlist.test" });
+    const shared = await createTestApp({ COOKIE_DOMAIN: "wishalia.test" });
     try {
-      expect(await signInCookieHeader(shared)).toMatch(/Domain=\.?wishlist\.test/i);
+      expect(await signInCookieHeader(shared)).toMatch(/Domain=\.?wishalia\.test/i);
     } finally {
       await shared.close();
     }
@@ -148,7 +148,7 @@ describe("the /manage guard", () => {
     const response = await t.app.inject({
       method: "GET",
       url: "/manage/ping",
-      headers: { cookie: "__Secure-wishlist.session_token=forged.value" },
+      headers: { cookie: "__Secure-wishalia.session_token=forged.value" },
     });
     expect(response.statusCode).toBe(401);
   });

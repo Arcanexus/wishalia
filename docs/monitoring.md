@@ -32,9 +32,9 @@ Every series carries a `component` label: `api`, `worker`, `web-app` or `web-pub
 
 | Metric                                    | Type      | Labels                           | Content                                                                   |
 | ----------------------------------------- | --------- | -------------------------------- | ------------------------------------------------------------------------- |
-| `wishlist_build_info`                     | gauge     | `version`                        | Always 1: the version that runs.                                          |
-| `wishlist_http_request_duration_seconds`  | histogram | `method`, `route`, `status_code` | Duration of the requests (API and frontends). Buckets from 5 ms to 5 s.   |
-| `wishlist_process_*`, `wishlist_nodejs_*` | various   |                                  | Node.js process metrics: CPU, memory, event loop lag, garbage collection. |
+| `wishalia_build_info`                     | gauge     | `version`                        | Always 1: the version that runs.                                          |
+| `wishalia_http_request_duration_seconds`  | histogram | `method`, `route`, `status_code` | Duration of the requests (API and frontends). Buckets from 5 ms to 5 s.   |
+| `wishalia_process_*`, `wishalia_nodejs_*` | various   |                                  | Node.js process metrics: CPU, memory, event loop lag, garbage collection. |
 
 `route` is the route pattern (`/manage/items/:id`, `/[token]`), never the URL: no id and no share
 link token reaches the metrics, and the number of series stays bounded. A request that matches no
@@ -53,12 +53,12 @@ name mentions contributions.
 
 ```promql
 # p95 latency of the API, per route (the spec budget is 300 ms)
-histogram_quantile(0.95, sum by (le, route) (rate(wishlist_http_request_duration_seconds_bucket{component="api"}[5m])))
+histogram_quantile(0.95, sum by (le, route) (rate(wishalia_http_request_duration_seconds_bucket{component="api"}[5m])))
 
 # Share of server errors on the public view
-sum(rate(wishlist_http_request_duration_seconds_count{component="web-public",status_code=~"5.."}[5m]))
-  / sum(rate(wishlist_http_request_duration_seconds_count{component="web-public"}[5m]))
+sum(rate(wishalia_http_request_duration_seconds_count{component="web-public",status_code=~"5.."}[5m]))
+  / sum(rate(wishalia_http_request_duration_seconds_count{component="web-public"}[5m]))
 
 # Version running, per component
-wishlist_build_info
+wishalia_build_info
 ```

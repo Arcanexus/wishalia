@@ -1,4 +1,4 @@
-# Default values of the wishlist chart. Every setting is documented in docs/chart-values.md.
+# Default values of the wishalia chart. Every setting is documented in docs/chart-values.md.
 
 nameOverride: ""
 fullnameOverride: ""
@@ -6,24 +6,24 @@ fullnameOverride: ""
 image:
   # Each component has its own image: <registry>/<repository>-<component>:<tag>
   registry: ghcr.io
-  repository: arcanexus/wishlist
+  repository: arcanexus/wishalia
   # Defaults to the appVersion of the chart
   tag: ""
   pullPolicy: IfNotPresent
 imagePullSecrets: []
 
 config:
-  # Display name of the product (the code only knows the code name "wishlist")
+  # Display name of the product (the code only knows the code name "wishalia")
   appName: Wishalia
   logLevel: info
 
 # Hosts of the two frontends. The public view and the management app are never served by the
 # same host (spec: separation of the public view and the management app).
 hosts:
-  # Public view of the share links, e.g. wishlist.example.com
-  public: wishlist.example.com
-  # Management app, e.g. app.wishlist.example.com
-  app: app.wishlist.example.com
+  # Public view of the share links, e.g. wishalia.example.com
+  public: wishalia.example.com
+  # Management app, e.g. app.wishalia.example.com
+  app: app.wishalia.example.com
 
 # Sign-in (Better Auth in the API). The secrets go in existingSecret: AUTH_SECRET (32+ characters),
 # OIDC_CLIENT_SECRET, SMTP_URL. See docs/configuration.md.
@@ -38,7 +38,7 @@ auth:
   oidc:
     issuer: ""
     clientId: ""
-  # Sender of the magic links, e.g. "wishlist <noreply@example.com>". SMTP_URL goes in existingSecret.
+  # Sender of the magic links, e.g. "wishalia <noreply@example.com>". SMTP_URL goes in existingSecret.
   mailFrom: ""
 
 # Secret holding the sensitive settings (DATABASE_URL, S3 keys, auth secrets...), loaded as
@@ -96,8 +96,8 @@ ingress:
   annotations: {}
   # TLS secrets: one per host, or a wildcard secret for both
   tls: []
-  #  - secretName: wishlist-tls
-  #    hosts: [wishlist.example.com, app.wishlist.example.com]
+  #  - secretName: wishalia-tls
+  #    hosts: [wishalia.example.com, app.wishalia.example.com]
 
 # The API is internal: only the two frontends call it (server side). Only the frontends are exposed.
 networkPolicy:

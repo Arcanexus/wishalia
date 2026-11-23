@@ -1,7 +1,7 @@
 name: Docker Build
 
 # Builds the four images on every PR (without pushing), scans them with Trivy, and publishes them
-# to ghcr.io for the main branch and for semver tags (v1.2.3): ghcr.io/arcanexus/wishlist-<app>.
+# to ghcr.io for the main branch and for semver tags (v1.2.3): ghcr.io/arcanexus/wishalia-<app>.
 on:
   push:
     branches: ["main"]
@@ -57,7 +57,7 @@ jobs:
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           # The code name, not the repository name: images keep their name if the repository is renamed.
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/wishlist-${{ matrix.app }}
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/wishalia-${{ matrix.app }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr

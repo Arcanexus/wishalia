@@ -1,5 +1,5 @@
-import type { Database } from "@wishlist/db";
-import { createTestDb } from "@wishlist/db/testing";
+import type { Database } from "@wishalia/db";
+import { createTestDb } from "@wishalia/db/testing";
 import type { FastifyInstance } from "fastify";
 
 import { buildApp } from "../app.js";
@@ -23,8 +23,8 @@ export async function createTestApp(env: NodeJS.ProcessEnv = {}): Promise<TestAp
   const mailer: Mailer = { send: async (mail) => void mails.push(mail) };
   const config = loadConfig({
     NODE_ENV: "test",
-    APP_ORIGIN: "https://app.wishlist.test",
-    PUBLIC_ORIGIN: "https://wishlist.test",
+    APP_ORIGIN: "https://app.wishalia.test",
+    PUBLIC_ORIGIN: "https://wishalia.test",
     AUTH_SECRET: "a-test-secret-that-is-long-enough-0123456789",
     OWNER_EMAILS: OWNER_EMAIL,
     ...env,
@@ -53,7 +53,7 @@ export async function signIn({ app, mails }: TestApp, email: string): Promise<st
   const ask = await app.inject({
     method: "POST",
     url: "/auth/sign-in/magic-link",
-    headers: { origin: "https://app.wishlist.test", "content-type": "application/json" },
+    headers: { origin: "https://app.wishalia.test", "content-type": "application/json" },
     payload: { email, callbackURL: "/" },
   });
   if (ask.statusCode !== 200) throw new Error(`magic link refused: ${ask.statusCode} ${ask.body}`);

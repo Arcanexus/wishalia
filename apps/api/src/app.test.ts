@@ -1,4 +1,4 @@
-import { createHttpMetrics, createRegistry } from "@wishlist/metrics";
+import { createHttpMetrics, createRegistry } from "@wishalia/metrics";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { buildApp } from "./app.js";

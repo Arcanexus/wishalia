@@ -1,4 +1,4 @@
-"""Builds the GitHub wiki of wishlist from docs/.
+"""Builds the GitHub wiki of wishalia from docs/.
 
 docs/ stays the only source of the documentation: it is versioned and reviewed with the code. This
 script turns it into wiki pages (run by .github/workflows/wiki.yml on every push to main):
@@ -20,7 +20,7 @@ import shutil
 import sys
 from pathlib import Path
 
-REPO_URL = "https://github.com/Arcanexus/wishlist"
+REPO_URL = "https://github.com/Arcanexus/wishalia"
 
 # Sidebar sections: (title, [(file in docs/, wiki page name), ...]), sorted by what the reader wants to do.
 # A page of docs/ missing here is an error, so that a new page is never left out of the wiki. Keep the page

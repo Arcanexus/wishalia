@@ -13,7 +13,7 @@ packages/
   db/           Drizzle schema, versioned migrations, PostgreSQL client
   metrics/      Prometheus registry and /metrics server, shared by the four components
   config/       shared TypeScript settings
-charts/wishlist Helm chart of the four components
+charts/wishalia Helm chart of the four components
 docs/           this documentation, published to the wiki
 site/           the product website (GitHub Pages)
 ```

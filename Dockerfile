@@ -23,11 +23,11 @@ COPY packages/metrics/package.json packages/metrics/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm turbo run build --filter "@wishlist/${APP}..."
+RUN pnpm turbo run build --filter "@wishalia/${APP}..."
 
 # Production files of the app only: dist/ (or build/ for SvelteKit) and its runtime dependencies
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm --filter "@wishlist/${APP}" deploy --prod /out \
+    pnpm --filter "@wishalia/${APP}" deploy --prod /out \
     && if [ -d "apps/${APP}/build" ]; then cp -r "apps/${APP}/build" /out/build; fi
 
 
@@ -40,7 +40,7 @@ ENV NODE_ENV=production \
 # npm, corepack and yarn are not used at run time: removed, so image scanners do not report their CVEs
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
         /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /opt/yarn* /usr/local/bin/yarn* \
-    && adduser -D -H -u 10001 -s /sbin/nologin wishlist
+    && adduser -D -H -u 10001 -s /sbin/nologin wishalia
 
 WORKDIR /app
 COPY --from=build --chown=root:root /out/ /app/

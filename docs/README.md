@@ -4,9 +4,8 @@ Wishalia is a self-hosted wishlist app for a family: several lists, recurring ev
 Christmas), gifts that several people chip in for, and a strict **anti-spoil** rule. The owner of a
 list never sees who gave what, until they choose to lift the secret after the event.
 
-> Wishalia is the product name; `wishlist` stays the code name (repository, packages, images,
-> chart, cookies, metrics). The name shown to people comes from `APP_NAME` (`Wishalia` by default).
-> Logo, colours and fonts: [Branding](branding.md).
+> The name shown to people comes from `APP_NAME` (`Wishalia` by default). Logo, colours and fonts:
+> [Branding](branding.md).
 
 | I want to                       | Read                                                               |
 | ------------------------------- | ------------------------------------------------------------------ |

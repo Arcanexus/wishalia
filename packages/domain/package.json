@@ -1,5 +1,5 @@
 {
-  "name": "@wishlist/domain",
+  "name": "@wishalia/domain",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -20,6 +20,6 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@wishlist/config": "workspace:*"
+    "@wishalia/config": "workspace:*"
   }
 }

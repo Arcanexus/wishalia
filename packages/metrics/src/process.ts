@@ -12,7 +12,7 @@ export interface ProcessMetrics {
   start(port: number, options?: Parameters<typeof startMetricsServer>[2]): Promise<Server | null>;
 }
 
-const KEY = Symbol.for("wishlist.metrics");
+const KEY = Symbol.for("wishalia.metrics");
 type Store = Map<string, ProcessMetrics>;
 
 /**

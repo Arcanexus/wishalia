@@ -1,6 +1,6 @@
 # Authentication
 
-Nobody types a password in wishlist. The API runs [Better Auth](https://www.better-auth.com) and
+Nobody types a password in wishalia. The API runs [Better Auth](https://www.better-auth.com) and
 offers three ways in:
 
 | Who        | How                                                                              |
@@ -18,7 +18,7 @@ link asked for an unknown address signs nobody up.
 ## Sessions
 
 A session lasts 30 days and is renewed once a day while it is used. The cookie is
-`__Secure-wishlist.session_token`: HttpOnly, Secure, SameSite=Lax, signed with `AUTH_SECRET`.
+`__Secure-wishalia.session_token`: HttpOnly, Secure, SameSite=Lax, signed with `AUTH_SECRET`.
 
 The management app and the public view share one session through `COOKIE_DOMAIN`, the parent
 domain of the two hosts. A `__Host-` cookie cannot carry a Domain, so the shared cookie is
@@ -61,7 +61,7 @@ development they are printed in the API log.
 ## Protections
 
 - Origin and CSRF checks on every state-changing request, in the tests too (Better Auth skips them
-  under test by default; wishlist turns them back on).
+  under test by default; wishalia turns them back on).
 - Redirects after sign-in only go to the two hosts.
 - Rate limit: 30 requests a minute per client address on `/auth/*`.
 - OAuth tokens are encrypted in the database; passkeys store only their public key.

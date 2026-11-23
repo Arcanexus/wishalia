@@ -1,4 +1,4 @@
-# @wishlist/domain
+# @wishalia/domain
 
 Pure business rules, with no I/O: no database, no HTTP, no clock read behind your back. Every rule
 here is covered by Vitest. The anti-spoil rule (`canSeeContributions`) lives here, as the single

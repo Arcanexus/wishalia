@@ -1,5 +1,5 @@
 {
-  "name": "@wishlist/db",
+  "name": "@wishalia/db",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
-    "@wishlist/config": "workspace:*",
+    "@wishalia/config": "workspace:*",
     "drizzle-kit": "^0.31.11",
     "@electric-sql/pglite": "^0.5.17"
   }

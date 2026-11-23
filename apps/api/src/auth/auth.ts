@@ -1,8 +1,8 @@
 import { randomBytes } from "node:crypto";
 
 import { passkey } from "@better-auth/passkey";
-import type { Database } from "@wishlist/db";
-import { schema } from "@wishlist/db";
+import type { Database } from "@wishalia/db";
+import { schema } from "@wishalia/db";
 import { betterAuth, type BetterAuthPlugin } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
@@ -117,7 +117,7 @@ export function createAuth({ config, db, mailer, log = () => {} }: AuthDeps) {
       // Better Auth skips its origin and CSRF checks under test by default: always on here, so that
       // the tests check what production runs
       disableOriginCheck: false,
-      cookiePrefix: "wishlist",
+      cookiePrefix: "wishalia",
       useSecureCookies: secure,
       ...(config.COOKIE_DOMAIN
         ? { crossSubDomainCookies: { enabled: true, domain: config.COOKIE_DOMAIN } }

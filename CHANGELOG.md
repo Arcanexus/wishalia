@@ -8,11 +8,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
-- The product is named **Wishalia**: default `APP_NAME` and chart `config.appName`, README, website,
-  documentation and a new logo (five relatives in a circle around a gift). The code name `wishlist`
-  stays in packages, images, the chart, cookies and metrics, so nothing breaks on upgrade. Image
-  names no longer follow the repository name, so renaming the repository keeps
-  `ghcr.io/arcanexus/wishlist-*`.
+- The product is named **Wishalia**, and the code name `wishlist` is gone: default `APP_NAME` and
+  chart `config.appName`, packages (`@wishalia/*`), images (`ghcr.io/arcanexus/wishalia-*`, no longer
+  derived from the repository name), the chart (`charts/wishalia`), cookies (`wishalia.*`), metrics
+  (`wishalia_*`), the development database and bucket, README, website, documentation, and a new
+  logo (five relatives in a circle around a gift). Nothing was deployed yet, so nothing breaks. The
+  links point to `Arcanexus/wishalia`, the repository's new name.
 
 ### Added
 
@@ -30,7 +31,7 @@ All notable changes to this project are documented here. The format follows
 - Chart: `auth.*` values (owners, cookie domain, OIDC, magic link sender), with a guard on the
   cookie domain.
 - Prometheus metrics on every component: `/metrics` on its own port (`METRICS_PORT`, 9464 in the
-  chart), request durations per route pattern, Node.js process metrics, `wishlist_build_info`. No
+  chart), request durations per route pattern, Node.js process metrics, `wishalia_build_info`. No
   metric describes contributions. See [Monitoring](docs/monitoring.md).
 - Chart: `metrics.*` values, a `metrics` port on every Service (the worker gets a Service for it),
   NetworkPolicy rules for the scrape (`metrics.allowFrom`) and an optional ServiceMonitor.
@@ -38,17 +39,17 @@ All notable changes to this project are documented here. The format follows
   links, item history) and the first migration. See [Data model](docs/data-model.md).
 - `item_events` is append-only, enforced by a database trigger.
 - Share links store only the SHA-256 hash of their token.
-- `@wishlist/domain`: funding rules (totals, remaining, overshoot, segments per event, item states)
+- `@wishalia/domain`: funding rules (totals, remaining, overshoot, segments per event, item states)
   and the anti-spoil rule (`resolveViewer`, `canSeeContributions`, `canSeeHistoryEntry`).
 - Demo data (`db:seed`) and the migration entry point of the API image (`node dist/migrate.js`).
 
 - Monorepo (pnpm + Turborepo, TypeScript strict) with four components: the API (Fastify, separate
   `/manage` and `/public` scopes), the worker, the management app and the public view (SvelteKit).
-- `@wishlist/domain`: amounts in cents, parsing of amounts typed the French way (`12,50`).
+- `@wishalia/domain`: amounts in cents, parsing of amounts typed the French way (`12,50`).
 - Security headers on every response: strict CSP, `no-referrer`, no framing.
 - Generic page titles and link previews on the public view: they never reflect the state of a list.
 - One Dockerfile for the four images (`--build-arg APP=...`), non-root and without npm at run time.
-- Helm chart `charts/wishlist`: four Deployments, two hosts, internal API behind a NetworkPolicy,
+- Helm chart `charts/wishalia`: four Deployments, two hosts, internal API behind a NetworkPolicy,
   hardened pods, migration Job. See [Chart values](docs/chart-values.md).
 - CI: format, lint, typecheck, tests with a coverage threshold and badge, chart lint, multi-arch
   images scanned by Trivy, CodeQL, dependency audit, Dependabot, release, chart publication.

@@ -38,7 +38,7 @@ const base = z.object({
   APP_ORIGIN: z.url().default("http://localhost:3003"),
   PUBLIC_ORIGIN: z.url().default("http://localhost:3002"),
   /**
-   * Parent domain of the two hosts (wishlist.example.com), so that one session works on both.
+   * Parent domain of the two hosts (wishalia.example.com), so that one session works on both.
    * Unset: the session cookie stays on the management host.
    */
   COOKIE_DOMAIN: optional,

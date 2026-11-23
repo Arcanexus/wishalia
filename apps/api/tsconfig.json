@@ -1,5 +1,5 @@
 {
-  "extends": "@wishlist/config/tsconfig.node.json",
+  "extends": "@wishalia/config/tsconfig.node.json",
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist"
