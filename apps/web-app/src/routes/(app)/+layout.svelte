@@ -11,7 +11,9 @@
       ? "events"
       : page.url.pathname.startsWith("/partage")
         ? "share"
-        : "lists",
+        : page.url.pathname.startsWith("/reglages")
+          ? "settings"
+          : "lists",
   );
   const modeLabels = { device: "comme l'appareil", light: "clair", dark: "sombre" } as const;
 </script>
@@ -28,6 +30,9 @@
         Événements
       </a>
       <a href={resolve("/(app)/partage")} aria-current={section === "share" ? "page" : undefined}>Partager</a>
+      <a href={resolve("/(app)/reglages")} aria-current={section === "settings" ? "page" : undefined}>
+        Réglages
+      </a>
     </nav>
     <div class="tools">
       <form method="POST" action="/preferences">
@@ -95,7 +100,8 @@
   }
   nav {
     display: flex;
-    gap: 0.25rem;
+    flex-wrap: wrap;
+    gap: 0 0.25rem;
     margin-right: auto;
   }
   nav a {

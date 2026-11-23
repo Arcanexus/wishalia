@@ -37,6 +37,10 @@ export const shareScope = pgEnum("share_scope", ["list", "event"]);
 export const historyVisibility = pgEnum("history_visibility", ["owner", "guests", "sealed"]);
 export const listTheme = pgEnum("list_theme", ["neutral", "christmas"]);
 export const listRevealMode = pgEnum("list_reveal_mode", ["received", "manual"]);
+/** A person's theme (docs/branding.md): automatic (Christmas in December), neutral or Christmas. */
+export const themeChoice = pgEnum("theme_choice", ["auto", "neutral", "christmas"]);
+/** A person's mode: as their device, light or dark. */
+export const modeChoice = pgEnum("mode_choice", ["device", "light", "dark"]);
 
 /** An account. Owner of its lists, guest on the others: the role is per list or event. */
 export const users = pgTable("users", {
@@ -46,6 +50,9 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").notNull().default(false),
   displayName: text("display_name").notNull(),
   image: text("image"),
+  // Display settings, kept with the account so that they follow the person on every device
+  theme: themeChoice("theme").notNull().default("auto"),
+  mode: modeChoice("mode").notNull().default("device"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
   // GDPR: a deleted account is anonymised (email and name cleared), never removed from the history
