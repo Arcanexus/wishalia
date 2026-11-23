@@ -11,7 +11,7 @@ versioned migrations of `packages/db/migrations`. Amounts are integers in cents.
 | `series`             | An ordered group of items (book volumes), with the external ids (ISBN, Open Library).                                               |
 | `events`             | A dated occasion (`birthday`, `christmas`, `other`), its reveal delay and when the secret was lifted.                               |
 | `event_wishes`       | The items an event selects. An event never owns an item.                                                                            |
-| `contributions`      | A guest's pledge on an item, within an event: an amount (pool) or copies (unique, quantity).                                        |
+| `contributions`      | A guest's pledge on an item, within an event: an amount (pool) or copies (unique, quantity). Keeps the SHA-256 of its withdraw key. |
 | `share_links`        | A share link for one list or one event, per guest or group. Only the SHA-256 hash of the token is stored.                           |
 | `item_events`        | The append-only history of every item, with its visibility.                                                                         |
 | `auth_sessions`      | A signed-in device (Better Auth). Deleting the row signs the device out.                                                            |

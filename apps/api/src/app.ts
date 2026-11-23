@@ -3,14 +3,14 @@ import type { Database } from "@wishalia/db";
 import type { HttpMetrics } from "@wishalia/metrics";
 import Fastify, { type FastifyInstance } from "fastify";
 
-import { createAuth } from "./auth/auth.js";
+import { authSecret, createAuth } from "./auth/auth.js";
 import type { Mailer } from "./auth/mailer.js";
 import type { Config } from "./config.js";
 import { registerErrorHandler } from "./http.js";
 import { authRoutes } from "./routes/auth.js";
 import { healthRoutes } from "./routes/health.js";
 import { manageRoutes } from "./routes/manage/index.js";
-import { publicRoutes } from "./routes/public.js";
+import { publicRoutes } from "./routes/public/index.js";
 
 export type Scope = "manage" | "public";
 
@@ -44,9 +44,11 @@ export async function buildApp(
 
   app.decorateRequest("scope", null);
   app.decorateRequest("user", null);
+  app.decorateRequest("share", null);
   registerErrorHandler(app);
 
-  const auth = createAuth({ config, db, mailer, log: (message) => app.log.info(message) });
+  const secret = authSecret(config);
+  const auth = createAuth({ config, db, mailer, secret, log: (message) => app.log.info(message) });
 
   if (metrics) {
     // The route pattern (/manage/items/:id), never the URL: no id in the metrics, bounded series
@@ -68,8 +70,8 @@ export async function buildApp(
 
   await app.register(healthRoutes, { config, db });
   await app.register(authRoutes, { prefix: "/auth", auth, config });
-  await app.register(manageRoutes, { prefix: "/manage", auth, db, now });
-  await app.register(publicRoutes, { prefix: "/public" });
+  await app.register(manageRoutes, { prefix: "/manage", auth, config, db, now, secret });
+  await app.register(publicRoutes, { prefix: "/public", auth, config, db, now, secret });
 
   return app;
 }

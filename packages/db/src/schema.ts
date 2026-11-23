@@ -302,6 +302,11 @@ export const contributions = pgTable(
     status: contributionStatus("status").notNull().default("active"),
     message: text("message"),
     anonymous: boolean("anonymous").notNull().default(false),
+    /**
+     * SHA-256 of the key that lets a guest without an account withdraw their contribution. The key
+     * itself is given once, when the contribution is made, and kept on their device.
+     */
+    withdrawKeyHash: text("withdraw_key_hash"),
     createdAt: createdAt(),
     withdrawnAt: timestamp("withdrawn_at", { withTimezone: true }),
   },

@@ -1,8 +1,9 @@
 # Management API
 
 The routes of `/manage/*`, which the management app calls server side. The API is internal: these
-routes are not reachable from the internet (see [Architecture](architecture.md)). The public REST
-API v1, with personal access tokens, comes later.
+routes are not reachable from the internet (see [Architecture](architecture.md)). The routes of the
+share links are in [Public view API](public-api.md). The public REST API v1, with personal access
+tokens, comes later.
 
 Every route needs a session (see [Authentication](authentication.md)) and answers `401` without
 one. Everything belongs to an owner: a list, an item or an event of someone else answers `404`,
@@ -82,3 +83,18 @@ Reordering (`position`) writes no entry.
 
 An event says where its secret stands: `revealAvailableAt` (the end of the event day, UTC, plus
 the delay), `canReveal` and `secretLifted`. Lifting the secret is final.
+
+## Share links
+
+| Route                                 | Body                                                                         | Answer                                                                                 |
+| ------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `GET /manage/share-links`             |                                                                              | The links, newest first, with `active`. Never their token.                             |
+| `POST /manage/share-links`            | `scope` (`list` or `event`), `listId` or `eventId`, `audience`, `expiresAt`? | `201`, the link with its `token` and `url`, given once. A past `expiresAt` is a `400`. |
+| `POST /manage/share-links/:id/revoke` |                                                                              | The link, revoked for good. Revoking twice changes nothing.                            |
+| `POST /manage/device-marker`          |                                                                              | `204`. For the "copy the link" button.                                                 |
+
+A link is made for one guest or one group (`audience`, such as « Mamie »), for one list or one
+event. Creating a link, and `POST /manage/device-marker`, set the **device marker**: a cookie
+(`__Secure-wishalia.owner_device`, HttpOnly, 400 days, on `COOKIE_DOMAIN`) holding the owner's id
+signed with `AUTH_SECRET`. The public view recognises the owner by it even without a session, and
+then shows no contribution. What the guests get is in [Public view API](public-api.md).
