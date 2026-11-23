@@ -340,6 +340,8 @@ describe("events", () => {
   });
 });
 
+const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
 describe("anti-spoil on /manage", () => {
   it("never returns contributions, and seals them in the history until the secret is lifted", async () => {
     clock = new Date("2026-12-20T10:00:00Z");
@@ -374,8 +376,9 @@ describe("anti-spoil on /manage", () => {
       `/events/${event.id}/items`,
       "/lists",
     ]) {
-      const text = JSON.stringify((await as(owner, "GET", url)).body);
-      expect(text).not.toMatch(/Mamie|5000|contribut|amount/i);
+      // Random ids are left out: one may hold "5000" by chance
+      const text = JSON.stringify((await as(owner, "GET", url)).body).replaceAll(UUID, "<id>");
+      expect(text, url).not.toMatch(/Mamie|5000|contribut|amount/i);
     }
     expect((await history(owner, item.id)).map((entry) => entry.type)).not.toContain("contribution_added");
 
