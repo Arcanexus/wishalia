@@ -18,7 +18,8 @@ Owner detection wins: an owner opening their own share link is still the owner. 
 `resolveViewer`, `canSeeContributions` and `canSeeHistoryEntry`; the history visibilities are in
 [Data model](data-model.md).
 It also closes the indirect leaks: page titles and link previews never reflect the state of a list,
-and the owner gets no notification of a contribution.
+the owner gets no notification of a contribution, and no Prometheus metric describes contributions
+(see [Monitoring](monitoring.md)).
 
 ## Separation of the two apps
 
@@ -41,6 +42,9 @@ The API is internal: only the two frontends reach it, server side, and a Network
   shared), `__Host-` is kept for host-only cookies such as CSRF.
 - Share links: only the SHA-256 hash of a token is stored, so a database leak opens no list.
 - History: `item_events` is append-only, enforced by a database trigger.
+- Metrics: `/metrics` listens on a port of its own that the ingress never routes, and only the
+  `metrics.allowFrom` peers may scrape the API and the worker. Labels carry route patterns, never a
+  URL, so no id or share link token ends up in Prometheus.
 - Containers: non-root user 10001, read-only root filesystem, no Linux capability, seccomp
   `RuntimeDefault`, no service account token, no npm in the runtime image.
 - Supply chain: install scripts are allowed for esbuild only; Dependabot, CodeQL, `pnpm audit` and

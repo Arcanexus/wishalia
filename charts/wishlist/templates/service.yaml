@@ -1,6 +1,8 @@
 {{- range $component, $def := include "wishlist.components" . | fromYaml }}
 {{- $values := index $.Values $def.values }}
-{{- if and $values.enabled (ne $component "worker") }}
+{{- /* The worker serves no traffic: its Service only exists for the metrics */ -}}
+{{- $http := ne $component "worker" }}
+{{- if and $values.enabled (or $http $.Values.metrics.enabled) }}
 ---
 apiVersion: v1
 kind: Service
@@ -14,8 +16,15 @@ spec:
   selector:
     {{- include "wishlist.selectorLabels" (dict "root" $ "component" $component) | nindent 4 }}
   ports:
+    {{- if $http }}
     - name: http
       port: {{ $values.port }}
       targetPort: http
+    {{- end }}
+    {{- if $.Values.metrics.enabled }}
+    - name: metrics
+      port: {{ $.Values.metrics.port }}
+      targetPort: metrics
+    {{- end }}
 {{- end }}
 {{- end }}

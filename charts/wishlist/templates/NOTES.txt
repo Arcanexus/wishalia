@@ -7,6 +7,13 @@ wishlist {{ .Chart.AppVersion }} is deployed.
 The ingress is disabled (ingress.enabled=false). To try the apps locally:
   kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "wishlist.fullname" . }}-web-public 3000:{{ .Values.webPublic.port }}
 {{- end }}
+{{- if .Values.metrics.enabled }}
+
+Prometheus metrics: port "metrics" ({{ .Values.metrics.port }}) of each Service, inside the cluster only.
+{{- if not .Values.metrics.serviceMonitor.enabled }}
+With the Prometheus Operator, set metrics.serviceMonitor.enabled=true to scrape them.
+{{- end }}
+{{- end }}
 {{- if not .Values.existingSecret }}
 
 Warning: existingSecret is empty. The apps need DATABASE_URL and the other secrets of

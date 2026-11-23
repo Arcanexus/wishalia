@@ -5,14 +5,15 @@ ConfigMap and loads the sensitive ones from `existingSecret`. Nothing is hard-co
 
 ## Set by the chart
 
-| Variable      | Components          | Value                                                                                 |
-| ------------- | ------------------- | ------------------------------------------------------------------------------------- |
-| `APP_NAME`    | all                 | `config.appName`: the product name shown to people.                                   |
-| `LOG_LEVEL`   | api                 | `config.logLevel`: `fatal`, `error`, `warn`, `info`, `debug`, `trace` or `silent`.    |
-| `PORT`        | all                 | The port of the component (3000 in the images).                                       |
-| `ORIGIN`      | web-app, web-public | `https://` + the host of the frontend. SvelteKit checks form posts against it (CSRF). |
-| `API_URL`     | web-app, web-public | Internal URL of the API Service.                                                      |
-| `APP_VERSION` | all                 | Set in the image from the release tag, shown by `/healthz`.                           |
+| Variable       | Components          | Value                                                                                 |
+| -------------- | ------------------- | ------------------------------------------------------------------------------------- |
+| `APP_NAME`     | all                 | `config.appName`: the product name shown to people.                                   |
+| `LOG_LEVEL`    | api                 | `config.logLevel`: `fatal`, `error`, `warn`, `info`, `debug`, `trace` or `silent`.    |
+| `PORT`         | all                 | The port of the component (3000 in the images).                                       |
+| `ORIGIN`       | web-app, web-public | `https://` + the host of the frontend. SvelteKit checks form posts against it (CSRF). |
+| `API_URL`      | web-app, web-public | Internal URL of the API Service.                                                      |
+| `METRICS_PORT` | all                 | `metrics.port` when `metrics.enabled`: the port of `/metrics`. Off (0) when unset.    |
+| `APP_VERSION`  | all                 | Set in the image from the release tag, shown by `/healthz`.                           |
 
 ## In the Secret
 

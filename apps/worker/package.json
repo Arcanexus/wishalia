@@ -15,6 +15,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@wishlist/metrics": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "^24.19.2",
     "@wishlist/config": "workspace:*",

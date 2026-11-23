@@ -8,6 +8,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Prometheus metrics on every component: `/metrics` on its own port (`METRICS_PORT`, 9464 in the
+  chart), request durations per route pattern, Node.js process metrics, `wishlist_build_info`. No
+  metric describes contributions. See [Monitoring](docs/monitoring.md).
+- Chart: `metrics.*` values, a `metrics` port on every Service (the worker gets a Service for it),
+  NetworkPolicy rules for the scrape (`metrics.allowFrom`) and an optional ServiceMonitor.
 - Data model: nine tables (users, lists, items, series, events, event items, contributions, share
   links, item history) and the first migration. See [Data model](docs/data-model.md).
 - `item_events` is append-only, enforced by a database trigger.

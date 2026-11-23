@@ -20,6 +20,9 @@
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@wishlist/metrics": "workspace:*"
+  },
   "devDependencies": {
     "@sveltejs/adapter-node": "^6.0.5",
     "@sveltejs/kit": "^3.4.0",

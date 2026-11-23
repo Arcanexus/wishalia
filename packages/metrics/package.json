@@ -1,0 +1,29 @@
+{
+  "name": "@wishlist/metrics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Prometheus metrics shared by every component: registry, HTTP histogram, /metrics server.",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "prom-client": "^15.1.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@wishlist/config": "workspace:*"
+  }
+}

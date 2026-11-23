@@ -87,6 +87,25 @@ ingress:
 networkPolicy:
   enabled: true
 
+# Prometheus metrics: every component serves /metrics on its own port, published by its Service
+# (named "metrics") and never by the ingress. No metric describes contributions (anti-spoil).
+metrics:
+  enabled: true
+  port: 9464
+  # Who may scrape the metrics port when networkPolicy.enabled: NetworkPolicy "from" peers. The
+  # default lets every pod of the "monitoring" namespace in (kube-prometheus-stack).
+  allowFrom:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+  # A ServiceMonitor for the Prometheus Operator (needs its CRDs)
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    # Extra labels, e.g. release: kube-prometheus-stack, so that Prometheus selects it
+    labels: {}
+
 serviceAccount:
   create: true
   name: ""
