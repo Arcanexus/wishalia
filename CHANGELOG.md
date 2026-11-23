@@ -21,11 +21,13 @@ All notable changes to this project are documented here. The format follows
   `/manage/share-links`, with the device marker that recognises the owner without a session.
 - Public view API (`/public/*`): the view of a share link, contributions and reservations (pools
   with overshoot, unique and quantity items, repeatable items per event) and their withdrawal by
-  their author. The owner gets no funding until the secret of every event of an item is lifted,
-  and cannot contribute. See [Public view API](docs/public-api.md).
-- `@wishalia/domain`: `isShareLinkActive` and `refuseContribution`.
-- Migration `0004_contribution_withdraw_key`: the hash of the key a guest without an account uses
-  to withdraw their contribution.
+  their author. A contribution may have no event, since a list is not always tied to one; its
+  secret then lifts when the owner marks the item received. The owner gets no funding until every
+  secret of an item is lifted, and cannot contribute. See [Public view API](docs/public-api.md).
+- `@wishalia/domain`: `isShareLinkActive`, `refuseContribution`, and `canSeeContributions` now takes
+  the secret of an event or of an item (`SecretState`).
+- Migration `0004_contributions_without_event`: the event of a contribution becomes optional, and
+  the hash of the key a guest without an account uses to withdraw their contribution.
 
 - Management API (`/manage/*`): lists, items (quick add from a URL or text, in-place edits, moves,
   received and archived), events (item selection, reveal of the secret) and the history of each

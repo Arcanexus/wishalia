@@ -55,19 +55,20 @@ export const contributionRoutes: FastifyPluginAsync<{ db: Database; now: () => D
         await tx.select().from(schema.wishes).where(eq(schema.wishes.id, wish.id)).for("update"),
       );
 
-      const events = await eventsOfItem(tx, link.ownerId, wish.id);
-      const eventId =
-        link.scope === "event"
-          ? link.eventId
-          : (input.eventId ?? (events.length === 1 ? events[0]?.id : undefined));
-      if (link.scope === "event" && input.eventId !== undefined && input.eventId !== link.eventId) {
-        throw notFound();
+      // An event link pins its event; a list link takes one of the item's events, or none
+      let event: typeof schema.events.$inferSelect | null = null;
+      if (link.scope === "event") {
+        if (!link.eventId || (input.eventId !== undefined && input.eventId !== link.eventId))
+          throw notFound();
+        const [pinned] = await tx.select().from(schema.events).where(eq(schema.events.id, link.eventId));
+        if (!pinned) throw notFound();
+        event = pinned;
+      } else if (input.eventId !== undefined) {
+        const events = await eventsOfItem(tx, link.ownerId, wish.id);
+        event = events.find((candidate) => candidate.id === input.eventId) ?? null;
+        if (!event) throw notFound();
       }
-      const event = events.find((candidate) => candidate.id === eventId);
-      if (!event) {
-        throw events.length === 0 ? new HttpError(409, "no_event") : new HttpError(400, "event_required");
-      }
-      if (isSecretLifted(revealState(event), at)) throw new HttpError(409, "event_closed");
+      if (event && isSecretLifted(revealState(event), at)) throw new HttpError(409, "event_closed");
 
       const active = await tx
         .select({
@@ -93,7 +94,7 @@ export const contributionRoutes: FastifyPluginAsync<{ db: Database; now: () => D
           amountCents: row.amountCents === null ? null : cents(row.amountCents),
           units: row.units,
         })),
-        { eventId: event.id, amountCents: input.amountCents ?? null, units: units ?? null },
+        { eventId: event?.id ?? null, amountCents: input.amountCents ?? null, units: units ?? null },
       );
       if (refusal) throw new HttpError(409, refusal);
 
@@ -102,7 +103,7 @@ export const contributionRoutes: FastifyPluginAsync<{ db: Database; now: () => D
           .insert(schema.contributions)
           .values({
             wishId: wish.id,
-            eventId: event.id,
+            eventId: event?.id ?? null,
             contributorId: sessionUser?.id ?? null,
             guestName: sessionUser ? null : (input.guestName ?? null),
             shareLinkId: link.id,
@@ -122,7 +123,7 @@ export const contributionRoutes: FastifyPluginAsync<{ db: Database; now: () => D
           actorId: sessionUser?.id ?? null,
           payload: {
             contributionId: row.id,
-            eventId: event.id,
+            eventId: row.eventId,
             amountCents: row.amountCents,
             units: row.units,
             name: row.anonymous ? null : (sessionUser?.displayName ?? row.guestName),
@@ -171,10 +172,19 @@ export const contributionRoutes: FastifyPluginAsync<{ db: Database; now: () => D
         contribution.withdrawKeyHash === hashToken(key);
       const bySession = sessionUser !== null && contribution.contributorId === sessionUser.id;
       if (!byKey && !bySession) throw notFound();
-      if (!(await itemInView(tx, link, contribution.wishId))) throw notFound();
+      const wish = await itemInView(tx, link, contribution.wishId);
+      if (!wish) throw notFound();
       if (contribution.status === "withdrawn") return;
-      const [event] = await tx.select().from(schema.events).where(eq(schema.events.id, contribution.eventId));
-      if (event && isSecretLifted(revealState(event), at)) throw new HttpError(409, "event_closed");
+      if (contribution.eventId === null) {
+        // Without an event, the item keeps the secret: once received, nothing changes any more
+        if (wish.status !== "open") throw new HttpError(409, "item_closed");
+      } else {
+        const [event] = await tx
+          .select()
+          .from(schema.events)
+          .where(eq(schema.events.id, contribution.eventId));
+        if (event && isSecretLifted(revealState(event), at)) throw new HttpError(409, "event_closed");
+      }
 
       await tx
         .update(schema.contributions)

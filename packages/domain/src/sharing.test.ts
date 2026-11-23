@@ -73,3 +73,14 @@ describe("refuseContribution", () => {
     expect(refuseContribution(repeatable, [reservation("e1", 2)], { eventId: "e2", units: 2 })).toBeNull();
   });
 });
+
+describe("refuseContribution without an event", () => {
+  it("counts every contribution of a plain item, and the ones without an event of a repeatable one", () => {
+    const plain = wish();
+    expect(refuseContribution(plain, [reservation("e1")], { eventId: null })).toBe("already_reserved");
+    const repeatable = wish({ repeatable: true });
+    expect(refuseContribution(repeatable, [reservation("e1")], { eventId: null })).toBeNull();
+    const none = [{ eventId: null, status: "active" as const, units: 1 }];
+    expect(refuseContribution(repeatable, none, { eventId: null })).toBe("already_reserved");
+  });
+});

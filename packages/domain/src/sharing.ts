@@ -17,7 +17,8 @@ export function isShareLinkActive(link: ShareLinkState, now: Date): boolean {
 }
 
 export interface ContributionRequest {
-  eventId: string;
+  /** Null without an event: a repeatable item then counts the contributions without an event. */
+  eventId: string | null;
   /** Pool: the amount pledged, in cents. */
   amountCents?: number | null;
   /** Unique and quantity: the copies reserved. */
@@ -40,7 +41,7 @@ export interface ContributableWish extends WishFunding {
  */
 export function refuseContribution(
   wish: ContributableWish,
-  contributions: readonly (ContributionFunding & { eventId: string })[],
+  contributions: readonly ContributionFunding[],
   request: ContributionRequest,
 ): ContributionRefusal | null {
   if (wish.status !== "open") return "item_closed";

@@ -288,9 +288,8 @@ export const contributions = pgTable(
     wishId: uuid("wish_id")
       .notNull()
       .references(() => wishes.id),
-    eventId: uuid("event_id")
-      .notNull()
-      .references(() => events.id),
+    /** Null without an event: a list is not always tied to one. The item then keeps the secret. */
+    eventId: uuid("event_id").references(() => events.id),
     /** Null for a guest without an account, who then gives a name. */
     contributorId: uuid("contributor_id").references(() => users.id),
     guestName: text("guest_name"),

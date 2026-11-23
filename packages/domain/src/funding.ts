@@ -18,7 +18,8 @@ export interface WishFunding {
 }
 
 export interface ContributionFunding {
-  eventId: string;
+  /** Null for a contribution made without an event. */
+  eventId: string | null;
   status: "active" | "withdrawn";
   /** Pool: the amount pledged. */
   amountCents?: Cents | null;
@@ -56,8 +57,8 @@ export function reservedUnits(contributions: readonly ContributionFunding[]): nu
 }
 
 /** Total pledged per event, in the order the events first appear: the segments of the pool bar. */
-export function fundingByEvent(contributions: readonly ContributionFunding[]): Map<string, Cents> {
-  const segments = new Map<string, Cents>();
+export function fundingByEvent(contributions: readonly ContributionFunding[]): Map<string | null, Cents> {
+  const segments = new Map<string | null, Cents>();
   for (const contribution of active(contributions)) {
     const current = segments.get(contribution.eventId) ?? cents(0);
     segments.set(contribution.eventId, cents(current + (contribution.amountCents ?? 0)));
@@ -101,7 +102,7 @@ export function progress(wish: WishFunding, contributions: readonly Contribution
 export function itemState(
   wish: WishFunding,
   contributions: readonly ContributionFunding[],
-  eventId?: string,
+  eventId?: string | null,
 ): ItemState {
   const relevant =
     wish.repeatable && eventId !== undefined

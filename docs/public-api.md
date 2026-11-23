@@ -26,10 +26,14 @@ The API decides it with `resolveViewer` (`@wishalia/domain`), and the answer say
 
 ## Anti-spoil
 
-The funding of an item (`funding`) is computed only after `canSeeContributions`, for every event
-the item is in or got contributions in. One sealed event is enough to answer `funding: null`, since
-a total or a state would give it away. The owner therefore gets `null` everywhere until they lift
-the secret of every event of an item, and `null` for an item in no event.
+A list is not always tied to an event, so a contribution may have none. Its secret is then kept by
+the item, and lifts when the owner marks the item received: the gift has arrived.
+
+The funding of an item (`funding`) is computed only after `canSeeContributions`, for every secret
+that covers it: each event the item is in or got contributions in, and the item itself when it is
+in no event or got contributions without one. One kept secret is enough to answer `funding: null`,
+since a total or a state would give it away. The owner therefore gets `null` until every secret of
+an item is lifted.
 
 The items come in the owner's order, never sorted by funding: the public view puts complete items
 last itself.
@@ -51,8 +55,10 @@ A contribution:
 - a unique item takes one reservation, a repeatable one one per event;
 - a quantity item takes `units` copies, up to what is left (per event when it is repeatable);
 - a guest without an account gives a name (`guestName`); with an account, their name is used;
-- on a list link, the event is required when the item is in several (`400 event_required`); on an
-  event link, it is the link's event;
+- on a list link, `eventId` is optional: one of the item's events, or none; on an event link, it is
+  the link's event;
+- a contribution without an event can be withdrawn while the item is open, one with an event until
+  its secret is lifted;
 - the item row is locked during the check, so the last copy is never reserved twice.
 
 Every contribution and every withdrawal writes a `sealed` history entry (`contribution_added`,
@@ -61,9 +67,9 @@ notification of it.
 
 ## Errors
 
-| Status | `error`                                                                                                               | When                                                    |
-| ------ | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| 400    | `invalid_request`, `event_required`                                                                                   | A field is wrong, or the event is missing.              |
-| 403    | `owner_cannot_contribute`                                                                                             | The owner tries to contribute to their own items.       |
-| 404    | `link_not_found`, `not_found`                                                                                         | No valid link, or an item or contribution out of reach. |
-| 409    | `item_closed`, `already_reserved`, `not_enough_left`, `amount_required`, `units_required`, `no_event`, `event_closed` | See above. `event_closed`: its secret is lifted.        |
+| Status | `error`                                                                                                   | When                                                    |
+| ------ | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| 400    | `invalid_request`                                                                                         | A field is wrong or missing.                            |
+| 403    | `owner_cannot_contribute`                                                                                 | The owner tries to contribute to their own items.       |
+| 404    | `link_not_found`, `not_found`                                                                             | No valid link, or an item or contribution out of reach. |
+| 409    | `item_closed`, `already_reserved`, `not_enough_left`, `amount_required`, `units_required`, `event_closed` | See above. `event_closed`: its secret is lifted.        |

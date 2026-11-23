@@ -4,6 +4,7 @@ import {
   canRevealSecret,
   canSeeContributions,
   canSeeHistoryEntry,
+  isLifted,
   isSecretLifted,
   resolveViewer,
   revealAvailableAt,
@@ -155,5 +156,21 @@ describe("canSeeHistoryEntry", () => {
     expect(canSeeHistoryEntry("sealed", "owner", kept, afterDelay)).toBe(false);
     expect(canSeeHistoryEntry("sealed", "owner", lifted, afterDelay)).toBe(true);
     expect(canSeeHistoryEntry("sealed", "guest", kept, before)).toBe(true);
+  });
+});
+
+describe("the secret of a contribution without an event", () => {
+  const now = new Date("2026-12-01T12:00:00Z");
+
+  it("hides it from the owner until they mark the item received", () => {
+    expect(canSeeContributions("owner", { itemReceived: false }, now)).toBe(false);
+    expect(canSeeContributions("owner", { itemReceived: true }, now)).toBe(true);
+    expect(isLifted({ itemReceived: true }, now)).toBe(true);
+  });
+
+  it("shows it to the guests all along", () => {
+    expect(canSeeContributions("guest", { itemReceived: false }, now)).toBe(true);
+    expect(canSeeHistoryEntry("sealed", "owner", { itemReceived: false }, now)).toBe(false);
+    expect(canSeeHistoryEntry("sealed", "owner", { itemReceived: true }, now)).toBe(true);
   });
 });

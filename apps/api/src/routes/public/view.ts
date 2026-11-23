@@ -12,6 +12,7 @@ import {
   timesGiven,
   totalFunded,
   type RevealState,
+  type SecretState,
   type ViewerRole,
 } from "@wishalia/domain";
 import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
@@ -78,7 +79,7 @@ export async function eventsOfItem(tx: Tx, ownerId: string, itemId: string): Pro
 interface ContributionRow {
   id: string;
   wishId: string;
-  eventId: string;
+  eventId: string | null;
   contributorId: string | null;
   contributorName: string | null;
   guestName: string | null;
@@ -86,7 +87,7 @@ interface ContributionRow {
   units: number | null;
   message: string | null;
   anonymous: boolean;
-  event: EventRow;
+  event: EventRow | null;
 }
 
 interface ViewData {
@@ -168,7 +169,7 @@ async function loadView(db: Database, link: LinkRow): Promise<ViewData> {
         event: schema.events,
       })
       .from(schema.contributions)
-      .innerJoin(schema.events, eq(schema.events.id, schema.contributions.eventId))
+      .leftJoin(schema.events, eq(schema.events.id, schema.contributions.eventId))
       .leftJoin(schema.users, eq(schema.users.id, schema.contributions.contributorId))
       .where(and(inArray(schema.contributions.wishId, ids), eq(schema.contributions.status, "active")))
       .orderBy(asc(schema.contributions.createdAt));
@@ -181,8 +182,9 @@ async function loadView(db: Database, link: LinkRow): Promise<ViewData> {
 
 /**
  * The funding of an item, or null when the viewer may not see it. The single rule decides, for
- * every event the item is in or got contributions in: one sealed event hides the whole funding,
- * since totals and states would give it away.
+ * every secret that covers the item: its events, and the item itself for the contributions made
+ * without an event (lifted when the owner marks it received). One kept secret hides the whole
+ * funding, since totals and states would give it away.
  */
 function publicFunding(
   wish: WishRow,
@@ -191,15 +193,17 @@ function publicFunding(
   context: { viewer: ViewerRole; sessionUserId: string | null; now: Date; eventId?: string },
 ) {
   const { viewer, sessionUserId, now, eventId } = context;
-  const relevant = new Map<string, EventRow>();
-  for (const event of events) relevant.set(event.id, event);
-  for (const contribution of contributions) relevant.set(contribution.event.id, contribution.event);
-  // An item in no event has no contribution, and no secret to lift: the owner still gets nothing
-  // rather than a "free" state, so that their view never carries funding before a reveal
-  if (relevant.size === 0 && viewer === "owner") return null;
-  const visible = [...relevant.values()].every((event) =>
-    canSeeContributions(viewer, revealState(event), now),
-  );
+  // Every secret that covers this item: its events, the events of its contributions, and the item
+  // itself for the contributions without an event, or when it is in no event at all
+  const relevant = new Map<string, SecretState>();
+  for (const event of events) relevant.set(event.id, revealState(event));
+  for (const contribution of contributions) {
+    if (contribution.event) relevant.set(contribution.event.id, revealState(contribution.event));
+  }
+  if (events.length === 0 || contributions.some((contribution) => contribution.eventId === null)) {
+    relevant.set("item", { itemReceived: wish.status === "received" });
+  }
+  const visible = [...relevant.values()].every((state) => canSeeContributions(viewer, state, now));
   if (!visible) return null;
 
   const funding = contributions.map((contribution) => ({

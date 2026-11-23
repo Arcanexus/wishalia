@@ -1,5 +1,5 @@
 {
-  "id": "e89d1212-543a-42c6-b697-06da7e51b993",
+  "id": "a98f6b57-53fc-459f-84b3-7b78bf06b15c",
   "prevId": "984dfbd2-e3e9-4241-a4fe-a5d82287e92f",
   "version": "7",
   "dialect": "postgresql",
@@ -443,7 +443,7 @@
           "name": "event_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "contributor_id": {
           "name": "contributor_id",

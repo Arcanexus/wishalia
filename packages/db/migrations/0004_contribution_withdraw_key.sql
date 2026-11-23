@@ -1,1 +1,0 @@
-ALTER TABLE "contributions" ADD COLUMN "withdraw_key_hash" text;

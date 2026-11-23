@@ -84,6 +84,7 @@ let lego: string;
 let books: string;
 let socks: string;
 let lonely: string;
+let parrainKey: { id: string; key: string };
 let listLink: Answer & { body: { id: string; token: string; url: string } };
 
 beforeAll(async () => {
@@ -184,10 +185,10 @@ describe("contributions through a list link", () => {
 
   it("takes pledges on a pool, beyond the target, and hides amounts and anonymous names", async () => {
     const token = listLink.body.token;
-    const missingEvent = await guest(token, "POST", `/items/${bike}/contributions`, {
-      payload: { guestName: "Mamie", amountCents: 5000 },
+    const foreignEvent = await guest(token, "POST", `/items/${lego}/contributions`, {
+      payload: { eventId: birthday, guestName: "Mamie" },
     });
-    expect(missingEvent).toMatchObject({ status: 400, body: { error: "event_required" } });
+    expect(foreignEvent.status).toBe(404);
     const noName = await guest(token, "POST", `/items/${bike}/contributions`, {
       payload: { eventId: christmas, amountCents: 5000 },
     });
@@ -235,11 +236,26 @@ describe("contributions through a list link", () => {
     expect((await reserve(books, {})).body).toEqual({ error: "units_required" });
     expect((await reserve(books, { units: 2 })).status).toBe(201);
     expect((await reserve(books, { units: 2 })).body).toEqual({ error: "not_enough_left" });
-    expect((await reserve(lonely, {})).body).toEqual({ error: "no_event" });
+    expect((await reserve(lonely, {})).status).toBe(404);
     expect((await reserve(crypto.randomUUID(), {})).status).toBe(404);
     const view = (await guest(token, "GET", "/view")).body;
     const booksView = view.items.find((entry: { id: string }) => entry.id === books);
     expect(booksView.funding).toMatchObject({ state: "in_progress", reservedUnits: 2 });
+  });
+
+  it("takes a contribution without an event: a list is not always tied to one", async () => {
+    const made = await guest(listLink.body.token, "POST", `/items/${lonely}/contributions`, {
+      payload: { guestName: "Parrain" },
+    });
+    expect(made.status).toBe(201);
+    expect(made.body.contribution.eventId).toBeNull();
+    parrainKey = { id: made.body.contribution.id, key: made.body.withdrawKey };
+    const view = (await guest(listLink.body.token, "GET", "/view")).body;
+    const lonelyView = view.items.find((entry: { id: string }) => entry.id === lonely);
+    expect(lonelyView).toMatchObject({
+      eventIds: [],
+      funding: { state: "complete", contributors: [{ name: "Parrain" }] },
+    });
   });
 
   it("lets the author withdraw with the key, and nobody else", async () => {
@@ -342,5 +358,27 @@ describe("anti-spoil on the public view", () => {
       payload: { eventId: christmas, guestName: "Tard" },
     });
     expect(closed.body).toEqual({ error: "event_closed" });
+  });
+
+  it("keeps a contribution without an event secret until the owner marks the item received", async () => {
+    const before = (await guest(listLink.body.token, "GET", "/view", { cookie: owner })).body;
+    expect(before.items.find((entry: { id: string }) => entry.id === lonely).funding).toBeNull();
+    const sealed = (await manage(owner, "GET", `/items/${lonely}/history`)).body as { type: string }[];
+    expect(sealed.map((entry) => entry.type)).not.toContain("reserved");
+
+    expect((await manage(owner, "PATCH", `/items/${lonely}`, { status: "received" })).status).toBe(200);
+    const after = (await guest(listLink.body.token, "GET", "/view", { cookie: owner })).body;
+    expect(after.items.find((entry: { id: string }) => entry.id === lonely).funding).toMatchObject({
+      contributors: [{ name: "Parrain" }],
+    });
+    const lifted = (await manage(owner, "GET", `/items/${lonely}/history`)).body as {
+      type: string;
+      payload: { name?: string };
+    }[];
+    expect(lifted.find((entry) => entry.type === "reserved")?.payload.name).toBe("Parrain");
+    const late = await guest(listLink.body.token, "DELETE", `/contributions/${parrainKey.id}`, {
+      headers: { "x-withdraw-key": parrainKey.key },
+    });
+    expect(late).toMatchObject({ status: 409, body: { error: "item_closed" } });
   });
 });
