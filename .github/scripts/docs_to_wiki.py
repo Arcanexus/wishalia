@@ -30,6 +30,9 @@ PAGES: list[tuple[str, list[tuple[str, str]]]] = [
         ("quick-start.md", "Quick-start"),
         ("installation.md", "Installation"),
     ]),
+    ("Using Wishalia", [
+        ("management-app.md", "Management-app"),
+    ]),
     ("Reference", [
         ("configuration.md", "Configuration"),
         ("authentication.md", "Authentication"),

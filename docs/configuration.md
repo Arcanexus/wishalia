@@ -5,22 +5,23 @@ ConfigMap and loads the sensitive ones from `existingSecret`. Nothing is hard-co
 
 ## Set by the chart
 
-| Variable                        | Components          | Value                                                                                                          |
-| ------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `APP_NAME`                      | all                 | `config.appName`: the product name shown to people.                                                            |
-| `LOG_LEVEL`                     | api                 | `config.logLevel`: `fatal`, `error`, `warn`, `info`, `debug`, `trace` or `silent`.                             |
-| `PORT`                          | all                 | The port of the component (3000 in the images).                                                                |
-| `ORIGIN`                        | web-app, web-public | `https://` + the host of the frontend. SvelteKit checks form posts against it (CSRF).                          |
-| `API_URL`                       | web-app, web-public | Internal URL of the API Service.                                                                               |
-| `METRICS_PORT`                  | all                 | `metrics.port` when `metrics.enabled`: the port of `/metrics`. Off (0) when unset.                             |
-| `APP_ORIGIN`, `PUBLIC_ORIGIN`   | all                 | `https://` + `hosts.app` and `hosts.public`. Must differ; https in production.                                 |
-| `API_ORIGIN`                    | api                 | `https://` + `hosts.api`: the REST API v1, on its own host. Unset: the API v1 is off.                          |
-| `API_RATE_LIMIT`                | api                 | `apiV1.rateLimit`: requests a minute and per token on the API v1 (120).                                        |
-| `COOKIE_DOMAIN`                 | api                 | `auth.cookieDomain`, by default `hosts.public` when `hosts.app` is under it: one session for both hosts.       |
-| `OWNER_EMAILS`                  | api                 | `auth.ownerEmails`: who may create an account by themselves. Everyone else is invited.                         |
-| `OIDC_ISSUER`, `OIDC_CLIENT_ID` | api                 | `auth.oidc.*`: the OIDC provider of the owners. Callback URL: `https://<hosts.app>/auth/oauth2/callback/oidc`. |
-| `MAIL_FROM`                     | api                 | `auth.mailFrom`: sender of the magic links.                                                                    |
-| `APP_VERSION`                   | all                 | Set in the image from the release tag, shown by `/healthz`.                                                    |
+| Variable                        | Components          | Value                                                                                                                                                                          |
+| ------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `APP_NAME`                      | all                 | `config.appName`: the product name shown to people.                                                                                                                            |
+| `LOG_LEVEL`                     | api                 | `config.logLevel`: `fatal`, `error`, `warn`, `info`, `debug`, `trace` or `silent`.                                                                                             |
+| `PORT`                          | all                 | The port of the component (3000 in the images).                                                                                                                                |
+| `ORIGIN`                        | web-app, web-public | `https://` + the host of the frontend. SvelteKit checks form posts against it (CSRF).                                                                                          |
+| `API_URL`                       | web-app, web-public | Internal URL of the API Service.                                                                                                                                               |
+| `METRICS_PORT`                  | all                 | `metrics.port` when `metrics.enabled`: the port of `/metrics`. Off (0) when unset.                                                                                             |
+| `APP_ORIGIN`, `PUBLIC_ORIGIN`   | all                 | `https://` + `hosts.app` and `hosts.public`. Must differ; https in production.                                                                                                 |
+| `API_ORIGIN`                    | api                 | `https://` + `hosts.api`: the REST API v1, on its own host. Unset: the API v1 is off.                                                                                          |
+| `API_RATE_LIMIT`                | api                 | `apiV1.rateLimit`: requests a minute and per token on the API v1 (120).                                                                                                        |
+| `COOKIE_DOMAIN`                 | api                 | `auth.cookieDomain`, by default `hosts.public` when `hosts.app` is under it: one session for both hosts.                                                                       |
+| `OWNER_EMAILS`                  | api                 | `auth.ownerEmails`: who may create an account by themselves. Everyone else is invited.                                                                                         |
+| `OIDC_ISSUER`, `OIDC_CLIENT_ID` | api, web-app        | `auth.oidc.*`: the OIDC provider of the owners. Callback URL: `https://<hosts.app>/auth/callback/oidc`. The management app shows its sign-in button when `OIDC_ISSUER` is set. |
+| `OIDC_NAME`                     | web-app             | `auth.oidc.name`: the provider's name on the sign-in button, « Se connecter avec … » (`SSO`).                                                                                  |
+| `MAIL_FROM`                     | api                 | `auth.mailFrom`: sender of the magic links.                                                                                                                                    |
+| `APP_VERSION`                   | all                 | Set in the image from the release tag, shown by `/healthz`.                                                                                                                    |
 
 ## In the Secret
 

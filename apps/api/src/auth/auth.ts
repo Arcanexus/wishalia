@@ -14,7 +14,7 @@ import { magicLinkMail, type Mailer } from "./mailer.js";
 
 /** Where Better Auth answers, on the API and behind the management app (/auth/* is proxied). */
 export const AUTH_BASE_PATH = "/auth";
-/** Id of the OIDC provider of the owners, in its callback URL: /auth/oauth2/callback/oidc. */
+/** Id of the OIDC provider of the owners, in its callback URL: /auth/callback/oidc. */
 export const OIDC_PROVIDER_ID = "oidc";
 export const SESSION_DAYS = 30;
 const MAGIC_LINK_MINUTES = 15;

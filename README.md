@@ -33,10 +33,15 @@ Christmas), and chip in together for the same gift. Its core promise: **the owne
 sees who gave what**, until they lift the secret after the event. The rule is enforced on the
 server, not hidden in the page.
 
-> **Status:** foundation. The four components build, test, ship as images and deploy with the Helm
-> chart. The data model, the business rules (funding, anti-spoil) the sign-in (OIDC, passkeys,
-> magic links) the management API, the public view API (share links, contributions) and the REST API v1
-> (personal access tokens, OpenAPI) are in place and tested; the screens come next.
+> **Status:** under way. The four components build, test, ship as images and deploy with the Helm
+> chart. The data model, the business rules (funding, anti-spoil), the sign-in (OIDC, passkeys,
+> magic links), the management API, the public view API (share links, contributions) and the REST
+> API v1 (personal access tokens, OpenAPI) are in place and tested. The management app has its
+> first screens (signing in, lists, quick add); events, sharing and the guests' screens come next.
+
+<p align="center">
+  <img src="docs/images/app-lists.png" alt="The management app: a greeting, the quick add field and two lists" width="640">
+</p>
 
 |                         |                                                                         |
 | ----------------------- | ----------------------------------------------------------------------- |
@@ -58,7 +63,8 @@ pnpm dev
 
 See the [quick start](docs/quick-start.md), the [installation on Kubernetes](docs/installation.md),
 the [architecture](docs/architecture.md), the [data model](docs/data-model.md),
-[authentication](docs/authentication.md), the [management API](docs/api.md) and
+[authentication](docs/authentication.md), the [management app](docs/management-app.md), the
+[management API](docs/api.md) and
 [monitoring](docs/monitoring.md).
 
 ## Contributing

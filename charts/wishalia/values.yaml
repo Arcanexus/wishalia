@@ -52,6 +52,8 @@ auth:
   oidc:
     issuer: ""
     clientId: ""
+    # Name on the sign-in button: "Se connecter avec <name>" (e.g. "Authentik", "Google")
+    name: "SSO"
   # Sender of the magic links, e.g. "wishalia <noreply@example.com>". SMTP_URL goes in existingSecret.
   mailFrom: ""
 

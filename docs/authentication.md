@@ -42,11 +42,11 @@ valid session.
 
 Create a client in your provider:
 
-| Setting      | Value                                           |
-| ------------ | ----------------------------------------------- |
-| Redirect URI | `https://<hosts.app>/auth/oauth2/callback/oidc` |
-| Scopes       | `openid email profile`                          |
-| Grant        | Authorization code, with PKCE                   |
+| Setting      | Value                                    |
+| ------------ | ---------------------------------------- |
+| Redirect URI | `https://<hosts.app>/auth/callback/oidc` |
+| Scopes       | `openid email profile`                   |
+| Grant        | Authorization code, with PKCE            |
 
 Then set `auth.oidc.issuer` and `auth.oidc.clientId`, and put `OIDC_CLIENT_SECRET` in the Secret.
 The email the provider returns must be in `auth.ownerEmails` for the first sign-in.
