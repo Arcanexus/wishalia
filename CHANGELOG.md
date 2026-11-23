@@ -21,6 +21,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Management app, sharing (`/partage`): one link per guest or group for a list or an event, with
+  an optional end date, its address shown once with « Copier le lien » and « Envoyer… », the
+  device marked as the owner's, the active links and their revocation behind a confirmation.
+  « Partager cette liste » and « Partager cet événement » lead there. The header gets
+  « Partager », and its mode button an icon.
 - Management app, events (`/evenements`): the events, upcoming and past, their creation and
   settings, the items an event selects (added from every list in one tap, or removed), and lifting
   the secret once allowed, behind a confirmation. Then each item shows who gave what for the event.

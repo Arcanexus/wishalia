@@ -49,8 +49,15 @@
 </svelte:head>
 
 <p class="back"><a href={resolve("/(app)/evenements")}>← Événements</a></p>
-<h1>{event.name}</h1>
-<p class="muted when">{eventKindLabel(event.kind)} · {formatDay(event.date)}</p>
+<div class="heading">
+  <div>
+    <h1>{event.name}</h1>
+    <p class="muted when">{eventKindLabel(event.kind)} · {formatDay(event.date)}</p>
+  </div>
+  <a class="button secondary" href="{resolve('/(app)/partage')}?evenement={event.id}">
+    Partager cet événement
+  </a>
+</div>
 
 <section class="card secret" aria-labelledby="secret-titre">
   <h2 id="secret-titre">Le secret</h2>
@@ -169,8 +176,15 @@
   .back {
     margin: 0 0 0.5rem;
   }
+  .heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+  }
   .when {
-    margin-top: -0.25rem;
+    margin: 0;
   }
   .secret {
     margin: 1.5rem 0 2rem;
