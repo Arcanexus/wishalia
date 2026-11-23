@@ -56,7 +56,8 @@ jobs:
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}-${{ matrix.app }}
+          # The code name, not the repository name: images keep their name if the repository is renamed.
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/wishlist-${{ matrix.app }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr

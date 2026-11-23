@@ -10,7 +10,9 @@ All notable changes to this project are documented here. The format follows
 
 - The product is named **Wishalia**: default `APP_NAME` and chart `config.appName`, README, website,
   documentation and a new logo (five relatives in a circle around a gift). The code name `wishlist`
-  stays in packages, images, the chart, cookies and metrics, so nothing breaks on upgrade.
+  stays in packages, images, the chart, cookies and metrics, so nothing breaks on upgrade. Image
+  names no longer follow the repository name, so renaming the repository keeps
+  `ghcr.io/arcanexus/wishlist-*`.
 
 ### Added
 
