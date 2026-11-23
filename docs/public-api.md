@@ -27,7 +27,12 @@ The API decides it with `resolveViewer` (`@wishalia/domain`), and the answer say
 ## Anti-spoil
 
 A list is not always tied to an event, so a contribution may have none. Its secret is then kept by
-the item, and lifts when the owner marks the item received: the gift has arrived.
+the item and its list, as the owner chose for the list (`revealMode`, see
+[Management API](api.md#lists)):
+
+- `received` (default): it lifts when the owner marks the item received, since the gift has arrived;
+- `manual`: it lifts when the owner lifts the secret of the list, whenever they decide. Marking an
+  item received then lifts nothing.
 
 The funding of an item (`funding`) is computed only after `canSeeContributions`, for every secret
 that covers it: each event the item is in or got contributions in, and the item itself when it is
@@ -57,8 +62,9 @@ A contribution:
 - a guest without an account gives a name (`guestName`); with an account, their name is used;
 - on a list link, `eventId` is optional: one of the item's events, or none; on an event link, it is
   the link's event;
-- a contribution without an event can be withdrawn while the item is open, one with an event until
-  its secret is lifted;
+- a contribution with an event is taken and withdrawn until the secret of its event is lifted
+  (`event_closed`); one without an event while the item is open (`item_closed`) and the secret of
+  the list is kept (`list_closed`);
 - the item row is locked during the check, so the last copy is never reserved twice.
 
 Every contribution and every withdrawal writes a `sealed` history entry (`contribution_added`,
@@ -67,9 +73,9 @@ notification of it.
 
 ## Errors
 
-| Status | `error`                                                                                                   | When                                                    |
-| ------ | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| 400    | `invalid_request`                                                                                         | A field is wrong or missing.                            |
-| 403    | `owner_cannot_contribute`                                                                                 | The owner tries to contribute to their own items.       |
-| 404    | `link_not_found`, `not_found`                                                                             | No valid link, or an item or contribution out of reach. |
-| 409    | `item_closed`, `already_reserved`, `not_enough_left`, `amount_required`, `units_required`, `event_closed` | See above. `event_closed`: its secret is lifted.        |
+| Status | `error`                                                                                                                  | When                                                    |
+| ------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| 400    | `invalid_request`                                                                                                        | A field is wrong or missing.                            |
+| 403    | `owner_cannot_contribute`                                                                                                | The owner tries to contribute to their own items.       |
+| 404    | `link_not_found`, `not_found`                                                                                            | No valid link, or an item or contribution out of reach. |
+| 409    | `item_closed`, `already_reserved`, `not_enough_left`, `amount_required`, `units_required`, `event_closed`, `list_closed` | See above: a secret is already lifted.                  |

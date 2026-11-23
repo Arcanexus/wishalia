@@ -381,4 +381,50 @@ describe("anti-spoil on the public view", () => {
     });
     expect(late).toMatchObject({ status: 409, body: { error: "item_closed" } });
   });
+
+  it("in manual mode, keeps the secret of a list until the owner lifts it, whenever they decide", async () => {
+    const list = (await manage(owner, "POST", "/lists", { name: "Toute l'année" })).body;
+    expect(list).toMatchObject({ revealMode: "received", secretLifted: false });
+    expect((await manage(owner, "POST", `/lists/${list.id}/reveal`)).body).toEqual({
+      error: "reveal_on_received",
+    });
+    expect((await manage(owner, "PATCH", `/lists/${list.id}`, { revealMode: "manual" })).body).toMatchObject({
+      revealMode: "manual",
+    });
+    const scarf = await item("Écharpe", list.id);
+    const link = await share({ scope: "list", listId: list.id, audience: "Marraine" });
+    const made = await guest(link.body.token, "POST", `/items/${scarf}/contributions`, {
+      payload: { guestName: "Marraine" },
+    });
+    expect(made.status).toBe(201);
+
+    // Received is not enough in manual mode
+    await manage(owner, "PATCH", `/items/${scarf}`, { status: "received" });
+    const sealed = (await guest(link.body.token, "GET", "/view", { cookie: owner })).body;
+    expect(sealed.items[0].funding).toBeNull();
+    await manage(owner, "PATCH", `/items/${scarf}`, { status: "open" });
+
+    const lifted = await manage(owner, "POST", `/lists/${list.id}/reveal`);
+    expect(lifted.body).toMatchObject({ secretLifted: true });
+    expect((await manage(owner, "POST", `/lists/${list.id}/reveal`)).body).toMatchObject({
+      secretLifted: true,
+    });
+    const view = (await guest(link.body.token, "GET", "/view", { cookie: owner })).body;
+    expect(view.items[0].funding).toMatchObject({ contributors: [{ name: "Marraine" }] });
+    const history = (await manage(owner, "GET", `/items/${scarf}/history`)).body as { type: string }[];
+    expect(history.map((entry) => entry.type)).toContain("reserved");
+
+    const late = await guest(link.body.token, "POST", `/items/${scarf}/contributions`, {
+      payload: { guestName: "Retard" },
+    });
+    expect(late.body).toEqual({ error: "list_closed" });
+    const withdraw = await guest(link.body.token, "DELETE", `/contributions/${made.body.contribution.id}`, {
+      headers: { "x-withdraw-key": made.body.withdrawKey },
+    });
+    expect(withdraw.body).toEqual({ error: "list_closed" });
+    expect((await manage(owner, "PATCH", `/lists/${list.id}`, { revealMode: "received" })).body).toEqual({
+      error: "secret_already_lifted",
+    });
+    expect((await manage(cousin, "POST", `/lists/${list.id}/reveal`)).status).toBe(404);
+  });
 });

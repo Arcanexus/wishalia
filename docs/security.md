@@ -8,10 +8,10 @@ The owner of a list never sees the contributions to their items: no amount, no n
 percentage, no history, until they lift the secret after the event. The rule is enforced **on the
 server**, by a single function of `@wishalia/domain` that every API calls, and covered by tests.
 
-| Viewer | Recognised by                                                                 | Sees the contributions                                                                                                                                               |
-| ------ | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Owner  | their session, or the device marker set when they create or copy a share link | only once they lift the secret, possible from the end of the event day plus the reveal delay (3 days by default); without an event, once they mark the item received |
-| Guest  | a valid share link (not revoked, not expired)                                 | yes, before and after the event                                                                                                                                      |
+| Viewer | Recognised by                                                                 | Sees the contributions                                                                                                                                                                                                                     |
+| ------ | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Owner  | their session, or the device marker set when they create or copy a share link | only once they lift the secret, possible from the end of the event day plus the reveal delay (3 days by default); without an event, as the list says: once they mark the item received (default), or once they lift the secret of the list |
+| Guest  | a valid share link (not revoked, not expired)                                 | yes, before and after the event                                                                                                                                                                                                            |
 
 Without a valid link, the public view shows nothing at all: every `/public` route but a ping
 answers `404`. The device marker is an HMAC of the owner's id with `AUTH_SECRET`, so nobody can

@@ -1,5 +1,5 @@
 {
-  "id": "a98f6b57-53fc-459f-84b3-7b78bf06b15c",
+  "id": "61d3182e-5306-4b9d-93c2-69e3c3ca3a7f",
   "prevId": "984dfbd2-e3e9-4241-a4fe-a5d82287e92f",
   "version": "7",
   "dialect": "postgresql",
@@ -1159,6 +1159,20 @@
           "primaryKey": false,
           "notNull": false
         },
+        "reveal_mode": {
+          "name": "reveal_mode",
+          "type": "list_reveal_mode",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'received'"
+        },
+        "revealed_at": {
+          "name": "revealed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -1439,6 +1453,11 @@
       "name": "history_visibility",
       "schema": "public",
       "values": ["owner", "guests", "sealed"]
+    },
+    "public.list_reveal_mode": {
+      "name": "list_reveal_mode",
+      "schema": "public",
+      "values": ["received", "manual"]
     },
     "public.list_theme": {
       "name": "list_theme",

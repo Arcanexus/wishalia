@@ -3,7 +3,7 @@ import { and, asc, count, eq, isNull, sql } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
-import { first, notFound, parse, userId } from "../../http.js";
+import { first, HttpError, notFound, parse, userId } from "../../http.js";
 import type { ManageDeps } from "./index.js";
 import { ownerItem, ownerList } from "./serialize.js";
 
@@ -15,6 +15,8 @@ const listPatch = z
     archived: z.boolean(),
     /** Forced on everyone who opens the list; null lets each person's theme apply. */
     theme: z.enum(["neutral", "christmas"]).nullable(),
+    /** How the secret of the contributions without an event lifts (frozen once lifted). */
+    revealMode: z.enum(["received", "manual"]),
   })
   .partial()
   .strict();
@@ -23,7 +25,7 @@ const idParams = z.object({ listId: z.uuid() });
 /** The default list of a new owner, created by the first quick add. */
 export const DEFAULT_LIST_NAME = "Mes envies";
 
-export const listRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db }) => {
+export const listRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now }) => {
   /** The owner's lists, in their order, with the number of open items. */
   app.get("/lists", async (request) => {
     const ownerId = userId(request);
@@ -59,6 +61,14 @@ export const listRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db }) =>
   app.patch("/lists/:listId", async (request) => {
     const { listId } = parse(idParams, request.params);
     const patch = parse(listPatch, request.body);
+    const mine = and(eq(schema.wishLists.id, listId), eq(schema.wishLists.ownerId, userId(request)));
+    if (patch.revealMode !== undefined) {
+      const [before] = await db.select().from(schema.wishLists).where(mine);
+      if (!before) throw notFound();
+      if (before.revealedAt && patch.revealMode !== before.revealMode) {
+        throw new HttpError(409, "secret_already_lifted");
+      }
+    }
     const [list] = await db
       .update(schema.wishLists)
       .set({
@@ -66,11 +76,27 @@ export const listRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db }) =>
         ...(patch.position !== undefined ? { position: patch.position } : {}),
         ...(patch.archived !== undefined ? { archivedAt: patch.archived ? new Date() : null } : {}),
         ...(patch.theme !== undefined ? { theme: patch.theme } : {}),
+        ...(patch.revealMode !== undefined ? { revealMode: patch.revealMode } : {}),
       })
-      .where(and(eq(schema.wishLists.id, listId), eq(schema.wishLists.ownerId, userId(request))))
+      .where(mine)
       .returning();
     if (!list) throw notFound();
     return ownerList(list, 0);
+  });
+
+  /**
+   * Lifts the secret of the contributions made without an event to the list's items, in `manual`
+   * mode: from then on the owner sees who gave what. Final, and possible whenever they decide.
+   */
+  app.post("/lists/:listId/reveal", async (request) => {
+    const { listId } = parse(idParams, request.params);
+    const mine = and(eq(schema.wishLists.id, listId), eq(schema.wishLists.ownerId, userId(request)));
+    const [list] = await db.select().from(schema.wishLists).where(mine);
+    if (!list) throw notFound();
+    if (list.revealMode !== "manual") throw new HttpError(409, "reveal_on_received");
+    if (list.revealedAt) return ownerList(list, 0);
+    const row = first(await db.update(schema.wishLists).set({ revealedAt: now() }).where(mine).returning());
+    return ownerList(row, 0);
   });
 
   /** The items of a list, open ones first in their order, then received and archived ones. */

@@ -22,12 +22,14 @@ All notable changes to this project are documented here. The format follows
 - Public view API (`/public/*`): the view of a share link, contributions and reservations (pools
   with overshoot, unique and quantity items, repeatable items per event) and their withdrawal by
   their author. A contribution may have no event, since a list is not always tied to one; its
-  secret then lifts when the owner marks the item received. The owner gets no funding until every
+  secret then lifts as the list says (`revealMode`): when the owner marks the item received
+  (default), or when they lift the secret of the list (`POST /manage/lists/:id/reveal`). The owner gets no funding until every
   secret of an item is lifted, and cannot contribute. See [Public view API](docs/public-api.md).
 - `@wishalia/domain`: `isShareLinkActive`, `refuseContribution`, and `canSeeContributions` now takes
   the secret of an event or of an item (`SecretState`).
-- Migration `0004_contributions_without_event`: the event of a contribution becomes optional, and
-  the hash of the key a guest without an account uses to withdraw their contribution.
+- Migration `0004_contributions_without_event`: the event of a contribution becomes optional, the
+  list's `reveal_mode` and `revealed_at`, and the hash of the key a guest without an account uses
+  to withdraw their contribution.
 - Social preview image (`docs/images/social-preview.png`, 1280 × 640) for the repository and the
   website's Open Graph tags, and a dark logo variant used by the README and the website in dark
   mode.

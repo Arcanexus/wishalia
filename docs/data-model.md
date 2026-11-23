@@ -42,11 +42,11 @@ The anti-spoil functions are described in [Security](security.md).
 
 ## History visibility
 
-| Visibility | Shown to guests | Shown to the owner                                                         | Used for                                          |
-| ---------- | --------------- | -------------------------------------------------------------------------- | ------------------------------------------------- |
-| `owner`    | yes             | yes                                                                        | Creation, edits, price changes, moves.            |
-| `guests`   | yes             | never                                                                      | Guest-side events that must stay hidden for good. |
-| `sealed`   | yes             | once the secret is lifted (event, or item received when there is no event) | Contributions and reservations.                   |
+| Visibility | Shown to guests | Shown to the owner                                                                               | Used for                                          |
+| ---------- | --------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| `owner`    | yes             | yes                                                                                              | Creation, edits, price changes, moves.            |
+| `guests`   | yes             | never                                                                                            | Guest-side events that must stay hidden for good. |
+| `sealed`   | yes             | once the secret is lifted (event; without one, item received or list revealed, as the list says) | Contributions and reservations.                   |
 
 ## Commands
 

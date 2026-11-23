@@ -11,7 +11,6 @@ import {
   reservedUnits,
   timesGiven,
   totalFunded,
-  type RevealState,
   type SecretState,
   type ViewerRole,
 } from "@wishalia/domain";
@@ -20,6 +19,7 @@ import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 
 import type { Tx } from "../../history.js";
 import { HttpError } from "../../http.js";
+import { itemSecret, revealState } from "../../secrets.js";
 import type { ShareContext } from "./index.js";
 
 type WishRow = typeof schema.wishes.$inferSelect;
@@ -30,12 +30,6 @@ export function shareOf(request: FastifyRequest): ShareContext {
   if (!request.share) throw new HttpError(404, "link_not_found");
   return request.share;
 }
-
-export const revealState = (event: EventRow): RevealState => ({
-  eventDate: event.date,
-  revealDelayDays: event.revealDelayDays,
-  revealedAt: event.revealedAt,
-});
 
 /**
  * An item the link opens, or undefined: an item of its list, or of its event. Archived items and
@@ -103,7 +97,11 @@ interface ViewData {
   itemEvents: Map<string, EventRow[]>;
   /** Item id → its active contributions, every event. */
   contributions: Map<string, ContributionRow[]>;
+  /** List id → the list, for the secret of the contributions without an event. */
+  lists: Map<string, ListRow>;
 }
+
+type ListRow = typeof schema.wishLists.$inferSelect;
 
 async function loadView(db: Database, link: LinkRow): Promise<ViewData> {
   const [owner] = await db
@@ -142,6 +140,13 @@ async function loadView(db: Database, link: LinkRow): Promise<ViewData> {
   }
 
   const ids = items.map((item) => item.id);
+  const listIds = [...new Set(items.map((item) => item.listId))];
+  const lists = new Map<string, ListRow>();
+  if (listIds.length > 0) {
+    for (const row of await db.select().from(schema.wishLists).where(inArray(schema.wishLists.id, listIds))) {
+      lists.set(row.id, row);
+    }
+  }
   const itemEvents = new Map<string, EventRow[]>();
   const contributions = new Map<string, ContributionRow[]>();
   if (ids.length > 0) {
@@ -177,7 +182,7 @@ async function loadView(db: Database, link: LinkRow): Promise<ViewData> {
       contributions.set(row.wishId, [...(contributions.get(row.wishId) ?? []), row]);
     }
   }
-  return { title, ownerName: owner.displayName, items, itemEvents, contributions };
+  return { title, ownerName: owner.displayName, items, itemEvents, contributions, lists };
 }
 
 /**
@@ -188,6 +193,7 @@ async function loadView(db: Database, link: LinkRow): Promise<ViewData> {
  */
 function publicFunding(
   wish: WishRow,
+  list: ListRow | undefined,
   events: EventRow[],
   contributions: ContributionRow[],
   context: { viewer: ViewerRole; sessionUserId: string | null; now: Date; eventId?: string },
@@ -201,7 +207,11 @@ function publicFunding(
     if (contribution.event) relevant.set(contribution.event.id, revealState(contribution.event));
   }
   if (events.length === 0 || contributions.some((contribution) => contribution.eventId === null)) {
-    relevant.set("item", { itemReceived: wish.status === "received" });
+    // A list that cannot be found keeps the secret
+    relevant.set(
+      "item",
+      list ? itemSecret(wish, list) : { mode: "manual", itemReceived: false, listRevealedAt: null },
+    );
   }
   const visible = [...relevant.values()].every((state) => canSeeContributions(viewer, state, now));
   if (!visible) return null;
@@ -300,12 +310,18 @@ export const viewRoutes: FastifyPluginAsync<{ db: Database; now: () => Date }> =
           quantity: wish.quantity,
           status: wish.status,
           eventIds: itemEvents.map((event) => event.id),
-          funding: publicFunding(wish, itemEvents, data.contributions.get(wish.id) ?? [], {
-            viewer,
-            sessionUserId: sessionUser?.id ?? null,
-            now: at,
-            ...(eventId ? { eventId } : {}),
-          }),
+          funding: publicFunding(
+            wish,
+            data.lists.get(wish.listId),
+            itemEvents,
+            data.contributions.get(wish.id) ?? [],
+            {
+              viewer,
+              sessionUserId: sessionUser?.id ?? null,
+              now: at,
+              ...(eventId ? { eventId } : {}),
+            },
+          ),
         };
       }),
     };

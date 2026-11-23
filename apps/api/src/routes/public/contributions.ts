@@ -1,5 +1,5 @@
 import { type Database, schema } from "@wishalia/db";
-import { cents, isSecretLifted, refuseContribution } from "@wishalia/domain";
+import { cents, isLifted, isSecretLifted, refuseContribution } from "@wishalia/domain";
 import { and, eq } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
@@ -7,7 +7,8 @@ import { z } from "zod";
 import { recordHistory } from "../../history.js";
 import { first, HttpError, notFound, parse } from "../../http.js";
 import { hashToken, isWellFormedToken, newToken } from "../../tokens.js";
-import { eventsOfItem, itemInView, revealState, shareOf } from "./view.js";
+import { itemSecret, revealState } from "../../secrets.js";
+import { eventsOfItem, itemInView, shareOf } from "./view.js";
 
 /** The header that carries the withdraw key of a guest without an account. */
 export const WITHDRAW_KEY_HEADER = "x-withdraw-key";
@@ -69,6 +70,15 @@ export const contributionRoutes: FastifyPluginAsync<{ db: Database; now: () => D
         if (!event) throw notFound();
       }
       if (event && isSecretLifted(revealState(event), at)) throw new HttpError(409, "event_closed");
+      if (!event) {
+        // Without an event, the list keeps the secret: once lifted by hand, it takes nothing more
+        const list = first(
+          await tx.select().from(schema.wishLists).where(eq(schema.wishLists.id, wish.listId)),
+        );
+        if (list.revealMode === "manual" && isLifted(itemSecret(wish, list), at)) {
+          throw new HttpError(409, "list_closed");
+        }
+      }
 
       const active = await tx
         .select({
@@ -176,8 +186,12 @@ export const contributionRoutes: FastifyPluginAsync<{ db: Database; now: () => D
       if (!wish) throw notFound();
       if (contribution.status === "withdrawn") return;
       if (contribution.eventId === null) {
-        // Without an event, the item keeps the secret: once received, nothing changes any more
+        // Without an event, the item and its list keep the secret: once lifted, nothing changes
         if (wish.status !== "open") throw new HttpError(409, "item_closed");
+        const list = first(
+          await tx.select().from(schema.wishLists).where(eq(schema.wishLists.id, wish.listId)),
+        );
+        if (isLifted(itemSecret(wish, list), at)) throw new HttpError(409, "list_closed");
       } else {
         const [event] = await tx
           .select()

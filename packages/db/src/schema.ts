@@ -36,6 +36,7 @@ export const contributionStatus = pgEnum("contribution_status", ["active", "with
 export const shareScope = pgEnum("share_scope", ["list", "event"]);
 export const historyVisibility = pgEnum("history_visibility", ["owner", "guests", "sealed"]);
 export const listTheme = pgEnum("list_theme", ["neutral", "christmas"]);
+export const listRevealMode = pgEnum("list_reveal_mode", ["received", "manual"]);
 
 /** An account. Owner of its lists, guest on the others: the role is per list or event. */
 export const users = pgTable("users", {
@@ -149,6 +150,13 @@ export const wishLists = pgTable(
      * apply. The light or dark mode always stays personal (docs/branding.md).
      */
     theme: listTheme("theme"),
+    /**
+     * How the secret of the contributions made without an event lifts: when the owner marks the
+     * item received (default), or when they lift the secret of the list themselves.
+     */
+    revealMode: listRevealMode("reveal_mode").notNull().default("received"),
+    /** When the owner lifted the secret of the list (manual mode), null while it is kept. */
+    revealedAt: timestamp("revealed_at", { withTimezone: true }),
     createdAt: createdAt(),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
   },

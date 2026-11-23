@@ -17,22 +17,23 @@ secret is lifted (`canSeeHistoryEntry` in `@wishalia/domain`).
 
 JSON only: `{ "error": "<code>" }`, with `issues` (`path`, `message`) for a `400`.
 
-| Status | `error`                                                           | When                                                         |
-| ------ | ----------------------------------------------------------------- | ------------------------------------------------------------ |
-| 400    | `invalid_request`                                                 | A field is missing, invalid or unknown; an id is not a uuid. |
-| 401    | `unauthenticated`                                                 | No valid session.                                            |
-| 404    | `not_found`                                                       | Missing, or someone else's.                                  |
-| 409    | `too_early`, `secret_already_lifted`, `repeatable_never_received` | See the routes below.                                        |
-| 500    | `internal`                                                        | Never with details: they go to the API log.                  |
+| Status | `error`                                                                                 | When                                                         |
+| ------ | --------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 400    | `invalid_request`                                                                       | A field is missing, invalid or unknown; an id is not a uuid. |
+| 401    | `unauthenticated`                                                                       | No valid session.                                            |
+| 404    | `not_found`                                                                             | Missing, or someone else's.                                  |
+| 409    | `too_early`, `secret_already_lifted`, `repeatable_never_received`, `reveal_on_received` | See the routes below.                                        |
+| 500    | `internal`                                                                              | Never with details: they go to the API log.                  |
 
 ## Lists
 
-| Route                         | Body                                    | Answer                                                                                                                                                                             |
-| ----------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /manage/lists`           |                                         | The lists in their order, with `itemCount` (open items).                                                                                                                           |
-| `POST /manage/lists`          | `name`                                  | `201`, the list, placed last.                                                                                                                                                      |
-| `PATCH /manage/lists/:id`     | `name`, `position`, `archived`, `theme` | The list. An archived list leaves `GET /manage/lists`. `theme` (`neutral`, `christmas` or `null`) is forced on everyone who opens the list; the light or dark mode stays personal. |
-| `GET /manage/lists/:id/items` |                                         | Its items: open first in their order, then received, archived.                                                                                                                     |
+| Route                           | Body                                                  | Answer                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /manage/lists`             |                                                       | The lists in their order, with `itemCount` (open items).                                                                                                                                                                                                                                                                     |
+| `POST /manage/lists`            | `name`                                                | `201`, the list, placed last.                                                                                                                                                                                                                                                                                                |
+| `PATCH /manage/lists/:id`       | `name`, `position`, `archived`, `theme`, `revealMode` | The list. An archived list leaves `GET /manage/lists`. `theme` (`neutral`, `christmas` or `null`) is forced on everyone who opens the list; the light or dark mode stays personal. `revealMode` (`received` or `manual`) says how the secret of the contributions without an event lifts, and is frozen once lifted (`409`). |
+| `POST /manage/lists/:id/reveal` |                                                       | `manual` mode only (`409 reveal_on_received` otherwise): lifts that secret, for good.                                                                                                                                                                                                                                        |
+| `GET /manage/lists/:id/items`   |                                                       | Its items: open first in their order, then received, archived.                                                                                                                                                                                                                                                               |
 
 ## Items
 

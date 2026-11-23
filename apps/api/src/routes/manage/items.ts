@@ -16,6 +16,7 @@ import { type HistoryEntry, recordHistory, type Tx } from "../../history.js";
 import { first, HttpError, notFound, parse, userId } from "../../http.js";
 import type { ManageDeps } from "./index.js";
 import { DEFAULT_LIST_NAME } from "./lists.js";
+import { itemSecret } from "../../secrets.js";
 import { ownerItem } from "./serialize.js";
 
 const cents = z.number().int().min(0).max(100_000_000);
@@ -242,6 +243,7 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now 
   app.get("/items/:itemId/history", async (request) => {
     const { itemId } = parse(itemParams, request.params);
     const item = await ownedItem(db, userId(request), itemId);
+    const list = first(await db.select().from(schema.wishLists).where(eq(schema.wishLists.id, item.listId)));
 
     const entries = await db
       .select()
@@ -269,8 +271,8 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now 
           : typeof eventId === "string"
             ? // An event that cannot be found keeps its secret
               { eventDate: "9999-12-31", revealDelayDays: 0, revealedAt: null }
-            : // A contribution without an event: the item keeps the secret until it is received
-              { itemReceived: item.status === "received" };
+            : // A contribution without an event: its item and list keep the secret
+              itemSecret(item, list);
         return canSeeHistoryEntry(entry.visibility, "owner", state, at);
       })
       .map((entry) => ({
