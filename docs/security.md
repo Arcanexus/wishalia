@@ -43,6 +43,8 @@ The API is internal: only the two frontends reach it, server side, and a Network
 - Sign-in: no password anywhere; OIDC, passkeys and single-use magic links (stored hashed), on
   invitation only. Origin and CSRF checks always on, rate limit on `/auth/*`. See
   [Authentication](authentication.md).
+- Ownership: every `/manage` route checks the owner and answers 404 for anything else, so that ids
+  cannot be probed. Stored links are cleaned and limited to `http(s)`. Errors never carry details.
 - Share links: only the SHA-256 hash of a token is stored, so a database leak opens no list.
 - History: `item_events` is append-only, enforced by a database trigger.
 - Metrics: `/metrics` listens on a port of its own that the ingress never routes, and only the

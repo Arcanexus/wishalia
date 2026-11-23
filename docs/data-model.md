@@ -6,7 +6,7 @@ versioned migrations of `packages/db/migrations`. Amounts are integers in cents.
 | Table                | Role                                                                                                                                |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `users`              | An account. Owner of its lists, guest on the others: the role is per list or event. A deleted account is anonymised, never removed. |
-| `wish_lists`         | A durable list ("Books", "Home"), ordered by `position`.                                                                            |
+| `wish_lists`         | A durable list ("Books", "Home"), ordered by `position`, with an optional forced `theme`.                                           |
 | `wishes`             | An item: `kind` (`unique`, `quantity`, `pool`), `repeatable`, price, pool target, quantity, optional series volume.                 |
 | `series`             | An ordered group of items (book volumes), with the external ids (ISBN, Open Library).                                               |
 | `events`             | A dated occasion (`birthday`, `christmas`, `other`), its reveal delay and when the secret was lifted.                               |

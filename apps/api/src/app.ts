@@ -6,9 +6,10 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { createAuth } from "./auth/auth.js";
 import type { Mailer } from "./auth/mailer.js";
 import type { Config } from "./config.js";
+import { registerErrorHandler } from "./http.js";
 import { authRoutes } from "./routes/auth.js";
 import { healthRoutes } from "./routes/health.js";
-import { manageRoutes } from "./routes/manage.js";
+import { manageRoutes } from "./routes/manage/index.js";
 import { publicRoutes } from "./routes/public.js";
 
 export type Scope = "manage" | "public";
@@ -25,9 +26,14 @@ export interface AppDeps {
   db: Database;
   metrics?: HttpMetrics;
   mailer?: Mailer | undefined;
+  /** The clock, for the reveal rules. Tests move it. */
+  now?: () => Date;
 }
 
-export async function buildApp(config: Config, { db, metrics, mailer }: AppDeps): Promise<FastifyInstance> {
+export async function buildApp(
+  config: Config,
+  { db, metrics, mailer, now = () => new Date() }: AppDeps,
+): Promise<FastifyInstance> {
   const app = Fastify({
     logger: config.NODE_ENV === "test" ? false : { level: config.LOG_LEVEL },
     // Behind the ingress controller, which terminates TLS
@@ -38,6 +44,7 @@ export async function buildApp(config: Config, { db, metrics, mailer }: AppDeps)
 
   app.decorateRequest("scope", null);
   app.decorateRequest("user", null);
+  registerErrorHandler(app);
 
   const auth = createAuth({ config, db, mailer, log: (message) => app.log.info(message) });
 
@@ -61,7 +68,7 @@ export async function buildApp(config: Config, { db, metrics, mailer }: AppDeps)
 
   await app.register(healthRoutes, { config, db });
   await app.register(authRoutes, { prefix: "/auth", auth, config });
-  await app.register(manageRoutes, { prefix: "/manage", auth });
+  await app.register(manageRoutes, { prefix: "/manage", auth, db, now });
   await app.register(publicRoutes, { prefix: "/public" });
 
   return app;
