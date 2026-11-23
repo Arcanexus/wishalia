@@ -31,6 +31,10 @@ the owner gets no notification of a contribution, and no Prometheus metric descr
 | API routes        | `/public/*`                | `/manage/*`              |
 | Contribution data | after the anti-spoil check | never                    |
 
+The [REST API v1](rest-api.md), when on, has its own host (`hosts.api`): the ingress only forwards
+`/v1` there, and the API refuses any other route on that host. It authenticates by personal access
+token only, never by cookie, and has the rights of the management app: no contribution data.
+
 The API is internal: only the two frontends reach it, server side, and a NetworkPolicy enforces it.
 
 ## Defences in place
@@ -47,6 +51,8 @@ The API is internal: only the two frontends reach it, server side, and a Network
   [Authentication](authentication.md).
 - Ownership: every `/manage` route checks the owner and answers 404 for anything else, so that ids
   cannot be probed. Stored links are cleaned and limited to `http(s)`. Errors never carry details.
+- Personal access tokens: only their SHA-256 hash is stored, they always expire (a year at most),
+  can be read-only, revoked, and are rate limited per token.
 - Share links: only the SHA-256 hash of a token is stored, so a database leak opens no list. The
   token travels in a header (`X-Share-Token`) between the public view and the API, never in an API
   URL. The withdraw key of a contribution is stored the same way.

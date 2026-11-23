@@ -11,7 +11,7 @@ metrics (`wishalia_`). Branding (logo, palettes, fonts, themes): `docs/branding.
    API, with tests. `/manage/*` responses never carry contribution data.
 2. **Separation**: two frontends (`web-app`, `web-public`), two hosts, two API scopes
    (`/manage`, `/public`). These scopes are internal, only the frontends call them. The one
-   exception (planned): the public REST API v1 on its own host, authenticated by personal access
+   exception: the public REST API v1 (`/v1`) on its own host, authenticated by personal access
    tokens (hash stored, expiry, rate limit), with `/manage` rights and never any contribution data.
    Prometheus `/metrics` is on its own port, never on the ingress, and no metric describes
    contributions.

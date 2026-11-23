@@ -2,6 +2,9 @@
 {{- if eq .Values.hosts.public .Values.hosts.app }}
 {{- fail "hosts.public and hosts.app must differ: the public view and the management app never share a host" }}
 {{- end }}
+{{- if and .Values.hosts.api (has .Values.hosts.api (list .Values.hosts.public .Values.hosts.app)) }}
+{{- fail "hosts.api must differ from hosts.public and hosts.app: the API v1 has its own host" }}
+{{- end }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -30,6 +33,19 @@ spec:
             backend:
               service:
                 name: {{ include "wishalia.fullname" $ }}-{{ $component }}
+                port:
+                  name: http
+    {{- end }}
+    {{- with .Values.hosts.api }}
+    # The API v1 only: /manage, /public and /auth stay internal (the API refuses them on this host too)
+    - host: {{ . | quote }}
+      http:
+        paths:
+          - path: /v1
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "wishalia.fullname" $ }}-api
                 port:
                   name: http
     {{- end }}

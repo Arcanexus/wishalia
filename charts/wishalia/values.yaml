@@ -24,6 +24,20 @@ hosts:
   public: wishalia.example.com
   # Management app, e.g. app.wishalia.example.com
   app: app.wishalia.example.com
+  # REST API v1 for scripts and home automation, e.g. api.wishalia.example.com. Empty: the API v1
+  # is off. The ingress only forwards /v1 on this host.
+  api: ""
+
+# REST API v1 (personal access tokens, made in the management app). On only when hosts.api is set.
+apiV1:
+  # Requests per minute and per token, counted by each API replica
+  rateLimit: 120
+  # Who may reach the API pods on its HTTP port when networkPolicy.enabled, besides the two
+  # frontends: the ingress controller. NetworkPolicy "from" peers; the default is ingress-nginx.
+  allowFrom:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
 
 # Sign-in (Better Auth in the API). The secrets go in existingSecret: AUTH_SECRET (32+ characters),
 # OIDC_CLIENT_SECRET, SMTP_URL. See docs/configuration.md.
@@ -97,9 +111,10 @@ ingress:
   # TLS secrets: one per host, or a wildcard secret for both
   tls: []
   #  - secretName: wishalia-tls
-  #    hosts: [wishalia.example.com, app.wishalia.example.com]
+  #    hosts: [wishalia.example.com, app.wishalia.example.com, api.wishalia.example.com]
 
-# The API is internal: only the two frontends call it (server side). Only the frontends are exposed.
+# The API is internal: only the two frontends call it (server side). Only the frontends are exposed,
+# and the API v1 when hosts.api is set (apiV1.allowFrom).
 networkPolicy:
   enabled: true
 

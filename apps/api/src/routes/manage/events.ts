@@ -15,13 +15,13 @@ const eventFields = {
   date: z.iso.date(),
   revealDelayDays: z.number().int().min(0).max(365),
 };
-const eventInput = z.object({
+export const eventInput = z.object({
   ...eventFields,
   kind: eventFields.kind.default("other"),
   revealDelayDays: eventFields.revealDelayDays.default(DEFAULT_REVEAL_DELAY_DAYS),
 });
 // No default here: a field left out of a patch stays as it is
-const eventPatch = z.object(eventFields).partial().strict();
+export const eventPatch = z.object(eventFields).partial().strict();
 const eventParams = z.object({ eventId: z.uuid() });
 const eventItemParams = z.object({ eventId: z.uuid(), itemId: z.uuid() });
 

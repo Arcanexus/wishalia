@@ -261,6 +261,34 @@ export const eventWishes = pgTable(
   (table) => [primaryKey({ columns: [table.eventId, table.wishId] })],
 );
 
+/**
+ * A personal access token of the REST API v1, made by an owner for a script or home automation.
+ * Only the SHA-256 hash of the token is stored; it always expires, and can be read-only.
+ */
+export const apiTokens = pgTable(
+  "api_tokens",
+  {
+    id: id(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => users.id),
+    /** What it is for ("Home Assistant"). */
+    name: text("name").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    /** The first characters of the token, to recognise it in the list ("wsh_Ab3d"). */
+    prefix: text("prefix").notNull(),
+    readOnly: boolean("read_only").notNull().default(false),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex("api_tokens_token_idx").on(table.tokenHash),
+    index("api_tokens_owner_idx").on(table.ownerId, table.createdAt),
+  ],
+);
+
 /** A share link. Only the SHA-256 hash of its token is stored: a database leak opens no list. */
 export const shareLinks = pgTable(
   "share_links",

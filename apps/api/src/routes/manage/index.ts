@@ -4,6 +4,7 @@ import type { FastifyPluginAsync } from "fastify";
 import type { Auth } from "../../auth/auth.js";
 import { toHeaders } from "../../auth/fastify.js";
 import type { Config } from "../../config.js";
+import { apiTokenRoutes } from "./api-tokens.js";
 import { eventRoutes } from "./events.js";
 import { itemRoutes } from "./items.js";
 import { listRoutes } from "./lists.js";
@@ -63,4 +64,5 @@ export const manageRoutes: FastifyPluginAsync<ShareDeps & { auth: Auth }> = asyn
   await app.register(itemRoutes, { db, now });
   await app.register(eventRoutes, { db, now });
   await app.register(shareLinkRoutes, { config, db, now, secret });
+  await app.register(apiTokenRoutes, { db, now });
 };

@@ -22,12 +22,12 @@ import { ownerItem } from "./serialize.js";
 const cents = z.number().int().min(0).max(100_000_000);
 
 /** The quick add (spec §5.1): one field, a URL and/or text. The list is optional. */
-const quickAddInput = z.object({
+export const quickAddInput = z.object({
   input: z.string().max(4000),
   listId: z.uuid().optional(),
 });
 
-const itemPatch = z
+export const itemPatch = z
   .object({
     title: z.string().trim().min(1).max(MAX_TITLE_LENGTH),
     url: z.string().max(2000).nullable(),

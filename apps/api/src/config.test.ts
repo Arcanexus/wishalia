@@ -47,6 +47,17 @@ describe("loadConfig: auth", () => {
     );
   });
 
+  it("keeps the API v1 off by default, and on its own https host", () => {
+    expect(loadConfig(production).API_ORIGIN).toBeUndefined();
+    expect(loadConfig({ ...production, API_ORIGIN: "https://api.wishalia.example" }).API_RATE_LIMIT).toBe(
+      120,
+    );
+    expect(() => loadConfig({ ...production, API_ORIGIN: production.APP_ORIGIN })).toThrow(/its own host/);
+    expect(() => loadConfig({ ...production, API_ORIGIN: "http://api.wishalia.example" })).toThrow(
+      /API_ORIGIN/,
+    );
+  });
+
   it("needs a cookie domain that contains both hosts", () => {
     expect(loadConfig({ ...production, COOKIE_DOMAIN: ".wishalia.example" }).COOKIE_DOMAIN).toBe(
       ".wishalia.example",

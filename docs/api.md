@@ -2,8 +2,8 @@
 
 The routes of `/manage/*`, which the management app calls server side. The API is internal: these
 routes are not reachable from the internet (see [Architecture](architecture.md)). The routes of the
-share links are in [Public view API](public-api.md). The public REST API v1, with personal access
-tokens, comes later.
+share links are in [Public view API](public-api.md). The [REST API v1](rest-api.md), for scripts, serves
+the same routes with personal access tokens.
 
 Every route needs a session (see [Authentication](authentication.md)) and answers `401` without
 one. Everything belongs to an owner: a list, an item or an event of someone else answers `404`,
