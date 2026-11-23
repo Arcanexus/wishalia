@@ -6,7 +6,13 @@
 
   let { data, children } = $props();
 
-  const section = $derived(page.url.pathname.startsWith("/evenements") ? "events" : "lists");
+  const section = $derived(
+    page.url.pathname.startsWith("/evenements")
+      ? "events"
+      : page.url.pathname.startsWith("/partage")
+        ? "share"
+        : "lists",
+  );
   const modeLabels = { device: "comme l'appareil", light: "clair", dark: "sombre" } as const;
 </script>
 
@@ -21,6 +27,7 @@
       <a href={resolve("/(app)/evenements")} aria-current={section === "events" ? "page" : undefined}>
         Événements
       </a>
+      <a href={resolve("/(app)/partage")} aria-current={section === "share" ? "page" : undefined}>Partager</a>
     </nav>
     <div class="tools">
       <form method="POST" action="/preferences">
@@ -30,7 +37,22 @@
           class="secondary"
           aria-label="Affichage {modeLabels[data.mode]}. Passer en affichage {modeLabels[data.nextMode]}"
         >
-          <span aria-hidden="true">{data.mode === "dark" ? "☾" : data.mode === "light" ? "☀" : "◐"}</span>
+          <svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+            {#if data.mode === "dark"}
+              <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="currentColor" />
+            {:else if data.mode === "light"}
+              <circle cx="12" cy="12" r="4.5" fill="currentColor" />
+              <path
+                d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            {:else}
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
+              <path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" />
+            {/if}
+          </svg>
           <span class="label">Affichage {modeLabels[data.mode]}</span>
         </button>
       </form>
@@ -51,7 +73,7 @@
     border-bottom: 1px solid var(--border);
   }
   .bar {
-    max-width: 52rem;
+    max-width: 64rem;
     margin: 0 auto;
     padding: 0.5rem 1rem;
     display: flex;
@@ -102,8 +124,8 @@
     margin: 0 auto;
     padding: 1.5rem 1rem 4rem;
   }
-  /* On a phone, the mode button keeps its symbol only; its name stays for screen readers */
-  @media (max-width: 30rem) {
+  /* Under a wide screen, the mode button keeps its symbol only; its name stays for screen readers */
+  @media (max-width: 64rem) {
     .label {
       display: none;
     }

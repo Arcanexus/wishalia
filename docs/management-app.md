@@ -1,7 +1,7 @@
 # Management app
 
 The management app (`hosts.app`) is where the owner of the lists works: signing in, their lists,
-the quick add, their events. It speaks French and says « vous ». It calls the [Management API](api.md) server side
+the quick add, their events and the links they share. It speaks French and says « vous ». It calls the [Management API](api.md) server side
 only: the browser never reaches the API.
 
 ![The lists and the quick add](images/app-lists.png)
@@ -63,6 +63,23 @@ must not see.
 
 ![Who gave what, once the secret is lifted](images/app-event-lifted-dark.png)
 
+## Sharing
+
+« Partager » (`/partage`) makes one link per guest or per group, « Mamie », « Les cousins », for a
+list or an event. A list page and an event page lead there with that one already chosen. A link may
+end on a chosen day; without one, it works until it is revoked.
+
+The link's address is shown **once**, right after it is made, with « Copier le lien » (and « Envoyer…
+» where the device can share): only its hash is kept, so it can never be shown again. Making a link
+also marks the device as the owner's (`__Secure-wishalia.owner_device`), so that the public view
+recognises them and spoils nothing, even without a session.
+
+![A new link, ready to copy](images/app-share.png)
+
+The active links list who each one is for, what it shares and until when. « Révoquer » asks once
+more, then the guest's link answers like an unknown one, for good. Revoked and expired links wait
+folded at the bottom.
+
 ## Themes and accessibility
 
 - The header button switches between the device's mode, light and dark. The choice is kept on the
@@ -76,4 +93,4 @@ must not see.
 
 ![A Christmas list on a phone, in dark mode](images/app-list-christmas-dark.png)
 
-Coming next: share links, settings (theme and mode stored with the account, passkeys, API tokens).
+Coming next: settings (theme and mode stored with the account, passkeys, API tokens).

@@ -23,7 +23,10 @@
 </svelte:head>
 
 <p class="back"><a href={resolve("/(app)")}>← Mes listes</a></p>
-<h1>{data.list.name}</h1>
+<div class="heading">
+  <h1>{data.list.name}</h1>
+  <a class="button secondary" href="{resolve('/(app)/partage')}?liste={data.list.id}">Partager cette liste</a>
+</div>
 
 <QuickAdd listName={data.list.name} result={form?.add ?? null} />
 
@@ -113,6 +116,17 @@
 {/if}
 
 <style>
+  .heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-bottom: 1rem;
+  }
+  .heading h1 {
+    margin: 0;
+  }
   .back {
     margin: 0 0 0.5rem;
   }

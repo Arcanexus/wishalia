@@ -69,3 +69,19 @@ export interface Gift {
   amountCents: number | null;
   units: number | null;
 }
+
+export interface ShareLink {
+  id: string;
+  scope: "list" | "event";
+  listId: string | null;
+  eventId: string | null;
+  /** Who the link is for: « Mamie », « Les cousins ». */
+  audience: string;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
+/** A link just made: its address is given once, never listed again. */
+export type CreatedShareLink = ShareLink & { token: string; url: string };
