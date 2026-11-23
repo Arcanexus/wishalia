@@ -15,8 +15,22 @@ All notable changes to this project are documented here. The format follows
   logo (five relatives in a circle around a gift). Nothing was deployed yet, so nothing breaks. The
   links point to `Arcanexus/wishalia`, the repository's new name.
 
+### Fixed
+
+- The OIDC callback URL in the documentation is `/auth/callback/oidc`.
+
 ### Added
 
+- Management app, first screens (see [Management app](docs/management-app.md)): signing in by
+  e-mail link or single sign-on (`/connexion`, button named by `auth.oidc.name` / `OIDC_NAME`),
+  signing out, the lists with their number of wishes, list creation, the quick add (shown at once,
+  undo offered when the link is already there) and a list page where items are marked received,
+  archived or put back. Neutral and Christmas themes in light and dark, the header button that
+  switches the mode (kept in the `wishalia.mode` cookie, applied server side without a flash), the
+  theme a list forces, Nunito and Inter. Every page passes axe (WCAG 2.2 AA) in both modes, on a
+  phone and a computer, and works without JavaScript.
+- `@wishalia/domain`: `resolveTheme`, `parseThemeChoice`, `parseModeChoice`, `nextMode`.
+- Chart: `auth.oidc.name`; `docs/chart-values.md` now lists the `auth.*` values.
 - REST API v1 (`/v1/*`) on its own host (`hosts.api`, off by default), for scripts and home
   automation: personal access tokens made, listed and revoked in `/manage/api-tokens` (hash stored,
   1 to 365 days, read-only option), the rights of `/manage` without any contribution data, a rate

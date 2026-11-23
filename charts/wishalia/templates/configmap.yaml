@@ -26,6 +26,7 @@ data:
   {{- with .Values.auth.oidc.issuer }}
   OIDC_ISSUER: {{ . | quote }}
   OIDC_CLIENT_ID: {{ required "auth.oidc.clientId is required with auth.oidc.issuer" $.Values.auth.oidc.clientId | quote }}
+  OIDC_NAME: {{ $.Values.auth.oidc.name | quote }}
   {{- end }}
   {{- with .Values.auth.mailFrom }}
   MAIL_FROM: {{ . | quote }}

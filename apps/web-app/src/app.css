@@ -1,0 +1,294 @@
+/*
+ * Wishalia design tokens (docs/branding.md). Two themes, neutral and Christmas, each in light and
+ * dark. <html> carries data-theme and data-mode (device, light or dark); "device" follows
+ * prefers-color-scheme. Every text colour meets WCAG 2.2 AA on the background it is used on.
+ */
+
+:root,
+:root[data-theme="neutral"] {
+  --bg: #f6f5f2;
+  --surface: #ffffff;
+  --text: #1e2329;
+  --text-2: #5c6570;
+  --border: #d5dce3;
+  --action: #33475b;
+  --on-action: #ffffff;
+  --link: #33475b;
+  --accent: #9f2a3b;
+  --on-accent: #ffffff;
+  --progress: #5b7a99;
+  --logo-heads: #33475b;
+  --logo-gift: #9f2a3b;
+  --logo-ribbon: #c9b79c;
+  --logo-ring: #d5dce3;
+  --focus: #33475b;
+  --danger: #9f2a3b;
+}
+
+:root[data-theme="christmas"] {
+  --bg: #fbf7f0;
+  --surface: #ffffff;
+  --text: #1f2430;
+  --text-2: #5b6170;
+  --border: #e3dccd;
+  --action: #1e5b3f;
+  --on-action: #ffffff;
+  --link: #1e5b3f;
+  --accent: #b91c1c;
+  --on-accent: #ffffff;
+  --progress: #e0a526;
+  --logo-heads: #1e5b3f;
+  --logo-gift: #b91c1c;
+  --logo-ribbon: #e0a526;
+  --logo-ring: #e3dccd;
+  --focus: #1e5b3f;
+  --danger: #b91c1c;
+}
+
+/* Dark, forced by the person */
+:root[data-theme="neutral"][data-mode="dark"] {
+  --bg: #15181c;
+  --surface: #1e232a;
+  --text: #eef0f2;
+  --text-2: #a3acb7;
+  --border: #343b45;
+  --action: #4a6a8a;
+  --link: #a9c4e0;
+  --accent: #b23a4b;
+  --progress: #8fb0d0;
+  --logo-heads: #a9c4e0;
+  --logo-gift: #d46a78;
+  --logo-ribbon: #d9c9ae;
+  --logo-ring: #343b45;
+  --focus: #a9c4e0;
+  --danger: #f08a97;
+}
+
+:root[data-theme="christmas"][data-mode="dark"] {
+  --bg: #121815;
+  --surface: #1c2621;
+  --text: #f4f1ea;
+  --text-2: #a9b5ae;
+  --border: #2f3d36;
+  --action: #2e7d57;
+  --link: #8fd3ae;
+  --accent: #c53030;
+  --progress: #e8b53a;
+  --logo-heads: #8fd3ae;
+  --logo-gift: #e5484d;
+  --logo-ribbon: #f3c969;
+  --logo-ring: #2f3d36;
+  --focus: #8fd3ae;
+  --danger: #f2a0a0;
+}
+
+/* Dark, following the device */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="neutral"][data-mode="device"] {
+    --bg: #15181c;
+    --surface: #1e232a;
+    --text: #eef0f2;
+    --text-2: #a3acb7;
+    --border: #343b45;
+    --action: #4a6a8a;
+    --link: #a9c4e0;
+    --accent: #b23a4b;
+    --progress: #8fb0d0;
+    --logo-heads: #a9c4e0;
+    --logo-gift: #d46a78;
+    --logo-ribbon: #d9c9ae;
+    --logo-ring: #343b45;
+    --focus: #a9c4e0;
+    --danger: #f08a97;
+  }
+
+  :root[data-theme="christmas"][data-mode="device"] {
+    --bg: #121815;
+    --surface: #1c2621;
+    --text: #f4f1ea;
+    --text-2: #a9b5ae;
+    --border: #2f3d36;
+    --action: #2e7d57;
+    --link: #8fd3ae;
+    --accent: #c53030;
+    --progress: #e8b53a;
+    --logo-heads: #8fd3ae;
+    --logo-gift: #e5484d;
+    --logo-ribbon: #f3c969;
+    --logo-ring: #2f3d36;
+    --focus: #8fd3ae;
+    --danger: #f2a0a0;
+  }
+}
+
+:root[data-mode="light"] {
+  color-scheme: light;
+}
+:root[data-mode="dark"] {
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Respects the size the person chose in their browser */
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter Variable", system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Nunito Variable", system-ui, sans-serif;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 0.5em;
+}
+
+h1 {
+  font-size: 1.9rem;
+}
+h2 {
+  font-size: 1.4rem;
+}
+
+a {
+  color: var(--link);
+  text-underline-offset: 0.15em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Large touch targets for every age (WCAG 2.5.8, and more) */
+button,
+.button,
+input,
+select {
+  font: inherit;
+  min-height: 48px;
+  border-radius: 10px;
+}
+
+button,
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 0 1.1rem;
+  border: 2px solid transparent;
+  background: var(--action);
+  color: var(--on-action);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+button.secondary,
+.button.secondary {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+button.accent {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0 0.9rem;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+input:focus-visible,
+select:focus-visible {
+  border-color: var(--focus);
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.muted {
+  color: var(--text-2);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 10;
+  background: var(--action);
+  color: var(--on-action);
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+}
+.skip-link:focus {
+  top: 1rem;
+}
+
+.notice {
+  border-left: 4px solid var(--action);
+  background: var(--surface);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+}
+.notice.error {
+  border-left-color: var(--danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

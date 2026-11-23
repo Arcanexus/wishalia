@@ -5,10 +5,29 @@ import { handle, init } from "./hooks.server.ts";
 
 type HandleInput = Parameters<typeof handle>[0];
 
-function request(routeId: string | null, url: string, status = 200): HandleInput {
+function request(
+  routeId: string | null,
+  url: string,
+  status = 200,
+  cookies: Record<string, string> = {},
+): HandleInput {
   return {
-    event: { request: new Request(`https://example.test${url}`), route: { id: routeId } },
-    resolve: async () => new Response("ok", { status }),
+    event: {
+      request: new Request(`https://example.test${url}`),
+      route: { id: routeId },
+      cookies: { get: (name: string) => cookies[name] },
+      locals: {},
+    },
+    resolve: async (
+      _event: unknown,
+      options?: { transformPageChunk?: (input: { html: string }) => string },
+    ) =>
+      new Response(
+        options?.transformPageChunk?.({
+          html: '<html data-theme="%wishalia.theme%" data-mode="%wishalia.mode%">',
+        }) ?? "ok",
+        { status },
+      ),
   } as unknown as HandleInput;
 }
 
@@ -32,6 +51,15 @@ describe("hooks", () => {
     );
     expect(text).toMatch(/_count\{component="web-app",method="GET",route="unmatched",status_code="404"\} 1/);
     expect(text).not.toContain("s3cr3t");
+  });
+
+  it("renders the person's theme and mode on <html>, from their cookies", async () => {
+    const response = await handle(
+      request("/", "/", 200, { "wishalia.theme": "christmas", "wishalia.mode": "dark" }),
+    );
+    expect(await response.text()).toBe('<html data-theme="christmas" data-mode="dark">');
+    const defaults = await handle(request("/", "/", 200, { "wishalia.theme": "pink" }));
+    expect(await defaults.text()).toMatch(/data-theme="(neutral|christmas)" data-mode="device"/);
   });
 
   it("starts no metrics server without METRICS_PORT", async () => {

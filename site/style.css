@@ -133,3 +133,36 @@ footer {
   color: var(--muted);
   text-align: center;
 }
+
+.shots {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.shots figure {
+  margin: 0;
+}
+
+.shots img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+
+.shots figcaption {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 40rem) {
+  .shots {
+    grid-template-columns: 1fr;
+  }
+  .shots .phone {
+    max-width: 16rem;
+  }
+}
