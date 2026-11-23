@@ -17,6 +17,18 @@ Five relatives in a circle around a gift: the family gathers around the present.
 - Variants: app icon (white heads on the action colour), single colour (one ink colour, white
   ribbon), and the Christmas variant where the ring becomes a holly wreath with berries.
 - Leave at least a quarter of the logo's width of free space around it.
+- On a dark background, use [`images/logo-dark.svg`](images/logo-dark.svg) (dark neutral palette).
+  The README and the website switch between the two with `prefers-color-scheme`.
+
+## Social preview
+
+![Wishalia social preview](images/social-preview.png)
+
+The image shown when a link to the repository or the website is shared (1280 × 640, GitHub's
+recommended size): logo, wordmark and tagline on the light neutral background. The source is
+[`images/social-preview.svg`](images/social-preview.svg); the PNG is rendered from it with Nunito
+and Inter. The website points to it in its Open Graph tags. For the repository, it is uploaded by
+hand in **Settings › General › Social preview** (GitHub has no API for it).
 
 ## Themes
 
