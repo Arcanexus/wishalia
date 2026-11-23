@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-label="Wishalia: self-hosted wishlists that keep the surprise">
+  <rect width="1280" height="640" fill="#f6f5f2"/>
+  <rect x="0" y="600" width="1280" height="40" fill="#33475b"/>
+  <g transform="translate(120 152) scale(3.5)">
+    <circle cx="48" cy="48" r="36" fill="none" stroke="#d5dce3" stroke-width="3"/>
+    <g fill="#33475b">
+      <circle cx="48" cy="12" r="8"/>
+      <circle cx="82.2" cy="36.9" r="8"/>
+      <circle cx="69.2" cy="77.1" r="8"/>
+      <circle cx="26.8" cy="77.1" r="8"/>
+      <circle cx="13.8" cy="36.9" r="8"/>
+    </g>
+    <rect x="32" y="41" width="32" height="9" rx="3" fill="#9f2a3b"/>
+    <rect x="35" y="52" width="26" height="18" rx="3" fill="#9f2a3b"/>
+    <rect x="45" y="41" width="6" height="29" fill="#c9b79c"/>
+    <circle cx="43" cy="36" r="4" fill="#9f2a3b"/>
+    <circle cx="53" cy="36" r="4" fill="#9f2a3b"/>
+  </g>
+  <text x="530" y="312" font-family="Nunito, sans-serif" font-weight="800" font-size="132" letter-spacing="-2.6" fill="#1e2329">Wish<tspan fill="#9f2a3b">alia</tspan></text>
+  <text x="534" y="380" font-family="Inter, sans-serif" font-weight="500" font-size="31" fill="#1e2329">Self-hosted wishlists that keep the surprise.</text>
+  <text x="534" y="436" font-family="Inter, sans-serif" font-weight="400" font-size="26" fill="#5c6570">Family events · gifts given together · no spoilers</text>
+</svg>
