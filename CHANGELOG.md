@@ -8,6 +8,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Sign-in with Better Auth in the API: OIDC for the owners, passkeys and magic links for the
+  family, no password. Invitation only (`OWNER_EMAILS`). A 30-day `__Secure-` session shared by the
+  two hosts (`COOKIE_DOMAIN`). See [Authentication](docs/authentication.md).
+- The management app proxies `/auth/*` to the internal API; `/manage/*` needs a session
+  (`/manage/me`).
+- Migration `0002_auth`: sessions, accounts, verifications and passkeys tables.
+- `/readyz` of the API checks the database.
+- Chart: `auth.*` values (owners, cookie domain, OIDC, magic link sender), with a guard on the
+  cookie domain.
 - Prometheus metrics on every component: `/metrics` on its own port (`METRICS_PORT`, 9464 in the
   chart), request durations per route pattern, Node.js process metrics, `wishlist_build_info`. No
   metric describes contributions. See [Monitoring](docs/monitoring.md).

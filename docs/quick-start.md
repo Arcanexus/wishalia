@@ -7,7 +7,17 @@ corepack enable
 pnpm install
 cp .env.example .env
 docker compose up -d     # PostgreSQL, MinIO (S3) and imgproxy
+pnpm build && pnpm --filter @wishlist/db db:migrate   # the tables (reads DATABASE_URL)
 pnpm dev                 # the four components, with hot reload
+```
+
+Put your email in `OWNER_EMAILS` (`.env`), then ask for a magic link: in development, the API
+prints the link in its log instead of sending an email.
+
+```sh
+curl -X POST http://localhost:3003/auth/sign-in/magic-link \
+  -H 'content-type: application/json' -H 'origin: http://localhost:3003' \
+  -d '{"email":"you@example.com"}'
 ```
 
 | Component                  | URL                           |

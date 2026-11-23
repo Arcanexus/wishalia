@@ -44,7 +44,7 @@ contribution data. `/manage` and `/public` stay internal.
 | Frontends  | SvelteKit 3, adapter-node | Little JavaScript sent to the browser: fast on a modest phone.             |
 | API        | Fastify 5                 | Fast, typed, schema-based validation.                                      |
 | Database   | PostgreSQL + Drizzle      | One store for the data and the job queue (no Redis).                       |
-| Auth       | Better Auth (coming)      | OIDC for the owner, passkeys and magic links for the family, no passwords. |
+| Auth       | Better Auth               | OIDC for the owner, passkeys and magic links for the family, no passwords. |
 | Amounts    | Integers in cents         | No floating point on money.                                                |
 | Deployment | One Helm chart, ArgoCD    | Matches the homelab GitOps flow.                                           |
 | Metrics    | prom-client, own port     | Prometheus standard; a separate port keeps `/metrics` off the ingress.     |

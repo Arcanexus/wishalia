@@ -12,6 +12,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
     }
   },
   "scripts": {
@@ -20,8 +24,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "node dist/migrate-cli.js",
-    "db:seed": "node dist/seed-cli.js"
+    "db:migrate": "node --env-file-if-exists=../../.env dist/migrate-cli.js",
+    "db:seed": "node --env-file-if-exists=../../.env dist/seed-cli.js"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",

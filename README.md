@@ -31,8 +31,8 @@ sees who gave what**, until they lift the secret after the event. The rule is en
 server, not hidden in the page.
 
 > **Status:** foundation. The four components build, test, ship as images and deploy with the Helm
-> chart. The data model and the business rules (funding, anti-spoil) are in place and tested; the
-> API and the screens come next.
+> chart. The data model, the business rules (funding, anti-spoil) and the sign-in (OIDC, passkeys,
+> magic links) are in place and tested; the API routes and the screens come next.
 
 |                         |                                                                         |
 | ----------------------- | ----------------------------------------------------------------------- |
@@ -53,8 +53,8 @@ pnpm dev
 ```
 
 See the [quick start](docs/quick-start.md), the [installation on Kubernetes](docs/installation.md),
-the [architecture](docs/architecture.md), the [data model](docs/data-model.md) and
-[monitoring](docs/monitoring.md).
+the [architecture](docs/architecture.md), the [data model](docs/data-model.md),
+[authentication](docs/authentication.md) and [monitoring](docs/monitoring.md).
 
 ## Contributing
 

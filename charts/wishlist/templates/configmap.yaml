@@ -11,6 +11,20 @@ data:
   API_URL: {{ include "wishlist.apiUrl" . | quote }}
   PUBLIC_ORIGIN: {{ printf "https://%s" .Values.hosts.public | quote }}
   APP_ORIGIN: {{ printf "https://%s" .Values.hosts.app | quote }}
+  {{- with include "wishlist.cookieDomain" . }}
+  # One session for both hosts (__Secure- cookie with a Domain)
+  COOKIE_DOMAIN: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.auth.ownerEmails }}
+  OWNER_EMAILS: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.auth.oidc.issuer }}
+  OIDC_ISSUER: {{ . | quote }}
+  OIDC_CLIENT_ID: {{ required "auth.oidc.clientId is required with auth.oidc.issuer" $.Values.auth.oidc.clientId | quote }}
+  {{- end }}
+  {{- with .Values.auth.mailFrom }}
+  MAIL_FROM: {{ . | quote }}
+  {{- end }}
   {{- if .Values.metrics.enabled }}
   # Prometheus /metrics endpoint of every component (Service port "metrics")
   METRICS_PORT: {{ .Values.metrics.port | quote }}
