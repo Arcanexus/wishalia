@@ -9,6 +9,8 @@ declare global {
       mode: ModeChoice;
       /** A theme the page's list forces on everyone, set by the list page before rendering. */
       listTheme: ThemeName | null;
+      /** The page is about Christmas (a Christmas event): the automatic theme turns Christmas. */
+      christmas: boolean;
     }
     interface Error {
       message: string;

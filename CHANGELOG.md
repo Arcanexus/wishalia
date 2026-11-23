@@ -21,6 +21,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Management app, events (`/evenements`): the events, upcoming and past, their creation and
+  settings, the items an event selects (added from every list in one tap, or removed), and lifting
+  the secret once allowed, behind a confirmation. Then each item shows who gave what for the event.
+  A Christmas event turns the automatic theme to Christmas. The header gets « Mes listes » and
+  « Événements ».
 - Management app, first screens (see [Management app](docs/management-app.md)): signing in by
   e-mail link or single sign-on (`/connexion`, button named by `auth.oidc.name` / `OIDC_NAME`),
   signing out, the lists with their number of wishes, list creation, the quick add (shown at once,

@@ -37,7 +37,7 @@ server, not hidden in the page.
 > chart. The data model, the business rules (funding, anti-spoil), the sign-in (OIDC, passkeys,
 > magic links), the management API, the public view API (share links, contributions) and the REST
 > API v1 (personal access tokens, OpenAPI) are in place and tested. The management app has its
-> first screens (signing in, lists, quick add); events, sharing and the guests' screens come next.
+> first screens (signing in, lists, quick add, events); sharing and the guests' screens come next.
 
 <p align="center">
   <img src="docs/images/app-lists.png" alt="The management app: a greeting, the quick add field and two lists" width="640">

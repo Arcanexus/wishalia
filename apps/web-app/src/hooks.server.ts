@@ -20,6 +20,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   event.locals.themeChoice = themeChoice;
   event.locals.mode = mode;
   event.locals.listTheme = null;
+  event.locals.christmas = false;
 
   const response = await resolve(event, {
     // The theme and mode are on <html> from the first byte: no flash of the wrong colours. Read at
@@ -30,6 +31,7 @@ export const handle: Handle = async ({ event, resolve }) => {
           "%wishalia.theme%",
           resolveTheme({
             listTheme: event.locals.listTheme,
+            christmasList: event.locals.christmas,
             personTheme: event.locals.themeChoice,
             today: new Date(),
           }),
