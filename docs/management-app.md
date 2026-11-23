@@ -1,7 +1,7 @@
 # Management app
 
 The management app (`hosts.app`) is where the owner of the lists works: signing in, their lists,
-the quick add. It speaks French and says « vous ». It calls the [Management API](api.md) server side
+the quick add, their events. It speaks French and says « vous ». It calls the [Management API](api.md) server side
 only: the browser never reaches the API.
 
 ![The lists and the quick add](images/app-lists.png)
@@ -37,6 +37,32 @@ A list page shows its items, newest first, with their price and the site of thei
 can be marked **received** or **archived**; received and archived items wait under « Reçues et
 archivées », where they can be put back in the list. Every change lands in the item's history.
 
+## Events
+
+« Événements » (`/evenements`) lists the person's events, upcoming first, then past ones, the most
+recent first. A past event whose secret can be lifted says so. An event has a name, a type
+(birthday, Christmas, other), a date and a delay before its secret can be lifted (3 days by
+default). A Christmas event is shown in the Christmas theme, unless the person chose another one.
+
+![The events](images/app-events.png)
+
+An event's page shows:
+
+- **The secret**: when it can be lifted (the end of the event day plus the delay). From then on, a
+  « Lever le secret » button, behind a checkbox that confirms the choice, which is final.
+- **The event's items**, which can be removed, and below them the open items of every list, to add
+  in one tap. An item stays in its list: the event only selects it.
+- **Its settings**, folded away. Once the secret is lifted, the date and the delay no longer change.
+
+![A Christmas event: its secret, its items, and the items to add](images/app-event-christmas.png)
+
+Once the secret is lifted, each item shows who gave what for this event: the amount of each
+contribution, or the reservation, under the name the guest gave (« Quelqu'un (anonyme) » when they
+chose to stay anonymous). Before, the API gives nothing of it: the page cannot show what the owner
+must not see.
+
+![Who gave what, once the secret is lifted](images/app-event-lifted-dark.png)
+
 ## Themes and accessibility
 
 - The header button switches between the device's mode, light and dark. The choice is kept on the
@@ -50,5 +76,4 @@ archivées », where they can be put back in the list. Every change lands in the
 
 ![A Christmas list on a phone, in dark mode](images/app-list-christmas-dark.png)
 
-Coming next: events, share links, settings (theme and mode stored with the account, passkeys,
-API tokens).
+Coming next: share links, settings (theme and mode stored with the account, passkeys, API tokens).

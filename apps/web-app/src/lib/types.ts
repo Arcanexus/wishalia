@@ -39,3 +39,33 @@ export type AddedItem = Item & { duplicateOf: string[] };
 export type AddResult =
   | { item: { id: string; title: string; listId: string }; duplicate: boolean }
   | { error: string; input: string };
+
+export type EventKind = "birthday" | "christmas" | "other";
+
+export interface WishEvent {
+  id: string;
+  name: string;
+  kind: EventKind;
+  /** A calendar day, YYYY-MM-DD. */
+  date: string;
+  revealDelayDays: number;
+  /** When the owner may lift the secret. */
+  revealAvailableAt: string;
+  canReveal: boolean;
+  secretLifted: boolean;
+}
+
+export interface HistoryEntry {
+  id: number;
+  type: string;
+  at: string;
+  actorId: string | null;
+  payload: Record<string, unknown>;
+}
+
+/** Who gave what to an item of an event, once its secret is lifted. */
+export interface Gift {
+  name: string | null;
+  amountCents: number | null;
+  units: number | null;
+}
