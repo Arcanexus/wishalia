@@ -26,7 +26,7 @@ const base = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   /** Display name of the product, so that the code never depends on the final brand. */
-  APP_NAME: z.string().min(1).default("wishlist"),
+  APP_NAME: z.string().min(1).default("Wishalia"),
   /** Port of the Prometheus /metrics endpoint, never published by the ingress. 0 turns it off. */
   METRICS_PORT: z.coerce.number().int().min(0).max(65535).default(0),
   /** Version shown in /healthz, given by the CI from the image tag. */
@@ -38,7 +38,7 @@ const base = z.object({
   APP_ORIGIN: z.url().default("http://localhost:3003"),
   PUBLIC_ORIGIN: z.url().default("http://localhost:3002"),
   /**
-   * Parent domain of the two hosts (wishlist.example.com), so that one session works on both.
+   * Parent domain of the two hosts (wishalia.example.com), so that one session works on both.
    * Unset: the session cookie stays on the management host.
    */
   COOKIE_DOMAIN: optional,

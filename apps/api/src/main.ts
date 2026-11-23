@@ -1,5 +1,5 @@
-import { createDb } from "@wishlist/db";
-import { createHttpMetrics, createRegistry, startMetricsServer } from "@wishlist/metrics";
+import { createDb } from "@wishalia/db";
+import { createHttpMetrics, createRegistry, startMetricsServer } from "@wishalia/metrics";
 
 import { buildApp } from "./app.js";
 import { smtpMailer } from "./auth/mailer.js";

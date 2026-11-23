@@ -1,6 +1,8 @@
-# wishlist: working rules
+# wishalia: working rules
 
-Self-hosted family wishlists. Code name `wishlist`; the product name comes from `APP_NAME`.
+Self-hosted family wishlists, named **Wishalia** everywhere: shown through `APP_NAME` (default
+`Wishalia`), and `wishalia` in packages (`@wishalia/*`), images, chart, cookies (`wishalia.*`) and
+metrics (`wishalia_`). Branding (logo, palettes, fonts, themes): `docs/branding.md`.
 
 ## Non-negotiable rules
 
@@ -35,5 +37,5 @@ what changed.
 - SvelteKit 3: config lives in `vite.config.ts` (`sveltekit({...})`), `#lib` (package.json `imports`)
   replaces `$lib`, hooks types come from `@sveltejs/kit/hooks`.
 - Checks: `pnpm format:check && pnpm build && pnpm lint && pnpm typecheck && pnpm coverage`, and
-  `helm lint charts/wishlist`.
+  `helm lint charts/wishalia`.
 - PR titles start with `[ADD]` or `[FIX]` and link an issue (see the PR template).

@@ -1,7 +1,7 @@
 import { createDb } from "./client.js";
 import { seedDemo } from "./seed.js";
 
-// pnpm --filter @wishlist/db db:seed, against DATABASE_URL (local development only)
+// pnpm --filter @wishalia/db db:seed, against DATABASE_URL (local development only)
 if (process.env.NODE_ENV === "production") {
   throw new Error("Refusing to seed demo data in production");
 }

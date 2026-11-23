@@ -1,5 +1,5 @@
 {
-  "name": "@wishlist/web-app",
+  "name": "@wishalia/web-app",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -21,7 +21,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@wishlist/metrics": "workspace:*"
+    "@wishalia/metrics": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^6.0.5",

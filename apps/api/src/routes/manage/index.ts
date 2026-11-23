@@ -1,4 +1,4 @@
-import type { Database } from "@wishlist/db";
+import type { Database } from "@wishalia/db";
 import type { FastifyPluginAsync } from "fastify";
 
 import type { Auth } from "../../auth/auth.js";

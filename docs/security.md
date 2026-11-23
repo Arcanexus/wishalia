@@ -6,7 +6,7 @@ Security is the first of the three priorities of the project, before ease of use
 
 The owner of a list never sees the contributions to their items: no amount, no name, no
 percentage, no history, until they lift the secret after the event. The rule is enforced **on the
-server**, by a single function of `@wishlist/domain` that every API calls, and covered by tests.
+server**, by a single function of `@wishalia/domain` that every API calls, and covered by tests.
 
 | Viewer            | Recognised by                                                                 | Sees the contributions                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |

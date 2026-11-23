@@ -1,13 +1,13 @@
 # Quick start
 
-Run wishlist on your machine with Node.js 22.17+ (24 recommended), pnpm (through Corepack) and Docker.
+Run Wishalia on your machine with Node.js 22.17+ (24 recommended), pnpm (through Corepack) and Docker.
 
 ```sh
 corepack enable
 pnpm install
 cp .env.example .env
 docker compose up -d     # PostgreSQL, MinIO (S3) and imgproxy
-pnpm build && pnpm --filter @wishlist/db db:migrate   # the tables (reads DATABASE_URL)
+pnpm build && pnpm --filter @wishalia/db db:migrate   # the tables (reads DATABASE_URL)
 pnpm dev                 # the four components, with hot reload
 ```
 

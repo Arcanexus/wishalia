@@ -1,5 +1,5 @@
 {
-  "name": "@wishlist/api",
+  "name": "@wishalia/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -18,9 +18,9 @@
   "dependencies": {
     "@better-auth/passkey": "^1.7.27",
     "@fastify/helmet": "^13.2.0",
-    "@wishlist/db": "workspace:*",
-    "@wishlist/domain": "workspace:*",
-    "@wishlist/metrics": "workspace:*",
+    "@wishalia/db": "workspace:*",
+    "@wishalia/domain": "workspace:*",
+    "@wishalia/metrics": "workspace:*",
     "better-auth": "^1.7.27",
     "drizzle-orm": "^0.45.4",
     "fastify": "^5.12.8",
@@ -31,7 +31,7 @@
     "@electric-sql/pglite": "0.5.17",
     "@types/node": "^24.19.2",
     "@types/nodemailer": "^8.0.2",
-    "@wishlist/config": "workspace:*",
+    "@wishalia/config": "workspace:*",
     "tsx": "^4.23.15"
   }
 }

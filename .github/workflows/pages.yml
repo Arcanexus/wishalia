@@ -1,6 +1,6 @@
 name: Pages
 
-# Publishes the product site (site/) on GitHub Pages: https://arcanexus.github.io/wishlist/
+# Publishes the product site (site/) on GitHub Pages: https://arcanexus.github.io/wishalia/
 # The logo is copied from docs/images at build time.
 on:
   push:

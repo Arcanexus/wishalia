@@ -1,5 +1,5 @@
-import type { schema } from "@wishlist/db";
-import { canRevealSecret, isSecretLifted, revealAvailableAt } from "@wishlist/domain";
+import type { schema } from "@wishalia/db";
+import { canRevealSecret, isSecretLifted, revealAvailableAt } from "@wishalia/domain";
 
 type WishRow = typeof schema.wishes.$inferSelect;
 type ListRow = typeof schema.wishLists.$inferSelect;

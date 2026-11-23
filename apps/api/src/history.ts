@@ -1,5 +1,5 @@
-import { schema, type Database } from "@wishlist/db";
-import type { HistoryVisibility } from "@wishlist/domain";
+import { schema, type Database } from "@wishalia/db";
+import type { HistoryVisibility } from "@wishalia/domain";
 
 type ItemEventType = (typeof schema.ITEM_EVENT_TYPES)[number];
 

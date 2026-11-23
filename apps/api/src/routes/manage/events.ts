@@ -1,5 +1,5 @@
-import { schema } from "@wishlist/db";
-import { canRevealSecret, DEFAULT_REVEAL_DELAY_DAYS } from "@wishlist/domain";
+import { schema } from "@wishalia/db";
+import { canRevealSecret, DEFAULT_REVEAL_DELAY_DAYS } from "@wishalia/domain";
 import { and, asc, eq } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";

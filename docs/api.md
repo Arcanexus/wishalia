@@ -10,7 +10,7 @@ exactly like a missing one, so that ids cannot be probed.
 
 **Anti-spoil:** no response of `/manage` carries contribution data, ever. Items are serialised field
 by field, never from a raw row. The history shows the contributions of an event only once its
-secret is lifted (`canSeeHistoryEntry` in `@wishlist/domain`).
+secret is lifted (`canSeeHistoryEntry` in `@wishalia/domain`).
 
 ## Errors
 

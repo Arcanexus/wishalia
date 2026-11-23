@@ -1,4 +1,4 @@
-import { schema } from "@wishlist/db";
+import { schema } from "@wishalia/db";
 import { eq } from "drizzle-orm";
 import type { InjectOptions } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";

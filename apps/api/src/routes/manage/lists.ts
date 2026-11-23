@@ -1,4 +1,4 @@
-import { schema } from "@wishlist/db";
+import { schema } from "@wishalia/db";
 import { and, asc, count, eq, isNull, sql } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";

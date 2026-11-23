@@ -3,16 +3,16 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "wishlist.fullname" . }}
+  name: {{ include "wishalia.fullname" . }}
   labels:
-    {{- include "wishlist.labels" . | nindent 4 }}
+    {{- include "wishalia.labels" . | nindent 4 }}
     {{- with .Values.metrics.serviceMonitor.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "wishlist.name" . }}
+      app.kubernetes.io/name: {{ include "wishalia.name" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
   endpoints:
     - port: metrics

@@ -1,4 +1,4 @@
-import { createHttpMetrics, createRegistry } from "@wishlist/metrics";
+import { createHttpMetrics, createRegistry } from "@wishalia/metrics";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { buildApp } from "./app.js";
@@ -19,7 +19,7 @@ describe("health probes", () => {
   it("answers /healthz with the name and the version", async () => {
     const response = await t.app.inject({ method: "GET", url: "/healthz" });
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ status: "ok", name: "wishlist", version: "1.2.3" });
+    expect(response.json()).toEqual({ status: "ok", name: "Wishalia", version: "1.2.3" });
   });
 
   it("answers /readyz once the database answers", async () => {

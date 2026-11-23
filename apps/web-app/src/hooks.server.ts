@@ -1,5 +1,5 @@
 import type { Handle, ServerInit } from "@sveltejs/kit/hooks";
-import { metricsPort, processMetrics } from "@wishlist/metrics";
+import { metricsPort, processMetrics } from "@wishalia/metrics";
 
 import { applySecurityHeaders } from "#lib/security-headers.ts";
 

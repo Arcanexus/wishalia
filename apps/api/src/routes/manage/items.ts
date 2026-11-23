@@ -1,4 +1,4 @@
-import { schema } from "@wishlist/db";
+import { schema } from "@wishalia/db";
 import {
   canSeeHistoryEntry,
   cleanUrl,
@@ -6,7 +6,7 @@ import {
   type EditableWish,
   MAX_TITLE_LENGTH,
   parseQuickAdd,
-} from "@wishlist/domain";
+} from "@wishalia/domain";
 import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
@@ -236,7 +236,7 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now 
   /**
    * The history of an item as the owner sees it: its own entries, and the sealed ones (the
    * contributions) only once the secret of their event is lifted. Through canSeeHistoryEntry,
-   * the single rule of @wishlist/domain.
+   * the single rule of @wishalia/domain.
    */
   app.get("/items/:itemId/history", async (request) => {
     const { itemId } = parse(itemParams, request.params);

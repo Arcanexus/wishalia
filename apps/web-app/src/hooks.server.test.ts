@@ -1,4 +1,4 @@
-import { processMetrics } from "@wishlist/metrics";
+import { processMetrics } from "@wishalia/metrics";
 import { describe, expect, it } from "vitest";
 
 import { handle, init } from "./hooks.server.ts";
