@@ -24,8 +24,8 @@ helm install wishlist oci://ghcr.io/arcanexus/charts/wishlist \
   --set existingSecret=wishlist-secrets
 ```
 
-The chart holds no secret value: create `wishlist-secrets` with your secret manager. Its keys are
-listed in [Configuration](configuration.md).
+The chart holds no secret value: create `wishlist-secrets` with your secret manager, with at least
+`DATABASE_URL`. Its keys are listed in [Configuration](configuration.md).
 
 ## With ArgoCD
 

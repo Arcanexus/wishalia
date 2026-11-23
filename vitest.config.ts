@@ -14,6 +14,8 @@ export default defineConfig({
         "**/index.ts",
         // Entry points: they only wire the tested modules together and start the process
         "apps/*/src/main.ts",
+        "apps/*/src/migrate.ts",
+        "packages/db/src/*-cli.ts",
         "packages/db/src/schema.ts",
       ],
       reporter: ["text", "html", "json-summary", "cobertura"],

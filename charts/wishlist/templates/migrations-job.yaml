@@ -1,4 +1,7 @@
 {{- if .Values.migrations.enabled }}
+{{- if not .Values.existingSecret }}
+{{- fail "migrations.enabled needs existingSecret with DATABASE_URL (or set migrations.enabled=false)" }}
+{{- end }}
 # Applies the database migrations before the new version starts. With ArgoCD, the Helm hooks
 # become PreSync hooks: the sync waits for the Job.
 apiVersion: batch/v1

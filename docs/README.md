@@ -12,8 +12,9 @@ list never sees who gave what, until they choose to lift the secret after the ev
 | Deploy it on Kubernetes         | [Installation](installation.md)                                    |
 | Set a variable or a chart value | [Configuration](configuration.md), [Chart values](chart-values.md) |
 | Understand the security model   | [Security](security.md)                                            |
-| Understand how it is built      | [Architecture](architecture.md)                                    |
+| Understand how it is built      | [Architecture](architecture.md), [Data model](data-model.md)       |
 | Contribute                      | [Development](development.md)                                      |
 
-The project is at its foundation stage: the four components start, answer their health probes and
-ship as images and a Helm chart. The data model, the API and the screens come next.
+The project is at its foundation stage: the four components ship as images and a Helm chart, and the
+data model and the business rules (funding, anti-spoil) are in place. The API and the screens come
+next.

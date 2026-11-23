@@ -20,7 +20,9 @@ Priorities, in order: security, ease of use for every age (WCAG 2.2 AA), perform
 Update in the same pull request, when concerned: `docs/` (published to the wiki; a new page goes
 into `PAGES` of `.github/scripts/docs_to_wiki.py`), the tests (coverage thresholds in
 `vitest.config.ts`), the Helm chart and `docs/chart-values.md`, the `[Unreleased]` section of
-`CHANGELOG.md`, and `site/` for user-facing features.
+`CHANGELOG.md`. Then review and update, every time: `README.md`, the website (`site/`), the wiki
+(generated from `docs/`) and the screenshots (`docs/images/`). Only retake the screenshots that show
+what changed.
 
 ## Conventions
 

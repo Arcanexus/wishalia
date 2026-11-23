@@ -2,15 +2,16 @@
 
 ## Commands
 
-| Command                             | What it does                                                              |
-| ----------------------------------- | ------------------------------------------------------------------------- |
-| `pnpm dev`                          | Starts the four components with hot reload.                               |
-| `pnpm build`                        | Builds every package and app (Turborepo, cached).                         |
-| `pnpm lint`                         | ESLint on every package.                                                  |
-| `pnpm typecheck`                    | TypeScript, and svelte-check on the frontends.                            |
-| `pnpm test`                         | Vitest, package by package.                                               |
-| `pnpm coverage`                     | Vitest on the whole repository with coverage; fails under the thresholds. |
-| `pnpm format` / `pnpm format:check` | Prettier.                                                                 |
+| Command                                             | What it does                                                                |
+| --------------------------------------------------- | --------------------------------------------------------------------------- |
+| `pnpm dev`                                          | Starts the four components with hot reload.                                 |
+| `pnpm build`                                        | Builds every package and app (Turborepo, cached).                           |
+| `pnpm lint`                                         | ESLint on every package.                                                    |
+| `pnpm typecheck`                                    | TypeScript, and svelte-check on the frontends.                              |
+| `pnpm test`                                         | Vitest, package by package.                                                 |
+| `pnpm coverage`                                     | Vitest on the whole repository with coverage; fails under the thresholds.   |
+| `pnpm format` / `pnpm format:check`                 | Prettier.                                                                   |
+| `pnpm --filter @wishlist/db db:migrate` / `db:seed` | Apply the migrations, load the demo data (see [Data model](data-model.md)). |
 
 ## Rules
 
