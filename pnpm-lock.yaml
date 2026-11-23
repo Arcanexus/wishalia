@@ -195,6 +195,9 @@ importers:
 
   packages/domain:
     devDependencies:
+      '@types/node':
+        specifier: ^24.19.2
+        version: 24.19.2
       '@wishlist/config':
         specifier: workspace:*
         version: link:../config

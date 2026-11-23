@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Management API (`/manage/*`): lists, items (quick add from a URL or text, in-place edits, moves,
+  received and archived), events (item selection, reveal of the secret) and the history of each
+  item. Everything is scoped to its owner (404 otherwise) and never returns contribution data.
+  See [Management API](docs/api.md).
+- `@wishlist/domain`: `parseQuickAdd`, `cleanUrl` (tracking parameters removed, only http(s)
+  links) and `diffWish` for the history.
+- JSON errors on every route, without internal details in a 500.
 - Sign-in with Better Auth in the API: OIDC for the owners, passkeys and magic links for the
   family, no password. Invitation only (`OWNER_EMAILS`). A 30-day `__Secure-` session shared by the
   two hosts (`COOKIE_DOMAIN`). See [Authentication](docs/authentication.md).

@@ -33,6 +33,7 @@ PAGES: list[tuple[str, list[tuple[str, str]]]] = [
     ("Reference", [
         ("configuration.md", "Configuration"),
         ("authentication.md", "Authentication"),
+        ("api.md", "Management-API"),
         ("chart-values.md", "Chart-values"),
         ("monitoring.md", "Monitoring"),
         ("security.md", "Security"),

@@ -17,7 +17,7 @@ export interface TestApp {
 }
 
 /** The API on an in-memory database, with a mailer that keeps the emails. */
-export async function createTestApp(env: NodeJS.ProcessEnv = {}): Promise<TestApp> {
+export async function createTestApp(env: NodeJS.ProcessEnv = {}, now?: () => Date): Promise<TestApp> {
   const { db, close: closeDb } = await createTestDb();
   const mails: Mail[] = [];
   const mailer: Mailer = { send: async (mail) => void mails.push(mail) };
@@ -29,7 +29,7 @@ export async function createTestApp(env: NodeJS.ProcessEnv = {}): Promise<TestAp
     OWNER_EMAILS: OWNER_EMAIL,
     ...env,
   });
-  const app = await buildApp(config, { db, mailer });
+  const app = await buildApp(config, { db, mailer, ...(now ? { now } : {}) });
   return {
     app,
     db,
