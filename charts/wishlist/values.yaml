@@ -25,6 +25,22 @@ hosts:
   # Management app, e.g. app.wishlist.example.com
   app: app.wishlist.example.com
 
+# Sign-in (Better Auth in the API). The secrets go in existingSecret: AUTH_SECRET (32+ characters),
+# OIDC_CLIENT_SECRET, SMTP_URL. See docs/configuration.md.
+auth:
+  # Emails allowed to create their account by themselves (the owners), comma-separated. Everyone
+  # else is invited.
+  ownerEmails: ""
+  # Parent domain of the two hosts, so that one session works on both. Defaults to hosts.public
+  # when the management host is a subdomain of it; set "-" to keep the session on the app host.
+  cookieDomain: ""
+  # OIDC provider of the owners. The client secret goes in existingSecret (OIDC_CLIENT_SECRET).
+  oidc:
+    issuer: ""
+    clientId: ""
+  # Sender of the magic links, e.g. "wishlist <noreply@example.com>". SMTP_URL goes in existingSecret.
+  mailFrom: ""
+
 # Secret holding the sensitive settings (DATABASE_URL, S3 keys, auth secrets...), loaded as
 # environment variables by every component. Create it with your secret manager (External Secrets,
 # Sealed Secrets...): the chart never holds a secret value.

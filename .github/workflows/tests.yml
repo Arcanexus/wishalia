@@ -125,6 +125,15 @@ jobs:
             exit 1
           fi
 
+      - name: The session cookie domain covers both hosts
+        run: |
+          if helm template t charts/wishlist --set existingSecret=s --set auth.cookieDomain=other.example.com; then
+            echo "::error::the chart rendered a cookie domain that does not contain the two hosts"
+            exit 1
+          fi
+          helm template t charts/wishlist --set existingSecret=s --show-only templates/configmap.yaml \
+            | grep -q 'COOKIE_DOMAIN: "wishlist.example.com"'
+
       - name: The metrics stay inside the cluster
         run: |
           out=$(helm template t charts/wishlist --set existingSecret=s --set ingress.enabled=true \

@@ -1,3 +1,5 @@
+import { sql } from "drizzle-orm";
+import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
@@ -15,11 +17,19 @@ export function createDb({ url, maxConnections = 10 }: DbOptions) {
   if (!url) {
     throw new Error("DATABASE_URL is required");
   }
-  const sql = postgres(url, { max: maxConnections });
+  const client = postgres(url, { max: maxConnections });
   return {
-    db: drizzle(sql, { schema }),
-    close: () => sql.end({ timeout: 5 }),
+    db: drizzle(client, { schema }),
+    close: () => client.end({ timeout: 5 }),
   };
 }
 
 export type Db = ReturnType<typeof createDb>["db"];
+
+/** Any Drizzle PostgreSQL client of the schema: postgres-js in the apps, PGlite in the tests. */
+export type Database = PgDatabase<PgQueryResultHKT, typeof schema>;
+
+/** Checks that the database answers (readiness probe). */
+export async function ping(db: Database): Promise<void> {
+  await db.execute(sql`select 1`);
+}

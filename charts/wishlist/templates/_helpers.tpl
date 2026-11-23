@@ -62,3 +62,20 @@ web-public: { values: webPublic, exposed: true }
     - port: metrics
 {{- end }}
 {{- end }}
+
+{{- /* COOKIE_DOMAIN: auth.cookieDomain, "-" for none, or hosts.public when hosts.app is under it */ -}}
+{{- define "wishlist.cookieDomain" -}}
+{{- $domain := .Values.auth.cookieDomain }}
+{{- if eq $domain "-" }}
+{{- else if $domain }}
+{{- $bare := trimPrefix "." $domain }}
+{{- range list .Values.hosts.app .Values.hosts.public }}
+{{- if not (or (eq . $bare) (hasSuffix (printf ".%s" $bare) .)) }}
+{{- fail "auth.cookieDomain must contain hosts.app and hosts.public" }}
+{{- end }}
+{{- end }}
+{{- $domain }}
+{{- else if hasSuffix (printf ".%s" .Values.hosts.public) .Values.hosts.app }}
+{{- .Values.hosts.public }}
+{{- end }}
+{{- end }}

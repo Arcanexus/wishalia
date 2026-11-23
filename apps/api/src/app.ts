@@ -1,8 +1,12 @@
 import helmet from "@fastify/helmet";
+import type { Database } from "@wishlist/db";
 import type { HttpMetrics } from "@wishlist/metrics";
 import Fastify, { type FastifyInstance } from "fastify";
 
+import { createAuth } from "./auth/auth.js";
+import type { Mailer } from "./auth/mailer.js";
 import type { Config } from "./config.js";
+import { authRoutes } from "./routes/auth.js";
 import { healthRoutes } from "./routes/health.js";
 import { manageRoutes } from "./routes/manage.js";
 import { publicRoutes } from "./routes/public.js";
@@ -17,10 +21,13 @@ declare module "fastify" {
 }
 
 /** Builds the API without listening, so that tests can call it with app.inject(). */
-export async function buildApp(
-  config: Config,
-  { metrics }: { metrics?: HttpMetrics } = {},
-): Promise<FastifyInstance> {
+export interface AppDeps {
+  db: Database;
+  metrics?: HttpMetrics;
+  mailer?: Mailer | undefined;
+}
+
+export async function buildApp(config: Config, { db, metrics, mailer }: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({
     logger: config.NODE_ENV === "test" ? false : { level: config.LOG_LEVEL },
     // Behind the ingress controller, which terminates TLS
@@ -30,6 +37,9 @@ export async function buildApp(
   });
 
   app.decorateRequest("scope", null);
+  app.decorateRequest("user", null);
+
+  const auth = createAuth({ config, db, mailer, log: (message) => app.log.info(message) });
 
   if (metrics) {
     // The route pattern (/manage/items/:id), never the URL: no id in the metrics, bounded series
@@ -49,8 +59,9 @@ export async function buildApp(
     referrerPolicy: { policy: "no-referrer" },
   });
 
-  await app.register(healthRoutes, { config });
-  await app.register(manageRoutes, { prefix: "/manage" });
+  await app.register(healthRoutes, { config, db });
+  await app.register(authRoutes, { prefix: "/auth", auth, config });
+  await app.register(manageRoutes, { prefix: "/manage", auth });
   await app.register(publicRoutes, { prefix: "/public" });
 
   return app;

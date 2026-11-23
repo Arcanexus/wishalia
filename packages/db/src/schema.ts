@@ -22,6 +22,11 @@ import {
 
 const id = () => uuid("id").primaryKey().defaultRandom();
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
+const updatedAt = () =>
+  timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date());
 
 export const wishKind = pgEnum("wish_kind", ["unique", "quantity", "pool"]);
 export const wishStatus = pgEnum("wish_status", ["open", "received", "archived"]);
@@ -34,12 +39,99 @@ export const historyVisibility = pgEnum("history_visibility", ["owner", "guests"
 /** An account. Owner of its lists, guest on the others: the role is per list or event. */
 export const users = pgTable("users", {
   id: id(),
+  // Nullable: an anonymised account keeps its row but loses its email
   email: text("email").unique(),
+  emailVerified: boolean("email_verified").notNull().default(false),
   displayName: text("display_name").notNull(),
+  image: text("image"),
   createdAt: createdAt(),
+  updatedAt: updatedAt(),
   // GDPR: a deleted account is anonymised (email and name cleared), never removed from the history
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
+
+// Tables of Better Auth (apps/api/src/auth.ts). Names and columns follow its core schema and its
+// passkey plugin; the API maps them in the Drizzle adapter.
+
+/** A signed-in device. The cookie holds the signed token; deleting the row signs the device out. */
+export const authSessions = pgTable(
+  "auth_sessions",
+  {
+    id: id(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    token: text("token").notNull().unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [index("auth_sessions_user_idx").on(table.userId)],
+);
+
+/** A way to sign in: the OIDC provider of the owner. No password is ever stored (column unused). */
+export const authAccounts = pgTable(
+  "auth_accounts",
+  {
+    id: id(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    accountId: text("account_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    // Encrypted by Better Auth (account.encryptOAuthTokens)
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    idToken: text("id_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
+    scope: text("scope"),
+    password: text("password"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("auth_accounts_user_idx").on(table.userId),
+    uniqueIndex("auth_accounts_provider_idx").on(table.providerId, table.accountId),
+  ],
+);
+
+/** Short-lived secrets: magic links (stored hashed), OAuth state. */
+export const authVerifications = pgTable(
+  "auth_verifications",
+  {
+    id: id(),
+    identifier: text("identifier").notNull(),
+    value: text("value").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [index("auth_verifications_identifier_idx").on(table.identifier)],
+);
+
+/** A WebAuthn credential (passkey). Only the public key is stored. */
+export const authPasskeys = pgTable(
+  "auth_passkeys",
+  {
+    id: id(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name"),
+    publicKey: text("public_key").notNull(),
+    credentialID: text("credential_id").notNull().unique(),
+    counter: integer("counter").notNull(),
+    deviceType: text("device_type").notNull(),
+    backedUp: boolean("backed_up").notNull(),
+    transports: text("transports"),
+    aaguid: text("aaguid"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [index("auth_passkeys_user_idx").on(table.userId)],
+);
 
 /** A durable list ("Books", "Home"). */
 export const wishLists = pgTable(
