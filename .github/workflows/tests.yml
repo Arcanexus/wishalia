@@ -152,12 +152,15 @@ jobs:
             echo "::error::the chart let the API v1 share a frontend host"
             exit 1
           fi
-          off=$(helm template t charts/wishalia --set existingSecret=s --set ingress.enabled=true)
-          echo "$off" | yq -e 'select(.kind == "Ingress") | .spec.rules | length == 2' > /dev/null
-          on=$(helm template t charts/wishalia --set existingSecret=s --set ingress.enabled=true \
-            --set hosts.api=api.wishalia.example.com)
-          echo "$on" | yq -e 'select(.kind == "Ingress") | .spec.rules[] | select(.host == "api.wishalia.example.com") | (.http.paths | length == 1) and .http.paths[0].path == "/v1"' > /dev/null
-          echo "$on" | yq -e 'select(.kind == "ConfigMap") | .data.API_ORIGIN == "https://api.wishalia.example.com"' > /dev/null
+          # One document at a time (--show-only), one comparison per yq call
+          render="helm template t charts/wishalia --set existingSecret=s --set ingress.enabled=true"
+          $render --show-only templates/ingress.yaml | yq -e '.spec.rules | length == 2' > /dev/null
+          api="--set hosts.api=api.wishalia.example.com"
+          rule='.spec.rules[] | select(.host == "api.wishalia.example.com") | .http.paths'
+          $render $api --show-only templates/ingress.yaml | yq -e "($rule | length) == 1" > /dev/null
+          $render $api --show-only templates/ingress.yaml | yq -e "$rule | .[0].path == \"/v1\"" > /dev/null
+          $render $api --show-only templates/configmap.yaml \
+            | yq -e '.data.API_ORIGIN == "https://api.wishalia.example.com"' > /dev/null
 
   scripts:
     runs-on: ubuntu-latest
