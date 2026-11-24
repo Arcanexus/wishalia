@@ -72,3 +72,22 @@ export function readGuestName(cookies: Cookies): string {
 export function writeGuestName(cookies: Cookies, name: string, secure: boolean): void {
   cookies.set(NAME_COOKIE, name, { path: "/", maxAge: MAX_AGE, httpOnly: true, sameSite: "lax", secure });
 }
+
+/**
+ * A visitor without an account has said they are not the owner: what others give shows on this
+ * link. Until then it stays folded, in case the device is the owner's (spec: « visiteur non
+ * identifié → les participations restent repliées derrière un clic de confirmation »).
+ */
+export const UNFOLDED_COOKIE = "wishalia.unfolded";
+
+export const readUnfolded = (cookies: Cookies) => cookies.get(UNFOLDED_COOKIE) === "1";
+
+export function writeUnfolded(cookies: Cookies, token: string, secure: boolean): void {
+  cookies.set(UNFOLDED_COOKIE, "1", {
+    path: `/s/${token}`,
+    maxAge: MAX_AGE,
+    httpOnly: true,
+    sameSite: "lax",
+    secure,
+  });
+}

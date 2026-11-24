@@ -16,7 +16,11 @@ server**, by a single function of `@wishalia/domain` that every API calls, and c
 Without a valid link, the public view shows nothing at all: every `/public` route but a ping
 answers `404`. The device marker is an HMAC of the owner's id with `AUTH_SECRET`, so nobody can
 forge the marker of someone else; changing `AUTH_SECRET` drops every marker and every session.
-Owner detection wins: an owner opening their own share link is still the owner. The functions are
+Owner detection wins: an owner opening their own share link is still the owner. The owner may still
+open their link on a device that knows nothing of them (a borrowed phone, a private window): for a
+visitor without an account, nothing given on this device and no answer yet, the public view leaves
+the funding **out of the page** until they say « Je ne suis pas Léa » (see
+[Public view](public-view.md#a-visitor-nobody-knows)). The functions are
 `resolveViewer`, `canSeeContributions` and `canSeeHistoryEntry`; the history visibilities are in
 [Data model](data-model.md).
 It also closes the indirect leaks: page titles and link previews never reflect the state of a list,

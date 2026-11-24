@@ -33,6 +33,23 @@ already given or received follow, quieter, with a dashed border.
 
 ![An event link on a phone, in dark mode](images/public-event-dark.png)
 
+## A visitor nobody knows
+
+The API recognises the owner by their session or their device marker, but the owner may open their
+link on a device that has neither: a borrowed phone, a private window, a new computer. So when
+nobody is known on the device (no account, no gift given from it on this link, no answer yet), the
+page leaves what others give **out of the page** (states, progress, names, the give buttons) and
+asks first: « Vous n'êtes pas Léa ? », with a « Je ne suis pas Léa, voir les cadeaux » button and
+« Si vous êtes Léa, ne cliquez pas : la surprise reste entière. » The items keep the owner's order,
+so that the order gives nothing away either.
+
+The answer is kept on the device for that link only, in an `HttpOnly` cookie (`wishalia.unfolded`,
+path `/s/<token>`, 400 days): the person is asked once per link and device. A guest signed in with
+an account, or who already gave from this device, is not asked. It works without JavaScript; with
+it, the page stays in place and the focus goes back to the title.
+
+![A visitor nobody knows is asked first](images/public-folded.png)
+
 ## Giving
 
 Under every item still open, one button says what it does: « Je le réserve » for a gift,

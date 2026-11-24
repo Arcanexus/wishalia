@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { GIFTS_COOKIE, readGifts, type StoredGift } from "#lib/server/gifts.ts";
+import { GIFTS_COOKIE, readGifts, type StoredGift, UNFOLDED_COOKIE } from "#lib/server/gifts.ts";
 import type { PublicView } from "#lib/types.ts";
 
 import { actions, load } from "./s/[token]/+page.server.ts";
@@ -279,6 +279,51 @@ describe("the gifts on the page", () => {
     ]);
     expect(JSON.stringify(value)).not.toContain(KEY);
     expect(value.guestName).toBe("Mamie");
+  });
+
+  type Loaded = { view: PublicView; folded: boolean; mine: unknown[] };
+  const load_ = async (patch: Partial<PublicView> = {}, cookies: Record<string, string> = {}) => {
+    api({ "GET /public/view": () => json({ ...view(), ...patch }) });
+    return ((await run(load, event(undefined, cookies).input)) as { value: Loaded }).value;
+  };
+
+  it("folds what others give for a visitor nobody knows, leaving it out of the page", async () => {
+    const page = await load_();
+    expect(page.folded).toBe(true);
+    expect(page.view.items[0]?.funding).toBeNull();
+    expect(page.mine).toEqual([]);
+    expect(JSON.stringify(page)).not.toContain("in_progress");
+  });
+
+  it("unfolds once they say they are not the owner, or when they are known", async () => {
+    expect((await load_({}, { [UNFOLDED_COOKIE]: "1" })).folded).toBe(false);
+    expect((await load_({}, { [GIFTS_COOKIE]: keep([stored]) })).folded).toBe(false);
+    const known = await load_({ me: { displayName: "Paul" } });
+    expect(known.folded).toBe(false);
+    expect(known.view.items[0]?.funding).not.toBeNull();
+    // Nothing to fold for the owner: the API already gave them no funding
+    const ownerItems = view().items.map((item) => ({ ...item, funding: null }));
+    expect((await load_({ viewer: "owner", items: ownerItems })).folded).toBe(false);
+  });
+
+  it("remembers the choice for this link only, on the server side of the device", async () => {
+    const { input, box } = event({});
+    expect((await run(actions.unfold, input)).value).toEqual({ unfolded: true });
+    expect(box.set).toEqual([
+      {
+        name: UNFOLDED_COOKIE,
+        value: "1",
+        options: expect.objectContaining({
+          path: `/s/${TOKEN}`,
+          httpOnly: true,
+          sameSite: "lax",
+          secure: true,
+        }),
+      },
+    ]);
+    const bad = event({});
+    (bad.input.params as { token: string }).token = "../manage";
+    expect((await run(actions.unfold, bad.input)).thrown).toMatchObject({ status: 404 });
   });
 
   it("drops a malformed cookie", () => {
