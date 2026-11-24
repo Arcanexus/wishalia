@@ -17,6 +17,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Both frontends' root element used a `style` attribute that their CSP (`style-src 'self'`)
+  blocked: it is a class now.
+
 - The sign-out and light/dark buttons were refused by the CSRF check in real browsers: with
   `Referrer-Policy: no-referrer`, a plain form sends `Origin: null`. The two frontends now send
   `same-origin`, which still never gives a share link token to another site.
@@ -30,6 +33,10 @@ All notable changes to this project are documented here. The format follows
   their own link is warned and sees no funding at all. An unknown, revoked or expired link gives
   one same page. Same title and preview for every link, `noindex`, never cached; light/dark button.
   See [Public view](docs/public-view.md).
+- The public view draws where things stand: a pool's bar split by event, with a mark at the target
+  and the overshoot hatched past it (« objectif atteint, 60 € en excédent »); one box per copy;
+  the givers' initials; « Presque complet » from 80 %; and, at the top, where the event or the
+  list stands (« 2 complets, 1 en cours, 0 libre »). See [Public view](docs/public-view.md).
 - Contributions folded for a visitor nobody knows on the public view (no account, nothing given
   from the device): states, progress, names and the give buttons stay out of the page until
   « Je ne suis pas Léa », remembered for the link on the device. See

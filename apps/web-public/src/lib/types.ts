@@ -25,6 +25,8 @@ export interface Funding {
   remainingCents?: number | null;
   overshootCents?: number | null;
   reservedUnits?: number;
+  /** A pool's total for each event, in the order the money came; null for no event. */
+  byEvent?: { eventId: string | null; amountCents: number }[];
   timesGiven?: number;
   /** Who gave: a name, or null when anonymous. Never an amount. */
   contributors: { name: string | null; mine: boolean }[];

@@ -21,11 +21,22 @@ The page greets the person the link was made for (« Bonjour Mamie ! »), then s
 - every item with its price (or the pool's target), its notes, a link to the site it comes from
   (opened in a new tab, only an `http(s)` address), and where it stands:
   - a gift: « Libre. » or « Réservé par Paul. »;
-  - several copies: « 1 sur 4 déjà réservé, par Jeanne. »;
-  - a pool: a progress bar and « 130 € réunis sur 320 € : il manque 190 €, avec Paul et une
-    personne discrète. », or the overshoot once the target is passed;
+  - several copies: one box per copy, filled when reserved, and « 1 sur 4 déjà réservé, par
+    Jeanne. »;
+  - a pool: a bar split by event (one colour per event, named under the bar when there are
+    several), on the scale of the target or of the total when it is passed, with a mark at the
+    target and the overshoot hatched past it; and « 130 € réunis sur 320 € : il manque 190 €, avec
+    Paul et une personne discrète. », or « objectif atteint, 60 € en excédent » once passed;
+  - « Presque complet » from 80 %;
   - a gift for every occasion: how many times it was given;
   - a received item: « Déjà reçu : merci ! ».
+
+Next to where an item stands, the givers' initials, stacked (« ? » for someone discreet). Above the items, where the
+event or the list stands: « 2 complets, 1 en cours, 0 libre », with a bar in the same colours.
+Every drawing repeats what the words say, so nothing is told by colour alone, and the drawings are
+SVG attributes, never `style` attributes, which the page's CSP refuses.
+
+![Where an event stands, and a pool past its target](images/public-gauge.png)
 
 Between guests, a contribution shows its author's name, or « une personne discrète » when they chose
 to stay anonymous, never its amount. Items still to give come first, in the owner's order; those

@@ -5,13 +5,19 @@
   import Logo from "@wishalia/ui/Logo.svelte";
   import ModeButton from "@wishalia/ui/ModeButton.svelte";
 
+  import Copies from "#lib/Copies.svelte";
+  import EventGauge from "#lib/EventGauge.svelte";
   import GiveForm from "#lib/GiveForm.svelte";
+  import Givers from "#lib/Givers.svelte";
+  import PoolBar from "#lib/PoolBar.svelte";
   import {
     canGive,
+    gauge,
     formatDay,
     formatEuros,
     heading,
     myGiftLine,
+    poolBar,
     standing,
     withdrawError,
   } from "#lib/view.ts";
@@ -31,6 +37,7 @@
           const event = eventsById.get(id);
           return event?.open ? [event] : [];
         });
+  const overall = $derived(view.viewer === "owner" || data.folded ? null : gauge(view.items));
   const kindLabels = { unique: null, quantity: "Plusieurs exemplaires", pool: "Cagnotte" } as const;
 
   /** Only web links become links: never a javascript: or data: address. */
@@ -104,6 +111,10 @@
     </p>
   {/if}
 
+  {#if overall}
+    <EventGauge gauge={overall} label={view.event ? "Où en est l'occasion" : "Où en est la liste"} />
+  {/if}
+
   {#if view.items.length === 0}
     <p class="card empty">La liste est vide pour l'instant. Revenez un peu plus tard !</p>
   {:else}
@@ -146,14 +157,23 @@
                 .join(", ")}
             </p>
           {/if}
-          {#if item.kind === "pool" && item.funding && item.status !== "received"}
-            <progress
-              max="100"
-              value={Math.round(item.funding.progress * 100)}
-              aria-label="Cagnotte « {item.title} » remplie à {Math.round(item.funding.progress * 100)} %"
-            ></progress>
+          {#if item.funding && item.status !== "received"}
+            {@const bar = poolBar(item, view.events)}
+            {#if bar}
+              <PoolBar {bar} id={item.id} />
+            {:else if item.kind === "quantity" && item.quantity && item.quantity <= 24}
+              <Copies wanted={item.quantity} taken={item.funding.reservedUnits ?? 0} />
+            {/if}
+            {#if item.funding.state === "almost"}<p class="tags">
+                <span class="tag almost">Presque complet</span>
+              </p>{/if}
           {/if}
-          {#if line}<p class="standing" class:done={complete}>{line}</p>{/if}
+          {#if line}
+            <div class="standing-row">
+              {#if item.funding?.contributors.length}<Givers contributors={item.funding.contributors} />{/if}
+              <p class="standing" class:done={complete}>{line}</p>
+            </div>
+          {/if}
 
           {#each data.mine.filter((gift) => gift.itemId === item.id) as gift (gift.id)}
             <div class="mine">
@@ -291,25 +311,18 @@
   .small {
     font-size: 0.95rem;
   }
-  progress {
-    display: block;
-    width: 100%;
-    height: 0.75rem;
-    margin-top: 0.75rem;
-    appearance: none;
-    border: 0;
-    border-radius: 999px;
-    background: var(--border);
-    overflow: hidden;
+  .standing-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
   }
-  progress::-webkit-progress-bar {
-    background: var(--border);
+  .standing-row :global(.givers) {
+    margin-top: 0;
+    flex: none;
   }
-  progress::-webkit-progress-value {
-    background: var(--progress);
-  }
-  progress::-moz-progress-bar {
-    background: var(--progress);
+  .almost {
+    border-color: var(--progress);
+    font-weight: 600;
   }
   .standing {
     font-weight: 600;
