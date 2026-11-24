@@ -24,6 +24,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Public view of the share links (`/s/<token>`): the list or the event, whose wishes they are, each
+  item with its price, notes, link and where it stands (free, reserved by whom, copies left, the
+  pool's progress, given at every occasion, received), what is still to give first. The owner on
+  their own link is warned and sees no funding at all. An unknown, revoked or expired link gives
+  one same page. Same title and preview for every link, `noindex`, never cached; light/dark button.
+  See [Public view](docs/public-view.md).
+- `@wishalia/ui`: the design tokens, fonts, logo and light/dark button, shared by the two frontends.
+
 - Passkeys in the management app: « Se connecter avec une clé d'accès » and the passkeys offered in
   the e-mail field's suggestions on `/connexion`; « Clés d'accès » in the settings to add, rename and
   delete them. Passkeys are discoverable (no email to type), and adding one needs a sign-in of less

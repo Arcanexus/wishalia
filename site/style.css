@@ -136,7 +136,7 @@ footer {
 
 .shots {
   display: grid;
-  grid-template-columns: 3fr 1fr;
+  grid-template-columns: 3fr 1fr 1fr;
   gap: 1rem;
   align-items: start;
 }

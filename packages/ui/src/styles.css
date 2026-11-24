@@ -1,3 +1,6 @@
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/nunito";
+
 /*
  * Wishalia design tokens (docs/branding.md). Two themes, neutral and Christmas, each in light and
  * dark. <html> carries data-theme and data-mode (device, light or dark); "device" follows

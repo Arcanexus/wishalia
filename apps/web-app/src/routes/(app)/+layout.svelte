@@ -2,7 +2,8 @@
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
 
-  import Logo from "#lib/Logo.svelte";
+  import Logo from "@wishalia/ui/Logo.svelte";
+  import ModeButton from "@wishalia/ui/ModeButton.svelte";
 
   let { data, children } = $props();
 
@@ -15,7 +16,6 @@
           ? "settings"
           : "lists",
   );
-  const modeLabels = { device: "comme l'appareil", light: "clair", dark: "sombre" } as const;
 </script>
 
 <header class="top">
@@ -35,32 +35,7 @@
       </a>
     </nav>
     <div class="tools">
-      <form method="POST" action="/preferences">
-        <input type="hidden" name="retour" value={page.url.pathname} />
-        <button
-          type="submit"
-          class="secondary"
-          aria-label="Affichage {modeLabels[data.mode]}. Passer en affichage {modeLabels[data.nextMode]}"
-        >
-          <svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-            {#if data.mode === "dark"}
-              <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="currentColor" />
-            {:else if data.mode === "light"}
-              <circle cx="12" cy="12" r="4.5" fill="currentColor" />
-              <path
-                d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              />
-            {:else}
-              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
-              <path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" />
-            {/if}
-          </svg>
-          <span class="label">Affichage {modeLabels[data.mode]}</span>
-        </button>
-      </form>
+      <ModeButton mode={data.mode} nextMode={data.nextMode} returnPath={page.url.pathname} />
       <form method="POST" action="/deconnexion">
         <button type="submit" class="secondary">Se déconnecter</button>
       </form>
@@ -129,11 +104,5 @@
     max-width: 52rem;
     margin: 0 auto;
     padding: 1.5rem 1rem 4rem;
-  }
-  /* Under a wide screen, the mode button keeps its symbol only; its name stays for screen readers */
-  @media (max-width: 64rem) {
-    .label {
-      display: none;
-    }
   }
 </style>

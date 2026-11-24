@@ -12,6 +12,7 @@ packages/
   domain/       pure business rules (amounts, funding, the anti-spoil rule)
   db/           Drizzle schema, versioned migrations, PostgreSQL client
   metrics/      Prometheus registry and /metrics server, shared by the four components
+  ui/           design tokens, fonts, logo and header button, shared by the two frontends
   config/       shared TypeScript settings
 charts/wishalia Helm chart of the four components
 docs/           this documentation, published to the wiki
