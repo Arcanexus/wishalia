@@ -259,6 +259,8 @@ describe("the drawings", () => {
     expect(initials("Paul")).toBe("P");
     expect(initials("jean-pierre dupont")).toBe("JP");
     expect(initials("Élise Martin")).toBe("ÉM");
+    expect(initials("Camille (exemple)")).toBe("C");
+    expect(initials("(42)")).toBe("?");
     expect(initials(null)).toBe("?");
   });
 });

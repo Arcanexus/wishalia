@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { PublicView } from "#lib/types.ts";
+import type { PublicView } from "@wishalia/ui/public/types.ts";
 
 import { POST as preferences } from "./preferences/+server.ts";
 import { load } from "./s/[token]/+page.server.ts";

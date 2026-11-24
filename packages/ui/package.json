@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "What the two frontends share: the design tokens and base styles, the fonts and the logo (docs/branding.md).",
+  "description": "What the two frontends share: the design tokens and base styles, the fonts, the logo (docs/branding.md), and the drawings and words of the public view.",
   "exports": {
     "./styles.css": "./src/styles.css",
     "./Logo.svelte": {
@@ -13,7 +13,12 @@
     "./ModeButton.svelte": {
       "svelte": "./src/ModeButton.svelte",
       "default": "./src/ModeButton.svelte"
-    }
+    },
+    "./public/*.svelte": {
+      "svelte": "./src/public/*.svelte",
+      "default": "./src/public/*.svelte"
+    },
+    "./public/*.ts": "./src/public/*.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
@@ -21,5 +26,9 @@
   },
   "peerDependencies": {
     "svelte": "^5.59.1"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "vitest run"
   }
 }

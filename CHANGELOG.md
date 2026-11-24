@@ -17,6 +17,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- After a move within an app, the page title could show in a corner: SvelteKit's route announcer
+  hides itself with a `style` attribute that the CSP blocks. The shared styles now hide it.
 - The words guests leave for the owner (« À lire après l'occasion ») never reached them: once the
   secret is lifted, the event page shows each one under the gift it goes with.
 - The gifts made without an event never showed who gave them: the list's page now shows who gave
@@ -31,6 +33,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- « Aperçu » on a list page: the list as relatives see it, with made-up gifts plainly marked as
+  examples, built without reading any real contribution. The guests' item card and drawings moved
+  to `@wishalia/ui` so that both apps draw them the same way.
 - Public view of the share links (`/s/<token>`): the list or the event, whose wishes they are, each
   item with its price, notes, link and where it stands (free, reserved by whom, copies left, the
   pool's progress, given at every occasion, received), what is still to give first. The owner on

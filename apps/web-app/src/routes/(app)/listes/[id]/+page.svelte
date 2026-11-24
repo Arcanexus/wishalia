@@ -42,7 +42,12 @@
 <p class="back"><a href={resolve("/(app)")}>← Mes listes</a></p>
 <div class="heading">
   <h1>{data.list.name}</h1>
-  <a class="button secondary" href="{resolve('/(app)/partage')}?liste={data.list.id}">Partager cette liste</a>
+  <div class="actions">
+    <a class="button secondary" href={resolve("/(app)/listes/[id]/apercu", { id: data.list.id })}>Aperçu</a>
+    <a class="button secondary" href="{resolve('/(app)/partage')}?liste={data.list.id}">
+      Partager cette liste
+    </a>
+  </div>
 </div>
 
 <ListSettings list={data.list} {form} />
@@ -160,6 +165,11 @@
   }
   .heading h1 {
     margin: 0;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
   .back {
     margin: 0 0 0.5rem;

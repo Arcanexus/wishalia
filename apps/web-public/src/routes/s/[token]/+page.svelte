@@ -4,23 +4,11 @@
 
   import Logo from "@wishalia/ui/Logo.svelte";
   import ModeButton from "@wishalia/ui/ModeButton.svelte";
+  import EventGauge from "@wishalia/ui/public/EventGauge.svelte";
+  import ItemCard from "@wishalia/ui/public/ItemCard.svelte";
 
-  import Copies from "#lib/Copies.svelte";
-  import EventGauge from "#lib/EventGauge.svelte";
   import GiveForm from "#lib/GiveForm.svelte";
-  import Givers from "#lib/Givers.svelte";
-  import PoolBar from "#lib/PoolBar.svelte";
-  import {
-    canGive,
-    gauge,
-    formatDay,
-    formatEuros,
-    heading,
-    myGiftLine,
-    poolBar,
-    standing,
-    withdrawError,
-  } from "#lib/view.ts";
+  import { canGive, gauge, formatDay, heading, myGiftLine, withdrawError } from "@wishalia/ui/public/view.ts";
 
   import type { PageProps } from "./$types";
 
@@ -38,11 +26,6 @@
           return event?.open ? [event] : [];
         });
   const overall = $derived(view.viewer === "owner" || data.folded ? null : gauge(view.items));
-  const kindLabels = { unique: null, quantity: "Plusieurs exemplaires", pool: "Cagnotte" } as const;
-
-  /** Only web links become links: never a javascript: or data: address. */
-  const webLink = (url: string | null) => (url && /^https?:\/\//i.test(url) ? url : null);
-  const site = (url: string) => URL.parse(url)?.hostname.replace(/^www\./, "") ?? url;
   const shortDay = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" });
   const short = (date: string) => shortDay.format(new Date(`${date}T00:00:00Z`));
 </script>
@@ -120,61 +103,7 @@
   {:else}
     <ul class="items">
       {#each view.items as item (item.id)}
-        {@const line = standing(item)}
-        {@const complete = item.status === "received" || item.funding?.state === "complete"}
-        <li class="card item" class:complete>
-          <div class="head">
-            <h2>{item.title}</h2>
-            {#if item.kind === "pool" && item.targetCents}
-              <span class="price">{formatEuros(item.targetCents)}</span>
-            {:else if item.priceCents}
-              <span class="price">{formatEuros(item.priceCents)}</span>
-            {/if}
-          </div>
-          {#if kindLabels[item.kind] || item.repeatable || (item.kind === "quantity" && item.quantity)}
-            <p class="tags">
-              {#if kindLabels[item.kind]}<span class="tag">{kindLabels[item.kind]}</span>{/if}
-              {#if item.kind === "quantity" && item.quantity}<span class="tag">
-                  {item.quantity} souhaités
-                </span>{/if}
-              {#if item.repeatable}<span class="tag">À chaque occasion</span>{/if}
-            </p>
-          {/if}
-          {#if item.notes}<p class="notes">{item.notes}</p>{/if}
-          {#if webLink(item.url)}
-            {@const link = webLink(item.url) ?? ""}
-            <p>
-              <a href={link} rel="noopener noreferrer nofollow external" target="_blank">
-                Voir sur {site(link)}<span class="visually-hidden"> (nouvel onglet)</span>
-              </a>
-            </p>
-          {/if}
-          {#if view.scope === "list" && item.eventIds.length > 0}
-            <p class="muted small">
-              Pour {item.eventIds
-                .map((id) => eventsById.get(id)?.name)
-                .filter(Boolean)
-                .join(", ")}
-            </p>
-          {/if}
-          {#if item.funding && item.status !== "received"}
-            {@const bar = poolBar(item, view.events)}
-            {#if bar}
-              <PoolBar {bar} id={item.id} />
-            {:else if item.kind === "quantity" && item.quantity && item.quantity <= 24}
-              <Copies wanted={item.quantity} taken={item.funding.reservedUnits ?? 0} />
-            {/if}
-            {#if item.funding.state === "almost"}<p class="tags">
-                <span class="tag almost">Presque complet</span>
-              </p>{/if}
-          {/if}
-          {#if line}
-            <div class="standing-row">
-              {#if item.funding?.contributors.length}<Givers contributors={item.funding.contributors} />{/if}
-              <p class="standing" class:done={complete}>{line}</p>
-            </div>
-          {/if}
-
+        <ItemCard {item} events={view.events} scope={view.scope}>
           {#each data.mine.filter((gift) => gift.itemId === item.id) as gift (gift.id)}
             <div class="mine">
               <p>
@@ -211,7 +140,7 @@
               failed={form?.give && form.give.itemId === item.id ? form.give : null}
             />
           {/if}
-        </li>
+        </ItemCard>
       {/each}
     </ul>
   {/if}
@@ -275,66 +204,6 @@
     display: grid;
     gap: 1rem;
   }
-  .item h2 {
-    font-size: 1.25rem;
-    margin: 0;
-    overflow-wrap: anywhere;
-  }
-  .item p {
-    margin: 0.5rem 0 0;
-  }
-  .head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 1rem;
-  }
-  .price {
-    font-weight: 700;
-    white-space: nowrap;
-  }
-  .tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-  .tag {
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 0.1rem 0.6rem;
-    font-size: 0.9rem;
-    color: var(--text-2);
-  }
-  .notes {
-    white-space: pre-line;
-  }
-  .small {
-    font-size: 0.95rem;
-  }
-  .standing-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-  .standing-row :global(.givers) {
-    margin-top: 0;
-    flex: none;
-  }
-  .almost {
-    border-color: var(--progress);
-    font-weight: 600;
-  }
-  .standing {
-    font-weight: 600;
-  }
-  /* Already given: quieter, without fading the text (contrast stays AA) */
-  .complete {
-    background: transparent;
-    border-style: dashed;
-  }
-  .complete .standing {
-    color: var(--text-2);
-  }
   .mine {
     display: flex;
     flex-wrap: wrap;
@@ -364,7 +233,7 @@
     margin: 1rem 0 0.5rem;
   }
   .thanks {
-    margin-top: 0.75rem;
+    margin: 0.75rem 0 0;
   }
   .empty {
     margin: 1.5rem 0;

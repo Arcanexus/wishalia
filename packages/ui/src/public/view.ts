@@ -238,9 +238,12 @@ export function initials(name: string | null): string {
   const words = name
     .trim()
     .split(/[\s-]+/u)
-    .filter(Boolean);
-  return words
-    .slice(0, 2)
-    .map((word) => [...word][0]?.toLocaleUpperCase("fr-FR") ?? "")
-    .join("");
+    // « Camille (exemple) » → « C »: only words that start with a letter
+    .filter((word) => /^\p{L}/u.test(word));
+  return (
+    words
+      .slice(0, 2)
+      .map((word) => [...word][0]?.toLocaleUpperCase("fr-FR") ?? "")
+      .join("") || "?"
+  );
 }

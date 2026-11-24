@@ -258,6 +258,9 @@ label {
   color: var(--text-2);
 }
 
+/* SvelteKit's route announcer hides itself with a style attribute, which the CSP (style-src 'self')
+   blocks: without this rule, the page title would show after each move within the app */
+#svelte-announcer,
 .visually-hidden {
   position: absolute;
   width: 1px;

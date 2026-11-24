@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GIFTS_COOKIE, readGifts, type StoredGift, UNFOLDED_COOKIE } from "#lib/server/gifts.ts";
-import type { PublicView } from "#lib/types.ts";
+import type { PublicView } from "@wishalia/ui/public/types.ts";
 
 import { actions, load } from "./s/[token]/+page.server.ts";
 

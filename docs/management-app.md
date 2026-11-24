@@ -40,6 +40,17 @@ A list page shows its items, newest first, with what kind of gift they are, thei
 of their link. Each item can be marked **received** or **archived**; received and archived items wait under « Reçues et
 archivées », where they can be put back in the list. Every change lands in the item's history.
 
+### The preview
+
+« Aperçu », next to the list's title, shows the list as the owner's relatives see it through a share
+link: the same cards, drawings and words, the list's theme, what is still to give first. The gifts
+on it are **made up** for the preview (« Camille (exemple) », « Hugo (exemple) », someone anonymous),
+and the page says so: they are built from the items alone, and the page never asks the API for a
+history or a contribution, so the preview can give nothing away. The relatives' buttons to give are
+left out; the page says they have one under each item.
+
+![The preview of a list, on a phone in dark mode](images/app-preview-dark.png)
+
 ### A list's settings
 
 « Réglages de la liste », folded under the list's title, holds:
