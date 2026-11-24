@@ -16,6 +16,7 @@ env:
 
 jobs:
   tests:
+    permissions: {}
     uses: ./.github/workflows/tests.yml
 
   build:
