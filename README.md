@@ -41,6 +41,7 @@ server, not hidden in the page.
 > events, sharing, settings), and the family sees a shared list or event in the public view, where
 > they reserve, chip in and withdraw. The worker completes the items added with a link (title,
 > price, images), and the owner can choose, send and frame the image of each item (on a volume or in S3, through imgproxy).
+> The app installs on a phone, and a wish comes in from the share menu of any app (a Shortcut on iPhone).
 
 <p align="center">
   <img src="docs/images/app-lists.png" alt="The management app: a greeting, the quick add field and two lists" width="640">
@@ -52,6 +53,7 @@ server, not hidden in the page.
 | 🎁 **Gifts together**   | Several contributions per item, across events, overshoot allowed.        |
 | 📅 **Lists and events** | Durable lists, recurring events, series of books, recurring wishes.      |
 | 👵 **For every age**    | Large touch targets, no password, an item added in under five seconds.   |
+| 📱 **On the phone**     | Installs like an app; « Partager » from any shop adds a wish.            |
 | ⚡ **Light**            | Little JavaScript, quick on a modest phone.                              |
 | 🏠 **Self-hosted**      | Four images, one Helm chart (PostgreSQL included, or yours), a REST API. |
 | 📈 **Observable**       | Prometheus metrics and a ServiceMonitor, with nothing that spoils.       |
@@ -66,7 +68,8 @@ pnpm dev
 
 See the [quick start](docs/quick-start.md), the [installation on Kubernetes](docs/installation.md),
 the [architecture](docs/architecture.md), the [data model](docs/data-model.md),
-[authentication](docs/authentication.md), the [management app](docs/management-app.md), the
+[authentication](docs/authentication.md), the [management app](docs/management-app.md),
+[installing the app on a phone](docs/install-app.md), the
 [management API](docs/api.md) and
 [monitoring](docs/monitoring.md).
 

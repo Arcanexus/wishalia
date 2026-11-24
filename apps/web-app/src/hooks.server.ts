@@ -2,6 +2,7 @@ import type { Handle, ServerInit } from "@sveltejs/kit/hooks";
 import { resolveTheme } from "@wishalia/domain";
 import { metricsPort, processMetrics } from "@wishalia/metrics";
 
+import { themeColorTags } from "#lib/install.ts";
 import { readPreferences } from "#lib/server/preferences.ts";
 import { applySecurityHeaders } from "#lib/security-headers.ts";
 
@@ -25,18 +26,18 @@ export const handle: Handle = async ({ event, resolve }) => {
   const response = await resolve(event, {
     // The theme and mode are on <html> from the first byte: no flash of the wrong colours. Read at
     // render time, after the page's load has set the list's forced theme
-    transformPageChunk: ({ html }) =>
-      html
-        .replace(
-          "%wishalia.theme%",
-          resolveTheme({
-            listTheme: event.locals.listTheme,
-            christmasList: event.locals.christmas,
-            personTheme: event.locals.themeChoice,
-            today: new Date(),
-          }),
-        )
-        .replace("%wishalia.mode%", event.locals.mode),
+    transformPageChunk: ({ html }) => {
+      const theme = resolveTheme({
+        listTheme: event.locals.listTheme,
+        christmasList: event.locals.christmas,
+        personTheme: event.locals.themeChoice,
+        today: new Date(),
+      });
+      return html
+        .replace("%wishalia.theme%", theme)
+        .replace("%wishalia.mode%", event.locals.mode)
+        .replace("%wishalia.theme-color%", themeColorTags(theme, event.locals.mode));
+    },
   });
   applySecurityHeaders(response.headers);
   // The route id (/[token]), never the URL: share link tokens never reach the metrics

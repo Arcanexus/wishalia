@@ -8,6 +8,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- The management app installs on a phone, a tablet or a computer (Progressive Web App): a manifest
+  (`/manifest.webmanifest`, named after `APP_NAME`), icons (192, 512, maskable, Apple touch), a
+  status bar colour that follows the theme and mode, and a service worker that keeps only the app's
+  code and icons, never a private page, with a « Pas de connexion » page when offline.
+- Web Share Target: on Android, « Partager » then « Wishalia » from any app opens « Ajouter une
+  envie » (`/ajouter`) with the shared link and words in the field, a choice of list, and one button
+  to add. The page never adds on its own. A shared link survives the sign-in page.
+- iOS Shortcut, documented step by step ([Install the app](docs/install-app.md)): through the add
+  page, or in the background with a REST API v1 token.
+- « Réglages » shows how to install the app on the device in hand, an « Installer Wishalia » button
+  where the browser offers one, and the address for the iPhone Shortcut.
 - The chart can deploy the images' S3 bucket itself: [Garage](https://garagehq.deuxfleurs.fr), one
   node, with its volume (or an existing claim), inside the cluster only (`images.garage.enabled`,
   off by default; the images stay on a volume by default). Garage makes the bucket and its key from

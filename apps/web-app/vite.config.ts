@@ -12,6 +12,7 @@ export default defineConfig({
       files: {
         src: fileURLToPath(new URL("src", import.meta.url)),
         assets: fileURLToPath(new URL("static", import.meta.url)),
+        serviceWorker: fileURLToPath(new URL("src/service-worker", import.meta.url)),
       },
       // Strict Content Security Policy: hashes or nonces for SvelteKit's own scripts, nothing else
       csp: {
@@ -22,6 +23,9 @@ export default defineConfig({
           "style-src": ["self"],
           "img-src": ["self", "data:"],
           "connect-src": ["self"],
+          // The service worker (src/service-worker.ts) and the manifest, from this app only
+          "worker-src": ["self"],
+          "manifest-src": ["self"],
           "object-src": ["none"],
           "base-uri": ["self"],
           "form-action": ["self"],

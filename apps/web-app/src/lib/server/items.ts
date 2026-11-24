@@ -14,9 +14,13 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * The quick add (spec §5.1): one field, a link and/or a few words. The API adds the item at once
  * and enriches it later; a link already in an open item is flagged, so the page offers to undo.
  */
-export async function quickAdd(event: FormEvent, listId?: string) {
+export async function quickAdd(event: FormEvent, pageListId?: string) {
   const form = await event.request.formData();
   const input = String(form.get("input") ?? "").trim();
+  // The list of the page, else the one the person picked (the share page), else the first one
+  const listId = pageListId ?? (String(form.get("listId") ?? "") || undefined);
+  if (listId !== undefined && !UUID.test(listId))
+    return fail(400, { add: { error: "invalid_request", input } });
   if (!input) return fail(400, { add: { error: "empty", input } });
   try {
     const added = await apiJson<AddedItem>(event, "/manage/items", {

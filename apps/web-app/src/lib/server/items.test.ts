@@ -31,6 +31,19 @@ describe("quickAdd", () => {
     expect(api.calls[0]?.body).toEqual({ input: "x" });
   });
 
+  it("takes the list the person picked, and refuses one that is not a list id", async () => {
+    const api = fakeApi({
+      "POST /manage/items": () => json({ id: ITEM, title: "x", listId: LIST, duplicateOf: [] }, 201),
+    });
+    await quickAdd(fakeEvent({ form: { input: "x", listId: LIST } }).event);
+    expect(api.calls[0]?.body).toEqual({ input: "x", listId: LIST });
+    expect(await quickAdd(fakeEvent({ form: { input: "x", listId: "../admin" } }).event)).toMatchObject({
+      status: 400,
+      data: { add: { error: "invalid_request", input: "x" } },
+    });
+    expect(api.calls).toHaveLength(1);
+  });
+
   it("refuses an empty field without calling the API, and keeps what was typed on an error", async () => {
     const api = fakeApi({ "POST /manage/items": () => json({ error: "not_found" }, 404) });
     expect(await quickAdd(fakeEvent({ form: { input: "  " } }).event)).toMatchObject({
@@ -44,8 +57,15 @@ describe("quickAdd", () => {
     });
   });
 
-  it("sends a signed-out person to the sign-in page", async () => {
+  it("sends a signed-out person to the sign-in page, with what they shared", async () => {
     fakeApi({ "POST /manage/items": () => json({ error: "unauthenticated" }, 401) });
+    const shared = fakeEvent({
+      url: "https://app.test/partager?url=https%3A%2F%2Fx.test",
+      form: { input: "x" },
+    });
+    expect((await outcome(() => quickAdd(shared.event))).thrown).toMatchObject({
+      location: `/connexion?retour=${encodeURIComponent("/partager?url=https%3A%2F%2Fx.test")}`,
+    });
     const { event } = fakeEvent({ url: "https://app.test/listes/1", form: { input: "x" } });
     expect((await outcome(() => quickAdd(event))).thrown).toMatchObject({
       status: 303,

@@ -34,6 +34,12 @@ envies », created by the very first add), from a list page into that list.
 When the link is already in one of the person's open items, the app says so and offers to undo the
 add, rather than asking before it.
 
+Installed on a phone, the app is also in the system's **share menu**: « Partager », then
+« Wishalia », opens « Ajouter une envie » (`/ajouter`) with the shared link and its title in the
+field, a choice of list, and one « Ajouter à ma liste » button. The page never adds on its own: the
+person sees what will be added and confirms with one tap. On iPhone, a Shortcut does the same. See
+[Install the app](install-app.md).
+
 ![An add whose link is already in the list](images/app-quick-add.png)
 
 A list page shows its items, newest first, with what kind of gift they are, their price and the site
@@ -172,6 +178,11 @@ creates one on this device, under the name typed or one guessed from the device 
 older session is asked to sign in again, and comes back to the settings. A device that already holds
 a passkey of the account is told so. Passkeys need JavaScript; without it, or in a browser without
 them, the page says so and the link by e-mail remains.
+
+« L'application sur votre téléphone » shows how to install the app on the device in hand (Android,
+iPhone and iPad, computer; every set of steps without JavaScript), an « Installer Wishalia » button
+where the browser offers one, and the address an iPhone Shortcut opens, with « Copier l'adresse ».
+See [Install the app](install-app.md).
 
 When the REST API v1 is on (`hosts.api`), the page also manages the **API tokens**: a name, a
 lifetime of 1 to 365 days (90 by default) and an optional read-only mode. A new token is shown once,
