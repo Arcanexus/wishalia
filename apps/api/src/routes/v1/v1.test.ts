@@ -1,6 +1,8 @@
 import type { InjectOptions } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { schema } from "@wishalia/db";
+
 import { createTestApp, OWNER_EMAIL, signIn, type TestApp } from "../../test/app.js";
 
 const OTHER_EMAIL = "other-owner@example.test";
@@ -140,6 +142,31 @@ describe("the REST API v1", () => {
       (row: { id: string }) => row.id === id,
     );
     expect(listed.lastUsedAt).toBe(clock.toISOString());
+  });
+
+  it("never gives who gave what, even once the secret is lifted", async () => {
+    const { token: secret } = await token(owner);
+    const before = clock;
+    clock = new Date("2026-12-20T10:00:00Z");
+    const event = (await manage(owner, "POST", "/events", { name: "Noël", date: "2026-12-25" })).body;
+    const item = (await manage(owner, "POST", "/items", { input: "Robot" })).body;
+    await manage(owner, "PUT", `/events/${event.id}/items/${item.id}`);
+    await t.db.insert(schema.itemEvents).values({
+      wishId: item.id,
+      type: "contribution_added",
+      payload: { eventId: event.id, amountCents: 5000, name: "Mamie" },
+      visibility: "sealed",
+    });
+    clock = new Date("2026-12-30T10:00:00Z");
+    expect((await manage(owner, "POST", `/events/${event.id}/reveal`)).status).toBe(200);
+
+    // The management app sees it once lifted; the token never does
+    const inApp = (await manage(owner, "GET", `/items/${item.id}/history`)).body as { type: string }[];
+    expect(inApp.map((entry) => entry.type)).toContain("contribution_added");
+    const viaToken = await v1(secret, "GET", `/items/${item.id}/history`);
+    expect(viaToken.status).toBe(200);
+    expect(JSON.stringify(viaToken.body)).not.toMatch(/contribution|Mamie|5000|amount/i);
+    clock = before;
   });
 
   it("only reads with a read-only token", async () => {
