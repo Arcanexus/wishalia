@@ -1,7 +1,7 @@
 import { createDb } from "@wishalia/db";
 import { createEnrichmentMetrics, createRegistry, metricsPort, startMetricsServer } from "@wishalia/metrics";
 
-import { imageSettingsFromEnv, s3Storage } from "@wishalia/storage";
+import { imageSettingsFromEnv, openStorage } from "@wishalia/storage";
 
 import { fetchImage, fetchPage } from "./fetch.js";
 import { createHealthServer } from "./health.js";
@@ -12,11 +12,11 @@ const { db, close } = createDb({ url: process.env.DATABASE_URL ?? "", maxConnect
 const port = Number(process.env.PORT ?? 3001);
 let running = true;
 
-// The images of the pages (docs/images.md): only with the S3 bucket and imgproxy configured
+// The images of the pages (docs/images.md): only with a bucket or a volume, and imgproxy, configured
 const images = imageSettingsFromEnv();
-const storage = images ? s3Storage(images.s3) : null;
+const storage = images ? openStorage(images.storage) : null;
 await storage?.ensureBucket().catch((error: Error) => {
-  process.stderr.write(`image bucket not ready (${error.message}): images will be retried with each item\n`);
+  process.stderr.write(`image storage not ready (${error.message}): images will be retried with each item\n`);
 });
 
 const server = createHealthServer(() => running);

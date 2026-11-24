@@ -98,16 +98,18 @@ interface Claimed {
 
 /** Takes the next item to complete, if any, and marks it running. */
 export async function claim(db: Database, now: Date): Promise<Claimed | null> {
-  const stale = new Date(now.getTime() - RUN_TIMEOUT_MS);
+  // Raw SQL: the dates go as ISO strings, the postgres driver does not serialise a Date here
+  const at = now.toISOString();
+  const stale = new Date(now.getTime() - RUN_TIMEOUT_MS).toISOString();
   const result = await db.execute<{ id: string; url: string | null; enrichment_attempts: number }>(sql`
     UPDATE ${schema.wishes}
-    SET enrichment = 'running', enrichment_at = ${now}, enrichment_attempts = enrichment_attempts + 1
+    SET enrichment = 'running', enrichment_at = ${at}::timestamptz, enrichment_attempts = enrichment_attempts + 1
     WHERE id = (
       SELECT id FROM ${schema.wishes}
       WHERE (
           (enrichment = 'pending' AND (enrichment_at IS NULL
-            OR enrichment_at < ${now}::timestamptz - make_interval(secs => ${RETRY_DELAY_MS / 1000} * enrichment_attempts)))
-          OR (enrichment = 'running' AND enrichment_at < ${stale})
+            OR enrichment_at < ${at}::timestamptz - make_interval(secs => ${RETRY_DELAY_MS / 1000} * enrichment_attempts)))
+          OR (enrichment = 'running' AND enrichment_at < ${stale}::timestamptz)
         )
         AND enrichment_attempts < ${MAX_ENRICHMENT_ATTEMPTS}
       ORDER BY created_at

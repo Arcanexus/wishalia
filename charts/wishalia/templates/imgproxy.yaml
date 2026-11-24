@@ -1,10 +1,12 @@
 {{- if .Values.images.enabled }}
 {{- if not .Values.existingSecret }}
-{{- fail "images.enabled needs existingSecret, with S3_ACCESS_KEY, S3_SECRET_KEY, IMGPROXY_KEY and IMGPROXY_SALT" }}
+{{- fail "images.enabled needs existingSecret, with IMGPROXY_KEY and IMGPROXY_SALT (and S3_ACCESS_KEY, S3_SECRET_KEY with images.storage=s3)" }}
 {{- end }}
+{{- $volume := include "wishalia.imageVolume" . }}
 {{- $imgproxy := .Values.images.imgproxy }}
-# imgproxy makes the thumbnails from the bucket (docs/images.md). Inside the cluster only: the two
-# frontends pass its answers on under /img/. It only reads s3:// sources and only signed paths.
+# imgproxy makes the thumbnails from the volume or the bucket (docs/images.md). Inside the cluster
+# only: the two frontends pass its answers on under /img/. It reads only the image files (local://
+# or s3:// of the bucket), and only signed paths.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -42,6 +44,14 @@ spec:
           env:
             - name: IMGPROXY_BIND
               value: {{ printf ":%v" $imgproxy.port | quote }}
+            {{- if $volume }}
+            # The volume, mounted read-only: local:///<key> is a file under it
+            - name: IMGPROXY_LOCAL_FILESYSTEM_ROOT
+              value: {{ include "wishalia.imageDir" . | quote }}
+            # Only the image files: never a URL of the Internet or of the cluster (SSRF)
+            - name: IMGPROXY_ALLOWED_SOURCES
+              value: "local:///"
+            {{- else }}
             - name: IMGPROXY_USE_S3
               value: "true"
             - name: IMGPROXY_S3_ENDPOINT
@@ -51,6 +61,7 @@ spec:
             # Only the images of the bucket: never a URL of the Internet or of the cluster (SSRF)
             - name: IMGPROXY_ALLOWED_SOURCES
               value: {{ printf "s3://%s/" .Values.images.s3.bucket | quote }}
+            {{- end }}
             - name: IMGPROXY_MAX_SRC_RESOLUTION
               value: {{ $imgproxy.maxSrcResolution | quote }}
             - name: IMGPROXY_MAX_SRC_FILE_SIZE
@@ -58,7 +69,12 @@ spec:
             # No EXIF (where a photo was taken) in what the browsers get
             - name: IMGPROXY_STRIP_METADATA
               value: "true"
-            {{- range $secretKey, $name := dict "S3_ACCESS_KEY" "AWS_ACCESS_KEY_ID" "S3_SECRET_KEY" "AWS_SECRET_ACCESS_KEY" "IMGPROXY_KEY" "IMGPROXY_KEY" "IMGPROXY_SALT" "IMGPROXY_SALT" }}
+            {{- $secrets := dict "IMGPROXY_KEY" "IMGPROXY_KEY" "IMGPROXY_SALT" "IMGPROXY_SALT" }}
+            {{- if not $volume }}
+            {{- $_ := set $secrets "S3_ACCESS_KEY" "AWS_ACCESS_KEY_ID" }}
+            {{- $_ := set $secrets "S3_SECRET_KEY" "AWS_SECRET_ACCESS_KEY" }}
+            {{- end }}
+            {{- range $secretKey, $name := $secrets }}
             - name: {{ $name }}
               valueFrom:
                 secretKeyRef:
@@ -80,17 +96,28 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            {{- if $volume }}
+            - name: images
+              mountPath: {{ include "wishalia.imageDir" . }}
+              readOnly: true
+            {{- end }}
       volumes:
         - name: tmp
           emptyDir:
             sizeLimit: 64Mi
+        {{- if $volume }}
+        - name: images
+          persistentVolumeClaim:
+            claimName: {{ include "wishalia.imageClaim" . }}
+            readOnly: true
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with include "wishalia.affinity" (dict "root" . "component" "imgproxy") }}
       affinity:
-        {{- toYaml . | nindent 8 }}
+        {{- . | nindent 8 }}
       {{- end }}
       {{- with .Values.tolerations }}
       tolerations:

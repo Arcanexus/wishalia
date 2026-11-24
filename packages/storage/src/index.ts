@@ -1,4 +1,4 @@
-export { imageSettingsFromEnv, type ImageSettings } from "./config.js";
+export { imageSettingsFromEnv, type ImageSettings, type StorageSettings } from "./config.js";
 export {
   cropOption,
   IMAGE_PREFIX,
@@ -12,5 +12,13 @@ export {
   type Variant,
 } from "./imgproxy.js";
 export { sniffImage, type Sniffed } from "./sniff.js";
-export { memoryStorage, s3Storage, StorageError, type S3Settings, type Storage } from "./storage.js";
+export {
+  memoryStorage,
+  openStorage,
+  s3Storage,
+  StorageError,
+  volumeStorage,
+  type S3Settings,
+  type Storage,
+} from "./storage.js";
 export { proxyImage } from "./proxy.js";

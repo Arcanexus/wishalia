@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { imagePath } from "./imgproxy.js";
 import { proxyImage } from "./proxy.js";
 
-const settings = { key: "ab".repeat(32), salt: "cd".repeat(32), bucket: "wishalia" };
+const settings = { key: "ab".repeat(32), salt: "cd".repeat(32), source: "s3://wishalia/" };
 const path = imagePath(settings, "wishes/a/b", "small", null).slice("/img".length);
 
 function imgproxy(response: Response | Error) {

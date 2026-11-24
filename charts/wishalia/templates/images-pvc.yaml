@@ -1,0 +1,26 @@
+{{- if and (include "wishalia.imageVolume" .) (not .Values.images.persistence.existingClaim) }}
+{{- $persistence := .Values.images.persistence }}
+# The image files (docs/images.md), when no existing claim is given. Kept on helm uninstall: the
+# photos the family sent are not lost with a release.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "wishalia.imageClaim" . }}
+  labels:
+    {{- include "wishalia.labels" . | nindent 4 }}
+    app.kubernetes.io/component: images
+  annotations:
+    helm.sh/resource-policy: keep
+    {{- with $persistence.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  accessModes:
+    {{- toYaml $persistence.accessModes | nindent 4 }}
+  {{- with $persistence.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ $persistence.size | quote }}
+{{- end }}

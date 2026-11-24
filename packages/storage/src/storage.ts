@@ -1,15 +1,20 @@
+import { randomUUID } from "node:crypto";
+import { mkdir, rename, rm, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+
 import { AwsClient } from "aws4fetch";
 
+import type { StorageSettings } from "./config.js";
 import { withoutTrailingSlashes } from "./url.js";
 
 /**
- * The S3 bucket of the images (MinIO on the homelab, docs/images.md). Only the API and the worker
- * write in it; imgproxy reads it; no browser ever reaches it.
+ * Where the image files live (docs/images.md): an S3 bucket (MinIO on the homelab) or a folder on
+ * a volume. Only the API and the worker write there; imgproxy reads it; no browser ever reaches it.
  */
 export interface Storage {
   put(key: string, body: Uint8Array, contentType: string): Promise<void>;
   delete(key: string): Promise<void>;
-  /** Creates the bucket when it is missing (MinIO starts empty). */
+  /** Creates the bucket or the folder when it is missing (MinIO and a new volume start empty). */
   ensureBucket(): Promise<void>;
 }
 
@@ -79,6 +84,45 @@ export function s3Storage(settings: S3Settings): Storage {
       }
     },
   };
+}
+
+/** The keys Wishalia writes (wishes/<id>/<uuid>): never a way out of the folder. */
+const SAFE_KEY = /^[\w-]+(\/[\w-]+)*$/;
+
+/**
+ * A folder on a volume (a PersistentVolumeClaim, or a folder with docker compose), that imgproxy
+ * mounts read-only. A file is written beside its place then renamed: imgproxy never reads half.
+ */
+export function volumeStorage(dir: string): Storage {
+  const path = (key: string) => {
+    if (!SAFE_KEY.test(key)) throw new StorageError(`Invalid image key: ${key}`, 400);
+    return join(dir, ...key.split("/"));
+  };
+  return {
+    async put(key, body) {
+      const file = path(key);
+      await mkdir(dirname(file), { recursive: true });
+      const partial = `${file}.${randomUUID()}.part`;
+      try {
+        await writeFile(partial, body, { mode: 0o640 });
+        await rename(partial, file);
+      } catch (error) {
+        await rm(partial, { force: true });
+        throw error;
+      }
+    },
+    async delete(key) {
+      await rm(path(key), { force: true });
+    },
+    async ensureBucket() {
+      await mkdir(dir, { recursive: true });
+    },
+  };
+}
+
+/** The storage the settings choose. */
+export function openStorage(settings: StorageSettings): Storage {
+  return settings.kind === "volume" ? volumeStorage(settings.dir) : s3Storage(settings);
 }
 
 /** A bucket in memory, for the tests and for running without S3. */

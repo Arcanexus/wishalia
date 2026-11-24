@@ -1,6 +1,6 @@
 import { createDb } from "@wishalia/db";
 import { createHttpMetrics, createRegistry, startMetricsServer } from "@wishalia/metrics";
-import { imageSettingsFromEnv, s3Storage } from "@wishalia/storage";
+import { imageSettingsFromEnv, openStorage } from "@wishalia/storage";
 
 import { buildApp } from "./app.js";
 import { smtpMailer } from "./auth/mailer.js";
@@ -14,10 +14,10 @@ const database = createDb({ url: config.DATABASE_URL });
 const registry = createRegistry({ component: "api", version: config.APP_VERSION });
 const mailer =
   config.SMTP_URL && config.MAIL_FROM ? smtpMailer(config.SMTP_URL, config.MAIL_FROM) : undefined;
-// The images (docs/images.md): with the S3 bucket and imgproxy only; checked at start-up
+// The images (docs/images.md): with a bucket or a volume, and imgproxy; checked at start-up
 const imageSettings = imageSettingsFromEnv();
 const images = imageSettings
-  ? { storage: s3Storage(imageSettings.s3), imgproxy: imageSettings.imgproxy }
+  ? { storage: openStorage(imageSettings.storage), imgproxy: imageSettings.imgproxy }
   : null;
 const app = await buildApp(config, { db: database.db, metrics: createHttpMetrics(registry), mailer, images });
 if (!config.AUTH_SECRET) {

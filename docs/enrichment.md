@@ -58,7 +58,7 @@ it was. A run whose worker stopped is taken again after 2 minutes.
 The worker needs `DATABASE_URL` (see [Configuration](configuration.md)) and outgoing HTTP(S) access to
 the Internet. Its metrics are described in [Monitoring](monitoring.md).
 
-The worker also takes up to four images from the page, through the same guard, when the image
-bucket is configured: see [Images](images.md).
+The worker also takes up to four images from the page, through the same guard, when the images
+are configured (a volume or a bucket): see [Images](images.md).
 
 Coming next: site-specific readers, and a headless browser as a last resort.

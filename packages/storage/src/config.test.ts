@@ -18,23 +18,37 @@ describe("imageSettingsFromEnv", () => {
     expect(imageSettingsFromEnv({ S3_ENDPOINT: " " })).toBeNull();
   });
 
-  it("reads everything, with a default region", () => {
+  it("reads S3, with a default region, chosen or not", () => {
     expect(imageSettingsFromEnv(full)).toEqual({
-      s3: {
+      storage: {
+        kind: "s3",
         endpoint: "http://minio:9000",
         region: "us-east-1",
         bucket: "wishalia",
         accessKey: "access",
         secretKey: "secret",
       },
-      imgproxy: { key: hex, salt: hex, bucket: "wishalia" },
+      imgproxy: { key: hex, salt: hex, source: "s3://wishalia/" },
     });
-    expect(imageSettingsFromEnv({ ...full, S3_REGION: "eu-west-3" })?.s3.region).toBe("eu-west-3");
+    const chosen = imageSettingsFromEnv({ ...full, IMAGE_STORAGE: "s3", S3_REGION: "eu-west-3" });
+    expect(chosen?.storage).toMatchObject({ kind: "s3", region: "eu-west-3" });
+  });
+
+  it("reads a volume, without any S3 setting", () => {
+    const env = { IMAGE_STORAGE: "volume", IMAGE_DIR: "/data/images", IMGPROXY_KEY: hex, IMGPROXY_SALT: hex };
+    expect(imageSettingsFromEnv(env)).toEqual({
+      storage: { kind: "volume", dir: "/data/images" },
+      imgproxy: { key: hex, salt: hex, source: "local:///" },
+    });
   });
 
   it("says everything that is wrong when half set", () => {
     expect(() => imageSettingsFromEnv({ S3_ENDPOINT: "minio:9000", IMGPROXY_KEY: "xyz" })).toThrow(
       /S3_BUCKET: required[\s\S]*IMGPROXY_KEY: hex[\s\S]*S3_ENDPOINT: an http\(s\) URL/,
     );
+    expect(() => imageSettingsFromEnv({ IMAGE_STORAGE: "volume", IMAGE_DIR: "images" })).toThrow(
+      /IMGPROXY_KEY: required[\s\S]*IMAGE_DIR: an absolute path/,
+    );
+    expect(() => imageSettingsFromEnv({ IMAGE_STORAGE: "disk" })).toThrow(/IMAGE_STORAGE/);
   });
 });

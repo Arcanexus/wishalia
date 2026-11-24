@@ -65,7 +65,7 @@ The API is internal: only the two frontends reach it, server side, and a Network
 - Images: the worker fetches a page's images through the same SSRF guard as the page, and every
   image (the page's or the owner's) is read from its bytes: JPEG, PNG, WebP, GIF, AVIF or HEIC only,
   never SVG, 10 MB and 50 megapixels at most. Browsers only get signed imgproxy paths, served on
-  the frontends' own host (`img-src 'self'`); imgproxy reads only the bucket, is reachable only from
+  the frontends' own host (`img-src 'self'`); imgproxy reads only the image files (the volume, read-only, or the bucket), is reachable only from
   the two frontends, and drops EXIF data. See [Images](images.md).
 - History: `item_events` is append-only, enforced by a database trigger.
 - Metrics: `/metrics` listens on a port of its own that the ingress never routes, and only the

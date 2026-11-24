@@ -68,6 +68,19 @@ existingSecret: ""
 # characters each: openssl rand -hex 32).
 images:
   enabled: false
+  # Where the files live: "volume" (a PersistentVolumeClaim, created by the chart or existing) or
+  # "s3" (MinIO or any S3-compatible bucket). docs/images.md compares the two.
+  storage: volume
+  persistence:
+    # An existing PersistentVolumeClaim; empty: the chart creates one (kept on helm uninstall)
+    existingClaim: ""
+    size: 5Gi
+    # Empty: the cluster's default StorageClass
+    storageClass: ""
+    # ReadWriteOnce: the API, the worker and imgproxy are kept on the same node (podAffinity).
+    # ReadWriteMany (NFS, CephFS...) lets them run anywhere.
+    accessModes: [ReadWriteOnce]
+    annotations: {}
   s3:
     # e.g. http://minio.storage.svc:9000 or https://s3.nas.example.com
     endpoint: ""

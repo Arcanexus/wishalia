@@ -4,7 +4,7 @@ import type { Crop } from "@wishalia/domain";
 
 /**
  * The paths of the thumbnails (docs/images.md). imgproxy, inside the cluster, reads the files from
- * the bucket and makes the sizes; the frontends pass its answers on under /img/. Every path is
+ * the bucket or the volume and makes the sizes; the frontends pass its answers on under /img/. Every path is
  * signed with IMGPROXY_KEY and IMGPROXY_SALT: a browser cannot ask for another file or another
  * size, and imgproxy refuses what the API did not sign.
  */
@@ -13,7 +13,8 @@ export interface ImgproxySettings {
   /** Hex, as imgproxy reads IMGPROXY_KEY and IMGPROXY_SALT. */
   key: string;
   salt: string;
-  bucket: string;
+  /** Where imgproxy reads the files: "s3://<bucket>/" or, from the volume, "local:///". */
+  source: string;
 }
 
 /** The sizes the screens use: a list row, a card, and the whole image to frame it. */
@@ -50,7 +51,7 @@ export function imagePath(
   variant: Variant,
   crop: Crop | null,
 ): string {
-  const source = Buffer.from(`s3://${settings.bucket}/${key}`).toString("base64url");
+  const source = Buffer.from(`${settings.source}${key}`).toString("base64url");
   const options = [variant !== "large" && crop ? cropOption(crop) : null, VARIANTS[variant]].filter(Boolean);
   const path = `/${options.join("/")}/${source}.webp`;
   return `${IMAGE_PREFIX}/${sign(settings, path)}${path}`;

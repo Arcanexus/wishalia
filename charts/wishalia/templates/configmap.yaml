@@ -36,9 +36,14 @@ data:
   METRICS_PORT: {{ .Values.metrics.port | quote }}
   {{- end }}
   {{- if .Values.images.enabled }}
-  # Images (docs/images.md): the bucket, and imgproxy inside the cluster
-  S3_ENDPOINT: {{ required "images.s3.endpoint is required with images.enabled" .Values.images.s3.endpoint | quote }}
+  # Images (docs/images.md): the volume or the bucket, and imgproxy inside the cluster
+  IMAGE_STORAGE: {{ include "wishalia.imageStorage" . | quote }}
+  {{- if eq (include "wishalia.imageStorage" .) "volume" }}
+  IMAGE_DIR: {{ include "wishalia.imageDir" . | quote }}
+  {{- else }}
+  S3_ENDPOINT: {{ required "images.s3.endpoint is required with images.storage=s3" .Values.images.s3.endpoint | quote }}
   S3_REGION: {{ .Values.images.s3.region | quote }}
   S3_BUCKET: {{ .Values.images.s3.bucket | quote }}
+  {{- end }}
   IMGPROXY_URL: {{ printf "http://%s-imgproxy:%v" (include "wishalia.fullname" .) .Values.images.imgproxy.port | quote }}
   {{- end }}

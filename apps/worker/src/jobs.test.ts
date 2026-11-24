@@ -1,6 +1,7 @@
 import { schema, type Database } from "@wishalia/db";
 import { createTestDb } from "@wishalia/db/testing";
-import { eq } from "drizzle-orm";
+import { eq, type SQL } from "drizzle-orm";
+import { PgDialect } from "drizzle-orm/pg-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { memoryStorage } from "@wishalia/storage";
@@ -135,6 +136,19 @@ describe("the enrichment queue", () => {
     };
     expect(await enrichNext({ db, fetchPage: refused, now })).toBe("failed");
     expect((await read(item.id)).enrichment).toBe("failed");
+  });
+
+  it("sends no Date to the driver: the postgres driver refuses them in raw SQL", async () => {
+    const params: unknown[] = [];
+    const spy = {
+      execute: async (query: SQL) => {
+        params.push(...new PgDialect().sqlToQuery(query).params);
+        return [];
+      },
+    } as unknown as Database;
+    expect(await claim(spy, clock)).toBeNull();
+    expect(params.length).toBeGreaterThan(0);
+    expect(params.filter((param) => param instanceof Date)).toEqual([]);
   });
 
   it("takes back a run whose worker stopped, and clears an item without a link", async () => {

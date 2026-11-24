@@ -9,7 +9,8 @@ Wishalia ships as four images and one Helm chart, published for every release:
 
 - Kubernetes 1.29+ with an ingress controller and TLS certificates (cert-manager or a wildcard).
 - PostgreSQL 16+ (the data model and the job queue both live there).
-- Optional: an S3 bucket (MinIO) for the images of the items; the chart then deploys imgproxy
+- Optional, for the images of the items: a volume (a PersistentVolumeClaim, created by the chart
+  or existing) or an S3 bucket (MinIO); the chart then deploys imgproxy
   (`images.enabled`, see [Images](images.md)).
 - Two DNS names: the public view (`wishalia.example.com`) and the management app
   (`app.wishalia.example.com`). They must differ: the chart refuses to render otherwise.

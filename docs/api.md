@@ -58,8 +58,8 @@ JSON only: `{ "error": "<code>" }`, with `issues` (`path`, `message`) for a `400
 | `PATCH /manage/items/:id/image` | `imageId`? (one of the item's, or `null` for none), `crop`? (`{ x, y, width, height }` fractions, or `null`)           | The item. Another image starts whole. History: `image_changed`.                                                            |
 
 An item carries `image`: signed paths of its picture in three sizes (`small`, `medium`, `large`),
-served by the frontends under `/img/`, or `null`; and `imageCrop`. The files' place in the bucket is
-never given. See [Images](images.md).
+served by the frontends under `/img/`, or `null`; and `imageCrop`. The files' place (on the volume or
+in the bucket) is never given. See [Images](images.md).
 
 The quick add takes what the person typed or shared: a URL, free text, or text with a URL in it.
 The item is created at once, first in its list (the first list of the owner when `listId` is left

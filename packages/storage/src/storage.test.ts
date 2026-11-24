@@ -1,6 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
-import { memoryStorage, s3Storage, StorageError } from "./storage.js";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
+import { memoryStorage, openStorage, s3Storage, StorageError, volumeStorage } from "./storage.js";
 
 function fakeS3(statuses: Record<string, number>) {
   const calls: { method: string; url: string; authorization: string | null; type: string | null }[] = [];
@@ -69,5 +73,51 @@ describe("the S3 bucket", () => {
     expect(storage.objects.get("k")?.contentType).toBe("image/png");
     await storage.delete("k");
     expect(storage.objects.size).toBe(0);
+  });
+});
+
+describe("volumeStorage", () => {
+  let dir = "";
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "wishalia-images-"));
+  });
+  afterEach(() => rm(dir, { recursive: true, force: true }));
+
+  it("writes, replaces and deletes files under its folder, creating it first", async () => {
+    const storage = volumeStorage(join(dir, "images"));
+    await storage.ensureBucket();
+    await storage.put("wishes/a/b", new Uint8Array([1, 2]), "image/png");
+    await storage.put("wishes/a/b", new Uint8Array([3]), "image/png");
+    expect([...(await readFile(join(dir, "images", "wishes", "a", "b")))]).toEqual([3]);
+    expect(await readdir(join(dir, "images", "wishes", "a"))).toEqual(["b"]);
+    await storage.delete("wishes/a/b");
+    await storage.delete("wishes/a/b");
+    expect(await readdir(join(dir, "images", "wishes", "a"))).toEqual([]);
+  });
+
+  it("refuses a key that could leave the folder", async () => {
+    const storage = volumeStorage(dir);
+    for (const key of ["../etc/passwd", "/abs", "a//b", "a/./b", "a\\b", ""]) {
+      await expect(storage.put(key, new Uint8Array([1]), "image/png"), key).rejects.toMatchObject({
+        status: 400,
+      });
+    }
+    await expect(storage.delete("../x")).rejects.toThrow(StorageError);
+  });
+
+  it("is what openStorage gives for a volume, S3 otherwise", async () => {
+    const volume = openStorage({ kind: "volume", dir });
+    await volume.put("k", new Uint8Array([7]), "image/png");
+    expect([...(await readFile(join(dir, "k")))]).toEqual([7]);
+    const s3 = openStorage({
+      kind: "s3",
+      endpoint: "http://minio:9000",
+      region: "us-east-1",
+      bucket: "b",
+      accessKey: "a",
+      secretKey: "s",
+      fetch: async () => new Response(null, { status: 200 }),
+    });
+    await expect(s3.ensureBucket()).resolves.toBeUndefined();
   });
 });

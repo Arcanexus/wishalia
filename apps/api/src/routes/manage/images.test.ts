@@ -17,7 +17,7 @@ let other: string;
 beforeAll(async () => {
   t = await createTestApp({ OWNER_EMAILS: `${OWNER_EMAIL},${OTHER_EMAIL}` }, undefined, {
     storage,
-    imgproxy: { key: hex, salt: hex, bucket: "wishalia" },
+    imgproxy: { key: hex, salt: hex, source: "s3://wishalia/" },
   });
   owner = await signIn(t, OWNER_EMAIL);
   other = await signIn(t, OTHER_EMAIL);

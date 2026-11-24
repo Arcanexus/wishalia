@@ -40,7 +40,7 @@ server, not hidden in the page.
 > screens (signing in, passkeys, lists, quick add, editing and reordering items, a list's preview,
 > events, sharing, settings), and the family sees a shared list or event in the public view, where
 > they reserve, chip in and withdraw. The worker completes the items added with a link (title,
-> price, images), and the owner can choose, send and frame the image of each item (S3, imgproxy).
+> price, images), and the owner can choose, send and frame the image of each item (on a volume or in S3, through imgproxy).
 
 <p align="center">
   <img src="docs/images/app-lists.png" alt="The management app: a greeting, the quick add field and two lists" width="640">

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { cropOption, imagePath, imageSources, isImagePath, sign } from "./imgproxy.js";
 
-const settings = { key: "736563726574", salt: "68656c6c6f", bucket: "wishalia" };
+const settings = { key: "736563726574", salt: "68656c6c6f", source: "s3://wishalia/" };
 
 describe("imgproxy paths", () => {
   it("signs as imgproxy's documentation shows", () => {
