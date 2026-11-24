@@ -4,6 +4,7 @@ import { fakeApi, fakeEvent, json, outcome } from "../test/event.ts";
 import { actions, load } from "./(app)/reglages/+page.server.ts";
 
 const TOKEN = "5b1f3f2e-1c2d-4e5f-8a9b-0c1d2e3f4a5b";
+const OTHER = "6c2f3f2e-1c2d-4e5f-8a9b-0c1d2e3f4a5b";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -16,12 +17,15 @@ const display = { displayName: " Alex ", theme: "neutral", mode: "dark" };
 
 describe("the settings page", () => {
   it("lists the API tokens only when the API v1 is on", async () => {
-    const api = fakeApi({ "GET /manage/api-tokens": () => json([{ id: TOKEN }]) });
+    const api = fakeApi({
+      "GET /manage/api-tokens": () => json([{ id: TOKEN }]),
+      "GET /auth/passkey/list-user-passkeys": () => json([]),
+    });
     vi.stubEnv("API_ORIGIN", undefined);
-    expect((await run(load, fakeEvent().event)).value).toEqual({ apiOrigin: null, tokens: [] });
-    expect(api.calls).toHaveLength(0);
+    expect((await run(load, fakeEvent().event)).value).toEqual({ apiOrigin: null, passkeys: [], tokens: [] });
+    expect(api.calls.map((call) => call.path)).not.toContain("/manage/api-tokens");
     vi.stubEnv("API_ORIGIN", "https://api.wishalia.test");
-    expect((await run(load, fakeEvent().event)).value).toEqual({
+    expect((await run(load, fakeEvent().event)).value).toMatchObject({
       apiOrigin: "https://api.wishalia.test",
       tokens: [{ id: TOKEN }],
     });
@@ -106,5 +110,87 @@ describe("the settings page", () => {
       status: 404,
       data: { revoke: { error: "not_found" } },
     });
+  });
+});
+
+describe("the passkeys of the settings", () => {
+  const raw = (id: string, createdAt: string, backedUp: boolean) => ({
+    id,
+    name: null,
+    createdAt,
+    backedUp,
+    publicKey: "never-shown",
+    credentialID: "never-shown",
+    counter: 3,
+  });
+
+  it("lists them newest first, with neither their key nor their credential id", async () => {
+    fakeApi({
+      "GET /auth/passkey/list-user-passkeys": () =>
+        json([raw(TOKEN, "2026-11-01T10:00:00.000Z", false), raw(OTHER, "2026-11-20T10:00:00.000Z", true)]),
+    });
+    vi.stubEnv("API_ORIGIN", undefined);
+    const { value } = await run(load, fakeEvent().event);
+    expect((value as { passkeys: unknown }).passkeys).toEqual([
+      { id: OTHER, name: null, createdAt: "2026-11-20T10:00:00.000Z", synced: true },
+      { id: TOKEN, name: null, createdAt: "2026-11-01T10:00:00.000Z", synced: false },
+    ]);
+    expect(JSON.stringify(value)).not.toContain("never-shown");
+  });
+
+  it("sends to the sign-in page without a session", async () => {
+    fakeApi({ "GET /auth/passkey/list-user-passkeys": () => json({ code: "UNAUTHORIZED" }, 401) });
+    const { event } = fakeEvent({ url: "https://app.test/reglages" });
+    expect((await run(load, event)).thrown).toMatchObject({
+      status: 303,
+      location: "/connexion?retour=%2Freglages",
+    });
+  });
+
+  it("renames one", async () => {
+    const api = fakeApi({ "POST /auth/passkey/update-passkey": () => json({ passkey: {} }) });
+    const { event } = fakeEvent({ form: { id: TOKEN, name: " Téléphone de Marie " } });
+    expect((await run(actions.renamePasskey, event)).value).toEqual({
+      passkey: { renamed: "Téléphone de Marie" },
+    });
+    expect(api.calls[0]?.body).toEqual({ id: TOKEN, name: "Téléphone de Marie" });
+  });
+
+  it("refuses an empty or too long name, or a bad id, without calling the API", async () => {
+    const api = fakeApi({});
+    for (const [form, error] of [
+      [{ id: TOKEN, name: " " }, "invalid_name"],
+      [{ id: TOKEN, name: "x".repeat(61) }, "invalid_name"],
+      [{ id: "../me", name: "x" }, "invalid_request"],
+    ] as const) {
+      expect((await run(actions.renamePasskey, fakeEvent({ form }).event)).value).toMatchObject({
+        status: 400,
+        data: { passkey: { error } },
+      });
+    }
+    expect((await run(actions.deletePasskey, fakeEvent({ form: { id: "x" } }).event)).value).toMatchObject({
+      status: 400,
+    });
+    expect(api.calls).toHaveLength(0);
+  });
+
+  it("deletes one", async () => {
+    const api = fakeApi({ "POST /auth/passkey/delete-passkey": () => json({ status: true }) });
+    const { event } = fakeEvent({ form: { id: TOKEN, name: "Mac" } });
+    expect((await run(actions.deletePasskey, event)).value).toEqual({ passkey: { deleted: "Mac" } });
+    expect(api.calls[0]?.body).toEqual({ id: TOKEN });
+  });
+
+  it("says when the API refuses, such as someone else's passkey", async () => {
+    fakeApi({
+      "POST /auth/passkey/delete-passkey": () => json({ code: "PASSKEY_NOT_FOUND" }, 404),
+      "POST /auth/passkey/update-passkey": () => json({}, 500),
+    });
+    expect(
+      (await run(actions.deletePasskey, fakeEvent({ form: { id: TOKEN, name: "Mac" } }).event)).value,
+    ).toMatchObject({ status: 404, data: { passkey: { error: "passkey_not_found", id: TOKEN } } });
+    expect(
+      (await run(actions.renamePasskey, fakeEvent({ form: { id: TOKEN, name: "Mac" } }).event)).value,
+    ).toMatchObject({ status: 500, data: { passkey: { error: "unknown" } } });
   });
 });

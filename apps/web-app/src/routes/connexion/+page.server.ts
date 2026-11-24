@@ -17,6 +17,8 @@ export const load: PageServerLoad = async (event) => {
     oidc: Boolean(process.env.OIDC_ISSUER),
     oidcName: process.env.OIDC_NAME ?? "SSO",
     failed: event.url.searchParams.has("erreur"),
+    // Where a passkey sign-in goes, in the browser: only a path of this app
+    returnPath: returnPath(event.url),
     signedOut: event.url.searchParams.has("au-revoir"),
   };
 };

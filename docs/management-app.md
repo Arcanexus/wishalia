@@ -8,8 +8,11 @@ only: the browser never reaches the API.
 
 ## Signing in
 
-`/connexion` offers two ways in, both without a password:
+`/connexion` offers three ways in, all without a password:
 
+- **A passkey**: « Se connecter avec une clé d'accès », and the passkeys of the device are also
+  offered in the e-mail field's suggestions. The phone or computer asks for the fingerprint, the face
+  or its code; nobody types an address. The button shows only where the browser can use passkeys.
 - **A link by e-mail** (magic link): the person types their address and receives a link that signs
   them in, valid a few minutes. It needs `MAIL_FROM` and `SMTP_URL` (see
   [Configuration](configuration.md)).
@@ -93,6 +96,14 @@ account (`PATCH /manage/me`):
 The device keeps a copy in its cookies (`wishalia.theme`, `wishalia.mode`), so that the sign-in page
 looks the same before the person signs in again.
 
+The **passkeys** (« Clés d'accès ») are listed with their name, the day they were added and whether
+the phone or computer's password manager syncs them on all its devices. « Ajouter une clé d'accès »
+creates one on this device, under the name typed or one guessed from the device (« iPhone »,
+« Mac »...); each can be renamed or deleted. Adding a passkey needs a sign-in of less than a day: an
+older session is asked to sign in again, and comes back to the settings. A device that already holds
+a passkey of the account is told so. Passkeys need JavaScript; without it, or in a browser without
+them, the page says so and the link by e-mail remains.
+
 When the REST API v1 is on (`hosts.api`), the page also manages the **API tokens**: a name, a
 lifetime of 1 to 365 days (90 by default) and an optional read-only mode. A new token is shown once,
 with « Copier le jeton »; the list shows each one's first characters, its end and when it was last
@@ -113,4 +124,4 @@ used, and « Révoquer » ends it for good. See [REST API v1](rest-api.md).
 
 ![A Christmas list on a phone, in dark mode](images/app-list-christmas-dark.png)
 
-Coming next: passkeys (signing in with a fingerprint or a face), then the guests' screens.
+Coming next: the guests' screens.

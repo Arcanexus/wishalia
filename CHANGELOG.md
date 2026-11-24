@@ -17,10 +17,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- The sign-out and light/dark buttons were refused by the CSRF check in real browsers: with
+  `Referrer-Policy: no-referrer`, a plain form sends `Origin: null`. The two frontends now send
+  `same-origin`, which still never gives a share link token to another site.
 - The OIDC callback URL in the documentation is `/auth/callback/oidc`.
 
 ### Added
 
+- Passkeys in the management app: « Se connecter avec une clé d'accès » and the passkeys offered in
+  the e-mail field's suggestions on `/connexion`; « Clés d'accès » in the settings to add, rename and
+  delete them. Passkeys are discoverable (no email to type), and adding one needs a sign-in of less
+  than a day. The API tests run the real WebAuthn ceremonies with a software authenticator.
 - Management app, settings (`/reglages`): the name, the theme and light or dark, stored with the
   account and followed by the header button and the device's cookies; the API tokens (made, shown
   once, revoked) when the REST API v1 is on. The header gets « Réglages ».

@@ -100,3 +100,12 @@ export interface ApiToken {
   active: boolean;
   createdAt: string;
 }
+
+/** A passkey of the signed-in person, as the settings show it: never its key or credential id. */
+export interface Passkey {
+  id: string;
+  name: string | null;
+  createdAt: string | null;
+  /** Synced by the phone or computer's password manager (iCloud, Google...), so on all its devices. */
+  synced: boolean;
+}
