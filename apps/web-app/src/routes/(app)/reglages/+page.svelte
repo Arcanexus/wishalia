@@ -3,7 +3,9 @@
 
   import { enhance } from "$app/forms";
   import { invalidateAll } from "$app/navigation";
+  import { page } from "$app/state";
 
+  import InstallApp from "#lib/InstallApp.svelte";
   import { addPasskey, deviceName, passkeysSupported, type PasskeyOutcome } from "#lib/passkey.ts";
 
   import type { PageProps } from "./$types";
@@ -121,6 +123,8 @@
     <button type="submit">Enregistrer</button>
   </form>
 </section>
+
+<InstallApp appName={data.appName} origin={page.url.origin} />
 
 <section class="card" aria-labelledby="cles">
   <h2 id="cles">Clés d'accès</h2>

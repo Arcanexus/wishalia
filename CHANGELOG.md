@@ -39,6 +39,18 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- The management app installs on a phone, a tablet or a computer (Progressive Web App): a manifest
+  (`/manifest.webmanifest`, named after `APP_NAME`), icons (192, 512, maskable, Apple touch), a
+  status bar colour that follows the theme and mode, and a service worker that keeps only the app's
+  code and icons, never a private page, with a « Pas de connexion » page when offline.
+- Web Share Target: on Android, « Partager » then « Wishalia » from any app opens « Ajouter une
+  envie » (`/ajouter`) with the shared link and words in the field, a choice of list, and one button
+  to add. The page never adds on its own. A shared link survives the sign-in page.
+- iOS Shortcut, documented step by step ([Install the app](docs/install-app.md)): through the add
+  page, or in the background with a REST API v1 token.
+- « Réglages » shows how to install the app on the device in hand, an « Installer Wishalia » button
+  where the browser offers one, and the address for the iPhone Shortcut.
+
 - Items show an image (docs/images.md). The worker takes up to four images from the page of an
   item's link, through the same SSRF guard as the page, keeps only real images read from their bytes
   (JPEG, PNG, WebP, GIF, AVIF, HEIC; never SVG; 120 px to 50 megapixels, 10 MB at most) on a volume

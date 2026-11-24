@@ -67,6 +67,11 @@ The API is internal: only the two frontends reach it, server side, and a Network
   never SVG, 10 MB and 50 megapixels at most. Browsers only get signed imgproxy paths, served on
   the frontends' own host (`img-src 'self'`); imgproxy reads only the image files (the volume, read-only, or the bucket), is reachable only from
   the two frontends, and drops EXIF data. See [Images](images.md).
+- Installed app: the share menu only fills the « Ajouter une envie » page (a `GET`), it never adds a
+  wish by itself, so no other site can add one by sending someone to `/ajouter`; the add is a form
+  post behind SvelteKit's CSRF check. The service worker caches only the app's code and static
+  files, never a page, an API answer or an image, and leaves every other request to the network.
+  The manifest is public and holds only the app's name. See [Install the app](install-app.md).
 - History: `item_events` is append-only, enforced by a database trigger.
 - Metrics: `/metrics` listens on a port of its own that the ingress never routes, and only the
   `metrics.allowFrom` peers may scrape the API and the worker. Labels carry route patterns, never a

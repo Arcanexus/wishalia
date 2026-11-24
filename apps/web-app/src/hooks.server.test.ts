@@ -24,7 +24,7 @@ function request(
     ) =>
       new Response(
         options?.transformPageChunk?.({
-          html: '<html data-theme="%wishalia.theme%" data-mode="%wishalia.mode%">',
+          html: '<html data-theme="%wishalia.theme%" data-mode="%wishalia.mode%">%wishalia.theme-color%',
         }) ?? "ok",
         { status },
       ),
@@ -57,9 +57,14 @@ describe("hooks", () => {
     const response = await handle(
       request("/", "/", 200, { "wishalia.theme": "christmas", "wishalia.mode": "dark" }),
     );
-    expect(await response.text()).toBe('<html data-theme="christmas" data-mode="dark">');
+    expect(await response.text()).toBe(
+      '<html data-theme="christmas" data-mode="dark"><meta name="theme-color" content="#1c2621" />',
+    );
     const defaults = await handle(request("/", "/", 200, { "wishalia.theme": "pink" }));
-    expect(await defaults.text()).toMatch(/data-theme="(neutral|christmas)" data-mode="device"/);
+    const html = await defaults.text();
+    expect(html).toMatch(/data-theme="(neutral|christmas)" data-mode="device"/);
+    // Following the device: one bar colour for each of its modes
+    expect(html).toContain('media="(prefers-color-scheme: dark)"');
   });
 
   it("starts no metrics server without METRICS_PORT", async () => {

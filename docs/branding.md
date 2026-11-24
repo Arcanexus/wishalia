@@ -17,6 +17,10 @@ Five relatives in a circle around a gift: the family gathers around the present.
 - Variants: app icon (white heads on the action colour), single colour (one ink colour, white
   ribbon), and the Christmas variant where the ring becomes a holly wreath with berries.
 - Leave at least a quarter of the logo's width of free space around it.
+- App icons, for the installed app ([Install the app](install-app.md)): the logo on the neutral
+  background `#F6F5F2`, in `apps/web-app/static/icons/` (192 and 512 px with rounded corners, a
+  maskable 512 px one with the logo inside the central 80 % circle, and a square 180 px
+  `apple-touch-icon.png` that iOS rounds itself).
 - On a dark background, use [`images/logo-dark.svg`](images/logo-dark.svg) (dark neutral palette).
   The README and the website switch between the two with `prefers-color-scheme`.
 

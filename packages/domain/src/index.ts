@@ -31,6 +31,7 @@ export {
   type WishFunding,
   type WishKind,
 } from "./funding.js";
+export { MAX_SHARED_LENGTH, sharedInput, type Shared } from "./share.js";
 export { cents, formatAmount, parseAmount, sum, type Cents } from "./money.js";
 export {
   cleanUrl,

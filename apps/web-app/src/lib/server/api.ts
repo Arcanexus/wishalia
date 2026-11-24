@@ -59,7 +59,8 @@ export class ApiError extends Error {
 export async function apiJson<T>(event: ApiEvent, path: string, call: ApiCall = {}): Promise<T> {
   const response = await apiFetch(event, path, call);
   if (response.status === 401) {
-    redirect(303, `/connexion?retour=${encodeURIComponent(event.url.pathname)}`);
+    // The query goes along: a link shared from another app is still there after signing in
+    redirect(303, `/connexion?retour=${encodeURIComponent(event.url.pathname + event.url.search)}`);
   }
   if (response.status === 204) return undefined as T;
   const payload = (await response.json().catch(() => null)) as { error?: string } | null;

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Hors ligne</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <style>
+      :root {
+        --bg: #f6f5f2;
+        --surface: #ffffff;
+        --text: #1e2329;
+        --text-2: #5c6570;
+        --border: #d5dce3;
+        --action: #33475b;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #15181c;
+          --surface: #1e232a;
+          --text: #eef0f2;
+          --text-2: #a3acb7;
+          --border: #343b45;
+          --action: #4a6a8a;
+        }
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          1.0625rem/1.55 system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 28rem;
+        margin: 1rem;
+        padding: 1.5rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        text-align: center;
+      }
+      h1 {
+        font-size: 1.6rem;
+        margin: 0.5rem 0;
+      }
+      p {
+        color: var(--text-2);
+      }
+      a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 48px;
+        padding: 0 1.1rem;
+        border-radius: 10px;
+        background: var(--action);
+        color: #ffffff;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      a:focus-visible {
+        outline: 3px solid var(--text);
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="" width="96" height="96" />
+      <h1>Pas de connexion</h1>
+      <p>
+        Vos listes ont besoin d'Internet pour s'afficher. Vérifiez le Wi-Fi ou les données mobiles, puis
+        réessayez.
+      </p>
+      <a href="/">Réessayer</a>
+    </main>
+  </body>
+</html>
