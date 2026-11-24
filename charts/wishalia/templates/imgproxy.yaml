@@ -55,7 +55,7 @@ spec:
             - name: IMGPROXY_USE_S3
               value: "true"
             - name: IMGPROXY_S3_ENDPOINT
-              value: {{ .Values.images.s3.endpoint | quote }}
+              value: {{ include "wishalia.s3Endpoint" . | quote }}
             - name: IMGPROXY_S3_REGION
               value: {{ .Values.images.s3.region | quote }}
             # Only the images of the bucket: never a URL of the Internet or of the cluster (SSRF)

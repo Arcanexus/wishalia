@@ -137,6 +137,18 @@ jobs:
           claim=$(helm template t charts/wishalia --set postgresql.persistence.existingClaim=pgdata --show-only templates/postgresql.yaml)
           echo "$claim" | yq -e 'select(.kind == "StatefulSet") | .spec.template.spec.volumes[] | select(.name == "data") | .persistentVolumeClaim.claimName == "pgdata"' > /dev/null
           echo "$claim" | yq -e 'select(.kind == "StatefulSet") | .spec.volumeClaimTemplates == null' > /dev/null
+          # Garage as the images' bucket: the endpoint points at it, and it needs S3 with no endpoint of yours
+          garage="--set images.enabled=true --set existingSecret=s --set images.storage=s3 --set images.garage.enabled=true"
+          helm template t charts/wishalia $garage --show-only templates/configmap.yaml \
+            | yq -e '.data.S3_ENDPOINT == "http://t-wishalia-garage:3900"' > /dev/null
+          helm template t charts/wishalia $garage --show-only templates/garage.yaml \
+            | yq -e 'select(.kind == "NetworkPolicy") | .spec.ingress[0].from | length == 3' > /dev/null
+          for bad in "--set images.storage=volume" "--set images.s3.endpoint=http://s3.example.com"; do
+            if helm template t charts/wishalia $garage $bad > /dev/null 2>&1; then
+              echo "::error::the chart rendered Garage with $bad"
+              exit 1
+            fi
+          done
           # Yours: the hook Job, DATABASE_URL from its Secret, no PostgreSQL
           yours=$(helm template t charts/wishalia --set postgresql.enabled=false --set externalDatabase.existingSecret=db)
           echo "$yours" | yq -e 'select(.kind == "Job") | .spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name == "db"' > /dev/null

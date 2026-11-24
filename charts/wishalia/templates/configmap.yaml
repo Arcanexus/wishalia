@@ -41,7 +41,7 @@ data:
   {{- if eq (include "wishalia.imageStorage" .) "volume" }}
   IMAGE_DIR: {{ include "wishalia.imageDir" . | quote }}
   {{- else }}
-  S3_ENDPOINT: {{ required "images.s3.endpoint is required with images.storage=s3" .Values.images.s3.endpoint | quote }}
+  S3_ENDPOINT: {{ include "wishalia.s3Endpoint" . | quote }}
   S3_REGION: {{ .Values.images.s3.region | quote }}
   S3_BUCKET: {{ .Values.images.s3.bucket | quote }}
   {{- end }}

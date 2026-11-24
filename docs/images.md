@@ -78,7 +78,7 @@ no image is ever a contribution data.
 | `images.storage`   | What it needs                                                                                                                                                 | Fits                                                     |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | `volume` (default) | A PersistentVolumeClaim, created by the chart (`images.persistence.size`, `storageClass`) or yours (`images.persistence.existingClaim`). Nothing else to run. | A homelab, one node or a shared file system (NFS, Ceph). |
-| `s3`               | An S3-compatible bucket (MinIO, Garage, a cloud bucket), its endpoint and its keys.                                                                           | Several nodes, or a bucket you already back up.          |
+| `s3`               | An S3-compatible bucket (MinIO, Garage, a cloud bucket), its endpoint and its keys. Or Garage deployed by the chart (`images.garage.enabled`), see below.     | Several nodes, or a bucket you already back up.          |
 
 On a volume, the API and the worker write the files and imgproxy mounts it read-only, at
 `/data/images` in the three pods. A `ReadWriteOnce` volume (most storage classes) can only be
@@ -88,16 +88,43 @@ anywhere. The claim the chart creates is kept on `helm uninstall`: the photos th
 lost with a release. A file is written beside its place and then renamed, so imgproxy never reads
 half of one.
 
+### A bucket deployed with the chart: Garage
+
+Without an S3 service of your own, the chart can run [Garage](https://garagehq.deuxfleurs.fr) beside
+Wishalia: `images.storage: s3`, `images.garage.enabled: true`, and `images.s3.endpoint` left empty
+(the chart points it at Garage). MinIO is not offered: its community edition is no longer
+maintained, with no new images or security fixes.
+
+- One node (`garage server --single-node`, `replication_factor = 1`), as a StatefulSet with its
+  volume (`images.garage.persistence`, 10 GiB, or your `existingClaim`), kept on `helm uninstall`.
+  The volume is the copy to back up.
+- Garage makes the bucket (`images.s3.bucket`) and its key at its first start, from
+  `existingSecret`. The key must be in Garage's format:
+
+  ```sh
+  kubectl -n wishalia create secret generic wishalia-secrets \
+    --from-literal=S3_ACCESS_KEY="GK$(openssl rand -hex 16)" \
+    --from-literal=S3_SECRET_KEY="$(openssl rand -hex 32)" \
+    --from-literal=GARAGE_RPC_SECRET="$(openssl rand -hex 32)" \
+    --from-literal=IMGPROXY_KEY="$(openssl rand -hex 32)" \
+    --from-literal=IMGPROXY_SALT="$(openssl rand -hex 32)" \
+    --from-literal=AUTH_SECRET="$(openssl rand -base64 32)"
+  ```
+
+- Inside the cluster only: a NetworkPolicy lets in the API and the worker (which write) and imgproxy
+  (which reads), on the S3 port. Its administration API has no token, so it only answers the
+  probes (`/health`).
+
 Changing from one to the other does not move the files: the page images come back with the next
 enrichment of each item, the photos the owner sent have to be copied over (same keys, `wishes/...`).
 
 ## Set-up
 
-| Where              | What                                                                                                                                                                                                                         |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Chart              | `images.enabled: true`, then `images.persistence.*` for a volume, or `images.storage: s3` and `images.s3.endpoint` (and `region`, `bucket`). The chart deploys imgproxy, internal only. See [Chart values](chart-values.md). |
-| `existingSecret`   | `IMGPROXY_KEY`, `IMGPROXY_SALT`: hex, 32 characters or more each (`openssl rand -hex 32`). With S3, also `S3_ACCESS_KEY`, `S3_SECRET_KEY`.                                                                                   |
-| The bucket         | Created by the worker when it is missing, if its keys may. Only the API and the worker write in it; imgproxy reads it. Nothing in it is public.                                                                              |
-| Without Kubernetes | Set the variables of [Configuration](configuration.md#images) on the API, the worker and the frontends (`IMGPROXY_URL`). `docker compose up` starts MinIO and imgproxy with local keys.                                      |
+| Where              | What                                                                                                                                                                                                                                                                                                                         |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chart              | `images.enabled: true`, then `images.persistence.*` for a volume, or `images.storage: s3` and `images.s3.endpoint` (and `region`, `bucket`), or `images.storage: s3` and `images.garage.enabled: true` for a bucket deployed with the chart. The chart deploys imgproxy, internal only. See [Chart values](chart-values.md). |
+| `existingSecret`   | `IMGPROXY_KEY`, `IMGPROXY_SALT`: hex, 32 characters or more each (`openssl rand -hex 32`). With S3, also `S3_ACCESS_KEY`, `S3_SECRET_KEY`; with Garage, also `GARAGE_RPC_SECRET`, and the key in Garage's format (above).                                                                                                    |
+| The bucket         | Created by the worker when it is missing, if its keys may. Only the API and the worker write in it; imgproxy reads it. Nothing in it is public.                                                                                                                                                                              |
+| Without Kubernetes | Set the variables of [Configuration](configuration.md#images) on the API, the worker and the frontends (`IMGPROXY_URL`). `docker compose up` starts MinIO and imgproxy with local keys.                                                                                                                                      |
 
 The API refuses to start when the image settings are only half set, and lists what is missing.

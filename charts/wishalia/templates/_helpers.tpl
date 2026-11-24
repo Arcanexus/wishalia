@@ -174,3 +174,17 @@ podAffinity:
           {{- include "wishalia.selectorLabels" (dict "root" $root "component" "api") | nindent 10 }}
 {{- end -}}
 {{- end }}
+
+{{- /* Garage, the bucket deployed with the chart (images.garage.enabled) */ -}}
+{{- define "wishalia.garage.fullname" -}}
+{{- printf "%s-garage" (include "wishalia.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- /* The S3 endpoint of the images: Garage's Service when the chart deploys it, else yours */ -}}
+{{- define "wishalia.s3Endpoint" -}}
+{{- if .Values.images.garage.enabled }}
+{{- printf "http://%s:3900" (include "wishalia.garage.fullname" .) }}
+{{- else }}
+{{- required "images.s3.endpoint is required with images.storage=s3 (or set images.garage.enabled=true)" .Values.images.s3.endpoint }}
+{{- end }}
+{{- end }}
