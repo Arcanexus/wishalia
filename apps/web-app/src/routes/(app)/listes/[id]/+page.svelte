@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import { enhance } from "$app/forms";
   import { resolve } from "$app/paths";
   import { cents, formatAmount } from "@wishalia/domain";
@@ -7,6 +8,7 @@
   import ItemEditor from "#lib/ItemEditor.svelte";
   import ListSettings from "#lib/ListSettings.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
+  import { dropIndex, moveId, placeLine } from "#lib/reorder.ts";
   import type { Item } from "#lib/types.ts";
 
   import type { PageProps } from "./$types";
@@ -14,6 +16,79 @@
   let { data, form }: PageProps = $props();
 
   const open = $derived(data.items.filter((item) => item.status === "open"));
+  const byId = $derived(new Map(open.map((item) => [item.id, item])));
+
+  // The order on screen while an item moves, before the server confirms it (optimistic)
+  let order = $state<string[] | null>(null);
+  let dragging = $state<string | null>(null);
+  let moved = $state("");
+  let list = $state<HTMLUListElement>();
+  let orderForm = $state<HTMLFormElement>();
+  const shown = $derived(order ? order.flatMap((id) => byId.get(id) ?? []) : open);
+
+  const place = (id: string, ids: string[]) => {
+    const item = byId.get(id);
+    moved = item ? placeLine(item.title, ids.indexOf(id) + 1, ids.length) : "";
+  };
+
+  /** After the server answered: its order is the truth, also when it refused (the list changed). */
+  const settle =
+    (focus?: { id: string; direction: string }) =>
+    async ({ update }: { update: (options?: { reset?: boolean }) => Promise<void> }) => {
+      await update({ reset: false });
+      order = null;
+      if (!focus) return;
+      // A moved node loses the focus, and the arrow is gone at the top or the bottom: keep the
+      // keyboard on the item, on the arrow that still goes somewhere
+      await tick();
+      const li = list?.querySelector(`li[data-id="${focus.id}"]`);
+      const same = li?.querySelector<HTMLButtonElement>(`button[value="${focus.direction}"]`);
+      const other = li?.querySelector<HTMLButtonElement>(
+        `button[name="direction"]:not([value="${focus.direction}"])`,
+      );
+      (same && !same.disabled ? same : other)?.focus();
+    };
+
+  /** Drag by the handle, with a mouse, a pen or a finger; the arrows do the same in one tap. */
+  function drag(event: PointerEvent, id: string) {
+    if (event.button !== 0 || !list) return;
+    event.preventDefault();
+    const handle = event.currentTarget as HTMLElement;
+    handle.setPointerCapture(event.pointerId);
+    const before = shown.map((item) => item.id);
+    order = before;
+    dragging = id;
+    const follow = (move: PointerEvent) => {
+      const others = [...(list?.querySelectorAll<HTMLElement>(":scope > li") ?? [])].filter(
+        (li) => li.dataset.id !== id,
+      );
+      const middles = others.map((li) => {
+        const box = li.getBoundingClientRect();
+        return box.top + box.height / 2;
+      });
+      const next = moveId(order ?? before, id, dropIndex(middles, move.clientY));
+      if (next.join() !== (order ?? before).join()) order = next;
+      // Near the edges, the page scrolls along
+      if (move.clientY < 64) window.scrollBy(0, -16);
+      else if (move.clientY > window.innerHeight - 64) window.scrollBy(0, 16);
+    };
+    const drop = async (end: PointerEvent) => {
+      handle.removeEventListener("pointermove", follow);
+      handle.removeEventListener("pointerup", drop);
+      handle.removeEventListener("pointercancel", drop);
+      dragging = null;
+      if (end.type === "pointercancel" || !order || order.join() === before.join()) {
+        order = null;
+        return;
+      }
+      place(id, order);
+      await tick();
+      orderForm?.requestSubmit();
+    };
+    handle.addEventListener("pointermove", follow);
+    handle.addEventListener("pointerup", drop);
+    handle.addEventListener("pointercancel", drop);
+  }
   const closed = $derived(data.items.filter((item) => item.status !== "open"));
 
   /** Only web links become links: never a javascript: or data: address from an old item. */
@@ -55,7 +130,11 @@
 <QuickAdd listName={data.list.name} result={form?.add ?? null} />
 
 <div role="status" class="visually-hidden">
-  {#if form?.settings && "saved" in form.settings}
+  {#if moved}
+    {moved}
+  {:else if form?.move && "title" in form.move}
+    {placeLine(form.move.title, form.move.position, form.move.count)}
+  {:else if form?.settings && "saved" in form.settings}
     Réglages de la liste enregistrés.
   {:else if form?.reveal && "lifted" in form.reveal}
     Le secret de la liste est levé.
@@ -75,45 +154,106 @@
   {#if open.length === 0}
     <p class="muted">Aucune envie pour le moment. Ajoutez-en une ci-dessus.</p>
   {:else}
-    <ul class="items">
-      {#each open as item (item.id)}
+    {#if form?.move && "error" in form.move}
+      <p class="notice error" role="alert">
+        L'ordre n'a pas pu être enregistré : la liste a changé entre-temps. Voici l'ordre actuel.
+      </p>
+    {/if}
+    <form method="POST" action="?/order" bind:this={orderForm} use:enhance={() => settle()} hidden>
+      {#each order ?? [] as id (id)}<input type="hidden" name="itemIds" value={id} />{/each}
+    </form>
+    <ul class="items" bind:this={list}>
+      {#each shown as item, index (item.id)}
         {@const link = webLink(item)}
-        <li class="card item">
-          <div class="text">
-            <h3>{item.title}</h3>
-            <p class="muted meta">
-              {#if kindLine(item)}<span class="kind">{kindLine(item)}</span>{/if}
-              {#if item.priceCents !== null}<span>{formatAmount(cents(item.priceCents))}</span>{/if}
-              {#if link}
-                <a href={link} rel="noopener noreferrer external" target="_blank">
-                  {host(link)}<span class="visually-hidden"> (nouvel onglet)</span>
-                </a>
-              {/if}
-            </p>
-            {#if item.notes}<p class="notes">{item.notes}</p>{/if}
-            {#if data.gifts[item.id]?.length}<Gifts gifts={data.gifts[item.id] ?? []} none="" />{/if}
-          </div>
-          <div class="actions">
-            <form method="POST" action="?/status" use:enhance>
-              <input type="hidden" name="itemId" value={item.id} />
-              <button type="submit" name="status" value="received" aria-label="J'ai reçu « {item.title} »">
-                Reçu
-              </button>
-            </form>
-            <form method="POST" action="?/status" use:enhance>
+        <li class="card item sortable" class:dragging={dragging === item.id} data-id={item.id}>
+          {#if shown.length > 1}
+            <form
+              method="POST"
+              action="?/move"
+              class="mover"
+              use:enhance={({ formData }) => {
+                const direction = String(formData.get("direction"));
+                const ids = shown.map((entry) => entry.id);
+                const next = moveId(ids, item.id, index + (direction === "up" ? -1 : 1));
+                order = next;
+                place(item.id, next);
+                return settle({ id: item.id, direction });
+              }}
+            >
               <input type="hidden" name="itemId" value={item.id} />
               <button
                 type="submit"
-                name="status"
-                value="archived"
+                name="direction"
+                value="up"
                 class="secondary"
-                aria-label="Archiver « {item.title} »"
+                disabled={index === 0}
+                aria-label="Monter « {item.title} »"
               >
-                Archiver
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+              </button>
+              <span
+                class="grip"
+                aria-hidden="true"
+                title="Glisser pour déplacer"
+                onpointerdown={(event) => drag(event, item.id)}
+              >
+                <svg viewBox="0 0 24 24">
+                  {#each [6, 12, 18] as y (y)}<circle cx="9" cy={y} r="1.6" /><circle
+                      cx="15"
+                      cy={y}
+                      r="1.6"
+                    />{/each}
+                </svg>
+              </span>
+              <button
+                type="submit"
+                name="direction"
+                value="down"
+                class="secondary"
+                disabled={index === shown.length - 1}
+                aria-label="Descendre « {item.title} »"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
               </button>
             </form>
+          {/if}
+          <div class="body">
+            <div class="text">
+              <h3>{item.title}</h3>
+              <p class="muted meta">
+                {#if kindLine(item)}<span class="kind">{kindLine(item)}</span>{/if}
+                {#if item.priceCents !== null}<span>{formatAmount(cents(item.priceCents))}</span>{/if}
+                {#if link}
+                  <a href={link} rel="noopener noreferrer external" target="_blank">
+                    {host(link)}<span class="visually-hidden"> (nouvel onglet)</span>
+                  </a>
+                {/if}
+              </p>
+              {#if item.notes}<p class="notes">{item.notes}</p>{/if}
+              {#if data.gifts[item.id]?.length}<Gifts gifts={data.gifts[item.id] ?? []} none="" />{/if}
+            </div>
+            <div class="actions">
+              <form method="POST" action="?/status" use:enhance>
+                <input type="hidden" name="itemId" value={item.id} />
+                <button type="submit" name="status" value="received" aria-label="J'ai reçu « {item.title} »">
+                  Reçu
+                </button>
+              </form>
+              <form method="POST" action="?/status" use:enhance>
+                <input type="hidden" name="itemId" value={item.id} />
+                <button
+                  type="submit"
+                  name="status"
+                  value="archived"
+                  class="secondary"
+                  aria-label="Archiver « {item.title} »"
+                >
+                  Archiver
+                </button>
+              </form>
+            </div>
+            <ItemEditor {item} lists={data.lists} failed={failedEdit(item)} />
           </div>
-          <ItemEditor {item} lists={data.lists} failed={failedEdit(item)} />
         </li>
       {/each}
     </ul>
@@ -188,8 +328,76 @@
     justify-content: space-between;
     gap: 0.75rem;
   }
+  .sortable {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+  .body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .mover {
+    flex: none;
+    margin-left: -0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    align-self: flex-start;
+  }
+  .mover button {
+    min-height: 2.5rem;
+    width: 2.75rem;
+    padding: 0;
+    display: grid;
+    place-items: center;
+  }
+  .mover button:disabled {
+    visibility: hidden;
+  }
+  .mover svg {
+    width: 1.4rem;
+    height: 1.4rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .grip {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 8px;
+    color: var(--text-2);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+  .grip:hover {
+    background: var(--surface-2, var(--border));
+  }
+  .grip svg {
+    fill: currentColor;
+    stroke: none;
+  }
+  .dragging {
+    border-color: var(--action);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+    position: relative;
+    z-index: 1;
+  }
+  .dragging .grip {
+    cursor: grabbing;
+  }
   .text {
-    flex: 1 1 16rem;
+    flex: 1 1 14rem;
     min-width: 0;
   }
   h3 {

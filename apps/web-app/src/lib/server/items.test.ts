@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { fakeApi, fakeEvent, json, outcome } from "../../test/event.ts";
-import { editItem, quickAdd, setItemStatus } from "./items.ts";
+import { editItem, moveItem, orderItems, quickAdd, setItemStatus } from "./items.ts";
 
 const ITEM = "0b6f8a4e-6a52-4a6c-9a39-6f4f3c0b9a11";
 const LIST = "4f1f3f2e-1c2d-4e5f-8a9b-0c1d2e3f4a5b";
@@ -181,5 +181,100 @@ describe("editItem", () => {
       status: 404,
       data: { edit: { itemId: ITEM, error: "not_found" } },
     });
+  });
+});
+
+describe("moving items", () => {
+  const LIST = "4f1f3f2e-1c2d-4e5f-8a9b-0c1d2e3f4a5b";
+  const [A, B, C] = ["a", "b", "c"].map((letter) => `0b6f8a4e-6a52-4a6c-9a39-6f4f3c0b9a1${letter}`) as [
+    string,
+    string,
+    string,
+  ];
+  const items = () =>
+    json([
+      { id: A, title: "Un", status: "open" },
+      { id: B, title: "Deux", status: "open" },
+      { id: C, title: "Trois", status: "open" },
+      { id: "x", title: "Reçu", status: "received" },
+    ]);
+  const saved = () => new Response(null, { status: 204 });
+
+  it("moves an item one place up or down among the open ones, and says where it is", async () => {
+    const api = fakeApi({
+      [`GET /manage/lists/${LIST}/items`]: items,
+      [`PUT /manage/lists/${LIST}/order`]: saved,
+    });
+    const up = await outcome(() => moveItem(fakeEvent({ form: { itemId: C, direction: "up" } }).event, LIST));
+    expect(up.value).toEqual({ move: { title: "Trois", position: 2, count: 3 } });
+    expect(api.calls.at(-1)?.body).toEqual({ itemIds: [A, C, B] });
+
+    // Already at the top: nothing to save
+    const top = await outcome(() =>
+      moveItem(fakeEvent({ form: { itemId: A, direction: "up" } }).event, LIST),
+    );
+    expect(top.value).toEqual({ move: { title: "Un", position: 1, count: 3 } });
+    expect(api.calls.filter((call) => call.method === "PUT")).toHaveLength(1);
+  });
+
+  it("refuses a wrong request, and says when the list changed meanwhile", async () => {
+    fakeApi({ [`GET /manage/lists/${LIST}/items`]: items });
+    for (const form of [
+      { itemId: "nope", direction: "up" },
+      { itemId: A, direction: "left" },
+    ]) {
+      expect((await outcome(() => moveItem(fakeEvent({ form }).event, LIST))).value).toMatchObject({
+        status: 400,
+      });
+    }
+    const gone = await outcome(() =>
+      moveItem(
+        fakeEvent({ form: { itemId: "0b6f8a4e-6a52-4a6c-9a39-6f4f3c0b9a99", direction: "down" } }).event,
+        LIST,
+      ),
+    );
+    expect(gone.value).toMatchObject({ status: 409, data: { move: { error: "order_changed" } } });
+
+    fakeApi({
+      [`GET /manage/lists/${LIST}/items`]: items,
+      [`PUT /manage/lists/${LIST}/order`]: () => json({ error: "order_changed" }, 409),
+    });
+    const raced = await outcome(() =>
+      moveItem(fakeEvent({ form: { itemId: A, direction: "down" } }).event, LIST),
+    );
+    expect(raced.value).toMatchObject({ status: 409, data: { move: { error: "order_changed" } } });
+  });
+
+  it("saves a whole new order once an item is dropped", async () => {
+    const api = fakeApi({ [`PUT /manage/lists/${LIST}/order`]: saved });
+    const { event } = fakeEvent({ form: { x: "1" } });
+    const body = new URLSearchParams([
+      ["itemIds", B],
+      ["itemIds", A],
+      ["itemIds", C],
+    ]);
+    event.request = new Request("https://app.test/", { method: "POST", body });
+    expect((await outcome(() => orderItems(event, LIST))).value).toEqual({ move: { ordered: true } });
+    expect(api.calls[0]?.body).toEqual({ itemIds: [B, A, C] });
+
+    event.request = new Request("https://app.test/", { method: "POST", body: new URLSearchParams() });
+    expect((await outcome(() => orderItems(event, LIST))).value).toMatchObject({ status: 400 });
+    fakeApi({});
+    expect(
+      (
+        await outcome(() =>
+          orderItems(
+            {
+              ...event,
+              request: new Request("https://app.test/", {
+                method: "POST",
+                body: new URLSearchParams([["itemIds", A]]),
+              }),
+            },
+            LIST,
+          ),
+        )
+      ).value,
+    ).toMatchObject({ status: 404 });
   });
 });

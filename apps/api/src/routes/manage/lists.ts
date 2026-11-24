@@ -21,6 +21,8 @@ export const listPatch = z
   .partial()
   .strict();
 const idParams = z.object({ listId: z.uuid() });
+/** The list's open items, every one of them, in their new order. */
+export const orderInput = z.object({ itemIds: z.array(z.uuid()).min(1).max(1000) }).strict();
 
 /** The default list of a new owner, created by the first quick add. */
 export const DEFAULT_LIST_NAME = "Mes envies";
@@ -82,6 +84,36 @@ export const listRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now 
       .returning();
     if (!list) throw notFound();
     return ownerList(list, 0);
+  });
+
+  /**
+   * Puts the list's open items in a new order (drag and drop). The order must name every open item
+   * once: when the list changed meanwhile (another device), it answers 409 and nothing moves. No
+   * history: the order says nothing about a gift.
+   */
+  app.put("/lists/:listId/order", async (request, reply) => {
+    const { listId } = parse(idParams, request.params);
+    const { itemIds } = parse(orderInput, request.body);
+    await db.transaction(async (tx) => {
+      const [list] = await tx
+        .select({ id: schema.wishLists.id })
+        .from(schema.wishLists)
+        .where(and(eq(schema.wishLists.id, listId), eq(schema.wishLists.ownerId, userId(request))));
+      if (!list) throw notFound();
+      const open = await tx
+        .select({ id: schema.wishes.id })
+        .from(schema.wishes)
+        .where(and(eq(schema.wishes.listId, listId), eq(schema.wishes.status, "open")));
+      const ids = new Set(open.map((row) => row.id));
+      const given = new Set(itemIds);
+      if (given.size !== itemIds.length || given.size !== ids.size || !itemIds.every((id) => ids.has(id))) {
+        throw new HttpError(409, "order_changed");
+      }
+      for (const [position, id] of itemIds.entries()) {
+        await tx.update(schema.wishes).set({ position }).where(eq(schema.wishes.id, id));
+      }
+    });
+    return reply.code(204).send();
   });
 
   /**

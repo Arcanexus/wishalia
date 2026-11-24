@@ -1,7 +1,7 @@
 import { error } from "@sveltejs/kit";
 
 import { ApiError, apiJson } from "#lib/server/api.ts";
-import { editItem, quickAdd, setItemStatus } from "#lib/server/items.ts";
+import { editItem, moveItem, orderItems, quickAdd, setItemStatus } from "#lib/server/items.ts";
 import { archiveList, revealList, saveListSettings } from "#lib/server/lists.ts";
 import { giftsFor } from "#lib/server/events.ts";
 import type { Gift, HistoryEntry, Item, List } from "#lib/types.ts";
@@ -48,6 +48,8 @@ export const actions: Actions = {
   add: (event) => quickAdd(event, event.params.id),
   status: (event) => setItemStatus(event),
   edit: (event) => editItem(event),
+  move: (event) => moveItem(event, event.params.id),
+  order: (event) => orderItems(event, event.params.id),
   settings: (event) => saveListSettings(event, event.params.id),
   reveal: (event) => revealList(event, event.params.id),
   archive: (event) => archiveList(event, event.params.id),

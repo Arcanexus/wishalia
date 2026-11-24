@@ -100,6 +100,40 @@ describe("lists", () => {
     expect(names).not.toContain("Jeux");
   });
 
+  it("puts a list's open items in a new order, all of them or none", async () => {
+    const list = (await as(owner, "POST", "/lists", { name: "À trier" })).body;
+    const a = await quickAdd(owner, "Un", list.id);
+    const b = await quickAdd(owner, "Deux", list.id);
+    const c = await quickAdd(owner, "Trois", list.id);
+    const done = await quickAdd(owner, "Reçu", list.id);
+    await as(owner, "PATCH", `/items/${done.id}`, { status: "received" });
+    const titles = async () =>
+      ((await as(owner, "GET", `/lists/${list.id}/items`)).body as { title: string }[]).map(
+        (item) => item.title,
+      );
+    // Newest first by default
+    expect(await titles()).toEqual(["Trois", "Deux", "Un", "Reçu"]);
+
+    const order = (itemIds: string[]) => as(owner, "PUT", `/lists/${list.id}/order`, { itemIds });
+    expect((await order([a.id, c.id, b.id])).status).toBe(204);
+    expect(await titles()).toEqual(["Un", "Trois", "Deux", "Reçu"]);
+    expect(await history(owner, a.id)).toHaveLength(1);
+
+    // Missing, repeated, foreign or closed items: the list changed meanwhile, nothing moves
+    for (const ids of [
+      [a.id, b.id],
+      [a.id, a.id, b.id],
+      [a.id, b.id, c.id, done.id],
+    ]) {
+      expect(await order(ids)).toMatchObject({ status: 409, body: { error: "order_changed" } });
+    }
+    expect(await titles()).toEqual(["Un", "Trois", "Deux", "Reçu"]);
+    expect((await order([])).status).toBe(400);
+    expect((await as(other, "PUT", `/lists/${list.id}/order`, { itemIds: [a.id, b.id, c.id] })).status).toBe(
+      404,
+    );
+  });
+
   it("forces a theme on a list, or lets each person choose", async () => {
     const list = (await as(owner, "POST", "/lists", { name: "Noël des enfants" })).body;
     expect(list.theme).toBeNull();
