@@ -3,7 +3,8 @@ import { error } from "@sveltejs/kit";
 import { ApiError, apiJson } from "#lib/server/api.ts";
 import { editItem, quickAdd, setItemStatus } from "#lib/server/items.ts";
 import { archiveList, revealList, saveListSettings } from "#lib/server/lists.ts";
-import type { Item, List } from "#lib/types.ts";
+import { giftsFor } from "#lib/server/events.ts";
+import type { Gift, HistoryEntry, Item, List } from "#lib/types.ts";
 
 import type { Actions, PageServerLoad } from "./$types";
 
@@ -29,7 +30,18 @@ export const load: PageServerLoad = async (event) => {
   event.locals.listTheme = list.theme;
   // The lists an item can move to
   const others = lists.filter((candidate) => !candidate.archivedAt);
-  return { list, items, lists: others };
+
+  // Who gave what outside any event, where its secret is lifted: the whole list once the owner
+  // lifted it, or each received item (the default). The API gives nothing before (anti-spoil).
+  const lifted = items.filter((item) =>
+    list.revealMode === "manual" ? list.secretLifted : item.status === "received",
+  );
+  const histories = await Promise.all(
+    lifted.map((item) => apiJson<HistoryEntry[]>(event, `/manage/items/${item.id}/history`)),
+  );
+  const gifts: Record<string, Gift[]> = {};
+  lifted.forEach((item, index) => (gifts[item.id] = giftsFor(histories[index] ?? [], null)));
+  return { list, items, lists: others, gifts };
 };
 
 export const actions: Actions = {

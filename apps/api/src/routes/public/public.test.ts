@@ -245,7 +245,7 @@ describe("contributions through a list link", () => {
 
   it("takes a contribution without an event: a list is not always tied to one", async () => {
     const made = await guest(listLink.body.token, "POST", `/items/${lonely}/contributions`, {
-      payload: { guestName: "Parrain" },
+      payload: { guestName: "Parrain", message: "Bon appétit" },
     });
     expect(made.status).toBe(201);
     expect(made.body.contribution.eventId).toBeNull();
@@ -365,6 +365,7 @@ describe("anti-spoil on the public view", () => {
     expect(before.items.find((entry: { id: string }) => entry.id === lonely).funding).toBeNull();
     const sealed = (await manage(owner, "GET", `/items/${lonely}/history`)).body as { type: string }[];
     expect(sealed.map((entry) => entry.type)).not.toContain("reserved");
+    expect(JSON.stringify(sealed)).not.toContain("Bon appétit");
 
     expect((await manage(owner, "PATCH", `/items/${lonely}`, { status: "received" })).status).toBe(200);
     const after = (await guest(listLink.body.token, "GET", "/view", { cookie: owner })).body;
@@ -373,9 +374,13 @@ describe("anti-spoil on the public view", () => {
     });
     const lifted = (await manage(owner, "GET", `/items/${lonely}/history`)).body as {
       type: string;
-      payload: { name?: string };
+      payload: { name?: string; message?: string | null };
     }[];
-    expect(lifted.find((entry) => entry.type === "reserved")?.payload.name).toBe("Parrain");
+    // The guest's word reaches the owner with the name, once the secret is lifted
+    expect(lifted.find((entry) => entry.type === "reserved")?.payload).toMatchObject({
+      name: "Parrain",
+      message: "Bon appétit",
+    });
     const late = await guest(listLink.body.token, "DELETE", `/contributions/${parrainKey.id}`, {
       headers: { "x-withdraw-key": parrainKey.key },
     });

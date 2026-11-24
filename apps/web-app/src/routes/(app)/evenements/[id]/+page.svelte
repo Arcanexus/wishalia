@@ -1,11 +1,11 @@
 <script lang="ts">
+  import Gifts from "#lib/Gifts.svelte";
   import { enhance } from "$app/forms";
   import { resolve } from "$app/paths";
   import { cents, formatAmount } from "@wishalia/domain";
 
   import EventFields from "#lib/EventFields.svelte";
   import { eventKindLabel, formatAvailable, formatDay } from "#lib/format.ts";
-  import type { Gift } from "#lib/types.ts";
 
   import type { PageProps } from "./$types";
 
@@ -26,16 +26,6 @@
   const typedValues = $derived(
     form?.update && "kind" in form.update ? (form.update as unknown as Values) : (event as Values),
   );
-
-  const describe = (gift: Gift) => {
-    const what =
-      gift.amountCents !== null
-        ? formatAmount(cents(gift.amountCents))
-        : gift.units !== null && gift.units > 1
-          ? `${gift.units} exemplaires`
-          : "l'a offert";
-    return `${gift.name ?? "Quelqu'un (anonyme)"} : ${what}`;
-  };
 
   const errors: Record<string, string> = {
     too_early: "Il est encore trop tôt pour lever le secret.",
@@ -111,15 +101,7 @@
             {#if item.priceCents !== null}<p class="muted meta">
                 {formatAmount(cents(item.priceCents))}
               </p>{/if}
-            {#if gifts}
-              {#if gifts.length === 0}
-                <p class="muted meta">Personne ne l'a offert pour cet événement.</p>
-              {:else}
-                <ul class="gifts">
-                  {#each gifts as gift, index (index)}<li>{describe(gift)}</li>{/each}
-                </ul>
-              {/if}
-            {/if}
+            {#if gifts}<Gifts {gifts} none="Personne ne l'a offert pour cet événement." />{/if}
           </div>
           <form method="POST" action="?/removeItem" use:enhance>
             <input type="hidden" name="itemId" value={item.id} />
@@ -242,10 +224,6 @@
   }
   .meta {
     margin: 0.25rem 0 0;
-  }
-  .gifts {
-    margin: 0.5rem 0 0;
-    padding-left: 1.2rem;
   }
   .settings {
     margin-top: 2rem;

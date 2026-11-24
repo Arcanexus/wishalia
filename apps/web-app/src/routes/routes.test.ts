@@ -248,8 +248,43 @@ describe("a list page", () => {
       list: list({ theme: "christmas" }),
       items: [{ id: ITEM }],
       lists: [list({ theme: "christmas" })],
+      gifts: {},
     });
     expect(event.locals.listTheme).toBe("christmas");
+  });
+
+  it("says who gave what outside events, only where the secret is lifted", async () => {
+    const RECEIVED = "9b6f8a4e-6a52-4a6c-9a39-6f4f3c0b9a11";
+    const gift = { id: 1, type: "reserved", at: "", actorId: null };
+    const api = fakeApi({
+      "GET /manage/lists": () => json([list({ revealMode: "received", secretLifted: false })]),
+      [`GET /manage/lists/${LIST}/items`]: () =>
+        json([
+          { id: ITEM, status: "open" },
+          { id: RECEIVED, status: "received" },
+        ]),
+      [`GET /manage/items/${RECEIVED}/history`]: () =>
+        json([
+          { ...gift, payload: { contributionId: "a", eventId: null, name: "Paul", message: "Merci !" } },
+        ]),
+    });
+    const { value } = (await run(listPage, fakeEvent({ params: { id: LIST } }).event)) as {
+      value: { gifts: Record<string, unknown> };
+    };
+    expect(value.gifts).toEqual({
+      [RECEIVED]: [{ name: "Paul", amountCents: null, units: null, message: "Merci !" }],
+    });
+    // The open item's history is never asked for: its secret holds
+    expect(api.calls.map((call) => call.path)).not.toContain(`/manage/items/${ITEM}/history`);
+
+    // A list whose secret the owner lifted: every item
+    const lifted = fakeApi({
+      "GET /manage/lists": () => json([list({ revealMode: "manual", secretLifted: true })]),
+      [`GET /manage/lists/${LIST}/items`]: () => json([{ id: ITEM, status: "open" }]),
+      [`GET /manage/items/${ITEM}/history`]: () => json([]),
+    });
+    await run(listPage, fakeEvent({ params: { id: LIST } }).event);
+    expect(lifted.calls.map((call) => call.path)).toContain(`/manage/items/${ITEM}/history`);
   });
 
   it("answers 404 for someone else's list or a wrong address", async () => {

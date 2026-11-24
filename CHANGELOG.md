@@ -17,6 +17,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- The words guests leave for the owner (« À lire après l'occasion ») never reached them: once the
+  secret is lifted, the event page shows each one under the gift it goes with.
+- The gifts made without an event never showed who gave them: the list's page now shows who gave
+  what, and their words, once the item is received or the list's secret lifted.
 - The REST API v1 gave who gave what, with amounts, in an item's history once a secret was lifted,
   against its rule of never giving contribution data. Sealed entries now stay out of v1 for good;
   the management app still shows them after the secret is lifted.
