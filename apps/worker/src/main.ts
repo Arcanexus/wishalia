@@ -1,7 +1,9 @@
 import { createDb } from "@wishalia/db";
 import { createEnrichmentMetrics, createRegistry, metricsPort, startMetricsServer } from "@wishalia/metrics";
 
-import { fetchPage } from "./fetch.js";
+import { imageSettingsFromEnv, openStorage } from "@wishalia/storage";
+
+import { fetchImage, fetchPage } from "./fetch.js";
 import { createHealthServer } from "./health.js";
 import { runLoop } from "./loop.js";
 
@@ -9,6 +11,13 @@ import { runLoop } from "./loop.js";
 const { db, close } = createDb({ url: process.env.DATABASE_URL ?? "", maxConnections: 2 });
 const port = Number(process.env.PORT ?? 3001);
 let running = true;
+
+// The images of the pages (docs/images.md): only with a bucket or a volume, and imgproxy, configured
+const images = imageSettingsFromEnv();
+const storage = images ? openStorage(images.storage) : null;
+await storage?.ensureBucket().catch((error: Error) => {
+  process.stderr.write(`image storage not ready (${error.message}): images will be retried with each item\n`);
+});
 
 const server = createHealthServer(() => running);
 server.listen(port);
@@ -22,6 +31,8 @@ const metricsServer = await startMetricsServer(registry, metricsPort(), {
 const loop = runLoop({
   db,
   fetchPage: (url) => fetchPage(url),
+  storage,
+  fetchImage: (url) => fetchImage(url),
   metrics,
   isRunning: () => running,
   log: (message) => process.stderr.write(`${message}\n`),

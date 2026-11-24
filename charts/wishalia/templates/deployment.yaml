@@ -60,6 +60,11 @@ spec:
             {{- else if eq $component "web-app" }}
             - name: ORIGIN
               value: {{ printf "https://%s" $.Values.hosts.app | quote }}
+            {{- if $.Values.images.enabled }}
+            # The images the owner sends (10 MB at most) go through the app's form
+            - name: BODY_SIZE_LIMIT
+              value: {{ $.Values.images.uploadLimit | quote }}
+            {{- end }}
             {{- end }}
             {{- range $name, $value := $values.env }}
             - name: {{ $name }}
@@ -93,17 +98,27 @@ spec:
             # The root filesystem is read-only
             - name: tmp
               mountPath: /tmp
+            {{- if and (include "wishalia.imageVolume" $) (has $component (list "api" "worker")) }}
+            # The image files (docs/images.md): written by the API and the worker
+            - name: images
+              mountPath: {{ include "wishalia.imageDir" $ }}
+            {{- end }}
       volumes:
         - name: tmp
           emptyDir:
             sizeLimit: 64Mi
+        {{- if and (include "wishalia.imageVolume" $) (has $component (list "api" "worker")) }}
+        - name: images
+          persistentVolumeClaim:
+            claimName: {{ include "wishalia.imageClaim" $ }}
+        {{- end }}
       {{- with $.Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with $.Values.affinity }}
+      {{- with include "wishalia.affinity" (dict "root" $ "component" $component) }}
       affinity:
-        {{- toYaml . | nindent 8 }}
+        {{- . | nindent 8 }}
       {{- end }}
       {{- with $.Values.tolerations }}
       tolerations:

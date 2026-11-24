@@ -4,6 +4,7 @@ import type { FastifyPluginAsync } from "fastify";
 import type { Auth } from "../../auth/auth.js";
 import { toHeaders } from "../../auth/fastify.js";
 import type { Config } from "../../config.js";
+import type { Images } from "../../images.js";
 import { apiTokenRoutes } from "./api-tokens.js";
 import { eventRoutes } from "./events.js";
 import { itemRoutes } from "./items.js";
@@ -15,6 +16,8 @@ import { shareLinkRoutes } from "./share-links.js";
 export interface ManageDeps {
   db: Database;
   now: () => Date;
+  /** The bucket and imgproxy, null when images are off. */
+  images: Images | null;
 }
 
 /** What the share links also need: the public origin of their URL and the device marker secret. */
@@ -43,7 +46,7 @@ declare module "fastify" {
  */
 export const manageRoutes: FastifyPluginAsync<ShareDeps & { auth: Auth }> = async (
   app,
-  { auth, config, db, now, secret },
+  { auth, config, db, now, secret, images },
 ) => {
   app.addHook("onRequest", async (request, reply) => {
     request.scope = "manage";
@@ -58,10 +61,10 @@ export const manageRoutes: FastifyPluginAsync<ShareDeps & { auth: Auth }> = asyn
 
   app.get("/ping", async (request) => ({ scope: request.scope }));
 
-  await app.register(meRoutes, { db, now });
-  await app.register(listRoutes, { db, now });
-  await app.register(itemRoutes, { db, now });
-  await app.register(eventRoutes, { db, now });
-  await app.register(shareLinkRoutes, { config, db, now, secret });
-  await app.register(apiTokenRoutes, { db, now });
+  await app.register(meRoutes, { db, now, images });
+  await app.register(listRoutes, { db, now, images });
+  await app.register(itemRoutes, { db, now, images });
+  await app.register(eventRoutes, { db, now, images });
+  await app.register(shareLinkRoutes, { config, db, now, secret, images });
+  await app.register(apiTokenRoutes, { db, now, images });
 };

@@ -62,6 +62,46 @@ auth:
 # Sealed Secrets...): the chart never holds a secret value.
 existingSecret: ""
 
+# Images of the items (docs/images.md): kept in an S3 bucket (MinIO), thumbnails made by imgproxy,
+# which the chart deploys inside the cluster only. Off: no image, everything else works.
+# existingSecret holds S3_ACCESS_KEY, S3_SECRET_KEY, IMGPROXY_KEY and IMGPROXY_SALT (hex, 32+
+# characters each: openssl rand -hex 32).
+images:
+  enabled: false
+  # Where the files live: "volume" (a PersistentVolumeClaim, created by the chart or existing) or
+  # "s3" (MinIO or any S3-compatible bucket). docs/images.md compares the two.
+  storage: volume
+  persistence:
+    # An existing PersistentVolumeClaim; empty: the chart creates one (kept on helm uninstall)
+    existingClaim: ""
+    size: 5Gi
+    # Empty: the cluster's default StorageClass
+    storageClass: ""
+    # ReadWriteOnce: the API, the worker and imgproxy are kept on the same node (podAffinity).
+    # ReadWriteMany (NFS, CephFS...) lets them run anywhere.
+    accessModes: [ReadWriteOnce]
+    annotations: {}
+  s3:
+    # e.g. http://minio.storage.svc:9000 or https://s3.nas.example.com
+    endpoint: ""
+    region: us-east-1
+    bucket: wishalia
+  # Largest request of the management app (adapter-node BODY_SIZE_LIMIT): an image is 10 MB at most
+  uploadLimit: 12M
+  imgproxy:
+    image:
+      repository: ghcr.io/imgproxy/imgproxy
+      tag: v4.0.25
+      pullPolicy: IfNotPresent
+    replicas: 1
+    port: 8080
+    # Largest image read, in megapixels (a decompression bomb past it)
+    maxSrcResolution: 50
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { memory: 512Mi }
+    env: {}
+
 api:
   enabled: true
   replicas: 1

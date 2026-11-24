@@ -24,14 +24,16 @@ services:
     volumes: [minio:/data]
 
   imgproxy:
-    image: ghcr.io/imgproxy/imgproxy:latest
+    image: ghcr.io/imgproxy/imgproxy:v4.0.25
     environment:
       IMGPROXY_USE_S3: "true"
       IMGPROXY_S3_ENDPOINT: http://minio:9000
+      IMGPROXY_ALLOWED_SOURCES: s3://wishalia/
       AWS_ACCESS_KEY_ID: wishalia
       AWS_SECRET_ACCESS_KEY: change-me-locally
-      # Local only: production signs every URL (IMGPROXY_KEY / IMGPROXY_SALT from a Secret)
-      IMGPROXY_ALLOW_INSECURE: "true"
+      # Signed paths only, as in production: the same local key and salt as .env.example
+      IMGPROXY_KEY: 6c6f63616c2d6f6e6c792d696d6770726f78792d6b65792d6368616e67652d6d65
+      IMGPROXY_SALT: 6c6f63616c2d6f6e6c792d696d6770726f78792d73616c742d6368616e67652d
     ports: ["8081:8080"]
     depends_on: [minio]
 

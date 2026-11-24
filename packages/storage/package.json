@@ -1,0 +1,30 @@
+{
+  "name": "@wishalia/storage",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The images of the items: S3 bucket, format sniffing and signed imgproxy paths.",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@wishalia/domain": "workspace:*",
+    "aws4fetch": "^1.0.20"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@wishalia/config": "workspace:*"
+  }
+}

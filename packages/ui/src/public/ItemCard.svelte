@@ -29,61 +29,94 @@
   const site = (url: string) => URL.parse(url)?.hostname.replace(/^www\./, "") ?? url;
 </script>
 
-<li class="card item" class:complete>
-  <div class="head">
-    <h2>{item.title}</h2>
-    {#if item.kind === "pool" && item.targetCents}
-      <span class="price">{formatEuros(item.targetCents)}</span>
-    {:else if item.priceCents}
-      <span class="price">{formatEuros(item.priceCents)}</span>
-    {/if}
-  </div>
-  {#if kindLabels[item.kind] || item.repeatable || (item.kind === "quantity" && item.quantity)}
-    <p class="tags">
-      {#if kindLabels[item.kind]}<span class="tag">{kindLabels[item.kind]}</span>{/if}
-      {#if item.kind === "quantity" && item.quantity}<span class="tag">
-          {item.quantity} souhaités
-        </span>{/if}
-      {#if item.repeatable}<span class="tag">À chaque occasion</span>{/if}
-    </p>
+<li class="card item" class:complete class:pictured={item.image}>
+  {#if item.image}
+    <!-- Next to the item's name, which says what it is: decorative for a screen reader -->
+    <img
+      class="picture"
+      src={item.image.medium}
+      alt=""
+      width="480"
+      height="480"
+      loading="lazy"
+      decoding="async"
+    />
   {/if}
-  {#if item.notes}<p class="notes">{item.notes}</p>{/if}
-  {#if webLink(item.url)}
-    {@const link = webLink(item.url) ?? ""}
-    <p>
-      <a href={link} rel="noopener noreferrer nofollow external" target="_blank">
-        Voir sur {site(link)}<span class="visually-hidden"> (nouvel onglet)</span>
-      </a>
-    </p>
-  {/if}
-  {#if scope === "list" && item.eventIds.length > 0}
-    <p class="muted small">
-      Pour {item.eventIds
-        .map((id) => eventsById.get(id)?.name)
-        .filter(Boolean)
-        .join(", ")}
-    </p>
-  {/if}
-  {#if item.funding && item.status !== "received"}
-    {#if bar}
-      <PoolBar {bar} id={item.id} />
-    {:else if item.kind === "quantity" && item.quantity && item.quantity <= 24}
-      <Copies wanted={item.quantity} taken={item.funding.reservedUnits ?? 0} />
-    {/if}
-    {#if item.funding.state === "almost"}<p class="tags">
-        <span class="tag almost">Presque complet</span>
-      </p>{/if}
-  {/if}
-  {#if line}
-    <div class="standing-row">
-      {#if item.funding?.contributors.length}<Givers contributors={item.funding.contributors} />{/if}
-      <p class="standing" class:done={complete}>{line}</p>
+  <div class="content">
+    <div class="head">
+      <h2>{item.title}</h2>
+      {#if item.kind === "pool" && item.targetCents}
+        <span class="price">{formatEuros(item.targetCents)}</span>
+      {:else if item.priceCents}
+        <span class="price">{formatEuros(item.priceCents)}</span>
+      {/if}
     </div>
-  {/if}
-  {@render children?.()}
+    {#if kindLabels[item.kind] || item.repeatable || (item.kind === "quantity" && item.quantity)}
+      <p class="tags">
+        {#if kindLabels[item.kind]}<span class="tag">{kindLabels[item.kind]}</span>{/if}
+        {#if item.kind === "quantity" && item.quantity}<span class="tag">
+            {item.quantity} souhaités
+          </span>{/if}
+        {#if item.repeatable}<span class="tag">À chaque occasion</span>{/if}
+      </p>
+    {/if}
+    {#if item.notes}<p class="notes">{item.notes}</p>{/if}
+    {#if webLink(item.url)}
+      {@const link = webLink(item.url) ?? ""}
+      <p>
+        <a href={link} rel="noopener noreferrer nofollow external" target="_blank">
+          Voir sur {site(link)}<span class="visually-hidden"> (nouvel onglet)</span>
+        </a>
+      </p>
+    {/if}
+    {#if scope === "list" && item.eventIds.length > 0}
+      <p class="muted small">
+        Pour {item.eventIds
+          .map((id) => eventsById.get(id)?.name)
+          .filter(Boolean)
+          .join(", ")}
+      </p>
+    {/if}
+    {#if item.funding && item.status !== "received"}
+      {#if bar}
+        <PoolBar {bar} id={item.id} />
+      {:else if item.kind === "quantity" && item.quantity && item.quantity <= 24}
+        <Copies wanted={item.quantity} taken={item.funding.reservedUnits ?? 0} />
+      {/if}
+      {#if item.funding.state === "almost"}<p class="tags">
+          <span class="tag almost">Presque complet</span>
+        </p>{/if}
+    {/if}
+    {#if line}
+      <div class="standing-row">
+        {#if item.funding?.contributors.length}<Givers contributors={item.funding.contributors} />{/if}
+        <p class="standing" class:done={complete}>{line}</p>
+      </div>
+    {/if}
+    {@render children?.()}
+  </div>
 </li>
 
 <style>
+  .pictured {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: 0 1rem;
+    align-items: start;
+  }
+  .picture {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 12px;
+    background: var(--surface-2, var(--border));
+  }
+  @media (min-width: 40rem) {
+    .pictured {
+      grid-template-columns: 8rem minmax(0, 1fr);
+    }
+  }
   .item h2 {
     font-size: 1.25rem;
     margin: 0;

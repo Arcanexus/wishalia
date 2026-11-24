@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { decodeEntities, extract, priceToCents } from "./extract.js";
+import { decodeEntities, extract, priceToCents, extractImages } from "./extract.js";
 
 describe("extract", () => {
   it("reads the JSON-LD Product first, in a @graph, with its offer", () => {
@@ -57,5 +57,38 @@ describe("decodeEntities", () => {
     expect(decodeEntities("a&nbsp;b &#233;t&#xE9; &lt;3&gt; &apos;x&apos; &bogus; &#0;")).toBe(
       "a b été <3> 'x' &bogus; &#0;",
     );
+  });
+});
+
+describe("extractImages", () => {
+  it("takes the product's images first, then the sharing ones, then the photos of the page", () => {
+    const html = `
+      <script type="application/ld+json">{"@graph":[{"@type":"Product","name":"Lampe",
+        "image":["/p/1.jpg",{"@type":"ImageObject","contentUrl":"/p/2.jpg"},{"url":"/p/3.jpg"}]}]}</script>
+      <meta property="og:image" content="https://cdn.example.com/og.jpg?a=1&amp;b=2">
+      <meta name="twitter:image" content="/tw.jpg">
+      <link rel="image_src" href="/src.jpg">
+      <img src="/logo.png"><img src="/icons/cart.svg"><img src="/tiny.jpg" width="16" height="16">
+      <img src="/thumb.jpg" data-src="/large.jpg" width="600">`;
+    expect(extractImages(html)).toEqual([
+      "/p/1.jpg",
+      "/p/2.jpg",
+      "/p/3.jpg",
+      "https://cdn.example.com/og.jpg?a=1&b=2",
+      "/tw.jpg",
+      "/src.jpg",
+      "/large.jpg",
+    ]);
+  });
+
+  it("reads a single JSON-LD image, skips a broken JSON-LD, and gives nothing without images", () => {
+    expect(
+      extractImages(`<script type="application/ld+json">{oops</script>
+        <script type="application/ld+json">{"@type":"Product","image":"/one.webp"}</script>`),
+    ).toEqual(["/one.webp"]);
+    expect(
+      extractImages(`<script type="application/ld+json">{"@type":"Product","image":42}</script>`),
+    ).toEqual([]);
+    expect(extractImages("<title>Rien</title>")).toEqual([]);
   });
 });

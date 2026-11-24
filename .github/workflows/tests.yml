@@ -134,6 +134,29 @@ jobs:
           helm template t charts/wishalia --set existingSecret=s --show-only templates/configmap.yaml \
             | grep -q 'COOKIE_DOMAIN: "wishalia.example.com"'
 
+      - name: The images live on a volume or in a bucket
+        run: |
+          out=$(helm template t charts/wishalia --set existingSecret=s --set images.enabled=true)
+          echo "$out" | grep -q 'kind: PersistentVolumeClaim'
+          echo "$out" | grep -q 'value: "local:///"'
+          if echo "$out" | grep -q 'AWS_ACCESS_KEY_ID'; then
+            echo "::error::the volume mode still asks imgproxy for S3 credentials"
+            exit 1
+          fi
+          out=$(helm template t charts/wishalia --set existingSecret=s --set images.enabled=true \
+            --set images.persistence.existingClaim=photos)
+          if echo "$out" | grep -q 'kind: PersistentVolumeClaim'; then
+            echo "::error::the chart created a claim beside images.persistence.existingClaim"
+            exit 1
+          fi
+          echo "$out" | grep -q 'claimName: photos'
+          helm template t charts/wishalia --set existingSecret=s --set images.enabled=true \
+            --set images.storage=s3 --set images.s3.endpoint=http://minio:9000 | grep -q 's3://wishalia/'
+          if helm template t charts/wishalia --set existingSecret=s --set images.enabled=true --set images.storage=disk; then
+            echo "::error::the chart rendered an unknown images.storage"
+            exit 1
+          fi
+
       - name: The metrics stay inside the cluster
         run: |
           out=$(helm template t charts/wishalia --set existingSecret=s --set ingress.enabled=true \

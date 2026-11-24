@@ -4,6 +4,7 @@
  */
 import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   bigserial,
   boolean,
   check,
@@ -202,7 +203,10 @@ export const wishes = pgTable(
     /** The raw URL first, cleaned and enriched by the worker. */
     url: text("url"),
     notes: text("notes"),
-    imageKey: text("image_key"),
+    /** The image shown, one of its wish_images; null without one. */
+    imageId: uuid("image_id").references((): AnyPgColumn => wishImages.id, { onDelete: "set null" }),
+    /** The frame the owner chose in it, as fractions of the image: null shows it whole. */
+    imageCrop: jsonb("image_crop").$type<{ x: number; y: number; width: number; height: number }>(),
     priceCents: integer("price_cents"),
     /** Pool only. */
     targetCents: integer("target_cents"),
@@ -390,6 +394,35 @@ export const itemEvents = pgTable(
   (table) => [index("item_events_wish_idx").on(table.wishId, table.at)],
 );
 
+/** Where an image of an item comes from: its link's page (the worker) or the owner. */
+export const imageSource = pgEnum("image_source", ["page", "upload"]);
+
+/**
+ * The images of an item (spec §6, docs/images.md): the ones the worker took from the page of its
+ * link (3 or 4 to choose from) and the ones the owner sent. The files are in the S3 bucket under
+ * `key`; imgproxy makes the thumbnails. The item shows one of them (wishes.image_id).
+ */
+export const wishImages = pgTable(
+  "wish_images",
+  {
+    id: id(),
+    wishId: uuid("wish_id")
+      .notNull()
+      .references(() => wishes.id),
+    source: imageSource("source").notNull(),
+    /** The object in the bucket, never given to a browser (they get signed imgproxy paths). */
+    key: text("key").notNull().unique(),
+    contentType: text("content_type").notNull(),
+    bytes: integer("bytes").notNull(),
+    width: integer("width"),
+    height: integer("height"),
+    /** Order of the proposals, as the page gave them. */
+    position: integer("position").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (table) => [index("wish_images_wish_idx").on(table.wishId, table.position)],
+);
+
 /** History entry types (spec, section 7). */
 export const ITEM_EVENT_TYPES = [
   "created",
@@ -404,5 +437,7 @@ export const ITEM_EVENT_TYPES = [
   "reserved",
   "received",
   "archived",
+  "enriched",
+  "image_changed",
 ] as const;
 export type ItemEventType = (typeof ITEM_EVENT_TYPES)[number];

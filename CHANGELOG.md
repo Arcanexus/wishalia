@@ -8,6 +8,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Items no longer carry `imageKey` (always empty until now) in the APIs, REST v1 included: they carry
+  `image` (signed thumbnail paths, or `null`) and `imageCrop`.
+- docker compose pins imgproxy (v4.0.25) and signs its paths with local keys, as in production.
+
 - The product is named **Wishalia**, and the code name `wishlist` is gone: default `APP_NAME` and
   chart `config.appName`, packages (`@wishalia/*`), images (`ghcr.io/arcanexus/wishalia-*`, no longer
   derived from the repository name), the chart (`charts/wishalia`), cookies (`wishalia.*`), metrics
@@ -34,6 +38,25 @@ All notable changes to this project are documented here. The format follows
 - The OIDC callback URL in the documentation is `/auth/callback/oidc`.
 
 ### Added
+
+- Items show an image (docs/images.md). The worker takes up to four images from the page of an
+  item's link, through the same SSRF guard as the page, keeps only real images read from their bytes
+  (JPEG, PNG, WebP, GIF, AVIF, HEIC; never SVG; 120 px to 50 megapixels, 10 MB at most) on a volume
+  or in an S3 bucket, and the item shows the first. An « Image » page per item lets the owner choose another,
+  send their own photo (made lighter on the device when over 1.5 MB) and frame it in a square, by
+  dragging, tapping, the arrow keys or a slider. imgproxy makes the thumbnails from signed paths
+  only; the two frontends serve them under `/img/` on their own host, so the CSP keeps
+  `img-src 'self'` and imgproxy and the files stay inside the cluster. The images show on the
+  owner's lists, in the preview and in the family's view. New table `wish_images`, items get
+  `image_id` and `image_crop`; open items with a link are read once more for their images. New
+  routes `GET /manage/items/:id/images`, `PUT` and `PATCH /manage/items/:id/image` (also in the REST
+  API v1), `image_changed` history entries, `features.images` in `/manage/me`, and the package
+  `@wishalia/storage`. The files live where you choose (`IMAGE_STORAGE`, chart `images.storage`):
+  on a volume (`volume`, the default: a PersistentVolumeClaim created by the chart and kept on
+  uninstall, or `images.persistence.existingClaim`; imgproxy mounts it read-only, and a
+  `ReadWriteOnce` volume keeps the API, the worker and imgproxy on one node), or in an S3 bucket
+  (`s3`, MinIO). Chart: `images.*` deploys imgproxy (internal, NetworkPolicy to the two frontends)
+  and sets `BODY_SIZE_LIMIT` on the management app.
 
 - Items added with a link complete themselves: the worker reads the page (JSON-LD `Product`, then
   Open Graph, then `<title>`) and fills the title, while it is still the site's name, and an empty

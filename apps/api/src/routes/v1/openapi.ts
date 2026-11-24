@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type { Config } from "../../config.js";
 import { eventInput, eventPatch } from "../manage/events.js";
+import { imagePatch } from "../manage/item-images.js";
 import { itemPatch, quickAddInput } from "../manage/items.js";
 import { listInput, listPatch } from "../manage/lists.js";
 
@@ -78,7 +79,11 @@ const schemas: Record<string, Schema> = {
       title: { type: "string" },
       url: nullable("string"),
       notes: nullable("string"),
-      imageKey: nullable("string"),
+      image: {
+        oneOf: [ref("ImageSources"), { type: "null" }],
+        description: "The image shown, framed, in three sizes; null without one.",
+      },
+      imageCrop: { oneOf: [ref("Crop"), { type: "null" }] },
       priceCents: nullable("integer"),
       targetCents: nullable("integer"),
       quantity: nullable("integer"),
@@ -93,6 +98,47 @@ const schemas: Record<string, Schema> = {
       },
       createdAt: { type: "string", format: "date-time" },
       updatedAt: { type: "string", format: "date-time" },
+    },
+  },
+  ImageSources: {
+    type: "object",
+    description:
+      "Signed thumbnail paths (WebP), to read on the management app's host: " +
+      "small 192 px and medium 480 px squares, large up to 1200 px, whole.",
+    properties: {
+      small: { type: "string", examples: ["/img/<signature>/rs:fill:192:192:0/<source>.webp"] },
+      medium: { type: "string" },
+      large: { type: "string" },
+    },
+  },
+  Crop: {
+    type: "object",
+    description: "A frame, as fractions (0 to 1) of the image's width and height.",
+    properties: {
+      x: { type: "number" },
+      y: { type: "number" },
+      width: { type: "number" },
+      height: { type: "number" },
+    },
+  },
+  ItemImages: {
+    type: "object",
+    properties: {
+      imageId: nullable("string", "uuid"),
+      crop: { oneOf: [ref("Crop"), { type: "null" }] },
+      images: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            source: { enum: ["page", "upload"] },
+            width: nullable("integer"),
+            height: nullable("integer"),
+            sources: ref("ImageSources"),
+          },
+        },
+      },
     },
   },
   HistoryEntry: {
@@ -199,6 +245,34 @@ export function openApiDocument(config: Config) {
       "/items/{itemId}/history": {
         parameters: [uuidParam("itemId")],
         get: { summary: "The history of an item", responses: { 200: json(list("HistoryEntry")) } },
+      },
+      "/items/{itemId}/images": {
+        parameters: [uuidParam("itemId")],
+        get: {
+          summary: "The images to choose from: the owner's own, then the page's proposals",
+          responses: { 200: json(ref("ItemImages")) },
+        },
+      },
+      "/items/{itemId}/image": {
+        parameters: [uuidParam("itemId")],
+        put: {
+          summary: "Send an image (JPEG, PNG, WebP, GIF, AVIF or HEIC; 10 MB at most), shown at once",
+          requestBody: {
+            required: true,
+            content: { "image/*": { schema: { type: "string", format: "binary" } } },
+          },
+          responses: {
+            200: json(ref("Item")),
+            413: json(ref("Error"), "Over 10 MB"),
+            415: json(ref("Error"), "Not an accepted image"),
+            503: json(ref("Error"), "Images are off on this server"),
+          },
+        },
+        patch: {
+          summary: "Choose the image shown (or none) and its frame",
+          requestBody: body(imagePatch),
+          responses: { 200: json(ref("Item")) },
+        },
       },
       "/events": {
         get: { summary: "The events, by date", responses: { 200: json(list("Event")) } },

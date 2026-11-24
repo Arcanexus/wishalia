@@ -45,16 +45,17 @@ curl -X POST -H "Authorization: Bearer wsh_..." -H "Content-Type: application/js
 The description is served at `GET /v1/openapi.json` (OpenAPI 3.1, no token needed): import it in
 any OpenAPI client. Its request bodies come from the schemas the routes validate with.
 
-| Route                                                   | What                                                                 |
-| ------------------------------------------------------- | -------------------------------------------------------------------- |
-| `GET /v1/me`                                            | The owner of the token.                                              |
-| `GET`, `POST /v1/lists`; `PATCH /v1/lists/:id`          | Lists.                                                               |
-| `GET /v1/lists/:id/items`; `POST /v1/lists/:id/reveal`  | Items of a list; lifting its secret (manual).                        |
-| `POST /v1/items`; `GET`, `PATCH /v1/items/:id`          | Quick add and edits of items.                                        |
-| `GET /v1/items/:id/history`                             | The history, without any sealed entry, even once a secret is lifted. |
-| `GET`, `POST /v1/events`; `PATCH /v1/events/:id`        | Events.                                                              |
-| `GET /v1/events/:id/items`; `PUT`, `DELETE .../:itemId` | The items an event selects.                                          |
-| `POST /v1/events/:id/reveal`                            | Lifting the secret of an event.                                      |
+| Route                                                          | What                                                                         |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `GET /v1/me`                                                   | The owner of the token.                                                      |
+| `GET`, `POST /v1/lists`; `PATCH /v1/lists/:id`                 | Lists.                                                                       |
+| `GET /v1/lists/:id/items`; `POST /v1/lists/:id/reveal`         | Items of a list; lifting its secret (manual).                                |
+| `POST /v1/items`; `GET`, `PATCH /v1/items/:id`                 | Quick add and edits of items.                                                |
+| `GET /v1/items/:id/history`                                    | The history, without any sealed entry, even once a secret is lifted.         |
+| `GET /v1/items/:id/images`; `PUT`, `PATCH /v1/items/:id/image` | The images of an item: send one, choose one, frame it ([Images](images.md)). |
+| `GET`, `POST /v1/events`; `PATCH /v1/events/:id`               | Events.                                                                      |
+| `GET /v1/events/:id/items`; `PUT`, `DELETE .../:itemId`        | The items an event selects.                                                  |
+| `POST /v1/events/:id/reveal`                                   | Lifting the secret of an event.                                              |
 
 The answers and errors are those of the [Management API](api.md). Share links and tokens are not in
 the API v1.
