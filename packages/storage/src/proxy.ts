@@ -1,4 +1,5 @@
 import { isImagePath } from "./imgproxy.js";
+import { withoutTrailingSlashes } from "./url.js";
 
 /**
  * What the frontends answer under /img/ (docs/images.md): imgproxy's answer to a signed path,
@@ -19,7 +20,7 @@ export async function proxyImage(
   const send = options.fetch ?? fetch;
   let answer: Response;
   try {
-    answer = await send(`${options.imgproxyUrl.replace(/\/+$/, "")}${path}`, {
+    answer = await send(`${withoutTrailingSlashes(options.imgproxyUrl)}${path}`, {
       headers: { accept: "image/webp" },
       redirect: "error",
       signal: AbortSignal.timeout(options.timeoutMs ?? 15_000),

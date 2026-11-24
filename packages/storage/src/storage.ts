@@ -1,5 +1,7 @@
 import { AwsClient } from "aws4fetch";
 
+import { withoutTrailingSlashes } from "./url.js";
+
 /**
  * The S3 bucket of the images (MinIO on the homelab, docs/images.md). Only the API and the worker
  * write in it; imgproxy reads it; no browser ever reaches it.
@@ -39,7 +41,7 @@ export function s3Storage(settings: S3Settings): Storage {
     service: "s3",
   });
   const call = settings.fetch ?? fetch;
-  const base = `${settings.endpoint.replace(/\/+$/, "")}/${encodeURIComponent(settings.bucket)}`;
+  const base = `${withoutTrailingSlashes(settings.endpoint)}/${encodeURIComponent(settings.bucket)}`;
   const objectUrl = (key: string) => `${base}/${key.split("/").map(encodeURIComponent).join("/")}`;
 
   async function send(url: string, init: RequestInit, ok: (status: number) => boolean) {
