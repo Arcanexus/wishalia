@@ -40,6 +40,23 @@ A list page shows its items, newest first, with what kind of gift they are, thei
 of their link. Each item can be marked **received** or **archived**; received and archived items wait under « Reçues et
 archivées », where they can be put back in the list. Every change lands in the item's history.
 
+### A list's settings
+
+« Réglages de la liste », folded under the list's title, holds:
+
+- its **name**;
+- its **theme**: « Celui de chacun » (everyone sees their own), « Neutre » or « Noël », forced on
+  everyone who opens the list, in the app and through its share links; the light or dark mode
+  stays each person's own. A new theme reloads the page, since the server draws it;
+- **the gifts made without an event**: when their secret lifts, « Quand je marque l'envie reçue »
+  (each item's secret lifts once it is received, the default) or « Quand je le décide » (the whole
+  list at once). The choice is frozen once the secret is lifted;
+- in « Quand je le décide » mode, « Lever le secret de la liste », behind a box to tick: final;
+- « Archiver la liste », behind a box to tick: the list leaves the lists, and its share links show
+  nothing any more. The app goes back to the lists and says so.
+
+![A list's settings, on a phone](images/app-list-settings.png)
+
 ### Editing an item
 
 « Modifier » opens the item in place, under its card: its name, what kind of gift it is, its price,
