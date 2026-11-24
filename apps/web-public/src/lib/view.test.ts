@@ -1,7 +1,21 @@
 import { describe, expect, it } from "vitest";
 
 import type { Funding, PublicItem } from "./types.ts";
-import { formatDay, formatEuros, givers, heading, joinNames, sortForGuests, standing } from "./view.ts";
+import {
+  canGive,
+  formatDay,
+  formatEuros,
+  giveError,
+  giveLabel,
+  givers,
+  heading,
+  joinNames,
+  myGiftLine,
+  sortForGuests,
+  standing,
+  unitsLeft,
+  withdrawError,
+} from "./view.ts";
 
 const funding = (patch: Partial<Funding> = {}): Funding => ({
   state: "free",
@@ -127,5 +141,52 @@ describe("standing", () => {
       "130 € réunis sur 120 € : objectif dépassé de 10 €.",
     );
     expect(pool({ totalCents: 2000 }, null)).toBe("20 € réunis.");
+  });
+});
+
+describe("giving helpers", () => {
+  const event = { id: "e", name: "Noël", kind: "christmas" as const, date: "2026-12-24", open: true };
+
+  it("counts the copies left", () => {
+    expect(unitsLeft(item({ kind: "pool" }))).toBe(0);
+    expect(unitsLeft(item())).toBe(1);
+    expect(unitsLeft(item({ funding: funding({ reservedUnits: 1 }) }))).toBe(0);
+    expect(unitsLeft(item({ kind: "quantity", quantity: 4, funding: funding({ reservedUnits: 1 }) }))).toBe(
+      3,
+    );
+    expect(unitsLeft(item({ repeatable: true, funding: funding({ reservedUnits: 3 }) }))).toBe(1);
+  });
+
+  it("offers to give only what a guest can still give", () => {
+    const guest = { viewer: "guest", event: null };
+    expect(canGive(item(), guest)).toBe(true);
+    expect(canGive(item({ kind: "pool", funding: funding({ state: "complete" }) }), guest)).toBe(true);
+    expect(canGive(item(), { viewer: "owner", event: null })).toBe(false);
+    expect(canGive(item({ status: "received" }), guest)).toBe(false);
+    expect(canGive(item({ funding: funding({ reservedUnits: 1 }) }), guest)).toBe(false);
+    expect(canGive(item(), { viewer: "guest", event: { ...event, open: false } })).toBe(false);
+  });
+
+  it("names the button after the item", () => {
+    expect(giveLabel(item({ kind: "pool" }))).toBe("Je participe");
+    expect(giveLabel(item())).toBe("Je le réserve");
+    expect(giveLabel(item({ kind: "quantity", quantity: 3 }))).toBe("J'en réserve");
+  });
+
+  it("says what went wrong in plain words", () => {
+    expect(giveError("already_reserved")).toContain("vient de le réserver");
+    expect(giveError("weird")).toContain("Réessayez");
+    expect(withdrawError("event_closed")).toContain("passée");
+    expect(withdrawError("weird")).toContain("Réessayez");
+  });
+
+  it("tells the person what they gave", () => {
+    const gift = { id: "g", itemId: "i", eventId: null, amountCents: null, units: null };
+    expect(plain(myGiftLine({ ...gift, amountCents: 2000 }, item({ kind: "pool" })))).toBe(
+      "Vous participez pour 20 €.",
+    );
+    expect(myGiftLine({ ...gift, units: 1 }, item({ kind: "quantity" }))).toBe("Vous en réservez un.");
+    expect(myGiftLine({ ...gift, units: 2 }, item({ kind: "quantity" }))).toBe("Vous en réservez 2.");
+    expect(myGiftLine({ ...gift, units: 1 }, item())).toBe("Vous l'avez réservé.");
   });
 });
