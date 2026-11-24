@@ -153,6 +153,11 @@ body {
   line-height: 1.55;
 }
 
+/* The page's root, in app.html: a class, since the CSP allows no style attribute */
+.sveltekit-body {
+  display: contents;
+}
+
 h1,
 h2,
 h3 {

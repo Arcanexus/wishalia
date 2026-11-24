@@ -79,7 +79,7 @@ export function standing(item: PublicItem): string | null {
         : `${formatEuros(total)} réunis`;
       const tail =
         funding.overshootCents && funding.overshootCents > 0
-          ? ` : objectif dépassé de ${formatEuros(funding.overshootCents)}`
+          ? ` : objectif atteint, ${formatEuros(funding.overshootCents)} en excédent`
           : funding.remainingCents
             ? ` : il manque ${formatEuros(funding.remainingCents)}`
             : "";
@@ -148,4 +148,99 @@ export function myGiftLine(gift: MyGift, item: PublicItem): string {
     return gift.units === 1 ? "Vous en réservez un." : `Vous en réservez ${gift.units}.`;
   }
   return "Vous l'avez réservé.";
+}
+
+/** A part of a pool's bar: what one event brought, as fractions of the bar's width. */
+export interface Segment {
+  key: string;
+  label: string;
+  cents: number;
+  start: number;
+  width: number;
+  /** Which of the bar's colours, by order of the events. */
+  tone: number;
+}
+
+export interface PoolBar {
+  segments: Segment[];
+  /** Where the target stands on the bar, 0 to 1; null without a target. */
+  target: number | null;
+  /** The part past the target, hatched. */
+  overshoot: { start: number; width: number } | null;
+}
+
+export const TONES = 4;
+
+/**
+ * A pool's bar (spec §4): one segment per event, on a scale of max(target, total), with a mark at
+ * the target and the overshoot past it. Null when there is nothing to draw.
+ */
+export function poolBar(item: PublicItem, events: readonly PublicEvent[]): PoolBar | null {
+  const funding = item.funding;
+  if (item.kind !== "pool" || !funding) return null;
+  const total = funding.totalCents ?? 0;
+  const target = item.targetCents ?? 0;
+  const scale = Math.max(target, total);
+  if (scale <= 0) return null;
+  const names = new Map(events.map((event) => [event.id, event.name]));
+  const parts = funding.byEvent?.length ? funding.byEvent : [{ eventId: null, amountCents: total }];
+  let at = 0;
+  const segments = parts
+    .filter((part) => part.amountCents > 0)
+    .map((part, index) => {
+      const segment = {
+        key: part.eventId ?? "none",
+        label: part.eventId ? (names.get(part.eventId) ?? "Une autre occasion") : "Sans occasion",
+        cents: part.amountCents,
+        start: at / scale,
+        width: part.amountCents / scale,
+        tone: index % TONES,
+      };
+      at += part.amountCents;
+      return segment;
+    });
+  return {
+    segments,
+    target: target > 0 ? target / scale : null,
+    overshoot:
+      target > 0 && total > target ? { start: target / scale, width: (total - target) / scale } : null,
+  };
+}
+
+/** Where an event, or a list, stands (spec §4: « X complets, Y en cours, Z libres »). */
+export interface Gauge {
+  complete: number;
+  inProgress: number;
+  free: number;
+}
+
+export function gauge(items: readonly PublicItem[]): Gauge | null {
+  const counted = items.filter((item) => item.funding !== null || item.status === "received");
+  if (counted.length === 0) return null;
+  const result: Gauge = { complete: 0, inProgress: 0, free: 0 };
+  for (const item of counted) {
+    const state = item.status === "received" ? "complete" : item.funding?.state;
+    if (state === "complete") result.complete += 1;
+    else if (state === "free") result.free += 1;
+    else result.inProgress += 1;
+  }
+  return result;
+}
+
+const count = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
+
+export const gaugeLine = ({ complete, inProgress, free }: Gauge) =>
+  `${count(complete, "complet", "complets")}, ${count(inProgress, "en cours", "en cours")}, ${count(free, "libre", "libres")}.`;
+
+/** One or two letters for an avatar: « Paul » → « P », « Jean Dupont » → « JD ». */
+export function initials(name: string | null): string {
+  if (!name) return "?";
+  const words = name
+    .trim()
+    .split(/[\s-]+/u)
+    .filter(Boolean);
+  return words
+    .slice(0, 2)
+    .map((word) => [...word][0]?.toLocaleUpperCase("fr-FR") ?? "")
+    .join("");
 }

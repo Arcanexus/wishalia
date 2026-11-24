@@ -5,12 +5,16 @@ import {
   canGive,
   formatDay,
   formatEuros,
+  gauge,
+  gaugeLine,
   giveError,
   giveLabel,
   givers,
   heading,
+  initials,
   joinNames,
   myGiftLine,
+  poolBar,
   sortForGuests,
   standing,
   unitsLeft,
@@ -138,7 +142,7 @@ describe("standing", () => {
       "45 € réunis sur 120 € : il manque 75 €, avec Paul.",
     );
     expect(pool({ totalCents: 13000, remainingCents: 0, overshootCents: 1000 })).toBe(
-      "130 € réunis sur 120 € : objectif dépassé de 10 €.",
+      "130 € réunis sur 120 € : objectif atteint, 10 € en excédent.",
     );
     expect(pool({ totalCents: 2000 }, null)).toBe("20 € réunis.");
   });
@@ -188,5 +192,73 @@ describe("giving helpers", () => {
     expect(myGiftLine({ ...gift, units: 1 }, item({ kind: "quantity" }))).toBe("Vous en réservez un.");
     expect(myGiftLine({ ...gift, units: 2 }, item({ kind: "quantity" }))).toBe("Vous en réservez 2.");
     expect(myGiftLine({ ...gift, units: 1 }, item())).toBe("Vous l'avez réservé.");
+  });
+});
+
+describe("the drawings", () => {
+  const noel = { id: "noel", name: "Noël", kind: "christmas" as const, date: "2026-12-24", open: true };
+  const pool = (patch: Partial<Funding>, targetCents: number | null = 10000) =>
+    item({ kind: "pool", targetCents, funding: funding({ totalCents: 0, ...patch }) });
+
+  it("draws a pool's bar per event, on the scale of the target, with the overshoot past it", () => {
+    const bar = poolBar(
+      pool({
+        totalCents: 6000,
+        byEvent: [
+          { eventId: "noel", amountCents: 4000 },
+          { eventId: null, amountCents: 1500 },
+          { eventId: "elsewhere", amountCents: 500 },
+        ],
+      }),
+      [noel],
+    );
+    expect(bar?.segments.map(({ label, start, width, tone }) => [label, start, width, tone])).toEqual([
+      ["Noël", 0, 0.4, 0],
+      ["Sans occasion", 0.4, 0.15, 1],
+      ["Une autre occasion", 0.55, 0.05, 2],
+    ]);
+    expect(bar?.target).toBe(1);
+    expect(bar?.overshoot).toBeNull();
+
+    const over = poolBar(pool({ totalCents: 12500, byEvent: [{ eventId: "noel", amountCents: 12500 }] }), [
+      noel,
+    ]);
+    expect(over?.target).toBe(0.8);
+    expect(over?.overshoot).toEqual({ start: 0.8, width: expect.closeTo(0.2) });
+    expect(over?.segments[0]?.width).toBe(1);
+  });
+
+  it("draws nothing when there is nothing to draw, or nothing to see", () => {
+    expect(poolBar(pool({ totalCents: 0 }, null), [])).toBeNull();
+    expect(poolBar(item({ kind: "pool", targetCents: 100, funding: null }), [])).toBeNull();
+    expect(poolBar(item(), [])).toBeNull();
+    // Without a split, the whole total is one segment; without a target, no mark
+    const plainBar = poolBar(pool({ totalCents: 3000 }, null), []);
+    expect(plainBar?.segments).toHaveLength(1);
+    expect(plainBar?.target).toBeNull();
+  });
+
+  it("counts where an event stands, received items as complete, hidden ones not at all", () => {
+    const items = [
+      item({ funding: funding({ state: "complete" }) }),
+      item({ status: "received", funding: null }),
+      item({ funding: funding({ state: "almost" }) }),
+      item({ funding: funding({ state: "in_progress" }) }),
+      item(),
+      item({ funding: null }),
+    ];
+    const result = gauge(items);
+    expect(result).toEqual({ complete: 2, inProgress: 2, free: 1 });
+    expect(gaugeLine(result ?? { complete: 0, inProgress: 0, free: 0 })).toBe(
+      "2 complets, 2 en cours, 1 libre.",
+    );
+    expect(gauge([item({ funding: null })])).toBeNull();
+  });
+
+  it("gives an avatar one or two letters", () => {
+    expect(initials("Paul")).toBe("P");
+    expect(initials("jean-pierre dupont")).toBe("JP");
+    expect(initials("Élise Martin")).toBe("ÉM");
+    expect(initials(null)).toBe("?");
   });
 });
