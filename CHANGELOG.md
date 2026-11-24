@@ -17,9 +17,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- The REST API v1 gave who gave what, with amounts, in an item's history once a secret was lifted,
+  against its rule of never giving contribution data. Sealed entries now stay out of v1 for good;
+  the management app still shows them after the secret is lifted.
 - Both frontends' root element used a `style` attribute that their CSP (`style-src 'self'`)
   blocked: it is a class now.
-
 - The sign-out and light/dark buttons were refused by the CSRF check in real browsers: with
   `Referrer-Policy: no-referrer`, a plain form sends `Origin: null`. The two frontends now send
   `same-origin`, which still never gives a share link token to another site.

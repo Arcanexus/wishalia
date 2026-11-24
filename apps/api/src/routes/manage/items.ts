@@ -262,8 +262,12 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now 
     const byId = new Map(events.map((event) => [event.id, event]));
     const at = now();
 
+    // The REST API v1 never gives contribution data (CLAUDE.md, rule 2), not even once a secret
+    // is lifted: who gave what stays in the management app
+    const sealedAllowed = request.scope !== "v1";
     return entries
       .filter((entry) => {
+        if (entry.visibility === "sealed" && !sealedAllowed) return false;
         const eventId = entry.payload.eventId;
         const event = typeof eventId === "string" ? byId.get(eventId) : undefined;
         const state: SecretState = event
