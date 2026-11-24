@@ -1,0 +1,183 @@
+{{- $garage := .Values.images.garage }}
+{{- if $garage.enabled }}
+{{- if not (and .Values.images.enabled (eq (include "wishalia.imageStorage" .) "s3")) }}
+{{- fail "images.garage.enabled needs images.enabled=true and images.storage=s3" }}
+{{- end }}
+{{- if .Values.images.s3.endpoint }}
+{{- fail "images.garage.enabled: leave images.s3.endpoint empty, the chart points it at Garage" }}
+{{- end }}
+{{- $name := include "wishalia.garage.fullname" . }}
+# Garage (garagehq.deuxfleurs.fr): an S3 bucket for the images, on one node, inside the cluster only.
+# Its settings; the secrets (RPC secret, the key of the bucket) come from existingSecret.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "wishalia.labels" . | nindent 4 }}
+    app.kubernetes.io/component: garage
+data:
+  garage.toml: |
+    metadata_dir = "/var/lib/garage/meta"
+    data_dir = "/var/lib/garage/data"
+    db_engine = "sqlite"
+    replication_factor = 1
+    rpc_bind_addr = "[::]:3901"
+    rpc_public_addr = "127.0.0.1:3901"
+
+    [s3_api]
+    s3_region = {{ .Values.images.s3.region | quote }}
+    api_bind_addr = "[::]:3900"
+
+    # Only its health, for the probes: no admin token, so no administration over HTTP
+    [admin]
+    api_bind_addr = "[::]:3903"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "wishalia.labels" . | nindent 4 }}
+    app.kubernetes.io/component: garage
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "wishalia.selectorLabels" (dict "root" . "component" "garage") | nindent 4 }}
+  ports:
+    - name: s3
+      port: 3900
+      targetPort: s3
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "wishalia.labels" . | nindent 4 }}
+    app.kubernetes.io/component: garage
+spec:
+  # One node (replication_factor = 1): for a family, the volume is the copy to back up
+  replicas: 1
+  serviceName: {{ $name }}
+  selector:
+    matchLabels:
+      {{- include "wishalia.selectorLabels" (dict "root" . "component" "garage") | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ .Values.images.s3.region | sha256sum }}
+      labels:
+        {{- include "wishalia.labels" . | nindent 8 }}
+        app.kubernetes.io/component: garage
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: garage
+          image: {{ printf "%s:%s" $garage.image.repository $garage.image.tag | quote }}
+          imagePullPolicy: {{ $garage.image.pullPolicy }}
+          # One node, laid out at start; the bucket and its key made from the variables below
+          command: ["/garage", "server", "--single-node", "--default-bucket"]
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: s3
+              containerPort: 3900
+            - name: admin
+              containerPort: 3903
+          env:
+            - name: GARAGE_CONFIG_FILE
+              value: /etc/garage/garage.toml
+            - name: GARAGE_DEFAULT_BUCKET
+              value: {{ .Values.images.s3.bucket | quote }}
+            {{- range $name, $key := dict "GARAGE_RPC_SECRET" "GARAGE_RPC_SECRET" "GARAGE_DEFAULT_ACCESS_KEY" "S3_ACCESS_KEY" "GARAGE_DEFAULT_SECRET_KEY" "S3_SECRET_KEY" }}
+            - name: {{ $name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.existingSecret }}
+                  key: {{ $key }}
+            {{- end }}
+          startupProbe:
+            httpGet: { path: /health, port: admin }
+            periodSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            httpGet: { path: /health, port: admin }
+            periodSeconds: 20
+            failureThreshold: 6
+          readinessProbe:
+            httpGet: { path: /health, port: admin }
+            periodSeconds: 10
+          resources:
+            {{- toYaml $garage.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/garage
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/garage
+      volumes:
+        - name: config
+          configMap:
+            name: {{ $name }}
+        {{- with $garage.persistence.existingClaim }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ . }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- if not $garage.persistence.existingClaim }}
+  # Kept when the release is uninstalled (the StatefulSet default): the photos outlive the chart
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "wishalia.selectorLabels" (dict "root" . "component" "garage") | nindent 10 }}
+      spec:
+        accessModes:
+          {{- toYaml $garage.persistence.accessModes | nindent 10 }}
+        {{- with $garage.persistence.storageClass }}
+        storageClassName: {{ if eq . "-" }}""{{ else }}{{ . }}{{ end }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $garage.persistence.size }}
+  {{- end }}
+{{- if .Values.networkPolicy.enabled }}
+---
+# The bucket: only the API and the worker (which write) and imgproxy (which reads)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "wishalia.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "wishalia.selectorLabels" (dict "root" . "component" "garage") | nindent 6 }}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        {{- range list "api" "worker" "imgproxy" }}
+        - podSelector:
+            matchLabels:
+              {{- include "wishalia.selectorLabels" (dict "root" $ "component" .) | nindent 14 }}
+        {{- end }}
+      ports:
+        - port: s3
+{{- end }}
+{{- end }}
