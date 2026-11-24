@@ -2,8 +2,8 @@ apiVersion: v2
 name: wishalia
 description: Self-hosted wishlists with events, shared gifts and a strict anti-spoil rule
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+version: 0.0.1
+appVersion: "0.0.1"
 home: https://github.com/Arcanexus/wishalia
 sources:
   - https://github.com/Arcanexus/wishalia

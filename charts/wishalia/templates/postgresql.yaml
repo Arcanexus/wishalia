@@ -69,6 +69,11 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml $pg.podSecurityContext | nindent 8 }}
+      {{- if and .Values.volumePermissions.enabled $pg.persistence.enabled }}
+      initContainers:
+        # volumePermissions: the data volume belongs to the postgres user
+        {{- include "wishalia.volumePermissions" (dict "root" . "volume" "data" "path" "/var/lib/postgresql" "user" $pg.podSecurityContext.runAsUser "group" (default $pg.podSecurityContext.runAsUser $pg.podSecurityContext.runAsGroup)) | nindent 8 }}
+      {{- end }}
       containers:
         - name: postgresql
           image: {{ printf "%s/%s:%s" $pg.image.registry $pg.image.repository $pg.image.tag | quote }}

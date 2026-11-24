@@ -156,6 +156,25 @@ jobs:
             echo "::error::the chart deployed PostgreSQL next to an existing database"
             exit 1
           fi
+      - name: Volume permissions for drivers without fsGroup (NFS)
+        run: |
+          vp="--set volumePermissions.enabled=true --set images.enabled=true --set existingSecret=s"
+          all=$(helm template t charts/wishalia $vp)
+          init='.spec.template.spec.initContainers[0]'
+          echo "$all" | yq -e "select(.kind == \"StatefulSet\" and .metadata.name == \"t-wishalia-postgresql\") | $init | .command[2] == \"*chown 70:70 /var/lib/postgresql\"" > /dev/null
+          for app in api worker; do
+            echo "$all" | yq -e "select(.kind == \"Deployment\" and .metadata.name == \"t-wishalia-$app\") | $init | .command[2] == \"*chown 10001:10001 /data/images\"" > /dev/null
+          done
+          # The API keeps its migrations, after the volume is fixed
+          echo "$all" | yq -e 'select(.kind == "Deployment" and .metadata.name == "t-wishalia-api") | .spec.template.spec.initContainers[1].name == "migrations"' > /dev/null
+          # Root with CHOWN only
+          echo "$all" | yq -e "select(.kind == \"StatefulSet\" and .metadata.name == \"t-wishalia-postgresql\") | $init | .securityContext.capabilities | (.add[0] == \"CHOWN\" and (.add | length) == 1 and .drop[0] == \"ALL\")" > /dev/null
+          # Off by default: no such init container anywhere
+          if helm template t charts/wishalia --set images.enabled=true --set existingSecret=s | grep -q volume-permissions; then
+            echo "::error::volume-permissions rendered while volumePermissions.enabled is off"
+            exit 1
+          fi
+
       - name: The two hosts must differ
         run: |
           if helm template t charts/wishalia --set existingSecret=s --set ingress.enabled=true --set hosts.app=wishalia.example.com; then

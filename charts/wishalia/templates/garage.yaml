@@ -74,6 +74,11 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.volumePermissions.enabled }}
+      initContainers:
+        # volumePermissions: the data volume belongs to the user of the pod
+        {{- include "wishalia.volumePermissions" (dict "root" . "volume" "data" "path" "/var/lib/garage" "user" .Values.podSecurityContext.runAsUser "group" (default .Values.podSecurityContext.runAsUser .Values.podSecurityContext.runAsGroup)) | nindent 8 }}
+      {{- end }}
       containers:
         - name: garage
           image: {{ printf "%s:%s" $garage.image.repository $garage.image.tag | quote }}

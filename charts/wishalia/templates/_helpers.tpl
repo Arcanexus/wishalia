@@ -188,3 +188,36 @@ podAffinity:
 {{- required "images.s3.endpoint is required with images.storage=s3 (or set images.garage.enabled=true)" .Values.images.s3.endpoint }}
 {{- end }}
 {{- end }}
+
+{{- /*
+volumePermissions.enabled: an init container that gives a volume's root folder to the user of its
+pod, for the volume drivers that do not apply fsGroup (NFS through csi-driver-nfs without
+fsGroupPolicy, hostPath...). It runs as root with only the CHOWN capability, changes nothing when
+the owner is already right, and never walks the files below. Takes (dict "root" $ "volume" "data"
+"path" "/var/lib/postgresql" "user" 70 "group" 70).
+*/ -}}
+{{- define "wishalia.volumePermissions" -}}
+{{- $vp := .root.Values.volumePermissions -}}
+{{- $owner := printf "%v:%v" (int .user) (int .group) -}}
+- name: volume-permissions
+  image: {{ printf "%s/%s:%s" $vp.image.registry $vp.image.repository $vp.image.tag | quote }}
+  imagePullPolicy: {{ $vp.image.pullPolicy }}
+  command:
+    - sh
+    - -c
+    - {{ printf "[ \"$(stat -c %%u:%%g %s)\" = %s ] || chown %s %s" .path $owner $owner .path | quote }}
+  securityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    runAsNonRoot: false
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: ["ALL"]
+      add: ["CHOWN"]
+  resources:
+    {{- toYaml $vp.resources | nindent 4 }}
+  volumeMounts:
+    - name: {{ .volume }}
+      mountPath: {{ .path }}
+{{- end }}

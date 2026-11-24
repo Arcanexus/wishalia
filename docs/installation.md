@@ -54,6 +54,11 @@ and the worker their `DATABASE_URL` by itself.
 - **The migrations**: the database only exists once the release is installed, so each API pod
   applies them before it starts (an init container), waiting up to five minutes for PostgreSQL. A
   lock lets one pod migrate at a time; the others then find nothing left to do.
+- **On NFS** (csi-driver-nfs, or any driver that does not apply `fsGroup`): a fresh volume
+  belongs to root, and the non-root PostgreSQL cannot write to it. Set
+  `volumePermissions.enabled=true`: an init container gives the volume's root folder to the pod's
+  user before it starts (the image volume and Garage's too). The export must let root change an
+  owner (no root squash).
 - **Backups**: yours to plan, e.g. a CronJob running `pg_dump`, or a snapshot of the volume. A new
   major version of PostgreSQL (`postgresql.image.tag`) does not read the data of the previous one:
   dump, upgrade, restore.
@@ -96,7 +101,7 @@ spec:
   source:
     repoURL: ghcr.io/arcanexus/charts
     chart: wishalia
-    targetRevision: 0.1.0
+    targetRevision: 0.0.1
     helm:
       valuesObject:
         hosts:
