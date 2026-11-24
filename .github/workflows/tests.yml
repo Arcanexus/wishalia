@@ -168,7 +168,7 @@ jobs:
           # The API keeps its migrations, after the volume is fixed
           echo "$all" | yq -e 'select(.kind == "Deployment" and .metadata.name == "t-wishalia-api") | .spec.template.spec.initContainers[1].name == "migrations"' > /dev/null
           # Root with CHOWN only
-          echo "$all" | yq -e "select(.kind == \"StatefulSet\") | $init | .securityContext.capabilities | .add[0] == \"CHOWN\" and (.add | length) == 1 and .drop[0] == \"ALL\"" > /dev/null
+          echo "$all" | yq -e "select(.kind == \"StatefulSet\" and .metadata.name == \"t-wishalia-postgresql\") | $init | .securityContext.capabilities | (.add[0] == \"CHOWN\" and (.add | length) == 1 and .drop[0] == \"ALL\")" > /dev/null
           # Off by default: no such init container anywhere
           if helm template t charts/wishalia --set images.enabled=true --set existingSecret=s | grep -q volume-permissions; then
             echo "::error::volume-permissions rendered while volumePermissions.enabled is off"
