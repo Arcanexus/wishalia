@@ -14,8 +14,21 @@ Prometheus metrics: port "metrics" ({{ .Values.metrics.port }}) of each Service,
 With the Prometheus Operator, set metrics.serviceMonitor.enabled=true to scrape them.
 {{- end }}
 {{- end }}
+{{- if .Values.postgresql.enabled }}
+
+Database: the built-in PostgreSQL ({{ include "wishalia.postgresql.fullname" . }}).
+{{- if not .Values.postgresql.auth.existingSecret }}
+Its password is in the Secret {{ include "wishalia.postgresql.fullname" . }}, kept on uninstall with the volume.
+{{- end }}
+{{- if not .Values.postgresql.persistence.enabled }}
+Warning: postgresql.persistence.enabled=false, the data is lost when its pod restarts.
+{{- end }}
+{{- else }}
+
+Database: your own PostgreSQL (DATABASE_URL from {{ default .Values.existingSecret .Values.externalDatabase.existingSecret }}).
+{{- end }}
 {{- if not .Values.existingSecret }}
 
-Warning: existingSecret is empty. The apps need DATABASE_URL and the other secrets of
-docs/configuration.md once the data model ships.
+Warning: existingSecret is empty. The apps need the secrets of docs/configuration.md
+(AUTH_SECRET, SMTP_URL...).
 {{- end }}

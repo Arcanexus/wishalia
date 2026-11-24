@@ -37,6 +37,21 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml $.Values.podSecurityContext | nindent 8 }}
+      {{- if and (eq $component "api") $.Values.migrations.enabled $.Values.postgresql.enabled }}
+      # The built-in PostgreSQL only exists once the release is installed: each API pod applies the
+      # migrations before it starts, waiting for the database (one at a time, under a lock)
+      initContainers:
+        - name: migrations
+          image: {{ include "wishalia.image" (dict "root" $ "component" "api") | quote }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          command: ["node", "dist/migrate.js"]
+          securityContext:
+            {{- toYaml $.Values.securityContext | nindent 12 }}
+          env:
+            {{- include "wishalia.database.env" $ | trim | nindent 12 }}
+          resources:
+            {{- toYaml $.Values.migrations.resources | nindent 12 }}
+      {{- end }}
       containers:
         - name: {{ $component }}
           image: {{ include "wishalia.image" (dict "root" $ "component" $component) | quote }}
@@ -65,6 +80,9 @@ spec:
             - name: BODY_SIZE_LIMIT
               value: {{ $.Values.images.uploadLimit | quote }}
             {{- end }}
+            {{- end }}
+            {{- if has $component (list "api" "worker") }}
+            {{- include "wishalia.database.env" $ | trim | nindent 12 }}
             {{- end }}
             {{- range $name, $value := $values.env }}
             - name: {{ $name }}

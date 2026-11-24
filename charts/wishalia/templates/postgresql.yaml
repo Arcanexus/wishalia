@@ -1,0 +1,160 @@
+{{- include "wishalia.database.check" . }}
+{{- if .Values.postgresql.enabled }}
+{{- $name := include "wishalia.postgresql.fullname" . }}
+{{- $pg := .Values.postgresql }}
+{{- if not $pg.auth.existingSecret }}
+{{- /* The password is made once and kept: read back at each upgrade, and left behind on uninstall,
+       so that a reinstall on the same volume still opens the database */}}
+{{- $password := randAlphaNum 32 | b64enc }}
+{{- with lookup "v1" "Secret" .Release.Namespace $name }}
+{{- with index (default dict .data) $pg.auth.passwordKey }}
+{{- $password = . }}
+{{- end }}
+{{- end }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "wishalia.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+  annotations:
+    helm.sh/resource-policy: keep
+type: Opaque
+data:
+  {{ $pg.auth.passwordKey }}: {{ $password }}
+---
+{{- end }}
+# Headless: the pod's own address, stable across restarts (StatefulSet)
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "wishalia.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+spec:
+  clusterIP: None
+  selector:
+    {{- include "wishalia.selectorLabels" (dict "root" . "component" "postgresql") | nindent 4 }}
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "wishalia.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+spec:
+  # One server: PostgreSQL does not share its data directory
+  replicas: 1
+  serviceName: {{ $name }}
+  selector:
+    matchLabels:
+      {{- include "wishalia.selectorLabels" (dict "root" . "component" "postgresql") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "wishalia.labels" . | nindent 8 }}
+        app.kubernetes.io/component: postgresql
+    spec:
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml $pg.podSecurityContext | nindent 8 }}
+      containers:
+        - name: postgresql
+          image: {{ printf "%s/%s:%s" $pg.image.registry $pg.image.repository $pg.image.tag | quote }}
+          imagePullPolicy: {{ $pg.image.pullPolicy }}
+          securityContext:
+            {{- toYaml $pg.securityContext | nindent 12 }}
+          ports:
+            - name: postgresql
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: {{ $pg.auth.database | quote }}
+            - name: POSTGRES_USER
+              value: {{ $pg.auth.username | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wishalia.postgresql.secretName" . }}
+                  key: {{ $pg.auth.passwordKey }}
+          {{- $ready := printf "pg_isready -h 127.0.0.1 -U %s -d %s" $pg.auth.username $pg.auth.database }}
+          startupProbe:
+            exec: { command: ["sh", "-c", {{ $ready | quote }}] }
+            periodSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            exec: { command: ["sh", "-c", {{ $ready | quote }}] }
+            periodSeconds: 20
+            failureThreshold: 6
+          readinessProbe:
+            exec: { command: ["sh", "-c", {{ $ready | quote }}] }
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            {{- toYaml $pg.resources | nindent 12 }}
+          volumeMounts:
+            # The image keeps its data under /var/lib/postgresql/<major>/docker
+            - name: data
+              mountPath: /var/lib/postgresql
+            # The root filesystem is read-only: the socket and the temporary files go here
+            - name: run
+              mountPath: /var/run/postgresql
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: run
+          emptyDir:
+            sizeLimit: 16Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
+        {{- if not $pg.persistence.enabled }}
+        # Without persistence the data is lost with the pod: for a trial only
+        - name: data
+          emptyDir: {}
+        {{- else if $pg.persistence.existingClaim }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ $pg.persistence.existingClaim }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- if and $pg.persistence.enabled (not $pg.persistence.existingClaim) }}
+  # Kept when the release is uninstalled (the StatefulSet default): the data outlives the chart
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "wishalia.selectorLabels" (dict "root" . "component" "postgresql") | nindent 10 }}
+      spec:
+        accessModes:
+          {{- toYaml $pg.persistence.accessModes | nindent 10 }}
+        {{- with $pg.persistence.storageClass }}
+        storageClassName: {{ if eq . "-" }}""{{ else }}{{ . }}{{ end }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $pg.persistence.size }}
+  {{- end }}
+{{- end }}
