@@ -15,7 +15,7 @@ function request(routeId: string | null, url: string, status = 200): HandleInput
 describe("hooks", () => {
   it("adds the security headers to every response", async () => {
     const response = await handle(request("/healthz", "/healthz"));
-    expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(response.headers.get("referrer-policy")).toBe("same-origin");
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expect(response.headers.get("x-frame-options")).toBe("DENY");
     expect(response.headers.get("cross-origin-opener-policy")).toBe("same-origin");

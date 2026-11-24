@@ -2,6 +2,7 @@ import { fail } from "@sveltejs/kit";
 import { MODE_CHOICES, THEME_CHOICES, type ModeChoice, type ThemeChoice } from "@wishalia/domain";
 
 import { ApiError, apiJson } from "#lib/server/api.ts";
+import { deletePasskey, listPasskeys, PASSKEY_NAME_MAX, renamePasskey } from "#lib/server/passkeys.ts";
 import { MODE_COOKIE, THEME_COOKIE, writePreference } from "#lib/server/preferences.ts";
 import type { ApiToken, Me } from "#lib/types.ts";
 
@@ -14,10 +15,11 @@ const apiOrigin = () => process.env.API_ORIGIN ?? null;
 
 export const load: PageServerLoad = async (event) => {
   const origin = apiOrigin();
-  return {
-    apiOrigin: origin,
-    tokens: origin ? await apiJson<ApiToken[]>(event, "/manage/api-tokens") : [],
-  };
+  const [passkeys, tokens] = await Promise.all([
+    listPasskeys(event),
+    origin ? apiJson<ApiToken[]>(event, "/manage/api-tokens") : [],
+  ]);
+  return { apiOrigin: origin, passkeys, tokens };
 };
 
 export const actions: Actions = {
@@ -73,6 +75,37 @@ export const actions: Actions = {
       return { revoke: { name: token.name } };
     } catch (failure) {
       if (failure instanceof ApiError) return fail(failure.status, { revoke: { error: failure.code } });
+      throw failure;
+    }
+  },
+
+  /** A clearer name, such as « Téléphone de Marie »: the device only knows its own. */
+  renamePasskey: async (event) => {
+    const form = await event.request.formData();
+    const id = String(form.get("id") ?? "");
+    const name = String(form.get("name") ?? "").trim();
+    if (!UUID.test(id)) return fail(400, { passkey: { error: "invalid_request" } });
+    if (!name || name.length > PASSKEY_NAME_MAX) return fail(400, { passkey: { error: "invalid_name", id } });
+    try {
+      await renamePasskey(event, id, name);
+      return { passkey: { renamed: name } };
+    } catch (failure) {
+      if (failure instanceof ApiError) return fail(failure.status, { passkey: { error: failure.code, id } });
+      throw failure;
+    }
+  },
+
+  /** For good: that device can no longer sign in, and the magic link remains. */
+  deletePasskey: async (event) => {
+    const form = await event.request.formData();
+    const id = String(form.get("id") ?? "");
+    const name = String(form.get("name") ?? "").slice(0, PASSKEY_NAME_MAX);
+    if (!UUID.test(id)) return fail(400, { passkey: { error: "invalid_request" } });
+    try {
+      await deletePasskey(event, id);
+      return { passkey: { deleted: name } };
+    } catch (failure) {
+      if (failure instanceof ApiError) return fail(failure.status, { passkey: { error: failure.code, id } });
       throw failure;
     }
   },

@@ -41,7 +41,9 @@ The API is internal: only the two frontends reach it, server side, and a Network
 
 - Content Security Policy: `default-src 'none'` on the API; a nonce-based policy written by
   SvelteKit on the frontends, with `frame-ancestors 'none'`.
-- `Referrer-Policy: no-referrer` everywhere, so that a share link token never leaks to another site.
+- `Referrer-Policy: same-origin` on the two frontends (`no-referrer` on the API), so that a share link
+  token never leaks to another site. Not `no-referrer` on the frontends: browsers would then send
+  `Origin: null` with a plain form, which the CSRF check refuses.
 - `X-Content-Type-Options`, `X-Frame-Options`, `Cross-Origin-Opener-Policy`, a `Permissions-Policy`
   that turns off the camera, microphone, location and payment.
 - Cookies: the session shared between the two hosts is `__Secure-` (a `__Host-` cookie cannot be

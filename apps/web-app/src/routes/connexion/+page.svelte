@@ -1,13 +1,54 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+
   import { enhance } from "$app/forms";
   import { resolve } from "$app/paths";
 
   import Logo from "#lib/Logo.svelte";
+  import {
+    passkeyAutofillSupported,
+    passkeysSupported,
+    signInWithPasskey,
+    type PasskeyOutcome,
+  } from "#lib/passkey.ts";
 
   import type { PageProps } from "./$types";
 
   let { data, form }: PageProps = $props();
   let sending = $state(false);
+  /** Passkeys need JavaScript: the button shows once the page runs in the browser. */
+  let passkeys = $state(false);
+  let signingIn = $state(false);
+  let passkeyOutcome = $state<PasskeyOutcome | null>(null);
+
+  /** quiet: the suggestions started on their own, so a failure nobody asked for stays unsaid. */
+  function settle(outcome: PasskeyOutcome, quiet = false) {
+    // The session cookie is set: a full load, so that every part of the app sees it
+    if (outcome === "ok") window.location.assign(data.returnPath);
+    else if (outcome === "unknown_key" || (!quiet && outcome !== "cancelled")) passkeyOutcome = outcome;
+  }
+
+  onMount(() => {
+    passkeys = passkeysSupported();
+    // The passkeys of this device are offered in the email field's suggestions too
+    void passkeyAutofillSupported().then(async (autofill) => {
+      if (autofill) settle(await signInWithPasskey({ autofill: true }), true);
+    });
+  });
+
+  async function withPasskey() {
+    signingIn = true;
+    passkeyOutcome = null;
+    const outcome = await signInWithPasskey();
+    signingIn = outcome === "ok";
+    settle(outcome);
+  }
+
+  const passkeyErrors: Partial<Record<PasskeyOutcome, string>> = {
+    unknown_key:
+      "Cette clé d'accès n'ouvre plus aucun compte. Recevez un lien par e-mail, puis ajoutez une nouvelle clé dans les réglages.",
+    failed: "La connexion avec la clé d'accès n'a pas marché. Réessayez, ou recevez un lien par e-mail.",
+  };
 
   const errors: Record<string, string> = {
     invalid_email: "Cette adresse e-mail ne semble pas complète. Vérifiez-la, par exemple marie@exemple.fr.",
@@ -49,6 +90,9 @@
       {#if form?.error}
         <p class="notice error" role="alert">{errors[form.error] ?? errors.unavailable}</p>
       {/if}
+      {#if passkeyOutcome && passkeyErrors[passkeyOutcome]}
+        <p class="notice error" role="alert">{passkeyErrors[passkeyOutcome]}</p>
+      {/if}
 
       <form
         method="POST"
@@ -66,7 +110,7 @@
           id="email"
           name="email"
           type="email"
-          autocomplete="email"
+          autocomplete="email webauthn"
           inputmode="email"
           required
           value={form && "email" in form ? form.email : ""}
@@ -80,6 +124,14 @@
           {sending ? "Envoi…" : "Recevoir mon lien de connexion"}
         </button>
       </form>
+
+      {#if passkeys}
+        <p class="or"><span>ou</span></p>
+        <button type="button" class="secondary wide" disabled={signingIn} onclick={withPasskey}>
+          {signingIn ? "Connexion…" : "Se connecter avec une clé d'accès"}
+        </button>
+        <p class="muted help">Avec l'empreinte, le visage ou le code de cet appareil.</p>
+      {/if}
 
       {#if data.oidc}
         <p class="or"><span>ou</span></p>

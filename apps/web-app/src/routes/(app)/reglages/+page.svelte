@@ -1,5 +1,10 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+
   import { enhance } from "$app/forms";
+  import { invalidateAll } from "$app/navigation";
+
+  import { addPasskey, deviceName, passkeysSupported, type PasskeyOutcome } from "#lib/passkey.ts";
 
   import type { PageProps } from "./$types";
 
@@ -23,6 +28,35 @@
   const day = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" });
   const activeTokens = $derived(data.tokens.filter((token) => token.active));
   let copied = $state(false);
+
+  /** null until the page runs in the browser: passkeys need JavaScript. */
+  let supported = $state<boolean | null>(null);
+  let adding = $state(false);
+  let addOutcome = $state<PasskeyOutcome | null>(null);
+  let passkeyName = $state("");
+  onMount(() => {
+    supported = passkeysSupported();
+  });
+
+  async function onAddPasskey(event: SubmitEvent) {
+    event.preventDefault();
+    adding = true;
+    addOutcome = null;
+    addOutcome = await addPasskey(passkeyName.trim() || deviceName(navigator.userAgent));
+    adding = false;
+    if (addOutcome === "ok") {
+      passkeyName = "";
+      await invalidateAll();
+    }
+  }
+
+  const addMessages: Record<Exclude<PasskeyOutcome, "ok" | "not_fresh">, string> = {
+    cancelled: "L'ajout est annulé. Vous pouvez recommencer quand vous voulez.",
+    exists: "Cet appareil a déjà une clé d'accès pour votre compte : rien à ajouter.",
+    unsupported: "Ce navigateur ne sait pas utiliser les clés d'accès.",
+    unknown_key: "La clé d'accès n'a pas pu être ajoutée. Réessayez.",
+    failed: "La clé d'accès n'a pas pu être ajoutée. Réessayez dans un instant.",
+  };
 
   const tokenErrors: Record<string, string> = {
     invalid_name: "Donnez un nom au jeton, en 60 caractères au plus, par exemple « Home Assistant ».",
@@ -86,6 +120,117 @@
     </div>
     <button type="submit">Enregistrer</button>
   </form>
+</section>
+
+<section class="card" aria-labelledby="cles">
+  <h2 id="cles">Clés d'accès</h2>
+  <p class="muted">
+    Une clé d'accès vous connecte avec l'empreinte, le visage ou le code de votre téléphone ou de votre
+    ordinateur : sans mot de passe, sans attendre d'e-mail. Le lien par e-mail reste toujours possible.
+  </p>
+
+  {#if data.passkeys.length > 0}
+    <ul class="tokens passkeys">
+      {#each data.passkeys as passkey (passkey.id)}
+        {@const name = passkey.name ?? "Clé d'accès"}
+        <li>
+          <div>
+            <strong>{name}</strong>
+            <span class="muted">
+              {passkey.createdAt
+                ? `Ajoutée le ${day.format(new Date(passkey.createdAt))}`
+                : "Ajoutée"}{passkey.synced
+                ? " · synchronisée sur vos appareils"
+                : " · sur cet appareil seulement"}
+            </span>
+          </div>
+          <div class="row-actions">
+            <details>
+              <summary class="button secondary" aria-label="Renommer la clé « {name} »">Renommer</summary>
+              <form
+                method="POST"
+                action="?/renamePasskey"
+                use:enhance={() =>
+                  async ({ update }) =>
+                    update({ reset: false })}
+              >
+                <input type="hidden" name="id" value={passkey.id} />
+                <label for="cle-{passkey.id}">Nouveau nom</label>
+                <input id="cle-{passkey.id}" name="name" required maxlength="60" value={passkey.name ?? ""} />
+                <button type="submit">Enregistrer le nom</button>
+              </form>
+            </details>
+            <form method="POST" action="?/deletePasskey" use:enhance>
+              <input type="hidden" name="id" value={passkey.id} />
+              <input type="hidden" name="name" value={name} />
+              <button type="submit" class="secondary" aria-label="Supprimer la clé « {name} »">
+                Supprimer
+              </button>
+            </form>
+          </div>
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    <p>Aucune clé d'accès pour l'instant.</p>
+  {/if}
+
+  {#if form?.passkey && "error" in form.passkey}
+    <p class="notice error" role="alert">
+      {form.passkey.error === "invalid_name"
+        ? "Donnez un nom à la clé, en 60 caractères au plus."
+        : "La clé d'accès n'a pas pu être modifiée. Réessayez."}
+    </p>
+  {/if}
+  <div role="status">
+    {#if form?.passkey && "renamed" in form.passkey}
+      <p class="notice">La clé s'appelle maintenant « {form.passkey.renamed} ».</p>
+    {:else if form?.passkey && "deleted" in form.passkey}
+      <p class="notice">La clé « {form.passkey.deleted} » est supprimée : elle ne connecte plus personne.</p>
+    {:else if addOutcome === "ok"}
+      <p class="notice">C'est fait. La prochaine fois, connectez-vous avec votre clé d'accès.</p>
+    {:else if addOutcome === "cancelled"}
+      <p class="notice">{addMessages.cancelled}</p>
+    {/if}
+  </div>
+
+  {#if supported === false}
+    <p class="notice">
+      Ce navigateur ne sait pas utiliser les clés d'accès. Essayez depuis votre téléphone, ou continuez avec
+      le lien par e-mail.
+    </p>
+  {:else if supported}
+    <form class="new-token" onsubmit={onAddPasskey}>
+      <h3>Ajouter une clé sur cet appareil</h3>
+      {#if addOutcome === "not_fresh"}
+        <div class="notice error" role="alert">
+          <p>
+            Pour votre sécurité, ajouter une clé d'accès demande une connexion de moins d'un jour.
+            Reconnectez-vous, puis recommencez.
+          </p>
+        </div>
+      {:else if addOutcome && addOutcome !== "ok" && addOutcome !== "cancelled"}
+        <p class="notice error" role="alert">{addMessages[addOutcome]}</p>
+      {/if}
+      <label for="cle-nom">Nom de la clé (facultatif)</label>
+      <input
+        id="cle-nom"
+        bind:value={passkeyName}
+        maxlength="60"
+        placeholder="Par exemple « Téléphone de Marie »"
+        aria-describedby="cle-aide"
+      />
+      <p id="cle-aide" class="muted help">
+        Votre appareil vous demandera votre empreinte, votre visage ou votre code.
+      </p>
+      <button type="submit" disabled={adding}>{adding ? "Ajout…" : "Ajouter une clé d'accès"}</button>
+    </form>
+    {#if addOutcome === "not_fresh"}
+      <form method="POST" action="/deconnexion?retour=/reglages">
+        <button type="submit" class="secondary">Me reconnecter</button>
+      </form>
+    {/if}
+  {/if}
 </section>
 
 {#if data.apiOrigin}
@@ -275,6 +420,42 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+  }
+  .passkeys li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  /* Renaming: the field takes the whole row */
+  .passkeys li .row-actions:has(details[open]) {
+    grid-column: 1 / -1;
+  }
+  @media (max-width: 30rem) {
+    .passkeys li {
+      grid-template-columns: 1fr;
+    }
+  }
+  .tokens li .row-actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  details[open] {
+    flex-basis: 100%;
+  }
+  details summary {
+    list-style: none;
+    display: inline-flex;
+  }
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+  details form {
+    margin-top: 0.75rem;
+  }
+  details form button {
+    margin-top: 0.75rem;
   }
   .new-token {
     border-top: 1px solid var(--border);

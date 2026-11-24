@@ -76,6 +76,17 @@ describe("/deconnexion", () => {
     expect(api.calls[0]?.headers.get("cookie")).toBe("wishalia.session=abc");
     expect(setCookies[0]).toMatchObject({ name: "wishalia.session", value: "", options: { maxAge: 0 } });
   });
+
+  it("sends back to a page of the app after signing in again, never to another site", async () => {
+    fakeApi({ "POST /auth/sign-out": () => json({ success: true }) });
+    for (const [back, location] of [
+      ["/reglages", "/connexion?retour=%2Freglages"],
+      ["//evil.example", "/connexion?retour=%2F"],
+    ]) {
+      const { event } = fakeEvent({ url: `https://app.test/deconnexion?retour=${back}`, form: {} });
+      expect((await run(signOut, event)).thrown).toMatchObject({ status: 303, location });
+    }
+  });
 });
 
 describe("/connexion", () => {
@@ -92,6 +103,7 @@ describe("/connexion", () => {
       oidc: true,
       oidcName: "Authentik",
       failed: true,
+      returnPath: "/",
       signedOut: false,
     });
     vi.stubEnv("OIDC_ISSUER", undefined);
@@ -102,8 +114,11 @@ describe("/connexion", () => {
       oidc: false,
       oidcName: "SSO",
       failed: false,
+      returnPath: "/",
       signedOut: true,
     });
+    const passkey = fakeEvent({ url: "https://app.test/connexion?retour=//evil.example" }).event;
+    expect((await run(signInPage, passkey)).value).toMatchObject({ returnPath: "/" });
   });
 
   it("sends a magic link back to where the person was going", async () => {

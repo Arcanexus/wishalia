@@ -63,7 +63,13 @@ export function createAuth({ config, db, mailer, log = () => {}, secret = authSe
       : undefined);
 
   const plugins: BetterAuthPlugin[] = [
-    passkey({ rpID, rpName: config.APP_NAME, origin: [config.APP_ORIGIN, config.PUBLIC_ORIGIN] }),
+    passkey({
+      rpID,
+      rpName: config.APP_NAME,
+      origin: [config.APP_ORIGIN, config.PUBLIC_ORIGIN],
+      // Kept on the device (discoverable): signing in asks for no email, only the fingerprint, face or PIN
+      authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
+    }),
   ];
   if (sendMagicLink) {
     plugins.push(
@@ -116,7 +122,8 @@ export function createAuth({ config, db, mailer, log = () => {}, secret = authSe
       encryptOAuthTokens: true,
       accountLinking: { enabled: true, trustedProviders: [OIDC_PROVIDER_ID] },
     },
-    session: { expiresIn: SESSION_DAYS * 24 * 3600, updateAge: 24 * 3600 },
+    // freshAge: adding a passkey needs a sign-in of less than a day, so a stolen old session cannot
+    session: { expiresIn: SESSION_DAYS * 24 * 3600, updateAge: 24 * 3600, freshAge: 24 * 3600 },
     rateLimit: { enabled: config.NODE_ENV !== "test", window: 60, max: 30 },
     advanced: {
       // Better Auth skips its origin and CSRF checks under test by default: always on here, so that

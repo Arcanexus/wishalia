@@ -58,6 +58,26 @@ is stored. The email is short, in plain words, with a big button and the link wr
 nothing about any list. Without SMTP, magic links are off and passkeys and OIDC remain; in
 development they are printed in the API log.
 
+## Passkeys
+
+A passkey is a key pair kept by the phone or computer, often synced by its password manager (iCloud
+Keychain, Google Password Manager...). The person adds one in the management app's settings, then
+signs in with the fingerprint, the face or the device's code.
+
+- **Discoverable** (`residentKey: required`): the passkey holds the account, so signing in asks for
+  no email. The sign-in page also offers it in the e-mail field's suggestions (conditional UI).
+- **Recent sign-in to add one**: registering needs a session of less than a day (`freshAge`), so an
+  old stolen session cannot add its own passkey.
+- **Bound to the domain**: the relying party is `COOKIE_DOMAIN` (the parent domain of the two hosts),
+  or the management host without it, and the API accepts only the origins of the two hosts. A
+  passkey made for another site never signs in here.
+- **No attestation** is asked: the device's make stays private.
+- The challenge waits in a signed, HttpOnly cookie for five minutes and works once. The database
+  keeps the public key and the signature counter, never anything secret.
+
+The browser talks to `/auth/passkey/*` on the management host, which the app proxies to the API like
+the rest of `/auth/*`.
+
 ## Protections
 
 - Origin and CSRF checks on every state-changing request, in the tests too (Better Auth skips them
