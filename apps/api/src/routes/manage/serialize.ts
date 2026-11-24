@@ -27,6 +27,8 @@ export function ownerItem(row: WishRow) {
     seriesState: row.seriesState,
     status: row.status,
     position: row.position,
+    /** The completion from the link: "pending" while the worker has it to do (or is on it). */
+    enrichment: row.enrichment === "running" ? "pending" : row.enrichment,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

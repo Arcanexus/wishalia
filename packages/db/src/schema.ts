@@ -37,6 +37,8 @@ export const shareScope = pgEnum("share_scope", ["list", "event"]);
 export const historyVisibility = pgEnum("history_visibility", ["owner", "guests", "sealed"]);
 export const listTheme = pgEnum("list_theme", ["neutral", "christmas"]);
 export const listRevealMode = pgEnum("list_reveal_mode", ["received", "manual"]);
+/** Where the completion of an item from its link stands (the worker's queue, docs/enrichment.md). */
+export const enrichmentState = pgEnum("enrichment_state", ["pending", "running", "done", "failed"]);
 /** A person's theme (docs/branding.md): automatic (Christmas in December), neutral or Christmas. */
 export const themeChoice = pgEnum("theme_choice", ["auto", "neutral", "christmas"]);
 /** A person's mode: as their device, light or dark. */
@@ -211,11 +213,17 @@ export const wishes = pgTable(
     seriesState: seriesVolumeState("series_state"),
     status: wishStatus("status").notNull().default("open"),
     position: integer("position").notNull().default(0),
+    /** Null without a link to complete from; the worker takes the pending ones. */
+    enrichment: enrichmentState("enrichment"),
+    enrichmentAttempts: integer("enrichment_attempts").notNull().default(0),
+    /** When the worker last took it: a run older than its timeout is taken again. */
+    enrichmentAt: timestamp("enrichment_at", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("wishes_list_idx").on(table.listId, table.position),
+    index("wishes_enrichment_idx").on(table.enrichment, table.createdAt),
     index("wishes_series_idx").on(table.seriesId, table.seriesNumber),
     check(
       "wishes_pool_target",

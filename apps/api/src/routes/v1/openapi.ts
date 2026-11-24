@@ -87,6 +87,10 @@ const schemas: Record<string, Schema> = {
       seriesState: { enum: ["owned", "wanted", "given", null] },
       status: { enum: ["open", "received", "archived"] },
       position: { type: "integer" },
+      enrichment: {
+        enum: ["pending", "done", "failed", null],
+        description: "The completion from the link: pending while the worker has it to do.",
+      },
       createdAt: { type: "string", format: "date-time" },
       updatedAt: { type: "string", format: "date-time" },
     },

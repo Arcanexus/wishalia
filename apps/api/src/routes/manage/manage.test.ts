@@ -37,7 +37,14 @@ async function as(
 async function quickAdd(cookie: string, input: string, listId?: string) {
   const { status, body } = await as(cookie, "POST", "/items", { input, ...(listId ? { listId } : {}) });
   expect(status).toBe(201);
-  return body as { id: string; listId: string; title: string; url: string | null; duplicateOf: string[] };
+  return body as {
+    id: string;
+    listId: string;
+    title: string;
+    url: string | null;
+    enrichment: string | null;
+    duplicateOf: string[];
+  };
 }
 
 async function history(cookie: string, itemId: string) {
@@ -192,7 +199,10 @@ describe("quick add", () => {
       url: "https://www.fnac.com/a1",
       kind: "unique",
       status: "open",
+      enrichment: "pending",
     });
+    // Words alone: nothing to complete
+    expect((await quickAdd(owner, "Un livre de cuisine")).enrichment).toBeNull();
   });
 
   it("puts new items first", async () => {
@@ -293,11 +303,21 @@ describe("editing an item", () => {
 
   it("cleans a new URL and refuses an unsafe one", async () => {
     const item = await quickAdd(owner, "Livre");
+    // A new link: the worker completes the item from it
     expect(
-      (await as(owner, "PATCH", `/items/${item.id}`, { url: "https://ex.com/b?utm_x=1" })).body.url,
-    ).toBe("https://ex.com/b");
+      (await as(owner, "PATCH", `/items/${item.id}`, { url: "https://ex.com/b?utm_x=1" })).body,
+    ).toMatchObject({
+      url: "https://ex.com/b",
+      enrichment: "pending",
+    });
+    expect((await as(owner, "PATCH", `/items/${item.id}`, { title: "Livre" })).body.enrichment).toBe(
+      "pending",
+    );
     expect((await as(owner, "PATCH", `/items/${item.id}`, { url: "javascript:alert(1)" })).status).toBe(400);
-    expect((await as(owner, "PATCH", `/items/${item.id}`, { url: null })).body.url).toBeNull();
+    expect((await as(owner, "PATCH", `/items/${item.id}`, { url: null })).body).toMatchObject({
+      url: null,
+      enrichment: null,
+    });
   });
 
   it("needs a quantity for a quantity item", async () => {

@@ -63,7 +63,7 @@
     </div>
     <p id="ajout-aide" class="muted help">
       {#if listName}Elle va dans « {listName} ».{:else}Elle va dans votre première liste.{/if}
-      Le titre, l'image et le prix se complètent tout seuls depuis le lien.
+      Le titre et le prix se complètent tout seuls depuis le lien.
     </p>
   </form>
 

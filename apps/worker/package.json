@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Background jobs (pg-boss): item enrichment, price tracking.",
+  "description": "Background jobs: completing items from their link (queue in PostgreSQL), price tracking to come.",
   "files": [
     "dist"
   ],
@@ -16,7 +16,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@wishalia/metrics": "workspace:*"
+    "@wishalia/db": "workspace:*",
+    "@wishalia/domain": "workspace:*",
+    "@wishalia/metrics": "workspace:*",
+    "drizzle-orm": "^0.45.4"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",

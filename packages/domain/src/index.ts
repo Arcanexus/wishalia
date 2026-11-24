@@ -62,3 +62,10 @@ export {
   type ThemeContext,
   type ThemeName,
 } from "./theme.js";
+export {
+  completion,
+  MAX_ENRICHMENT_ATTEMPTS,
+  MAX_FOUND_CENTS,
+  type Completable,
+  type Found,
+} from "./enrichment.js";

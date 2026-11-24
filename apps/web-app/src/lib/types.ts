@@ -38,6 +38,8 @@ export interface Item {
   quantity: number | null;
   status: ItemStatus;
   position: number;
+  /** The completion from the link (title, price): "pending" while the worker has it to do. */
+  enrichment?: "pending" | "done" | "failed" | null;
   createdAt: string;
 }
 

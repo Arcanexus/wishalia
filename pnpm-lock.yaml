@@ -170,9 +170,18 @@ importers:
 
   apps/worker:
     dependencies:
+      '@wishalia/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@wishalia/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@wishalia/metrics':
         specifier: workspace:*
         version: link:../../packages/metrics
+      drizzle-orm:
+        specifier: ^0.45.4
+        version: 0.45.4(@electric-sql/pglite@0.5.17)(@opentelemetry/api@1.10.0)(kysely@0.29.9)(postgres@4.1.1)
     devDependencies:
       '@types/node':
         specifier: ^24.19.2

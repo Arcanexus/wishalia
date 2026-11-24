@@ -40,7 +40,10 @@ Every series carries a `component` label: `api`, `worker`, `web-app` or `web-pub
 link token reaches the metrics, and the number of series stays bounded. A request that matches no
 route is counted under `route="unmatched"`.
 
-The worker's job metrics (queue depth, durations, failures) arrive with the jobs themselves.
+The worker counts its [enrichment](enrichment.md) jobs: `wishalia_enrichment_jobs_total` (counter,
+label `outcome`: `done`, `unchanged`, `retry`, `failed`, `skipped`) and
+`wishalia_enrichment_duration_seconds` (histogram, page fetch included, from 100 ms to 20 s). No
+label names an item, a link or a site.
 
 ## What is never measured
 
