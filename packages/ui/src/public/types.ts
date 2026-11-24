@@ -43,6 +43,13 @@ export interface MyGift {
   units: number | null;
 }
 
+/** Signed thumbnail paths, served by the frontend under /img (docs/images.md). */
+export interface ImageSources {
+  small: string;
+  medium: string;
+  large: string;
+}
+
 export interface PublicItem {
   id: string;
   kind: ItemKind;
@@ -50,6 +57,8 @@ export interface PublicItem {
   title: string;
   url: string | null;
   notes: string | null;
+  /** The image the owner shows, framed; null without one. */
+  image?: ImageSources | null;
   priceCents: number | null;
   targetCents: number | null;
   quantity: number | null;

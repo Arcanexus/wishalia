@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Background jobs: completing items from their link (queue in PostgreSQL), price tracking to come.",
+  "description": "Background jobs: completing items from their link, their images included (queue in PostgreSQL), price tracking to come.",
   "files": [
     "dist"
   ],
@@ -19,6 +19,7 @@
     "@wishalia/db": "workspace:*",
     "@wishalia/domain": "workspace:*",
     "@wishalia/metrics": "workspace:*",
+    "@wishalia/storage": "workspace:*",
     "drizzle-orm": "^0.45.4"
   },
   "devDependencies": {

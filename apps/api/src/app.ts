@@ -6,6 +6,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { authSecret, createAuth } from "./auth/auth.js";
 import type { Mailer } from "./auth/mailer.js";
 import type { Config } from "./config.js";
+import type { Images } from "./images.js";
 import { registerErrorHandler } from "./http.js";
 import { authRoutes } from "./routes/auth.js";
 import { healthRoutes } from "./routes/health.js";
@@ -29,11 +30,13 @@ export interface AppDeps {
   mailer?: Mailer | undefined;
   /** The clock, for the reveal rules. Tests move it. */
   now?: () => Date;
+  /** The S3 bucket and imgproxy (docs/images.md); without them, items have no image. */
+  images?: Images | null;
 }
 
 export async function buildApp(
   config: Config,
-  { db, metrics, mailer, now = () => new Date() }: AppDeps,
+  { db, metrics, mailer, now = () => new Date(), images = null }: AppDeps,
 ): Promise<FastifyInstance> {
   const app = Fastify({
     logger: config.NODE_ENV === "test" ? false : { level: config.LOG_LEVEL },
@@ -71,8 +74,8 @@ export async function buildApp(
 
   await app.register(healthRoutes, { config, db });
   await app.register(authRoutes, { prefix: "/auth", auth, config });
-  await app.register(manageRoutes, { prefix: "/manage", auth, config, db, now, secret });
-  await app.register(publicRoutes, { prefix: "/public", auth, config, db, now, secret });
+  await app.register(manageRoutes, { prefix: "/manage", auth, config, db, now, secret, images });
+  await app.register(publicRoutes, { prefix: "/public", auth, config, db, now, secret, images });
   if (config.API_ORIGIN) {
     const apiHost = new URL(config.API_ORIGIN).host;
     // The ingress only forwards /v1 on the API host; the API checks it too, so that the internal
@@ -82,7 +85,7 @@ export async function buildApp(
         return reply.status(404).send({ error: "not_found" });
       }
     });
-    await app.register(v1Routes, { prefix: "/v1", config, db, now });
+    await app.register(v1Routes, { prefix: "/v1", config, db, now, images });
   }
 
   return app;

@@ -17,6 +17,7 @@
   let { data, form }: PageProps = $props();
 
   const open = $derived(data.items.filter((item) => item.status === "open"));
+  const images = $derived(data.me.features?.images ?? false);
   const byId = $derived(new Map(open.map((item) => [item.id, item])));
 
   // While the worker completes items from their links, the page looks again every few seconds,
@@ -233,6 +234,18 @@
               </button>
             </form>
           {/if}
+          {#if item.image}
+            <!-- The name next to it says what it is: decorative for a screen reader -->
+            <img
+              class="thumb"
+              src={item.image.small}
+              alt=""
+              width="192"
+              height="192"
+              loading="lazy"
+              decoding="async"
+            />
+          {/if}
           <div class="body">
             <div class="text">
               <h3>{item.title}</h3>
@@ -247,7 +260,9 @@
               </p>
               {#if item.notes}<p class="notes">{item.notes}</p>{/if}
               {#if item.enrichment === "pending"}
-                <p class="muted completing">Le titre et le prix se complètent depuis le lien…</p>
+                <p class="muted completing">
+                  Le titre, le prix{images ? " et les images" : ""} se complètent depuis le lien…
+                </p>
               {:else if item.enrichment === "failed"}
                 <p class="muted completing">
                   La page du lien n'a pas pu être lue : complétez l'envie avec « Modifier » si besoin.
@@ -256,6 +271,15 @@
               {#if data.gifts[item.id]?.length}<Gifts gifts={data.gifts[item.id] ?? []} none="" />{/if}
             </div>
             <div class="actions">
+              {#if images}
+                <a
+                  class="button secondary"
+                  href={resolve("/(app)/listes/[id]/image/[itemId]", { id: data.list.id, itemId: item.id })}
+                  aria-label="Image de « {item.title} »"
+                >
+                  Image
+                </a>
+              {/if}
               <form method="POST" action="?/status" use:enhance>
                 <input type="hidden" name="itemId" value={item.id} />
                 <button type="submit" name="status" value="received" aria-label="J'ai reçu « {item.title} »">
@@ -419,6 +443,20 @@
   .dragging .grip {
     cursor: grabbing;
   }
+  .thumb {
+    flex: none;
+    width: 4.5rem;
+    height: 4.5rem;
+    object-fit: cover;
+    border-radius: 10px;
+    background: var(--border);
+  }
+  @media (min-width: 40rem) {
+    .thumb {
+      width: 6rem;
+      height: 6rem;
+    }
+  }
   .text {
     flex: 1 1 14rem;
     min-width: 0;
@@ -448,6 +486,7 @@
   }
   .actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
   }
   .closed {

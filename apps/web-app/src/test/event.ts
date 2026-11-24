@@ -7,7 +7,7 @@ export function fakeApi(routes: Record<string, (body: unknown) => Response>) {
   const fetch = vi.fn(async (url: URL | string, init: RequestInit = {}) => {
     const target = new URL(url);
     const method = init.method ?? "GET";
-    const body = typeof init.body === "string" ? JSON.parse(init.body) : undefined;
+    const body = typeof init.body === "string" ? JSON.parse(init.body) : (init.body ?? undefined);
     calls.push({ method, path: target.pathname, headers: new Headers(init.headers), body });
     const route = routes[`${method} ${target.pathname}`];
     return route ? route(body) : json({ error: "not_found" }, 404);
@@ -43,6 +43,8 @@ export interface EventInput {
   url?: string;
   method?: string;
   form?: Record<string, string>;
+  /** A multipart form, with files. */
+  formData?: FormData;
   cookie?: string;
   params?: Record<string, string>;
   cookies?: Record<string, string>;
@@ -53,15 +55,17 @@ export function fakeEvent({
   url = "https://app.test/",
   method,
   form,
+  formData,
   cookie,
   params = {},
   cookies,
 }: EventInput = {}) {
   const headers = new Headers(cookie ? { cookie } : {});
   const request = new Request(url, {
-    method: method ?? (form ? "POST" : "GET"),
+    method: method ?? (form || formData ? "POST" : "GET"),
     headers,
     ...(form ? { body: new URLSearchParams(form) } : {}),
+    ...(formData ? { body: formData } : {}),
   });
   const jar = fakeCookies(cookies);
   const event = {

@@ -5,6 +5,8 @@ import { BlockList, isIP } from "node:net";
 import { createBrotliDecompress, createGunzip, createInflate } from "node:zlib";
 import type { Readable } from "node:stream";
 
+import { MAX_IMAGE_BYTES } from "@wishalia/domain";
+
 /**
  * Fetching the page of an item's link, safely (docs/enrichment.md). The link comes from the owner,
  * so the worker must not become a way into the cluster or the home network (SSRF): only http(s)
@@ -100,6 +102,28 @@ export interface Page {
   html: string;
 }
 
+/** A file of a page, as it came: an image, read again from its bytes before it is kept. */
+export interface Download {
+  url: string;
+  bytes: Buffer;
+  contentType: string;
+}
+
+/** What one request accepts: HTML for a page, an image for its pictures. */
+interface Wanted {
+  accept: string;
+  type: RegExp;
+}
+const HTML: Wanted = {
+  accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.1",
+  type: /text\/html|application\/xhtml\+xml/i,
+};
+const IMAGE: Wanted = {
+  accept: "image/avif,image/webp,image/png,image/jpeg,image/*;q=0.8",
+  // Some shops serve their images as application/octet-stream; the bytes decide after
+  type: /^\s*(image\/(jpeg|png|webp|gif|avif|heic)|application\/octet-stream)\b/i,
+};
+
 const USER_AGENT = "Mozilla/5.0 (compatible; Wishalia/1.0; self-hosted wishlist)";
 
 /** Checks a link before connecting: http(s), standard port, no credentials, no private literal. */
@@ -148,7 +172,8 @@ function charsetOf(contentType: string): string {
 function request(
   url: URL,
   options: Required<Omit<FetchOptions, "port">> & { port: number | undefined },
-): Promise<{ location?: string; page?: Page }> {
+  wanted: Wanted,
+): Promise<{ location?: string; file?: Download }> {
   const client = url.protocol === "https:" ? https : http;
   return new Promise((resolve, reject) => {
     const req = client.get(
@@ -159,7 +184,7 @@ function request(
         timeout: options.timeoutMs,
         headers: {
           "user-agent": USER_AGENT,
-          accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.1",
+          accept: wanted.accept,
           "accept-language": "fr-FR,fr;q=0.9,en;q=0.5",
           "accept-encoding": "gzip, deflate, br",
         },
@@ -177,9 +202,9 @@ function request(
           return;
         }
         const type = response.headers["content-type"] ?? "";
-        if (!/text\/html|application\/xhtml\+xml/i.test(type)) {
+        if (!wanted.type.test(type)) {
           response.resume();
-          reject(new FetchError("not_html"));
+          reject(new FetchError(wanted === HTML ? "not_html" : "not_image"));
           return;
         }
         const body = decode(response, response.headers["content-encoding"]);
@@ -197,8 +222,7 @@ function request(
         });
         body.on("error", () => reject(new FetchError("bad_body")));
         body.on("end", () => {
-          const html = new TextDecoder(charsetOf(type)).decode(Buffer.concat(chunks));
-          resolve({ page: { url: url.href, html } });
+          resolve({ file: { url: url.href, bytes: Buffer.concat(chunks), contentType: type } });
         });
       },
     );
@@ -212,20 +236,36 @@ function request(
 const errorCode = (error: NodeJS.ErrnoException) =>
   error.code === "blocked_address" ? "blocked_address" : "unreachable";
 
-/** Fetches a page, following up to a few redirects, each one checked again. */
-export async function fetchPage(raw: string, options: FetchOptions = {}): Promise<Page> {
+/** Fetches a file, following up to a few redirects, each one checked again. */
+async function fetchFile(
+  raw: string,
+  options: FetchOptions,
+  wanted: Wanted,
+  maxBytes: number,
+): Promise<Download> {
   const settings = {
     timeoutMs: options.timeoutMs ?? 10_000,
-    maxBytes: options.maxBytes ?? 3_000_000,
+    maxBytes: options.maxBytes ?? maxBytes,
     maxRedirects: options.maxRedirects ?? 5,
     lookup: options.lookup ?? safeLookup,
     port: options.port,
   };
   let url = checkUrl(raw);
   for (let hop = 0; hop <= settings.maxRedirects; hop += 1) {
-    const { location, page } = await request(url, settings);
-    if (page) return page;
+    const { location, file } = await request(url, settings, wanted);
+    if (file) return file;
     url = checkUrl(new URL(location ?? "", url).href);
   }
   throw new FetchError("too_many_redirects");
+}
+
+/** Fetches a page (HTML only, 3 MB at most). */
+export async function fetchPage(raw: string, options: FetchOptions = {}): Promise<Page> {
+  const file = await fetchFile(raw, options, HTML, 3_000_000);
+  return { url: file.url, html: new TextDecoder(charsetOf(file.contentType)).decode(file.bytes) };
+}
+
+/** Fetches an image of a page (MAX_IMAGE_BYTES at most), with the same guard as the page. */
+export function fetchImage(raw: string, options: FetchOptions = {}): Promise<Download> {
+  return fetchFile(raw, options, IMAGE, MAX_IMAGE_BYTES);
 }

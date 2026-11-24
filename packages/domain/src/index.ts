@@ -69,3 +69,16 @@ export {
   type Completable,
   type Found,
 } from "./enrichment.js";
+export {
+  IMAGE_TYPES,
+  isProposable,
+  MAX_IMAGE_BYTES,
+  MAX_IMAGE_PIXELS,
+  MAX_PAGE_IMAGES,
+  MIN_CROP,
+  MIN_PAGE_IMAGE_SIDE,
+  normalizeCrop,
+  pageImageLinks,
+  type Crop,
+  type ImageType,
+} from "./images.js";

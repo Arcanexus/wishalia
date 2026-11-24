@@ -16,7 +16,9 @@ import { type HistoryEntry, recordHistory, type Tx } from "../../history.js";
 import { first, HttpError, notFound, parse, userId } from "../../http.js";
 import type { ManageDeps } from "./index.js";
 import { DEFAULT_LIST_NAME } from "./lists.js";
+import { imageOf } from "../../images.js";
 import { itemSecret } from "../../secrets.js";
+import { itemImageRoutes } from "./item-images.js";
 import { ownerItem } from "./serialize.js";
 
 const cents = z.number().int().min(0).max(100_000_000);
@@ -47,7 +49,7 @@ export const itemPatch = z
 const itemParams = z.object({ itemId: z.uuid() });
 
 /** An item of the signed-in owner, or 404. */
-async function ownedItem(tx: Tx, ownerId: string, itemId: string) {
+export async function ownedItem(tx: Tx, ownerId: string, itemId: string) {
   const [row] = await tx
     .select({ wish: schema.wishes })
     .from(schema.wishes)
@@ -80,7 +82,9 @@ async function targetList(tx: Tx, ownerId: string, listId: string | undefined): 
   return created.id;
 }
 
-export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now }) => {
+export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now, images }) => {
+  await app.register(itemImageRoutes, { db, now, images });
+
   /**
    * Adds an item at once, with what the input gives (spec §5.2: optimistic add). The worker
    * enriches it later. A link already in one of the owner's open items is flagged, not refused:
@@ -140,7 +144,8 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now 
 
   app.get("/items/:itemId", async (request) => {
     const { itemId } = parse(itemParams, request.params);
-    return ownerItem(await ownedItem(db, userId(request), itemId));
+    const item = await ownedItem(db, userId(request), itemId);
+    return ownerItem(item, await imageOf(db, images, item));
   });
 
   /**
@@ -240,7 +245,7 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now 
       return first(row ? [row] : []);
     });
 
-    return ownerItem(updated);
+    return ownerItem(updated, await imageOf(db, images, updated));
   });
 
   /**

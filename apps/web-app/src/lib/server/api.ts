@@ -18,22 +18,27 @@ export function apiUrl(): string {
 export interface ApiCall {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
+  /** A file sent as it is (an image), instead of a JSON body. */
+  file?: Uint8Array<ArrayBuffer>;
   fetch?: typeof fetch;
 }
 
 export async function apiFetch(event: ApiEvent, path: string, call: ApiCall = {}): Promise<Response> {
-  const { method = "GET", body, fetch: send = fetch } = call;
+  const { method = "GET", body, file, fetch: send = fetch } = call;
   const headers = new Headers({ accept: "application/json", "x-forwarded-for": event.getClientAddress() });
   const cookie = event.request.headers.get("cookie");
   if (cookie) headers.set("cookie", cookie);
   // Better Auth checks the origin of every state-changing call: the app's own
   headers.set("origin", event.url.origin);
   if (body !== undefined) headers.set("content-type", "application/json");
+  // What the file is, the API reads from its bytes: never from what the browser said
+  if (file !== undefined) headers.set("content-type", "application/octet-stream");
   return send(new URL(path, apiUrl()), {
     method,
     headers,
     redirect: "manual",
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    ...(file !== undefined ? { body: file } : {}),
   });
 }
 

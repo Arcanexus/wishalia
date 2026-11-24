@@ -11,7 +11,9 @@ Wishalia ships as four images and one Helm chart, published for every release:
 - A database: the chart deploys its own PostgreSQL by default, or uses yours, PostgreSQL 16+
   (see [The database](#the-database)). The data model and the job queue both live there.
 - A default StorageClass for the built-in PostgreSQL's volume (`postgresql.persistence`).
-- An S3 bucket (MinIO) for the images, from the media step on.
+- Optional, for the images of the items: a volume (a PersistentVolumeClaim, created by the chart
+  or existing) or an S3 bucket (MinIO); the chart then deploys imgproxy
+  (`images.enabled`, see [Images](images.md)).
 - Two DNS names: the public view (`wishalia.example.com`) and the management app
   (`app.wishalia.example.com`). They must differ: the chart refuses to render otherwise.
 

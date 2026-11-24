@@ -3,7 +3,8 @@ import type { Found } from "@wishalia/domain";
 /**
  * What a product page says about itself (spec §5.3), in cascade: the JSON-LD `schema.org/Product`
  * first, then the Open Graph and Twitter tags, then the page's <title>. Pure: the HTML in, what was
- * found out. No HTML is ever kept or shown: only a title and a price, as text and a number.
+ * found out. No HTML is ever kept or shown: only a title and a price, as text and a number, and the
+ * links of its images (fetched and checked apart).
  */
 
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
@@ -120,6 +121,82 @@ function fromMeta(html: string): Found {
 function fromTitle(html: string): string | null {
   const title = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];
   return title ? decodeEntities(title).replace(/\s+/g, " ").trim() || null : null;
+}
+
+/** The links of a JSON-LD "image": a text, an ImageObject, or a list of either. */
+function ldImages(value: unknown, depth = 0): string[] {
+  if (depth > 3) return [];
+  if (typeof value === "string") return [value];
+  if (Array.isArray(value)) return value.flatMap((entry) => ldImages(entry, depth + 1));
+  if (value && typeof value === "object") {
+    const object = value as Record<string, unknown>;
+    return ldImages(object.contentUrl ?? object.url, depth + 1);
+  }
+  return [];
+}
+
+function productImages(html: string): string[] {
+  for (const match of html.matchAll(
+    /<script\b[^>]*type\s*=\s*["']?application\/ld\+json["']?[^>]*>([\s\S]*?)<\/script>/gi,
+  )) {
+    let document: unknown;
+    try {
+      document = JSON.parse(match[1] ?? "");
+    } catch {
+      continue;
+    }
+    for (const node of nodes(document)) {
+      if (isProduct(node)) return ldImages(node.image).map(decodeEntities);
+    }
+  }
+  return [];
+}
+
+/** A picture of the page's body that looks like a photo of the product, not a logo or an icon. */
+const NOT_A_PHOTO = /\.svg(\?|$)|^data:|logo|icon|sprite|pixel|avatar|badge|flag|placeholder|spinner|loader/i;
+
+function bodyImages(html: string): string[] {
+  const links: string[] = [];
+  for (const match of html.matchAll(/<img\b[^>]*>/gi)) {
+    const tag = attributes(match[0]);
+    const src = tag["data-src"] || tag["data-zoom-image"] || tag["data-old-hires"] || tag.src;
+    if (!src || NOT_A_PHOTO.test(src)) continue;
+    const small = ["width", "height"].some((side) => {
+      const value = Number.parseInt(tag[side] ?? "", 10);
+      return Number.isFinite(value) && value < 120;
+    });
+    if (!small) links.push(src);
+  }
+  return links;
+}
+
+/**
+ * The images the page proposes for its product, best first: the product's own (JSON-LD), the
+ * sharing image (Open Graph, Twitter), then the photos of the page. Links only, unchecked: the
+ * worker fetches each one through the same guard as the page, and keeps real images only.
+ */
+export function extractImages(html: string): string[] {
+  const meta: string[] = [];
+  for (const match of html.matchAll(/<(meta|link)\b[^>]*>/gi)) {
+    const tag = attributes(match[0]);
+    const key = (tag.property ?? tag.name ?? tag.rel)?.toLowerCase();
+    const value = tag.content ?? tag.href;
+    if (
+      value &&
+      key &&
+      [
+        "og:image",
+        "og:image:secure_url",
+        "og:image:url",
+        "twitter:image",
+        "twitter:image:src",
+        "image_src",
+      ].includes(key)
+    ) {
+      meta.push(value);
+    }
+  }
+  return [...productImages(html), ...meta, ...bodyImages(html)].map((link) => link.trim()).filter(Boolean);
 }
 
 /** Title and price, each from the first source that has it. */

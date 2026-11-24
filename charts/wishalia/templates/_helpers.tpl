@@ -134,3 +134,43 @@ or nothing here when it is in existingSecret (loaded whole by envFrom).
       key: {{ .Values.externalDatabase.urlKey }}
 {{- end }}
 {{- end }}
+
+{{- /* The image storage, checked: "volume" or "s3" (docs/images.md) */ -}}
+{{- define "wishalia.imageStorage" -}}
+{{- $storage := .Values.images.storage | default "volume" -}}
+{{- if not (has $storage (list "volume" "s3")) -}}
+{{- fail (printf "images.storage must be \"volume\" or \"s3\", not %q" $storage) -}}
+{{- end -}}
+{{- $storage -}}
+{{- end }}
+
+{{- /* Whether the images live on a volume that the API, the worker and imgproxy mount */ -}}
+{{- define "wishalia.imageVolume" -}}
+{{- if and .Values.images.enabled (eq (include "wishalia.imageStorage" .) "volume") }}true{{ end -}}
+{{- end }}
+
+{{- /* Where the volume is mounted, the same path in the three pods */ -}}
+{{- define "wishalia.imageDir" -}}/data/images{{- end }}
+
+{{- define "wishalia.imageClaim" -}}
+{{- .Values.images.persistence.existingClaim | default (printf "%s-images" (include "wishalia.fullname" .)) -}}
+{{- end }}
+
+{{- /*
+The pods that mount a ReadWriteOnce volume (the API, the worker, imgproxy) must share a node: a
+podAffinity to the API pods (the first one may go anywhere), unless the values give their own
+affinity. Takes (dict "root" $ "component" "worker").
+*/ -}}
+{{- define "wishalia.affinity" -}}
+{{- $root := .root -}}
+{{- if $root.Values.affinity -}}
+{{- toYaml $root.Values.affinity -}}
+{{- else if and (include "wishalia.imageVolume" $root) (has "ReadWriteOnce" $root.Values.images.persistence.accessModes) (has .component (list "api" "worker" "imgproxy")) -}}
+podAffinity:
+  requiredDuringSchedulingIgnoredDuringExecution:
+    - topologyKey: kubernetes.io/hostname
+      labelSelector:
+        matchLabels:
+          {{- include "wishalia.selectorLabels" (dict "root" $root "component" "api") | nindent 10 }}
+{{- end -}}
+{{- end }}

@@ -18,15 +18,17 @@ export const mePatch = z
 
 type UserRow = typeof schema.users.$inferSelect;
 
-const me = (row: UserRow) => ({
+const me = (row: UserRow, imagesOn: boolean) => ({
   id: row.id,
   displayName: row.displayName,
   email: row.email,
   theme: row.theme,
   mode: row.mode,
+  /** What this server offers: images need the S3 bucket and imgproxy (docs/images.md). */
+  features: { images: imagesOn },
 });
 
-export const meRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db }) => {
+export const meRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, images }) => {
   /** The signed-in person and their display settings: what the app shows in its header. */
   app.get("/me", async (request) => {
     return me(
@@ -36,6 +38,7 @@ export const meRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db }) => {
           .from(schema.users)
           .where(eq(schema.users.id, userId(request))),
       ),
+      images !== null,
     );
   });
 
@@ -47,6 +50,6 @@ export const meRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db }) => {
       .set(patch)
       .where(eq(schema.users.id, userId(request)))
       .returning();
-    return me(first(rows));
+    return me(first(rows), images !== null);
   });
 };

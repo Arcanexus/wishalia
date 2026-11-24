@@ -5,6 +5,7 @@ import type { FastifyInstance } from "fastify";
 import { buildApp } from "../app.js";
 import type { Mail, Mailer } from "../auth/mailer.js";
 import { loadConfig } from "../config.js";
+import type { Images } from "../images.js";
 
 export const OWNER_EMAIL = "owner@example.test";
 
@@ -17,7 +18,11 @@ export interface TestApp {
 }
 
 /** The API on an in-memory database, with a mailer that keeps the emails. */
-export async function createTestApp(env: NodeJS.ProcessEnv = {}, now?: () => Date): Promise<TestApp> {
+export async function createTestApp(
+  env: NodeJS.ProcessEnv = {},
+  now?: () => Date,
+  images: Images | null = null,
+): Promise<TestApp> {
   const { db, close: closeDb } = await createTestDb();
   const mails: Mail[] = [];
   const mailer: Mailer = { send: async (mail) => void mails.push(mail) };
@@ -29,7 +34,7 @@ export async function createTestApp(env: NodeJS.ProcessEnv = {}, now?: () => Dat
     OWNER_EMAILS: OWNER_EMAIL,
     ...env,
   });
-  const app = await buildApp(config, { db, mailer, ...(now ? { now } : {}) });
+  const app = await buildApp(config, { db, mailer, images, ...(now ? { now } : {}) });
   return {
     app,
     db,

@@ -23,7 +23,8 @@
   "dependencies": {
     "@simplewebauthn/browser": "^13.3.0",
     "@wishalia/domain": "workspace:*",
-    "@wishalia/metrics": "workspace:*"
+    "@wishalia/metrics": "workspace:*",
+    "@wishalia/storage": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^6.0.5",

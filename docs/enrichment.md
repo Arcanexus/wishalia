@@ -1,8 +1,8 @@
 # Completing items from their link
 
 When an item is added with a link, it shows at once with the site's name as its title (« fnac.com »).
-The worker then reads the page behind the link and completes the item: its **title** and its
-**price**. The list page says « Le titre et le prix se complètent depuis le lien… » meanwhile, and
+The worker then reads the page behind the link and completes the item: its **title**, its
+**price** and its **images** ([Images](images.md)). The list page says « Le titre et le prix se complètent depuis le lien… » meanwhile, and
 looks again every few seconds, for a minute at most.
 
 ![An item being completed from its link](images/app-enrichment.png)
@@ -58,5 +58,7 @@ it was. A run whose worker stopped is taken again after 2 minutes.
 The worker needs `DATABASE_URL` (see [Configuration](configuration.md)) and outgoing HTTP(S) access to
 the Internet. Its metrics are described in [Monitoring](monitoring.md).
 
-Coming next: proposing the page's images (with the image storage), site-specific readers, and a
-headless browser as a last resort.
+The worker also takes up to four images from the page, through the same guard, when the images
+are configured (a volume or a bucket): see [Images](images.md).
+
+Coming next: site-specific readers, and a headless browser as a last resort.

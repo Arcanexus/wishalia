@@ -7,6 +7,7 @@ import type { FastifyPluginAsync } from "fastify";
 import type { Auth } from "../../auth/auth.js";
 import { toHeaders } from "../../auth/fastify.js";
 import type { Config } from "../../config.js";
+import type { Images } from "../../images.js";
 import {
   deviceMarkerCookieName,
   hashToken,
@@ -23,6 +24,7 @@ export interface PublicDeps {
   db: Database;
   now: () => Date;
   secret: string;
+  images: Images | null;
 }
 
 /** The header that carries the token of the share link. Never the URL: no token in the access logs. */
@@ -49,7 +51,7 @@ declare module "fastify" {
  * Contributions are only returned after the single anti-spoil check (canSeeContributions).
  */
 export const publicRoutes: FastifyPluginAsync<PublicDeps> = async (app, deps) => {
-  const { auth, config, db, now, secret } = deps;
+  const { auth, config, db, now, secret, images } = deps;
   app.addHook("onRequest", async (request) => {
     request.scope = "public";
   });
@@ -83,7 +85,7 @@ export const publicRoutes: FastifyPluginAsync<PublicDeps> = async (app, deps) =>
         sessionUser: session ? { id: session.user.id, displayName: session.user.name } : null,
       };
     });
-    await shared.register(viewRoutes, { db, now });
+    await shared.register(viewRoutes, { db, now, images });
     await shared.register(contributionRoutes, { db, now });
   });
 };

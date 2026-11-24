@@ -19,6 +19,7 @@ import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 
 import type { Tx } from "../../history.js";
 import { HttpError } from "../../http.js";
+import { imagesOf, type Images } from "../../images.js";
 import { itemSecret, revealState } from "../../secrets.js";
 import type { ShareContext } from "./index.js";
 
@@ -273,11 +274,16 @@ const publicEvent = (event: EventRow, now: Date) => ({
  * What a guest sees through their link. The order is the owner's, never the funding state: the
  * public view sorts complete items last itself, so that the owner's view gives nothing away.
  */
-export const viewRoutes: FastifyPluginAsync<{ db: Database; now: () => Date }> = async (app, { db, now }) => {
+export const viewRoutes: FastifyPluginAsync<{
+  db: Database;
+  now: () => Date;
+  images: Images | null;
+}> = async (app, { db, now, images }) => {
   app.get("/view", async (request) => {
     const { link, viewer, sessionUser } = shareOf(request);
     const at = now();
     const data = await loadView(db, link);
+    const pictures = await imagesOf(db, images, data.items);
     const eventId = data.title.kind === "event" ? data.title.event.id : undefined;
     const events = new Map<string, EventRow>();
     if (data.title.kind === "event") events.set(data.title.event.id, data.title.event);
@@ -304,7 +310,8 @@ export const viewRoutes: FastifyPluginAsync<{ db: Database; now: () => Date }> =
           title: wish.title,
           url: wish.url,
           notes: wish.notes,
-          imageKey: wish.imageKey,
+          // Signed thumbnails only: the guests never learn where the files are
+          image: pictures.get(wish.id) ?? null,
           priceCents: wish.priceCents,
           targetCents: wish.targetCents,
           quantity: wish.quantity,

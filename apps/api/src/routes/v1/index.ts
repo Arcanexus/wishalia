@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 
 import type { Config } from "../../config.js";
+import type { Images } from "../../images.js";
 import { createRateLimiter } from "../../rate-limit.js";
 import { hashToken } from "../../tokens.js";
 import { isApiTokenActive, isWellFormedApiToken } from "../manage/api-tokens.js";
@@ -15,6 +16,7 @@ export interface V1Deps {
   config: Config;
   db: Database;
   now: () => Date;
+  images: Images | null;
 }
 
 /** lastUsedAt is written at most once a minute per token, not on every request. */
@@ -27,7 +29,7 @@ const READ_METHODS = new Set(["GET", "HEAD"]);
  * session can be ridden. It has the rights of /manage, through the same routes, and so never
  * returns contribution data. A read-only token only reads.
  */
-export const v1Routes: FastifyPluginAsync<V1Deps> = async (app, { config, db, now }) => {
+export const v1Routes: FastifyPluginAsync<V1Deps> = async (app, { config, db, now, images }) => {
   const limiter = createRateLimiter(config.API_RATE_LIMIT);
 
   app.addHook("onRequest", async (request) => {
@@ -80,8 +82,8 @@ export const v1Routes: FastifyPluginAsync<V1Deps> = async (app, { config, db, no
     });
 
     secured.get("/me", async (request) => request.user);
-    await secured.register(listRoutes, { db, now });
-    await secured.register(itemRoutes, { db, now });
-    await secured.register(eventRoutes, { db, now });
+    await secured.register(listRoutes, { db, now, images });
+    await secured.register(itemRoutes, { db, now, images });
+    await secured.register(eventRoutes, { db, now, images });
   });
 };
