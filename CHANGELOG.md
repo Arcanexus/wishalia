@@ -30,6 +30,10 @@ All notable changes to this project are documented here. The format follows
   their own link is warned and sees no funding at all. An unknown, revoked or expired link gives
   one same page. Same title and preview for every link, `noindex`, never cached; light/dark button.
   See [Public view](docs/public-view.md).
+- Contributions folded for a visitor nobody knows on the public view (no account, nothing given
+  from the device): states, progress, names and the give buttons stay out of the page until
+  « Je ne suis pas Léa », remembered for the link on the device. See
+  [Public view](docs/public-view.md#a-visitor-nobody-knows).
 - Giving from the public view: reserve a gift or some copies, chip in to a pool, with a word for the
   owner and the choice to stay discreet; on a list link, the event the gift is for. The person sees
   their gifts and withdraws them; without an account, the withdraw key stays in an HttpOnly cookie

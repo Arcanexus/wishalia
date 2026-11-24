@@ -124,4 +124,4 @@ used, and « Révoquer » ends it for good. See [REST API v1](rest-api.md).
 
 ![A Christmas list on a phone, in dark mode](images/app-list-christmas-dark.png)
 
-Coming next: the guests' screens.
+The guests' screens are in [Public view](public-view.md).

@@ -40,7 +40,7 @@ function api(answer: () => Response) {
 const json = (payload: unknown, status = 200) =>
   new Response(JSON.stringify(payload), { status, headers: { "content-type": "application/json" } });
 
-function event(token = TOKEN, cookie?: string) {
+function event(token = TOKEN, cookie?: string, jar: Record<string, string> = {}) {
   const headers: Record<string, string> = {};
   const locals = { themeChoice: "auto", mode: "device", listTheme: null, christmas: false } as App.Locals;
   const setHeaders = vi.fn();
@@ -49,7 +49,7 @@ function event(token = TOKEN, cookie?: string) {
       params: { token },
       request: new Request(`https://wishalia.test/s/${token}`, { headers: cookie ? { cookie } : {} }),
       getClientAddress: () => "10.0.0.9",
-      cookies: { get: () => undefined },
+      cookies: { get: (name: string) => jar[name] },
       locals,
       setHeaders,
     } as unknown as Parameters<typeof load>[0],
@@ -121,8 +121,11 @@ describe("the page of a share link", () => {
     api(() =>
       json(view({ items: [item("taken", "complete"), item("free", "free")] as PublicView["items"] })),
     );
-    const { value } = await run(event().event);
+    const { value } = await run(event(TOKEN, undefined, { "wishalia.unfolded": "1" }).event);
     expect(value?.view.items.map((entry) => entry.id)).toEqual(["free", "taken"]);
+    // Folded, the owner's order stays: the order gives nothing away
+    const folded = await run(event().event);
+    expect(folded.value?.view.items.map((entry) => entry.id)).toEqual(["taken", "free"]);
   });
 
   it("applies the list's forced theme, or Christmas for a Christmas event", async () => {

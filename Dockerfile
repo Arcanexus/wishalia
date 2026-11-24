@@ -24,7 +24,11 @@ COPY packages/ui/package.json packages/ui/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm turbo run build --filter "@wishalia/${APP}..."
+# turbo straight from node_modules, not through `pnpm turbo`: pnpm hands its children
+# pnpm_config_verify_deps_before_run="false", a string that pnpm 10 reads as true. Every package
+# build then checks the workspace state, and the parallel builds race on that file ("Unexpected
+# end of JSON input"). Without a pnpm parent, the check stays off as by default.
+RUN node_modules/.bin/turbo run build --filter "@wishalia/${APP}..."
 
 # Production files of the app only: dist/ (or build/ for SvelteKit) and its runtime dependencies
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \

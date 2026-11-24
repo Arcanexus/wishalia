@@ -3,7 +3,14 @@ import { parseAmount } from "@wishalia/domain";
 
 import { genericMeta } from "#lib/meta.ts";
 import { isWellFormedToken, loadView, publicFetch } from "#lib/server/api.ts";
-import { readGifts, readGuestName, writeGifts, writeGuestName } from "#lib/server/gifts.ts";
+import {
+  readGifts,
+  readGuestName,
+  readUnfolded,
+  writeGifts,
+  writeGuestName,
+  writeUnfolded,
+} from "#lib/server/gifts.ts";
 import type { MyGift, PublicView } from "#lib/types.ts";
 import { sortForGuests } from "#lib/view.ts";
 
@@ -38,11 +45,21 @@ export const load: PageServerLoad = async (event) => {
 
   // The withdraw keys stay on the server: the page only learns what was given
   const kept = readGifts(event.cookies).map(({ key: _key, ...gift }) => gift);
+  // Nobody known on this device: what others give stays folded until they say they are not the
+  // owner. It is left out of the page, not hidden in it, and the order gives nothing away either.
+  const folded =
+    view.viewer === "guest" &&
+    view.me === null &&
+    kept.length === 0 &&
+    !readUnfolded(event.cookies) &&
+    view.items.some((item) => item.funding !== null);
+  const items = sortForGuests(folded ? view.items.map((item) => ({ ...item, funding: null })) : view.items);
   return {
     // The same title and preview for every link: a preview in a chat gives nothing away
     meta: genericMeta(process.env.APP_NAME ?? "Wishalia"),
-    view: { ...view, items: sortForGuests(view.items) },
-    mine: myGifts(view, kept),
+    view: { ...view, items },
+    folded,
+    mine: folded ? [] : myGifts(view, kept),
     guestName: readGuestName(event.cookies),
   };
 };
@@ -54,6 +71,14 @@ async function codeOf(response: Response): Promise<string> {
 }
 
 export const actions: Actions = {
+  /** « Je ne suis pas … » : what others give shows on this link, on this device. */
+  unfold: async (event) => {
+    const { token } = event.params;
+    if (!isWellFormedToken(token)) error(404, "link_not_found");
+    writeUnfolded(event.cookies, token, event.url.protocol === "https:");
+    return { unfolded: true };
+  },
+
   /** A reservation or a pledge, through the link: the API checks what is left and the secrets. */
   give: async (event) => {
     const { token } = event.params;

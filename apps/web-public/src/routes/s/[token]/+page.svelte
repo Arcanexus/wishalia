@@ -57,7 +57,7 @@
 
 <main id="contenu" class="page">
   <p class="hello">Bonjour {view.audience} !</p>
-  <h1>{heading(view)}</h1>
+  <h1 id="titre" tabindex="-1">{heading(view)}</h1>
   <p class="muted lead">
     {#if view.event}
       Les envies de {owner}, pour le {formatDay(view.event.date)}.
@@ -73,6 +73,28 @@
         vous offrent : la surprise reste entière.
       </p>
     </div>
+  {:else if data.folded}
+    <section class="card fold" aria-labelledby="fold-title">
+      <h2 id="fold-title">Vous n'êtes pas {owner} ?</h2>
+      <p>
+        Ce que vos proches offrent reste caché pour l'instant, au cas où cet appareil serait celui de {owner}.
+        Dites-nous que ce n'est pas le cas, et vous verrez ce qui est déjà pris, et pourrez offrir à votre
+        tour.
+      </p>
+      <form
+        method="POST"
+        action="?/unfold"
+        use:enhance={() =>
+          async ({ update }) => {
+            await update();
+            // The button is gone: bring the reader back to the top of the list
+            document.getElementById("titre")?.focus();
+          }}
+      >
+        <button type="submit">Je ne suis pas {owner}, voir les cadeaux</button>
+      </form>
+      <p class="muted small">Si vous êtes {owner}, ne cliquez pas : la surprise reste entière.</p>
+    </section>
   {:else if view.event && !view.event.open}
     <p class="notice">Cet événement est passé : la liste reste à voir, mais on ne peut plus y participer.</p>
   {:else if openEvents.length > 0 && view.scope === "list"}
@@ -159,7 +181,7 @@
             </p>
           {/if}
 
-          {#if canGive(item, view)}
+          {#if !data.folded && canGive(item, view)}
             <GiveForm
               {item}
               events={giftEvents(item.eventIds)}
@@ -175,7 +197,8 @@
   {/if}
 
   <div class="visually-hidden" role="status">
-    {#if form?.given}Merci, c'est noté !{:else if form?.withdrawn}C'est retiré.{/if}
+    {#if form?.given}Merci, c'est noté !{:else if form?.withdrawn}C'est retiré.{:else if form?.unfolded}Les
+      cadeaux sont affichés.{/if}
   </div>
 
   {#if view.viewer !== "owner"}
@@ -315,6 +338,17 @@
   }
   .mine .notice {
     flex-basis: 100%;
+  }
+  .fold {
+    margin: 1rem 0 1.5rem;
+    border-width: 2px;
+    border-color: var(--action);
+  }
+  .fold h2 {
+    margin-top: 0;
+  }
+  .fold form {
+    margin: 1rem 0 0.5rem;
   }
   .thanks {
     margin-top: 0.75rem;
