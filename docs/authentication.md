@@ -51,6 +51,104 @@ Create a client in your provider:
 Then set `auth.oidc.issuer` and `auth.oidc.clientId`, and put `OIDC_CLIENT_SECRET` in the Secret.
 The email the provider returns must be in `auth.ownerEmails` for the first sign-in.
 
+### With Authentik
+
+In Authentik, under **Applications > Providers**, create an **OAuth2/OpenID Provider**:
+
+| Setting                    | Value                                                     |
+| -------------------------- | --------------------------------------------------------- |
+| Name                       | `wishalia`                                                |
+| Authorization flow         | `default-provider-authorization-implicit-consent`         |
+| Client type                | Confidential                                              |
+| Client ID                  | `wishalia` (or the one Authentik suggests)                |
+| Client Secret              | the one Authentik suggests, kept for `OIDC_CLIENT_SECRET` |
+| Redirect URIs              | Strict, `https://<hosts.app>/auth/callback/oidc`          |
+| Scopes                     | `openid`, `email`, `profile` (the default mappings)       |
+| Subject mode               | Based on the User's hashed ID                             |
+| Include claims in id_token | on                                                        |
+
+Then, under **Applications > Applications**, create an application with a slug, for example
+`wishalia`, bound to that provider, and bind to it the group (or users) who may sign in. Only
+the emails of `auth.ownerEmails` create their account this way; the others need an invitation
+first, and Authentik must give the same email as the invitation.
+
+The issuer is the provider's URL, with its trailing slash:
+
+```yaml
+auth:
+  ownerEmails: you@example.com
+  oidc:
+    issuer: https://authentik.example.com/application/o/wishalia/
+    clientId: wishalia
+    name: Authentik
+existingSecret: wishalia-secrets # holds OIDC_CLIENT_SECRET
+```
+
+The same with a blueprint, for an Authentik managed in git. `!Env` reads the client secret from
+the environment of the Authentik worker, so that it stays out of the repository:
+
+```yaml
+version: 1
+metadata:
+  name: wishalia
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+entries:
+  - model: authentik_providers_oauth2.oauth2provider
+    identifiers:
+      name: wishalia
+    attrs:
+      name: wishalia
+      client_type: confidential
+      # Must be explicit: an empty list makes Authentik refuse /authorize
+      grant_types: [authorization_code, refresh_token]
+      client_id: wishalia
+      client_secret: !Env WISHALIA_clientSecret
+      include_claims_in_id_token: true
+      issuer_mode: per_provider
+      sub_mode: hashed_user_id
+      signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+      authorization_flow:
+        !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      redirect_uris:
+        - matching_mode: strict
+          url: https://app.wishalia.example.com/auth/callback/oidc
+      property_mappings:
+        - !Find [
+            authentik_providers_oauth2.scopemapping,
+            [name, "authentik default OAuth Mapping: OpenID 'openid'"],
+          ]
+        - !Find [
+            authentik_providers_oauth2.scopemapping,
+            [name, "authentik default OAuth Mapping: OpenID 'email'"],
+          ]
+        - !Find [
+            authentik_providers_oauth2.scopemapping,
+            [name, "authentik default OAuth Mapping: OpenID 'profile'"],
+          ]
+  - model: authentik_core.application
+    identifiers:
+      slug: wishalia
+    attrs:
+      name: Wishalia
+      slug: wishalia
+      provider: !Find [authentik_providers_oauth2.oauth2provider, [name, wishalia]]
+      policy_engine_mode: any
+      meta_launch_url: https://app.wishalia.example.com
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      target: !Find [authentik_core.application, [slug, wishalia]]
+    attrs:
+      group: !Find [authentik_core.group, [name, family]]
+      order: 0
+      target: !Find [authentik_core.application, [slug, wishalia]]
+```
+
+Signing in with Authentik and with a passkey or a magic link leads to the same account when the
+emails match.
+
 ## Magic links
 
 Set `SMTP_URL` (Secret) and `auth.mailFrom`. A link works once, for 15 minutes, and only its hash

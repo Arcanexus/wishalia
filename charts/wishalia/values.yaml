@@ -275,6 +275,23 @@ securityContext:
   capabilities:
     drop: ["ALL"]
 
+# For volume drivers that do not apply fsGroup (NFS through csi-driver-nfs without fsGroupPolicy,
+# hostPath...), where a fresh volume belongs to root and the non-root pods cannot write to it: an
+# init container gives the root folder of each volume the chart mounts read-write (PostgreSQL, the
+# image files, Garage) to the user of its pod. It runs as root with the CHOWN capability only,
+# changes nothing when the owner is right, and never walks the files below. The NFS export must
+# let root change an owner (no root squash).
+volumePermissions:
+  enabled: false
+  image:
+    registry: docker.io
+    repository: library/busybox
+    tag: "1.37.0"
+    pullPolicy: IfNotPresent
+  resources:
+    requests: { cpu: 10m, memory: 16Mi }
+    limits: { memory: 32Mi }
+
 # Probes on /healthz (the httpGet part is set by the chart)
 startupProbe:
   periodSeconds: 5

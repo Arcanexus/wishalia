@@ -37,10 +37,18 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml $.Values.podSecurityContext | nindent 8 }}
-      {{- if and (eq $component "api") $.Values.migrations.enabled $.Values.postgresql.enabled }}
-      # The built-in PostgreSQL only exists once the release is installed: each API pod applies the
-      # migrations before it starts, waiting for the database (one at a time, under a lock)
+      {{- $imagesMounted := and (include "wishalia.imageVolume" $) (has $component (list "api" "worker")) }}
+      {{- $fixImages := and $imagesMounted $.Values.volumePermissions.enabled }}
+      {{- $migrate := and (eq $component "api") $.Values.migrations.enabled $.Values.postgresql.enabled }}
+      {{- if or $fixImages $migrate }}
       initContainers:
+        {{- if $fixImages }}
+        # volumePermissions: the image volume belongs to the user of the pod
+        {{- include "wishalia.volumePermissions" (dict "root" $ "volume" "images" "path" (include "wishalia.imageDir" $) "user" $.Values.podSecurityContext.runAsUser "group" (default $.Values.podSecurityContext.runAsUser $.Values.podSecurityContext.runAsGroup)) | nindent 8 }}
+        {{- end }}
+        {{- if $migrate }}
+        # The built-in PostgreSQL only exists once the release is installed: each API pod applies the
+        # migrations before it starts, waiting for the database (one at a time, under a lock)
         - name: migrations
           image: {{ include "wishalia.image" (dict "root" $ "component" "api") | quote }}
           imagePullPolicy: {{ $.Values.image.pullPolicy }}
@@ -51,6 +59,7 @@ spec:
             {{- include "wishalia.database.env" $ | trim | nindent 12 }}
           resources:
             {{- toYaml $.Values.migrations.resources | nindent 12 }}
+        {{- end }}
       {{- end }}
       containers:
         - name: {{ $component }}

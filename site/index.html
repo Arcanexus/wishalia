@@ -128,11 +128,11 @@
 
       <section aria-labelledby="install">
         <h2 id="install">Install</h2>
-        <pre><code>helm install wishalia oci://ghcr.io/arcanexus/charts/wishalia \
+        <pre><code>helm install wishalia oci://ghcr.io/arcanexus/charts/wishalia --version 0.0.1 \
   --set hosts.public=wishalia.example.com \
   --set hosts.app=app.wishalia.example.com \
   --set ingress.enabled=true</code></pre>
-        <p>PostgreSQL comes with the chart, or bring your own with <code>postgresql.enabled=false</code>.</p>
+        <p>PostgreSQL comes with the chart, or bring your own with <code>postgresql.enabled=false</code>. On NFS, add <code>volumePermissions.enabled=true</code>.</p>
         <p>
           <a href="https://github.com/Arcanexus/wishalia/wiki/Installation">Read the installation guide</a>
         </p>

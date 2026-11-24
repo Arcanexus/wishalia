@@ -6,8 +6,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.1] - 2026-11-24
+
+The first release: images `ghcr.io/arcanexus/wishalia-{api,worker,web-app,web-public}:0.0.1` and
+the chart `oci://ghcr.io/arcanexus/charts/wishalia` 0.0.1.
+
 ### Added
 
+- The chart can give its volumes to their pods' users, for volume drivers that do not apply
+  `fsGroup`, such as NFS through csi-driver-nfs (`volumePermissions.enabled`, off by default): an
+  init container, root with the `CHOWN` capability only, gives the root folder of the PostgreSQL,
+  image and Garage volumes to the pod's user, and changes nothing when it is already theirs.
+- [Authentication](docs/authentication.md) shows how to set up Authentik as the owners' OIDC
+  provider, in its interface or with a blueprint.
 - The management app installs on a phone, a tablet or a computer (Progressive Web App): a manifest
   (`/manifest.webmanifest`, named after `APP_NAME`), icons (192, 512, maskable, Apple touch), a
   status bar colour that follows the theme and mode, and a service worker that keeps only the app's
