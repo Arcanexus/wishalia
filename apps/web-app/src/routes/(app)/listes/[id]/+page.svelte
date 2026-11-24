@@ -3,6 +3,7 @@
   import { resolve } from "$app/paths";
   import { cents, formatAmount } from "@wishalia/domain";
 
+  import ItemEditor from "#lib/ItemEditor.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
   import type { Item } from "#lib/types.ts";
 
@@ -15,6 +16,20 @@
 
   /** Only web links become links: never a javascript: or data: address from an old item. */
   const webLink = (item: Item) => (item.url && /^https?:\/\//i.test(item.url) ? item.url : null);
+  const kindLine = (item: Item) =>
+    item.kind === "pool"
+      ? item.targetCents
+        ? `Cagnotte, objectif ${formatAmount(cents(item.targetCents)).replace(/,00(?=\s*€)/u, "")}`
+        : "Cagnotte"
+      : item.kind === "quantity"
+        ? `${item.quantity ?? 1} exemplaire${(item.quantity ?? 1) > 1 ? "s" : ""}`
+        : item.repeatable
+          ? "À chaque occasion"
+          : null;
+  const failedEdit = (item: Item) =>
+    form?.edit && "error" in form.edit && form.edit.itemId === item.id
+      ? { error: form.edit.error, values: form.edit.values }
+      : null;
   const host = (url: string) => URL.parse(url)?.hostname.replace(/^www\./, "") ?? url;
 </script>
 
@@ -31,7 +46,9 @@
 <QuickAdd listName={data.list.name} result={form?.add ?? null} />
 
 <div role="status" class="visually-hidden">
-  {#if form?.status && "status" in form.status}
+  {#if form?.edit && "title" in form.edit}
+    « {form.edit.title} » est enregistré{form.edit.listId !== data.list.id ? " et a changé de liste" : ""}.
+  {:else if form?.status && "status" in form.status}
     « {form.status.title} » : {form.status.status === "received"
       ? "reçu"
       : form.status.status === "archived"
@@ -52,6 +69,7 @@
           <div class="text">
             <h3>{item.title}</h3>
             <p class="muted meta">
+              {#if kindLine(item)}<span class="kind">{kindLine(item)}</span>{/if}
               {#if item.priceCents !== null}<span>{formatAmount(cents(item.priceCents))}</span>{/if}
               {#if link}
                 <a href={link} rel="noopener noreferrer external" target="_blank">
@@ -81,6 +99,7 @@
               </button>
             </form>
           </div>
+          <ItemEditor {item} lists={data.lists} failed={failedEdit(item)} />
         </li>
       {/each}
     </ul>
@@ -158,6 +177,10 @@
     flex-wrap: wrap;
     gap: 0.25rem 1rem;
     margin: 0.25rem 0 0;
+  }
+  .kind {
+    color: var(--text);
+    font-weight: 600;
   }
   .notes {
     margin: 0.5rem 0 0;

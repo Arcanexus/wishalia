@@ -26,11 +26,18 @@ export interface Item {
   id: string;
   listId: string;
   kind: "unique" | "quantity" | "pool";
+  /** Given again at every occasion: never received. */
+  repeatable: boolean;
   title: string;
   url: string | null;
   notes: string | null;
   priceCents: number | null;
+  /** A pool's target. */
+  targetCents: number | null;
+  /** How many copies are wanted. */
+  quantity: number | null;
   status: ItemStatus;
+  position: number;
   createdAt: string;
 }
 
@@ -108,4 +115,17 @@ export interface Passkey {
   createdAt: string | null;
   /** Synced by the phone or computer's password manager (iCloud, Google...), so on all its devices. */
   synced: boolean;
+}
+
+/** What the edit form sends back, to fill it in again when something is wrong. */
+export interface EditValues {
+  title: string;
+  url: string;
+  price: string;
+  notes: string;
+  kind: string;
+  quantity: string;
+  target: string;
+  repeatable: boolean;
+  listId: string;
 }

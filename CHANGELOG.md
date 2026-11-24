@@ -35,6 +35,10 @@ All notable changes to this project are documented here. The format follows
   their own link is warned and sees no funding at all. An unknown, revoked or expired link gives
   one same page. Same title and preview for every link, `noindex`, never cached; light/dark button.
   See [Public view](docs/public-view.md).
+- Editing an item in the management app, in place: its name, its kind (a gift, possibly given at
+  every occasion; several copies; a pool with an optional target), its price, its list, its link
+  and its notes. Works without JavaScript. See
+  [Management app](docs/management-app.md#editing-an-item).
 - The public view draws where things stand: a pool's bar split by event, with a mark at the target
   and the overshoot hatched past it (« objectif atteint, 60 € en excédent »); one box per copy;
   the givers' initials; « Presque complet » from 80 %; and, at the top, where the event or the

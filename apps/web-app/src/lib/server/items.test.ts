@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { fakeApi, fakeEvent, json, outcome } from "../../test/event.ts";
-import { quickAdd, setItemStatus } from "./items.ts";
+import { editItem, quickAdd, setItemStatus } from "./items.ts";
 
 const ITEM = "0b6f8a4e-6a52-4a6c-9a39-6f4f3c0b9a11";
 const LIST = "4f1f3f2e-1c2d-4e5f-8a9b-0c1d2e3f4a5b";
@@ -81,6 +81,105 @@ describe("setItemStatus", () => {
     expect(await setItemStatus(event)).toMatchObject({
       status: 404,
       data: { status: { error: "not_found" } },
+    });
+  });
+});
+
+describe("editItem", () => {
+  const OTHER = "5f1f3f2e-1c2d-4e5f-8a9b-0c1d2e3f4a5b";
+  const base = {
+    itemId: ITEM,
+    title: " Vélo de ville ",
+    url: "https://shop.test/velo?utm_source=x",
+    price: "",
+    notes: "Plutôt vert",
+    kind: "pool",
+    quantity: "3",
+    target: "320",
+    listId: LIST,
+  };
+  const patched = () =>
+    fakeApi({
+      [`PATCH /manage/items/${ITEM}`]: (body) =>
+        json({ id: ITEM, listId: LIST, ...(body as object), title: (body as { title: string }).title }),
+    });
+
+  it("sends the fields of the kind chosen, and only those", async () => {
+    const api = patched();
+    expect(await editItem(fakeEvent({ form: base }).event)).toEqual({
+      edit: { itemId: ITEM, title: "Vélo de ville", listId: LIST },
+    });
+    expect(api.calls[0]?.body).toEqual({
+      title: "Vélo de ville",
+      url: "https://shop.test/velo",
+      notes: "Plutôt vert",
+      priceCents: null,
+      kind: "pool",
+      quantity: null,
+      targetCents: 32000,
+      repeatable: false,
+      listId: LIST,
+    });
+
+    await editItem(
+      fakeEvent({ form: { ...base, kind: "quantity", price: "12,50", notes: "", listId: OTHER } }).event,
+    );
+    expect(api.calls[1]?.body).toMatchObject({
+      kind: "quantity",
+      quantity: 3,
+      targetCents: null,
+      priceCents: 1250,
+      notes: null,
+      listId: OTHER,
+    });
+
+    await editItem(
+      fakeEvent({ form: { ...base, kind: "unique", repeatable: "on", url: "", target: "" } }).event,
+    );
+    expect(api.calls[2]?.body).toMatchObject({
+      kind: "unique",
+      repeatable: true,
+      url: null,
+      targetCents: null,
+    });
+  });
+
+  it("takes a pool without a target", async () => {
+    const api = patched();
+    await editItem(fakeEvent({ form: { ...base, target: "" } }).event);
+    expect(api.calls[0]?.body).toMatchObject({ kind: "pool", targetCents: null });
+  });
+
+  it("refuses what cannot be right without calling the API, and gives back what was typed", async () => {
+    const api = patched();
+    const cases: [Record<string, string>, string][] = [
+      [{ itemId: "../x" }, "invalid_request"],
+      [{ listId: "nope" }, "invalid_request"],
+      [{ kind: "series" }, "invalid_request"],
+      [{ title: "  " }, "invalid_title"],
+      [{ title: "x".repeat(301) }, "invalid_title"],
+      [{ url: "javascript:alert(1)" }, "invalid_url"],
+      [{ notes: "x".repeat(4001) }, "invalid_notes"],
+      [{ price: "beaucoup" }, "invalid_price"],
+      [{ kind: "quantity", quantity: "0" }, "invalid_quantity"],
+      [{ kind: "quantity", quantity: "2.5" }, "invalid_quantity"],
+      [{ target: "0" }, "invalid_target"],
+      [{ target: "abc" }, "invalid_target"],
+    ];
+    for (const [patch, error] of cases) {
+      const result = await editItem(fakeEvent({ form: { ...base, ...patch } }).event);
+      expect(result, error).toMatchObject({ status: 400, data: { edit: { error } } });
+    }
+    expect(api.calls).toHaveLength(0);
+    const kept = await editItem(fakeEvent({ form: { ...base, price: "x" } }).event);
+    expect(kept).toMatchObject({ data: { edit: { values: { title: "Vélo de ville", target: "320" } } } });
+  });
+
+  it("passes the API's refusal on", async () => {
+    fakeApi({ [`PATCH /manage/items/${ITEM}`]: () => json({ error: "not_found" }, 404) });
+    expect(await editItem(fakeEvent({ form: base }).event)).toMatchObject({
+      status: 404,
+      data: { edit: { itemId: ITEM, error: "not_found" } },
     });
   });
 });
