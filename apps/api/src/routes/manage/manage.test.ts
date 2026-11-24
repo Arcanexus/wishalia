@@ -47,6 +47,33 @@ async function history(cookie: string, itemId: string) {
   }[];
 }
 
+describe("me", () => {
+  it("gives the person with their display settings, and keeps their changes", async () => {
+    expect((await as(owner, "GET", "/me")).body).toMatchObject({
+      email: OWNER_EMAIL,
+      theme: "auto",
+      mode: "device",
+    });
+    const changed = await as(owner, "PATCH", "/me", {
+      theme: "christmas",
+      mode: "dark",
+      displayName: "  Alex ",
+    });
+    expect(changed.body).toMatchObject({ displayName: "Alex", theme: "christmas", mode: "dark" });
+    expect((await as(owner, "GET", "/me")).body).toMatchObject({ theme: "christmas", mode: "dark" });
+    // Only their own row
+    expect((await as(other, "GET", "/me")).body).toMatchObject({ theme: "auto", mode: "device" });
+    await as(owner, "PATCH", "/me", { theme: "auto", mode: "device" });
+  });
+
+  it("refuses an unknown setting or field", async () => {
+    expect((await as(owner, "PATCH", "/me", { theme: "pink" })).status).toBe(400);
+    expect((await as(owner, "PATCH", "/me", { mode: "sepia" })).status).toBe(400);
+    expect((await as(owner, "PATCH", "/me", { email: "x@y.test" })).status).toBe(400);
+    expect((await as(owner, "PATCH", "/me", { displayName: " " })).status).toBe(400);
+  });
+});
+
 describe("lists", () => {
   it("creates lists in order and lists them with their open items", async () => {
     const books = (await as(owner, "POST", "/lists", { name: "  Livres " })).body;
@@ -313,6 +340,8 @@ describe("events", () => {
   });
 });
 
+const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
 describe("anti-spoil on /manage", () => {
   it("never returns contributions, and seals them in the history until the secret is lifted", async () => {
     clock = new Date("2026-12-20T10:00:00Z");
@@ -347,8 +376,9 @@ describe("anti-spoil on /manage", () => {
       `/events/${event.id}/items`,
       "/lists",
     ]) {
-      const text = JSON.stringify((await as(owner, "GET", url)).body);
-      expect(text).not.toMatch(/Mamie|5000|contribut|amount/i);
+      // Random ids are left out: one may hold "5000" by chance
+      const text = JSON.stringify((await as(owner, "GET", url)).body).replaceAll(UUID, "<id>");
+      expect(text, url).not.toMatch(/Mamie|5000|contribut|amount/i);
     }
     expect((await history(owner, item.id)).map((entry) => entry.type)).not.toContain("contribution_added");
 

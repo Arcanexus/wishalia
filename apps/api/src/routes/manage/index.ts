@@ -8,6 +8,7 @@ import { apiTokenRoutes } from "./api-tokens.js";
 import { eventRoutes } from "./events.js";
 import { itemRoutes } from "./items.js";
 import { listRoutes } from "./lists.js";
+import { meRoutes } from "./me.js";
 import { shareLinkRoutes } from "./share-links.js";
 
 /** What the routes of /manage need. `now` is injected so that tests can move the clock. */
@@ -57,9 +58,7 @@ export const manageRoutes: FastifyPluginAsync<ShareDeps & { auth: Auth }> = asyn
 
   app.get("/ping", async (request) => ({ scope: request.scope }));
 
-  /** The signed-in person: what the management app shows in its header. */
-  app.get("/me", async (request) => request.user);
-
+  await app.register(meRoutes, { db, now });
   await app.register(listRoutes, { db, now });
   await app.register(itemRoutes, { db, now });
   await app.register(eventRoutes, { db, now });

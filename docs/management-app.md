@@ -80,11 +80,31 @@ The active links list who each one is for, what it shares and until when. « Ré
 more, then the guest's link answers like an unknown one, for good. Revoked and expired links wait
 folded at the bottom.
 
+## Settings
+
+« Réglages » (`/reglages`) holds what follows the person on every device, stored with their
+account (`PATCH /manage/me`):
+
+- the first name or nickname their family sees;
+- the **theme**: `Automatique` (Christmas in December and for Christmas lists, neutral otherwise),
+  `Neutre` or `Noël`;
+- **light or dark**: as the device, light or dark. The header button changes the same setting.
+
+The device keeps a copy in its cookies (`wishalia.theme`, `wishalia.mode`), so that the sign-in page
+looks the same before the person signs in again.
+
+When the REST API v1 is on (`hosts.api`), the page also manages the **API tokens**: a name, a
+lifetime of 1 to 365 days (90 by default) and an optional read-only mode. A new token is shown once,
+with « Copier le jeton »; the list shows each one's first characters, its end and when it was last
+used, and « Révoquer » ends it for good. See [REST API v1](rest-api.md).
+
+![The settings](images/app-settings.png)
+
 ## Themes and accessibility
 
-- The header button switches between the device's mode, light and dark. The choice is kept on the
-  device for a year (`wishalia.mode` cookie) and applied by the server, so the page never flashes in
-  the wrong colours. A theme forced by a list (`theme` of the list) colours its page, in each
+- The header button switches between the device's mode, light and dark. The choice is kept with the
+  account and on the device (`wishalia.mode` cookie), and applied by the server, so the page never
+  flashes in the wrong colours. A theme forced by a list (`theme` of the list) colours its page, in each
   person's mode. See [Branding](branding.md).
 - Every page passes axe (WCAG 2.2 AA) in light and dark, on a phone and a computer: contrast of
   4.5:1 or more, 48 px touch targets, visible focus, a « Aller au contenu » skip link, labels on
@@ -93,4 +113,4 @@ folded at the bottom.
 
 ![A Christmas list on a phone, in dark mode](images/app-list-christmas-dark.png)
 
-Coming next: settings (theme and mode stored with the account, passkeys, API tokens).
+Coming next: passkeys (signing in with a fingerprint or a face), then the guests' screens.

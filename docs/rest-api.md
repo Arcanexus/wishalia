@@ -11,7 +11,7 @@ ingress then forwards `/v1` only on that host, and the API refuses everything el
 
 ## Personal access tokens
 
-An owner creates a token in the management app, gives it a name (« Home Assistant ») and a
+An owner creates a token in the management app (« Réglages »), gives it a name (« Home Assistant ») and a
 lifetime of 1 to 365 days (90 by default), and may make it **read-only**. The token is shown once:
 only its SHA-256 is stored, with its first characters (`wsh_Ab3d`) to recognise it. It can be
 revoked at any time, for good.

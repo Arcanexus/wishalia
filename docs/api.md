@@ -25,6 +25,13 @@ JSON only: `{ "error": "<code>" }`, with `issues` (`path`, `message`) for a `400
 | 409    | `too_early`, `secret_already_lifted`, `repeatable_never_received`, `reveal_on_received` | See the routes below.                                        |
 | 500    | `internal`                                                                              | Never with details: they go to the API log.                  |
 
+## The signed-in person
+
+| Route              | Body                              | Answer                                                                                  |
+| ------------------ | --------------------------------- | --------------------------------------------------------------------------------------- |
+| `GET /manage/me`   |                                   | `id`, `displayName`, `email`, and the display settings `theme` and `mode`.              |
+| `PATCH /manage/me` | `displayName`?, `theme`?, `mode`? | The person. `theme`: `auto`, `neutral`, `christmas`; `mode`: `device`, `light`, `dark`. |
+
 ## Lists
 
 | Route                           | Body                                                  | Answer                                                                                                                                                                                                                                                                                                                       |

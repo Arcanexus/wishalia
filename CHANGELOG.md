@@ -21,6 +21,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Management app, settings (`/reglages`): the name, the theme and light or dark, stored with the
+  account and followed by the header button and the device's cookies; the API tokens (made, shown
+  once, revoked) when the REST API v1 is on. The header gets « Réglages ».
+- `GET /manage/me` gives the person's `theme` and `mode`; `PATCH /manage/me` changes them and the
+  display name. Migration `0006_user_display_settings`.
 - Management app, sharing (`/partage`): one link per guest or group for a list or an event, with
   an optional end date, its address shown once with « Copier le lien » and « Envoyer… », the
   device marked as the owner's, the active links and their revocation behind a confirmation.

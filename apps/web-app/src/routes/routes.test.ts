@@ -36,8 +36,9 @@ describe("the root layout", () => {
 });
 
 describe("/preferences", () => {
-  it("moves to the next mode and goes back to the page, never elsewhere", async () => {
-    const { event, setCookies } = fakeEvent({ form: { retour: "/listes/1" } });
+  it("moves to the next mode, keeps it with the account, and goes back to the page, never elsewhere", async () => {
+    const api = fakeApi({ "PATCH /manage/me": () => json({}) });
+    const { event, setCookies } = fakeEvent({ form: { retour: "/listes/1" }, cookie: "s=1" });
     event.locals.mode = "dark";
     expect((await run(preferences, event)).thrown).toMatchObject({ status: 303, location: "/listes/1" });
     expect(setCookies[0]).toMatchObject({
@@ -49,6 +50,15 @@ describe("/preferences", () => {
     const away = fakeEvent({ url: "http://localhost/preferences", form: { retour: "//evil.test" } });
     expect((await run(preferences, away.event)).thrown).toMatchObject({ location: "/" });
     expect(away.setCookies[0]?.options?.secure).toBe(false);
+    // Only the signed-in request went to the API
+    expect(api.calls).toEqual([expect.objectContaining({ method: "PATCH", body: { mode: "device" } })]);
+  });
+
+  it("keeps the choice on the device when the API cannot be reached", async () => {
+    vi.stubGlobal("fetch", () => Promise.reject(new Error("down")));
+    const { event, setCookies } = fakeEvent({ form: { retour: "/" }, cookie: "s=1" });
+    expect((await run(preferences, event)).thrown).toMatchObject({ status: 303, location: "/" });
+    expect(setCookies[0]).toMatchObject({ name: "wishalia.mode", value: "light" });
   });
 });
 
@@ -154,9 +164,21 @@ describe("the app pages", () => {
       status: 303,
       location: "/connexion?retour=%2Flistes%2F1",
     });
-    const me = { id: "u", displayName: "Marie", email: "m@x.test" };
+    const me = { id: "u", displayName: "Marie", email: "m@x.test", theme: "christmas", mode: "dark" };
     fakeApi({ "GET /manage/me": () => json(me) });
-    expect((await run(appLayout, fakeEvent().event)).value).toEqual({ me });
+    const signedIn = fakeEvent();
+    expect((await run(appLayout, signedIn.event)).value).toEqual({ me, mode: "dark", nextMode: "device" });
+    // The account's settings win, and the device follows them
+    expect(signedIn.event.locals).toMatchObject({ themeChoice: "christmas", mode: "dark" });
+    expect(signedIn.setCookies.map((cookie) => [cookie.name, cookie.value])).toEqual([
+      ["wishalia.theme", "christmas"],
+      ["wishalia.mode", "dark"],
+    ]);
+    const same = fakeEvent({ cookies: { "wishalia.theme": "christmas", "wishalia.mode": "dark" } });
+    same.event.locals.themeChoice = "christmas";
+    same.event.locals.mode = "dark";
+    await run(appLayout, same.event);
+    expect(same.setCookies).toHaveLength(0);
   });
 
   it("list the lists, and open a new one once created", async () => {

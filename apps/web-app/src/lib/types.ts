@@ -4,6 +4,8 @@ export interface Me {
   id: string;
   displayName: string;
   email: string;
+  theme: "auto" | "neutral" | "christmas";
+  mode: "device" | "light" | "dark";
 }
 
 export interface List {
@@ -85,3 +87,16 @@ export interface ShareLink {
 
 /** A link just made: its address is given once, never listed again. */
 export type CreatedShareLink = ShareLink & { token: string; url: string };
+
+export interface ApiToken {
+  id: string;
+  name: string;
+  /** Its first characters, to recognise it: wsh_Ab3d. */
+  prefix: string;
+  readOnly: boolean;
+  expiresAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+  active: boolean;
+  createdAt: string;
+}
