@@ -1,8 +1,8 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
 
-  import type { PublicEvent, PublicItem } from "./types.ts";
-  import { formatEuros, giveLabel, giveError, unitsLeft } from "./view.ts";
+  import type { PublicEvent, PublicItem } from "@wishalia/ui/public/types.ts";
+  import { formatEuros, giveLabel, giveError, unitsLeft } from "@wishalia/ui/public/view.ts";
 
   interface Values {
     amount?: string;

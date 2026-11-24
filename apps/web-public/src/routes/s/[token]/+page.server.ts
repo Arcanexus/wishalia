@@ -11,8 +11,8 @@ import {
   writeGuestName,
   writeUnfolded,
 } from "#lib/server/gifts.ts";
-import type { MyGift, PublicView } from "#lib/types.ts";
-import { sortForGuests } from "#lib/view.ts";
+import type { MyGift, PublicView } from "@wishalia/ui/public/types.ts";
+import { sortForGuests } from "@wishalia/ui/public/view.ts";
 
 import type { Actions, PageServerLoad } from "./$types";
 

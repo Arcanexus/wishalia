@@ -1,6 +1,6 @@
 import { error, type RequestEvent } from "@sveltejs/kit";
 
-import type { PublicView } from "#lib/types.ts";
+import type { PublicView } from "@wishalia/ui/public/types.ts";
 
 /**
  * Calls to the internal API, server side: the browser never reaches it (spec §8). The share token

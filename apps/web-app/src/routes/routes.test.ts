@@ -4,6 +4,7 @@ import { fakeApi, fakeEvent, json, outcome } from "../test/event.ts";
 import { load as appLayout } from "./(app)/+layout.server.ts";
 import { actions as homeActions, load as home } from "./(app)/+page.server.ts";
 import { actions as listActions, load as listPage } from "./(app)/listes/[id]/+page.server.ts";
+import { load as previewPage } from "./(app)/listes/[id]/apercu/+page.server.ts";
 import { load as rootLayout } from "./+layout.server.ts";
 import { actions as signIn, load as signInPage } from "./connexion/+page.server.ts";
 import { POST as signOut } from "./deconnexion/+server.ts";
@@ -317,5 +318,61 @@ describe("a list page", () => {
     expect(api.calls[0]?.body).toEqual({ input: "x", listId: LIST });
     await run(listActions.status, fakeEvent({ form: { itemId: ITEM, status: "received" } }).event);
     expect(api.calls[1]?.method).toBe("PATCH");
+  });
+});
+
+describe("a list's preview", () => {
+  const item = (id: string, patch: object = {}) => ({
+    id,
+    kind: "unique",
+    repeatable: false,
+    title: id,
+    url: null,
+    notes: null,
+    priceCents: null,
+    targetCents: null,
+    quantity: null,
+    status: "open",
+    ...patch,
+  });
+
+  it("shows the items as relatives see them, with made-up gifts, never reading a real one", async () => {
+    const api = fakeApi({
+      "GET /manage/lists": () => json([list({ theme: "christmas" })]),
+      [`GET /manage/lists/${LIST}/items`]: () =>
+        json([
+          item("taken"),
+          item("free"),
+          item("gone", { status: "archived" }),
+          item("got", { status: "received" }),
+        ]),
+    });
+    const { event } = fakeEvent({ params: { id: LIST } });
+    const { value } = (await run(previewPage, event)) as {
+      value: { items: { id: string; funding: { state: string; contributors: { name: string }[] } | null }[] };
+    };
+    // What is still to give first, as relatives see it; nothing archived
+    expect(value.items.map((entry) => entry.id)).toEqual(["free", "taken", "got"]);
+    expect(value.items[1]?.funding?.contributors[0]?.name).toMatch(/\(exemple\)$/);
+    expect(event.locals.listTheme).toBe("christmas");
+    // Only the list and its items: no history, no contribution
+    expect(api.calls.map((call) => call.path)).toEqual(["/manage/lists", `/manage/lists/${LIST}/items`]);
+  });
+
+  it("answers 404 for someone else's list or a wrong address, and lets other failures through", async () => {
+    fakeApi({
+      "GET /manage/lists": () => json([]),
+      [`GET /manage/lists/${LIST}/items`]: () => json([]),
+      "GET /manage/lists/nope/items": () => json({ error: "invalid_request" }, 400),
+    });
+    for (const id of [LIST, "nope"]) {
+      expect((await run(previewPage, fakeEvent({ params: { id } }).event)).thrown).toMatchObject({
+        status: 404,
+      });
+    }
+    fakeApi({ "GET /manage/lists": () => json({ error: "boom" }, 500) });
+    expect((await run(previewPage, fakeEvent({ params: { id: LIST } }).event)).thrown).toMatchObject({
+      status: 500,
+    });
   });
 });
