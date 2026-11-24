@@ -137,6 +137,8 @@ export const contributionRoutes: FastifyPluginAsync<{ db: Database; now: () => D
             amountCents: row.amountCents,
             units: row.units,
             name: row.anonymous ? null : (sessionUser?.displayName ?? row.guestName),
+            // The word for the owner (« À lire après l'occasion »): read once the secret is lifted
+            message: row.message,
           },
           // Shown to the guests, and to the owner once the secret of the event is lifted
           visibility: "sealed",

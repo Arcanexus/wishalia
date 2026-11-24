@@ -77,6 +77,8 @@ export interface Gift {
   name: string | null;
   amountCents: number | null;
   units: number | null;
+  /** The word the guest left for the owner. */
+  message: string | null;
 }
 
 export interface ShareLink {

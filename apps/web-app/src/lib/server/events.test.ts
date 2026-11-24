@@ -52,6 +52,7 @@ describe("giftsFor", () => {
             eventId: "e",
             amountCents: 2000,
             name: "Marie",
+            message: "Joyeux Noël !",
           }),
           entry("reserved", { contributionId: "b", eventId: "e", units: 2, name: null }),
           entry("contribution_added", {
@@ -66,9 +67,28 @@ describe("giftsFor", () => {
         "e",
       ),
     ).toEqual([
-      { name: "Marie", amountCents: 2000, units: null },
-      { name: null, amountCents: null, units: 2 },
+      { name: "Marie", amountCents: 2000, units: null, message: "Joyeux Noël !" },
+      { name: null, amountCents: null, units: 2, message: null },
     ]);
+  });
+
+  it("keeps the gifts made without an event apart", () => {
+    const history = [
+      entry("reserved", {
+        contributionId: "a",
+        eventId: null,
+        units: null,
+        name: "Paul",
+        message: "Bon appétit",
+      }),
+      entry("reserved", { contributionId: "b", units: 1, name: "Jo" }),
+      entry("reserved", { contributionId: "c", eventId: "e", name: "Léo" }),
+    ];
+    expect(giftsFor(history, null).map((gift) => [gift.name, gift.message])).toEqual([
+      ["Paul", "Bon appétit"],
+      ["Jo", null],
+    ]);
+    expect(giftsFor(history, "e").map((gift) => gift.name)).toEqual(["Léo"]);
   });
 });
 

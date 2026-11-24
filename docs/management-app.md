@@ -98,8 +98,12 @@ An event's page shows:
 
 Once the secret is lifted, each item shows who gave what for this event: the amount of each
 contribution, or the reservation, under the name the guest gave (« Quelqu'un (anonyme) » when they
-chose to stay anonymous). Before, the API gives nothing of it: the page cannot show what the owner
-must not see.
+chose to stay anonymous), with the word they left for the owner, if any. Before, the API gives
+nothing of it: the page cannot show what the owner must not see.
+
+The gifts made without an event show the same way on the list's page, under each item, once their
+secret lifts: when the item is marked received, or when the list's secret is lifted in « Quand je le
+décide » mode.
 
 ![Who gave what, once the secret is lifted](images/app-event-lifted-dark.png)
 

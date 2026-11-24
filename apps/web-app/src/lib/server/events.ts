@@ -42,11 +42,11 @@ export async function readEventForm(event: FormEvent, key: "create" | "update") 
 }
 
 /**
- * Who gave what to an item for one event, from its history: the contributions and reservations
+ * Who gave what to an item for one event (or for none: null), from its history: the contributions and reservations
  * of that event, without the withdrawn ones. The API only gives these entries once the secret of
  * the event is lifted (anti-spoil): before, the list is empty.
  */
-export function giftsFor(history: readonly HistoryEntry[], eventId: string): Gift[] {
+export function giftsFor(history: readonly HistoryEntry[], eventId: string | null): Gift[] {
   const withdrawn = new Set(
     history
       .filter((entry) => entry.type === "contribution_withdrawn")
@@ -56,12 +56,13 @@ export function giftsFor(history: readonly HistoryEntry[], eventId: string): Gif
     .filter(
       (entry) =>
         (entry.type === "contribution_added" || entry.type === "reserved") &&
-        entry.payload.eventId === eventId &&
+        (entry.payload.eventId ?? null) === eventId &&
         !withdrawn.has(entry.payload.contributionId),
     )
     .map((entry) => ({
       name: typeof entry.payload.name === "string" ? entry.payload.name : null,
       amountCents: typeof entry.payload.amountCents === "number" ? entry.payload.amountCents : null,
       units: typeof entry.payload.units === "number" ? entry.payload.units : null,
+      message: typeof entry.payload.message === "string" ? entry.payload.message : null,
     }));
 }

@@ -3,6 +3,7 @@
   import { resolve } from "$app/paths";
   import { cents, formatAmount } from "@wishalia/domain";
 
+  import Gifts from "#lib/Gifts.svelte";
   import ItemEditor from "#lib/ItemEditor.svelte";
   import ListSettings from "#lib/ListSettings.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
@@ -85,6 +86,7 @@
               {/if}
             </p>
             {#if item.notes}<p class="notes">{item.notes}</p>{/if}
+            {#if data.gifts[item.id]?.length}<Gifts gifts={data.gifts[item.id] ?? []} none="" />{/if}
           </div>
           <div class="actions">
             <form method="POST" action="?/status" use:enhance>
@@ -122,6 +124,12 @@
           <div class="text">
             <h3>{item.title}</h3>
             <p class="muted meta">{item.status === "received" ? "Reçu" : "Archivé"}</p>
+            {#if data.gifts[item.id]}
+              <Gifts
+                gifts={data.gifts[item.id] ?? []}
+                none="Personne ne l'a offert en dehors des événements."
+              />
+            {/if}
           </div>
           <form method="POST" action="?/status" use:enhance class="actions">
             <input type="hidden" name="itemId" value={item.id} />
