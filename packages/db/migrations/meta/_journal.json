@@ -50,6 +50,13 @@
       "when": 1795452137288,
       "tag": "0006_user_display_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795510931354,
+      "tag": "0007_enrichment",
+      "breakpoints": true
     }
   ]
 }

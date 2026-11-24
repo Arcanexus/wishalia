@@ -35,6 +35,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Items added with a link complete themselves: the worker reads the page (JSON-LD `Product`, then
+  Open Graph, then `<title>`) and fills the title, while it is still the site's name, and an empty
+  price. It never reaches an internal address (checked after DNS and at each redirect), stops at
+  10 s and 3 MB, tries 3 times, and writes an `enriched` history entry. The list page shows the
+  items being completed. The queue is a column in PostgreSQL (`enrichment`, migration `0007`), and
+  the worker now needs `DATABASE_URL`. New metrics `wishalia_enrichment_*`.
 - Reordering a list's items: a handle to drag with a mouse or a finger, and « Monter » / « Descendre »
   arrows for one tap, the keyboard or without JavaScript; the new place is announced. The API takes
   the whole new order at once (`PUT /manage/lists/:id/order`), or nothing when the list changed.

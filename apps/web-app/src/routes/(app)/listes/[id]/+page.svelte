@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { tick } from "svelte";
+  import { onDestroy, tick } from "svelte";
   import { enhance } from "$app/forms";
+  import { invalidateAll } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { cents, formatAmount } from "@wishalia/domain";
 
@@ -17,6 +18,21 @@
 
   const open = $derived(data.items.filter((item) => item.status === "open"));
   const byId = $derived(new Map(open.map((item) => [item.id, item])));
+
+  // While the worker completes items from their links, the page looks again every few seconds,
+  // for a minute at most (it never polls without a reason)
+  const completing = $derived(open.some((item) => item.enrichment === "pending"));
+  let polls = 0;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  $effect(() => {
+    if (!completing || polls >= 20 || order || dragging) return;
+    timer = setTimeout(() => {
+      polls += 1;
+      void invalidateAll();
+    }, 3000);
+    return () => clearTimeout(timer);
+  });
+  onDestroy(() => clearTimeout(timer));
 
   // The order on screen while an item moves, before the server confirms it (optimistic)
   let order = $state<string[] | null>(null);
@@ -230,6 +246,13 @@
                 {/if}
               </p>
               {#if item.notes}<p class="notes">{item.notes}</p>{/if}
+              {#if item.enrichment === "pending"}
+                <p class="muted completing">Le titre et le prix se complètent depuis le lien…</p>
+              {:else if item.enrichment === "failed"}
+                <p class="muted completing">
+                  La page du lien n'a pas pu être lue : complétez l'envie avec « Modifier » si besoin.
+                </p>
+              {/if}
               {#if data.gifts[item.id]?.length}<Gifts gifts={data.gifts[item.id] ?? []} none="" />{/if}
             </div>
             <div class="actions">
@@ -414,6 +437,10 @@
   .kind {
     color: var(--text);
     font-weight: 600;
+  }
+  .completing {
+    margin: 0.5rem 0 0;
+    font-size: 0.95rem;
   }
   .notes {
     margin: 0.5rem 0 0;

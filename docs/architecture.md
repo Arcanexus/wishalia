@@ -7,7 +7,7 @@ apps/
   api/          Fastify: /manage/* (owner) and /public/* (share links), separate scopes
   web-app/      SvelteKit: the management app, for the owner
   web-public/   SvelteKit: the public view of the share links
-  worker/       background jobs (pg-boss): enrichment of the items, price tracking
+  worker/       background jobs: completing the items from their link (price tracking to come)
 packages/
   domain/       pure business rules (amounts, funding, the anti-spoil rule)
   db/           Drizzle schema, versioned migrations, PostgreSQL client
@@ -29,7 +29,7 @@ internet and lets the anti-spoil check run before anything reaches a page.
 browser ──> ingress ──> web-public ──┐
                    └──> web-app ─────┴──> api ──> PostgreSQL
                                                   ▲
-                                       worker ────┘   (jobs in PostgreSQL, pg-boss)
+                                       worker ────┘   (its queue is a column in PostgreSQL)
 
 Prometheus ──> :9464/metrics of each component (inside the cluster only)
 ```

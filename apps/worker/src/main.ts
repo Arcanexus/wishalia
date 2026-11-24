@@ -1,24 +1,40 @@
-import { createRegistry, metricsPort, startMetricsServer } from "@wishalia/metrics";
+import { createDb } from "@wishalia/db";
+import { createEnrichmentMetrics, createRegistry, metricsPort, startMetricsServer } from "@wishalia/metrics";
 
+import { fetchPage } from "./fetch.js";
 import { createHealthServer } from "./health.js";
+import { runLoop } from "./loop.js";
 
-// The job queue (pg-boss on PostgreSQL) and the enrichment jobs come with the enrichment step.
+// The enrichment queue lives in the database (docs/enrichment.md): the worker needs DATABASE_URL
+const { db, close } = createDb({ url: process.env.DATABASE_URL ?? "", maxConnections: 2 });
 const port = Number(process.env.PORT ?? 3001);
 let running = true;
 
 const server = createHealthServer(() => running);
 server.listen(port);
 
-// Job metrics (queue depth, durations, failures) join this registry with the jobs themselves
 const registry = createRegistry({ component: "worker", version: process.env.APP_VERSION ?? "dev" });
+const metrics = createEnrichmentMetrics(registry);
 const metricsServer = await startMetricsServer(registry, metricsPort(), {
   onError: (error) => process.stderr.write(`metrics server failed to start: ${error.message}\n`),
+});
+
+const loop = runLoop({
+  db,
+  fetchPage: (url) => fetchPage(url),
+  metrics,
+  isRunning: () => running,
+  log: (message) => process.stderr.write(`${message}\n`),
 });
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.once(signal, () => {
     running = false;
     metricsServer?.close();
-    server.close(() => process.exit(0));
+    // The job under way ends first (a page takes 10 s at most), then the connections close
+    void loop.finally(async () => {
+      await close();
+      server.close(() => process.exit(0));
+    });
   });
 }

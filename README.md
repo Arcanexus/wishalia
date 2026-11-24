@@ -39,7 +39,8 @@ server, not hidden in the page.
 > API v1 (personal access tokens, OpenAPI) are in place and tested. The management app has its
 > screens (signing in, passkeys, lists, quick add, editing and reordering items, a list's preview,
 > events, sharing, settings), and the family sees a shared list or event in the public view, where
-> they reserve, chip in and withdraw.
+> they reserve, chip in and withdraw. The worker completes the items added with a link (title,
+> price).
 
 <p align="center">
   <img src="docs/images/app-lists.png" alt="The management app: a greeting, the quick add field and two lists" width="640">

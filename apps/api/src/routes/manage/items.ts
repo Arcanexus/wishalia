@@ -102,6 +102,8 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now 
             listId,
             title: parsed.title,
             url: parsed.url,
+            // The worker completes it from its link (docs/enrichment.md)
+            enrichment: parsed.url ? "pending" : null,
             // New items come first
             position: sql`(SELECT coalesce(min(${schema.wishes.position}) - 1, 0) FROM ${schema.wishes} WHERE ${schema.wishes.listId} = ${listId})`,
           })
@@ -167,6 +169,11 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now 
         }
         editable.url = cleaned;
       }
+      // A new link: the worker completes the item from it again
+      const relink =
+        editable.url !== undefined && editable.url !== before.url
+          ? { enrichment: editable.url ? ("pending" as const) : null, enrichmentAttempts: 0 }
+          : {};
 
       const kind = editable.kind ?? before.kind;
       const quantity = editable.quantity !== undefined ? editable.quantity : before.quantity;
@@ -221,6 +228,7 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now 
         .update(schema.wishes)
         .set({
           ...editable,
+          ...relink,
           ...(status !== undefined ? { status } : {}),
           ...(listId !== undefined ? { listId } : {}),
           ...(position !== undefined ? { position } : {}),
