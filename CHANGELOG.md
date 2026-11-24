@@ -6,6 +6,26 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The management app installs on a phone, a tablet or a computer (Progressive Web App): a manifest
+  (`/manifest.webmanifest`, named after `APP_NAME`), icons (192, 512, maskable, Apple touch), a
+  status bar colour that follows the theme and mode, and a service worker that keeps only the app's
+  code and icons, never a private page, with a « Pas de connexion » page when offline.
+- Web Share Target: on Android, « Partager » then « Wishalia » from any app opens « Ajouter une
+  envie » (`/ajouter`) with the shared link and words in the field, a choice of list, and one button
+  to add. The page never adds on its own. A shared link survives the sign-in page.
+- iOS Shortcut, documented step by step ([Install the app](docs/install-app.md)): through the add
+  page, or in the background with a REST API v1 token.
+- « Réglages » shows how to install the app on the device in hand, an « Installer Wishalia » button
+  where the browser offers one, and the address for the iPhone Shortcut.
+- The Helm chart deploys its own PostgreSQL when you have none (`postgresql.enabled`, the default):
+  the official image as a StatefulSet with its volume (or an existing claim), a password made once and kept, a
+  NetworkPolicy, and `DATABASE_URL` given to the API and the worker. With your own PostgreSQL, set
+  `postgresql.enabled=false` and give its URL in `externalDatabase.existingSecret` (any key) or in
+  `existingSecret`. The migrations wait for the database to start, and take a lock so that several
+  API pods never apply them at once.
+
 ### Changed
 
 - Items no longer carry `imageKey` (always empty until now) in the APIs, REST v1 included: they carry
@@ -38,18 +58,6 @@ All notable changes to this project are documented here. The format follows
 - The OIDC callback URL in the documentation is `/auth/callback/oidc`.
 
 ### Added
-
-- The management app installs on a phone, a tablet or a computer (Progressive Web App): a manifest
-  (`/manifest.webmanifest`, named after `APP_NAME`), icons (192, 512, maskable, Apple touch), a
-  status bar colour that follows the theme and mode, and a service worker that keeps only the app's
-  code and icons, never a private page, with a « Pas de connexion » page when offline.
-- Web Share Target: on Android, « Partager » then « Wishalia » from any app opens « Ajouter une
-  envie » (`/ajouter`) with the shared link and words in the field, a choice of list, and one button
-  to add. The page never adds on its own. A shared link survives the sign-in page.
-- iOS Shortcut, documented step by step ([Install the app](docs/install-app.md)): through the add
-  page, or in the background with a REST API v1 token.
-- « Réglages » shows how to install the app on the device in hand, an « Installer Wishalia » button
-  where the browser offers one, and the address for the iPhone Shortcut.
 
 - Items show an image (docs/images.md). The worker takes up to four images from the page of an
   item's link, through the same SSRF guard as the page, keeps only real images read from their bytes

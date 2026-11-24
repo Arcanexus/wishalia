@@ -32,7 +32,7 @@ ConfigMap and loads the sensitive ones from `existingSecret`. Nothing is hard-co
 
 | Key                              | Used from                              | Content                                                                                                                                                       |
 | -------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                   | the API, the worker, the migration Job | `postgres://user:password@host:5432/database`                                                                                                                 |
+| `DATABASE_URL`                   | the API, the worker, the migration Job | `postgres://user:password@host:5432/database`. Only with your own database (`postgresql.enabled=false`); the built-in one is wired by the chart.              |
 | `AUTH_SECRET`                    | the API                                | 32 random characters or more (`openssl rand -base64 32`): signs the session cookies and the device marker, encrypts the OAuth tokens. Required in production. |
 | `OIDC_CLIENT_SECRET`             | the API                                | Client secret of the OIDC provider, with `auth.oidc.*`.                                                                                                       |
 | `SMTP_URL`                       | the API                                | `smtp://user:password@host:587` (STARTTLS) or `smtps://...:465`. Unset: no magic links, passkeys and OIDC only.                                               |

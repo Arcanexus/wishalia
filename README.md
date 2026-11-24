@@ -47,16 +47,16 @@ server, not hidden in the page.
   <img src="docs/images/app-lists.png" alt="The management app: a greeting, the quick add field and two lists" width="640">
 </p>
 
-|                         |                                                                         |
-| ----------------------- | ----------------------------------------------------------------------- |
-| 🤫 **Nothing spoiled**  | No amount, name or progress shown to the owner, link previews included. |
-| 🎁 **Gifts together**   | Several contributions per item, across events, overshoot allowed.       |
-| 📅 **Lists and events** | Durable lists, recurring events, series of books, recurring wishes.     |
-| 👵 **For every age**    | Large touch targets, no password, an item added in under five seconds.  |
-| 📱 **On the phone**     | Installs like an app; « Partager » from any shop adds a wish.           |
-| ⚡ **Light**            | Little JavaScript, quick on a modest phone.                             |
-| 🏠 **Self-hosted**      | Four images, one Helm chart, a REST API for home automation.            |
-| 📈 **Observable**       | Prometheus metrics and a ServiceMonitor, with nothing that spoils.      |
+|                         |                                                                          |
+| ----------------------- | ------------------------------------------------------------------------ |
+| 🤫 **Nothing spoiled**  | No amount, name or progress shown to the owner, link previews included.  |
+| 🎁 **Gifts together**   | Several contributions per item, across events, overshoot allowed.        |
+| 📅 **Lists and events** | Durable lists, recurring events, series of books, recurring wishes.      |
+| 👵 **For every age**    | Large touch targets, no password, an item added in under five seconds.   |
+| 📱 **On the phone**     | Installs like an app; « Partager » from any shop adds a wish.            |
+| ⚡ **Light**            | Little JavaScript, quick on a modest phone.                              |
+| 🏠 **Self-hosted**      | Four images, one Helm chart (PostgreSQL included, or yours), a REST API. |
+| 📈 **Observable**       | Prometheus metrics and a ServiceMonitor, with nothing that spoils.       |
 
 ## Quick start
 

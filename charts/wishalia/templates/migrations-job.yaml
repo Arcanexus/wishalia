@@ -1,7 +1,8 @@
-{{- if .Values.migrations.enabled }}
-{{- if not .Values.existingSecret }}
-{{- fail "migrations.enabled needs existingSecret with DATABASE_URL (or set migrations.enabled=false)" }}
+{{- if not (include "wishalia.database.configured" .) }}
+{{- fail "no database: keep postgresql.enabled=true, or give the DATABASE_URL of yours in externalDatabase.existingSecret or existingSecret" }}
 {{- end }}
+{{- /* With the built-in PostgreSQL, the API pods apply the migrations (initContainer, deployment.yaml) */}}
+{{- if and .Values.migrations.enabled (not .Values.postgresql.enabled) }}
 # Applies the database migrations before the new version starts. With ArgoCD, the Helm hooks
 # become PreSync hooks: the sync waits for the Job.
 apiVersion: batch/v1
@@ -38,6 +39,10 @@ spec:
           command: ["node", "dist/migrate.js"]
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- with include "wishalia.database.env" . | trim }}
+          env:
+            {{- . | nindent 12 }}
+          {{- end }}
           {{- with .Values.existingSecret }}
           envFrom:
             - secretRef:
