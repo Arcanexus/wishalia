@@ -4,6 +4,7 @@
   import { cents, formatAmount } from "@wishalia/domain";
 
   import ItemEditor from "#lib/ItemEditor.svelte";
+  import ListSettings from "#lib/ListSettings.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
   import type { Item } from "#lib/types.ts";
 
@@ -43,10 +44,16 @@
   <a class="button secondary" href="{resolve('/(app)/partage')}?liste={data.list.id}">Partager cette liste</a>
 </div>
 
+<ListSettings list={data.list} {form} />
+
 <QuickAdd listName={data.list.name} result={form?.add ?? null} />
 
 <div role="status" class="visually-hidden">
-  {#if form?.edit && "title" in form.edit}
+  {#if form?.settings && "saved" in form.settings}
+    Réglages de la liste enregistrés.
+  {:else if form?.reveal && "lifted" in form.reveal}
+    Le secret de la liste est levé.
+  {:else if form?.edit && "title" in form.edit}
     « {form.edit.title} » est enregistré{form.edit.listId !== data.list.id ? " et a changé de liste" : ""}.
   {:else if form?.status && "status" in form.status}
     « {form.status.title} » : {form.status.status === "received"

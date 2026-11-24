@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
   import { resolve } from "$app/paths";
+  import { page } from "$app/state";
 
   import QuickAdd from "#lib/QuickAdd.svelte";
 
@@ -16,6 +17,12 @@
 </svelte:head>
 
 <h1>Bonjour {firstName}</h1>
+
+{#if page.url.searchParams.has("archivee")}
+  <p class="notice" role="status">
+    La liste est archivée : elle ne s'affiche plus, ni pour vous ni pour vos proches.
+  </p>
+{/if}
 
 <QuickAdd listName={data.lists[0]?.name ?? null} result={form?.add ?? null} />
 

@@ -2,6 +2,7 @@ import { error } from "@sveltejs/kit";
 
 import { ApiError, apiJson } from "#lib/server/api.ts";
 import { editItem, quickAdd, setItemStatus } from "#lib/server/items.ts";
+import { archiveList, revealList, saveListSettings } from "#lib/server/lists.ts";
 import type { Item, List } from "#lib/types.ts";
 
 import type { Actions, PageServerLoad } from "./$types";
@@ -35,4 +36,7 @@ export const actions: Actions = {
   add: (event) => quickAdd(event, event.params.id),
   status: (event) => setItemStatus(event),
   edit: (event) => editItem(event),
+  settings: (event) => saveListSettings(event, event.params.id),
+  reveal: (event) => revealList(event, event.params.id),
+  archive: (event) => archiveList(event, event.params.id),
 };

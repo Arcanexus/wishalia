@@ -35,6 +35,9 @@ All notable changes to this project are documented here. The format follows
   their own link is warned and sees no funding at all. An unknown, revoked or expired link gives
   one same page. Same title and preview for every link, `noindex`, never cached; light/dark button.
   See [Public view](docs/public-view.md).
+- A list's settings in the management app: its name, a theme forced on everyone (or none), when the
+  secret of the gifts made without an event lifts, lifting it, and archiving the list, the last two
+  behind a box to tick. See [Management app](docs/management-app.md#a-lists-settings).
 - Editing an item in the management app, in place: its name, its kind (a gift, possibly given at
   every occasion; several copies; a pool with an optional target), its price, its list, its link
   and its notes. Works without JavaScript. See
