@@ -1,7 +1,7 @@
 import { error } from "@sveltejs/kit";
 
 import { ApiError, apiJson } from "#lib/server/api.ts";
-import { quickAdd, setItemStatus } from "#lib/server/items.ts";
+import { editItem, quickAdd, setItemStatus } from "#lib/server/items.ts";
 import type { Item, List } from "#lib/types.ts";
 
 import type { Actions, PageServerLoad } from "./$types";
@@ -26,10 +26,13 @@ export const load: PageServerLoad = async (event) => {
   if (!list) error(404, "Cette liste n'existe pas, ou plus.");
   // A theme the owner forces on the list colours the whole page (docs/branding.md)
   event.locals.listTheme = list.theme;
-  return { list, items };
+  // The lists an item can move to
+  const others = lists.filter((candidate) => !candidate.archivedAt);
+  return { list, items, lists: others };
 };
 
 export const actions: Actions = {
   add: (event) => quickAdd(event, event.params.id),
   status: (event) => setItemStatus(event),
+  edit: (event) => editItem(event),
 };

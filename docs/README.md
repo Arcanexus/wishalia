@@ -21,6 +21,6 @@ list never sees who gave what, until they choose to lift the secret after the ev
 
 The project is under way: the four components ship as images and a Helm chart, the APIs (management,
 public view, REST v1) and the business rules (funding, anti-spoil) are in place, and the management
-app has its first screens: signing in, the lists, the quick add, the events, sharing and the
+app has its first screens: signing in, the lists, the quick add, editing items, the events, sharing and the
 settings, with passkeys. The public view shows a shared list or event to the family, who reserve,
 chip in and withdraw from it.

@@ -238,13 +238,16 @@ describe("the app pages", () => {
 describe("a list page", () => {
   it("shows the list and its items, in the theme the list forces", async () => {
     fakeApi({
-      "GET /manage/lists": () => json([list({ theme: "christmas" })]),
+      "GET /manage/lists": () =>
+        json([list({ theme: "christmas" }), list({ id: "old", archivedAt: "2026-01-01T00:00:00Z" })]),
       [`GET /manage/lists/${LIST}/items`]: () => json([{ id: ITEM }]),
     });
     const { event } = fakeEvent({ params: { id: LIST } });
+    // The lists an item can move to: never an archived one
     expect((await run(listPage, event)).value).toEqual({
       list: list({ theme: "christmas" }),
       items: [{ id: ITEM }],
+      lists: [list({ theme: "christmas" })],
     });
     expect(event.locals.listTheme).toBe("christmas");
   });

@@ -36,9 +36,29 @@ add, rather than asking before it.
 
 ![An add whose link is already in the list](images/app-quick-add.png)
 
-A list page shows its items, newest first, with their price and the site of their link. Each item
-can be marked **received** or **archived**; received and archived items wait under « Reçues et
+A list page shows its items, newest first, with what kind of gift they are, their price and the site
+of their link. Each item can be marked **received** or **archived**; received and archived items wait under « Reçues et
 archivées », where they can be put back in the list. Every change lands in the item's history.
+
+### Editing an item
+
+« Modifier » opens the item in place, under its card: its name, what kind of gift it is, its price,
+its list, its link and notes for the family. The kind is a choice of three, each with a line that
+says what it means:
+
+- **Un cadeau**: one person reserves it; « À chaque occasion » makes it a gift that can be given
+  again at every event (it is then never marked received);
+- **Plusieurs exemplaires**: how many are wanted, from 1 to 1,000; each guest reserves one or more;
+- **Une cagnotte**: a target in euros, optional; each guest chips in what they want, past the target
+  if they like.
+
+Only the fields of the kind chosen show, by CSS, so the form works the same without JavaScript.
+Amounts are typed as the person writes them (« 24 », « 12,50 »). A link is cleaned like in the quick
+add, and anything that is not an `http(s)` address is refused. When something is wrong, the form
+stays open with what was typed and says what to fix. Moving an item to another list takes it off
+the page, and the page says so. The API writes the history: `updated`, `price_changed`, `moved`.
+
+![Editing an item into a pool, on a phone](images/app-edit-item.png)
 
 ## Events
 

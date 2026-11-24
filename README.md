@@ -37,7 +37,7 @@ server, not hidden in the page.
 > chart. The data model, the business rules (funding, anti-spoil), the sign-in (OIDC, passkeys,
 > magic links), the management API, the public view API (share links, contributions) and the REST
 > API v1 (personal access tokens, OpenAPI) are in place and tested. The management app has its
-> screens (signing in, passkeys, lists, quick add, events, sharing, settings), and the family sees a
+> screens (signing in, passkeys, lists, quick add, editing items, events, sharing, settings), and the family sees a
 > shared list or event in the public view, where they reserve, chip in and withdraw.
 
 <p align="center">
