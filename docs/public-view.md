@@ -33,11 +33,55 @@ already given or received follow, quieter, with a dashed border.
 
 ![An event link on a phone, in dark mode](images/public-event-dark.png)
 
+## Giving
+
+Under every item still open, one button says what it does: « Je le réserve » for a gift,
+« J'en réserve » when several copies are left, « Je participe » for a pool. It opens a short form,
+in the page, that asks only what the gift needs:
+
+- for a pool, the amount in euros (« 20 » or « 12,50 »), with what is still missing; giving more
+  than the target is allowed;
+- for several copies, how many (up to what is left);
+- the person's first name, when they have no account (it is kept on the device for the next time);
+- an optional word for the owner (« À lire après l'occasion, avec le cadeau. »), 500 characters at
+  most;
+- « Rester discret »: nobody sees their name, not even the owner.
+
+On a list link, when the item is picked for more than one open event, the form asks which one the
+gift is for; with one open event it goes to that event without asking. An event link gives to its
+event. The page then thanks the person (« Merci, c'est noté ! Léa n'en saura rien avant
+l'occasion. ») and shows their gift on the item: « Vous l'avez réservé. », « Vous en réservez 2. »,
+« Vous participez pour 12,50 € », with a « Me retirer » button. Someone who chips in to a pool can
+chip in again.
+
+![Chipping in to a pool, on a phone](images/public-give.png)
+
+When the gift cannot be taken, the form stays open with what was typed and says why, in words: the
+item was reserved in the meantime (« Quelqu'un vient de le réserver. Regardez les autres envies ! »),
+fewer copies are left, the amount is missing, the name is missing, or the occasion is past.
+
+### Withdrawing
+
+« Me retirer » takes the gift back, as long as the secret of its event is kept and the item is not
+received. A guest with an account withdraws by their session; a guest without one by the withdraw
+key the API gave once, kept on their device:
+
+- in an `HttpOnly`, `SameSite=Lax` cookie, `wishalia.gifts`, scoped to the link's path
+  (`/s/<token>`), so that the page's JavaScript never reads it and another link never receives it;
+- for 400 days, and the 30 latest gifts of that link (a cookie holds about 4 KB);
+- the first name goes in `wishalia.guest_name`, also `HttpOnly`.
+
+On another device, or after clearing the cookies, the gift stays given, but that device does not
+know it is theirs and cannot withdraw it. With an account, their gifts follow them on every device.
+
+![Their own gifts, in dark mode](images/public-mine-dark.png)
+
 ## When the owner opens their own link
 
 The API recognises the owner by their session or by the device marker put on their device when
 they made or copied a link (see [Public view API](public-api.md#who-is-looking)). The page then says
-so, and shows the items **without anything about who gave what**: no state, no progress, no names.
+so, and shows the items **without anything about who gave what**: no state, no progress, no names,
+and no button to give (the API refuses it anyway).
 The order gives nothing away either: what is given is not moved down for the owner, since their view
 has no funding to sort by.
 
@@ -64,6 +108,5 @@ envoyé. » A token that cannot be one is answered the same way without asking t
 The page follows the list's forced theme when it has one; otherwise the person's choice, with the
 Christmas theme in December and for a Christmas event. The header button switches between the
 device's mode, light and dark, kept on the device (`wishalia.mode`). Every page passes axe (WCAG 2.2
-AA) in light and dark, on a phone and a computer, and works without JavaScript.
-
-Coming next: contributing from this page (reserving, chipping in, withdrawing).
+AA) in light and dark, on a phone and a computer, and works without JavaScript, giving and
+withdrawing included.

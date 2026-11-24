@@ -20,15 +20,33 @@ export function apiUrl(): string {
   return url;
 }
 
-export async function publicFetch(event: ApiEvent, token: string, path: string): Promise<Response> {
+export interface PublicCall {
+  method?: "GET" | "POST" | "DELETE";
+  body?: unknown;
+  headers?: Record<string, string>;
+}
+
+export async function publicFetch(
+  event: ApiEvent,
+  token: string,
+  path: string,
+  { method = "GET", body, headers: extra = {} }: PublicCall = {},
+): Promise<Response> {
   const headers = new Headers({
     accept: "application/json",
     "x-share-token": token,
     "x-forwarded-for": event.getClientAddress(),
+    ...extra,
   });
   const cookie = event.request.headers.get("cookie");
   if (cookie) headers.set("cookie", cookie);
-  return fetch(new URL(path, apiUrl()), { headers, redirect: "manual" });
+  if (body !== undefined) headers.set("content-type", "application/json");
+  return fetch(new URL(path, apiUrl()), {
+    method,
+    headers,
+    redirect: "manual",
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  });
 }
 
 /**

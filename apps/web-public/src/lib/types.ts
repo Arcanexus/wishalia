@@ -28,6 +28,17 @@ export interface Funding {
   timesGiven?: number;
   /** Who gave: a name, or null when anonymous. Never an amount. */
   contributors: { name: string | null; mine: boolean }[];
+  /** The signed-in person's own contributions, with what only they may see. */
+  mine?: { id: string; eventId: string | null; amountCents: number | null; units: number | null }[];
+}
+
+/** A contribution of the person looking, from their account or kept on their device. */
+export interface MyGift {
+  id: string;
+  itemId: string;
+  eventId: string | null;
+  amountCents: number | null;
+  units: number | null;
 }
 
 export interface PublicItem {

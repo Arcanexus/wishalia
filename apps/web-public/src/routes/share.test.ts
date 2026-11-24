@@ -49,6 +49,7 @@ function event(token = TOKEN, cookie?: string) {
       params: { token },
       request: new Request(`https://wishalia.test/s/${token}`, { headers: cookie ? { cookie } : {} }),
       getClientAddress: () => "10.0.0.9",
+      cookies: { get: () => undefined },
       locals,
       setHeaders,
     } as unknown as Parameters<typeof load>[0],

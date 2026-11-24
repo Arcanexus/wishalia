@@ -30,6 +30,11 @@ All notable changes to this project are documented here. The format follows
   their own link is warned and sees no funding at all. An unknown, revoked or expired link gives
   one same page. Same title and preview for every link, `noindex`, never cached; light/dark button.
   See [Public view](docs/public-view.md).
+- Giving from the public view: reserve a gift or some copies, chip in to a pool, with a word for the
+  owner and the choice to stay discreet; on a list link, the event the gift is for. The person sees
+  their gifts and withdraws them; without an account, the withdraw key stays in an HttpOnly cookie
+  scoped to the link, and their first name is remembered. Works without JavaScript.
+  See [Public view](docs/public-view.md#giving).
 - `@wishalia/ui`: the design tokens, fonts, logo and light/dark button, shared by the two frontends.
 
 - Passkeys in the management app: « Se connecter avec une clé d'accès » and the passkeys offered in

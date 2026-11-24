@@ -1,18 +1,36 @@
 <script lang="ts">
+  import { enhance } from "$app/forms";
   import { page } from "$app/state";
 
   import Logo from "@wishalia/ui/Logo.svelte";
   import ModeButton from "@wishalia/ui/ModeButton.svelte";
 
-  import { formatDay, formatEuros, heading, standing } from "#lib/view.ts";
+  import GiveForm from "#lib/GiveForm.svelte";
+  import {
+    canGive,
+    formatDay,
+    formatEuros,
+    heading,
+    myGiftLine,
+    standing,
+    withdrawError,
+  } from "#lib/view.ts";
 
   import type { PageProps } from "./$types";
 
-  let { data }: PageProps = $props();
+  let { data, form }: PageProps = $props();
   const view = $derived(data.view);
   const owner = $derived(view.owner.displayName);
   const openEvents = $derived(view.events.filter((event) => event.open));
   const eventsById = $derived(new Map(view.events.map((event) => [event.id, event])));
+  /** The open events a gift can be for: on a list link, those of the item. */
+  const giftEvents = (eventIds: string[]) =>
+    view.scope === "event"
+      ? []
+      : eventIds.flatMap((id) => {
+          const event = eventsById.get(id);
+          return event?.open ? [event] : [];
+        });
   const kindLabels = { unique: null, quantity: "Plusieurs exemplaires", pool: "Cagnotte" } as const;
 
   /** Only web links become links: never a javascript: or data: address. */
@@ -114,10 +132,51 @@
             ></progress>
           {/if}
           {#if line}<p class="standing" class:done={complete}>{line}</p>{/if}
+
+          {#each data.mine.filter((gift) => gift.itemId === item.id) as gift (gift.id)}
+            <div class="mine">
+              <p>
+                <strong>{myGiftLine(gift, item)}</strong>
+                {#if gift.eventId && view.scope === "list" && eventsById.get(gift.eventId)}
+                  <span class="muted">Pour {eventsById.get(gift.eventId)?.name}.</span>
+                {/if}
+              </p>
+              <form method="POST" action="?/withdraw" use:enhance>
+                <input type="hidden" name="id" value={gift.id} />
+                <button type="submit" class="secondary" aria-label="Me retirer de « {item.title} »">
+                  Me retirer
+                </button>
+              </form>
+              {#if form?.withdraw && "id" in form.withdraw && form.withdraw.id === gift.id}
+                <p class="notice error" role="alert">{withdrawError(form.withdraw.error)}</p>
+              {/if}
+            </div>
+          {/each}
+
+          {#if form?.given?.itemId === item.id}
+            <p class="notice thanks">
+              Merci, c'est noté ! {owner} n'en saura rien avant l'occasion.
+            </p>
+          {/if}
+
+          {#if canGive(item, view)}
+            <GiveForm
+              {item}
+              events={giftEvents(item.eventIds)}
+              {owner}
+              needsName={view.me === null}
+              guestName={data.guestName}
+              failed={form?.give && form.give.itemId === item.id ? form.give : null}
+            />
+          {/if}
         </li>
       {/each}
     </ul>
   {/if}
+
+  <div class="visually-hidden" role="status">
+    {#if form?.given}Merci, c'est noté !{:else if form?.withdrawn}C'est retiré.{/if}
+  </div>
 
   {#if view.viewer !== "owner"}
     <p class="muted secret">
@@ -239,6 +298,26 @@
   }
   .complete .standing {
     color: var(--text-2);
+  }
+  .mine {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border: 2px solid var(--action);
+  }
+  .mine p {
+    margin: 0;
+  }
+  .mine .notice {
+    flex-basis: 100%;
+  }
+  .thanks {
+    margin-top: 0.75rem;
   }
   .empty {
     margin: 1.5rem 0;
