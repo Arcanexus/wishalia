@@ -3,7 +3,7 @@ import type { AddressInfo } from "node:net";
 import { gzipSync } from "node:zlib";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { checkUrl, fetchPage, isPublicAddress, safeLookup } from "./fetch.js";
+import { checkUrl, fetchImage, fetchPage, isPublicAddress, safeLookup } from "./fetch.js";
 
 describe("isPublicAddress", () => {
   it("refuses loopback, private, link-local, reserved and mapped private addresses", () => {
@@ -97,6 +97,12 @@ describe("fetchPage", () => {
         case "/inside":
           response.writeHead(302, { location: "http://10.0.0.5/admin" }).end();
           return;
+        case "/photo.png":
+          response.writeHead(200, { "content-type": "image/png" }).end(Buffer.from("\x89PNG fake", "latin1"));
+          return;
+        case "/photo.bin":
+          response.writeHead(200, { "content-type": "application/octet-stream" }).end("bytes");
+          return;
         case "/json":
           response.writeHead(200, { "content-type": "application/json" }).end("{}");
           return;
@@ -133,5 +139,15 @@ describe("fetchPage", () => {
     await expect(get("/missing")).rejects.toThrow("http_404");
     await expect(get("/loop", { maxRedirects: 2 })).rejects.toThrow("too_many_redirects");
     await expect(get("/inside")).rejects.toThrow("blocked_address");
+  });
+
+  it("fetches an image with the same guard, and refuses a page or a vector image", async () => {
+    const image = await fetchImage(at("/photo.png"), { lookup, port });
+    expect(image).toMatchObject({ url: at("/photo.png"), contentType: "image/png" });
+    expect(image.bytes.subarray(0, 4).toString("latin1")).toBe("\x89PNG");
+    expect((await fetchImage(at("/photo.bin"), { lookup, port })).bytes.toString()).toBe("bytes");
+    await expect(fetchImage(at("/page"), { lookup, port })).rejects.toThrow("not_image");
+    await expect(fetchImage(at("/inside"), { lookup, port })).rejects.toThrow("blocked_address");
+    await expect(fetchImage("http://127.0.0.1/a.png")).rejects.toThrow("blocked_address");
   });
 });

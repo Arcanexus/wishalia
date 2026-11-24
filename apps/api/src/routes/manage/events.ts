@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { recordHistory, type Tx } from "../../history.js";
 import { first, HttpError, notFound, parse, userId } from "../../http.js";
+import { imagesOf } from "../../images.js";
 import type { ManageDeps } from "./index.js";
 import { ownerEvent, ownerItem } from "./serialize.js";
 
@@ -34,7 +35,7 @@ async function ownedEvent(tx: Tx, ownerId: string, eventId: string) {
   return event;
 }
 
-export const eventRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now }) => {
+export const eventRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now, images }) => {
   app.get("/events", async (request) => {
     const rows = await db
       .select()
@@ -80,7 +81,12 @@ export const eventRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now
       .innerJoin(schema.wishes, eq(schema.wishes.id, schema.eventWishes.wishId))
       .where(eq(schema.eventWishes.eventId, eventId))
       .orderBy(asc(schema.eventWishes.position), asc(schema.eventWishes.addedAt));
-    return rows.map((row) => ownerItem(row.wish));
+    const pictures = await imagesOf(
+      db,
+      images,
+      rows.map((row) => row.wish),
+    );
+    return rows.map((row) => ownerItem(row.wish, pictures.get(row.wish.id) ?? null));
   });
 
   app.put("/events/:eventId/items/:itemId", async (request, reply) => {

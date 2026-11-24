@@ -35,3 +35,10 @@ data:
   # Prometheus /metrics endpoint of every component (Service port "metrics")
   METRICS_PORT: {{ .Values.metrics.port | quote }}
   {{- end }}
+  {{- if .Values.images.enabled }}
+  # Images (docs/images.md): the bucket, and imgproxy inside the cluster
+  S3_ENDPOINT: {{ required "images.s3.endpoint is required with images.enabled" .Values.images.s3.endpoint | quote }}
+  S3_REGION: {{ .Values.images.s3.region | quote }}
+  S3_BUCKET: {{ .Values.images.s3.bucket | quote }}
+  IMGPROXY_URL: {{ printf "http://%s-imgproxy:%v" (include "wishalia.fullname" .) .Values.images.imgproxy.port | quote }}
+  {{- end }}

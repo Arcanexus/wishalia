@@ -41,7 +41,7 @@ async function pgError(query: Promise<unknown>): Promise<string> {
 }
 
 describe("migrations", () => {
-  it("create the nine tables of the spec, the four of the sign-in and the API tokens", async () => {
+  it("create the tables of the spec, the four of the sign-in, the API tokens and the images", async () => {
     const result = await client.query<{ table_name: string }>(
       "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name",
     );
@@ -58,6 +58,7 @@ describe("migrations", () => {
       "series",
       "share_links",
       "users",
+      "wish_images",
       "wish_lists",
       "wishes",
     ]);

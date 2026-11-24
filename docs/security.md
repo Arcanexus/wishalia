@@ -62,6 +62,11 @@ The API is internal: only the two frontends reach it, server side, and a Network
 - Share links: only the SHA-256 hash of a token is stored, so a database leak opens no list. The
   token travels in a header (`X-Share-Token`) between the public view and the API, never in an API
   URL. The withdraw key of a contribution is stored the same way.
+- Images: the worker fetches a page's images through the same SSRF guard as the page, and every
+  image (the page's or the owner's) is read from its bytes: JPEG, PNG, WebP, GIF, AVIF or HEIC only,
+  never SVG, 10 MB and 50 megapixels at most. Browsers only get signed imgproxy paths, served on
+  the frontends' own host (`img-src 'self'`); imgproxy reads only the bucket, is reachable only from
+  the two frontends, and drops EXIF data. See [Images](images.md).
 - History: `item_events` is append-only, enforced by a database trigger.
 - Metrics: `/metrics` listens on a port of its own that the ingress never routes, and only the
   `metrics.allowFrom` peers may scrape the API and the worker. Labels carry route patterns, never a

@@ -1,0 +1,139 @@
+{{- if .Values.images.enabled }}
+{{- if not .Values.existingSecret }}
+{{- fail "images.enabled needs existingSecret, with S3_ACCESS_KEY, S3_SECRET_KEY, IMGPROXY_KEY and IMGPROXY_SALT" }}
+{{- end }}
+{{- $imgproxy := .Values.images.imgproxy }}
+# imgproxy makes the thumbnails from the bucket (docs/images.md). Inside the cluster only: the two
+# frontends pass its answers on under /img/. It only reads s3:// sources and only signed paths.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "wishalia.fullname" . }}-imgproxy
+  labels:
+    {{- include "wishalia.labels" . | nindent 4 }}
+    app.kubernetes.io/component: imgproxy
+spec:
+  replicas: {{ $imgproxy.replicas }}
+  selector:
+    matchLabels:
+      {{- include "wishalia.selectorLabels" (dict "root" . "component" "imgproxy") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "wishalia.labels" . | nindent 8 }}
+        {{- include "wishalia.selectorLabels" (dict "root" . "component" "imgproxy") | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "wishalia.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: imgproxy
+          image: {{ printf "%s:%s" $imgproxy.image.repository $imgproxy.image.tag | quote }}
+          imagePullPolicy: {{ $imgproxy.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ $imgproxy.port }}
+          env:
+            - name: IMGPROXY_BIND
+              value: {{ printf ":%v" $imgproxy.port | quote }}
+            - name: IMGPROXY_USE_S3
+              value: "true"
+            - name: IMGPROXY_S3_ENDPOINT
+              value: {{ .Values.images.s3.endpoint | quote }}
+            - name: IMGPROXY_S3_REGION
+              value: {{ .Values.images.s3.region | quote }}
+            # Only the images of the bucket: never a URL of the Internet or of the cluster (SSRF)
+            - name: IMGPROXY_ALLOWED_SOURCES
+              value: {{ printf "s3://%s/" .Values.images.s3.bucket | quote }}
+            - name: IMGPROXY_MAX_SRC_RESOLUTION
+              value: {{ $imgproxy.maxSrcResolution | quote }}
+            - name: IMGPROXY_MAX_SRC_FILE_SIZE
+              value: "10485760"
+            # No EXIF (where a photo was taken) in what the browsers get
+            - name: IMGPROXY_STRIP_METADATA
+              value: "true"
+            {{- range $secretKey, $name := dict "S3_ACCESS_KEY" "AWS_ACCESS_KEY_ID" "S3_SECRET_KEY" "AWS_SECRET_ACCESS_KEY" "IMGPROXY_KEY" "IMGPROXY_KEY" "IMGPROXY_SALT" "IMGPROXY_SALT" }}
+            - name: {{ $name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.existingSecret }}
+                  key: {{ $secretKey }}
+            {{- end }}
+            {{- range $name, $value := $imgproxy.env }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+            {{- end }}
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 20
+          resources:
+            {{- toYaml $imgproxy.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "wishalia.fullname" . }}-imgproxy
+  labels:
+    {{- include "wishalia.labels" . | nindent 4 }}
+    app.kubernetes.io/component: imgproxy
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "wishalia.selectorLabels" (dict "root" . "component" "imgproxy") | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ $imgproxy.port }}
+      targetPort: http
+{{- if .Values.networkPolicy.enabled }}
+---
+# Only the two frontends ask imgproxy for thumbnails
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "wishalia.fullname" . }}-imgproxy
+  labels:
+    {{- include "wishalia.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "wishalia.selectorLabels" (dict "root" . "component" "imgproxy") | nindent 6 }}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        {{- range list "web-app" "web-public" }}
+        - podSelector:
+            matchLabels:
+              {{- include "wishalia.selectorLabels" (dict "root" $ "component" .) | nindent 14 }}
+        {{- end }}
+      ports:
+        - port: http
+{{- end }}
+{{- end }}

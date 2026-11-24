@@ -1,24 +1,25 @@
 # Data model
 
-Nine tables, defined in [packages/db/src/schema.ts](../packages/db/src/schema.ts) and created by the
+The tables, defined in [packages/db/src/schema.ts](../packages/db/src/schema.ts) and created by the
 versioned migrations of `packages/db/migrations`. Amounts are integers in cents.
 
-| Table                | Role                                                                                                                                                                       |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `users`              | An account. Owner of its lists, guest on the others: the role is per list or event. A deleted account is anonymised, never removed. Keeps the person's `theme` and `mode`. |
-| `wish_lists`         | A durable list ("Books", "Home"), ordered by `position`, with an optional forced `theme`.                                                                                  |
-| `wishes`             | An item: `kind` (`unique`, `quantity`, `pool`), `repeatable`, price, pool target, quantity, optional series volume.                                                        |
-| `series`             | An ordered group of items (book volumes), with the external ids (ISBN, Open Library).                                                                                      |
-| `events`             | A dated occasion (`birthday`, `christmas`, `other`), its reveal delay and when the secret was lifted.                                                                      |
-| `event_wishes`       | The items an event selects. An event never owns an item.                                                                                                                   |
-| `contributions`      | A guest's pledge on an item, within an event or without one: an amount (pool) or copies (unique, quantity). Keeps the SHA-256 of its withdraw key.                         |
-| `share_links`        | A share link for one list or one event, per guest or group. Only the SHA-256 hash of the token is stored.                                                                  |
-| `api_tokens`         | A personal access token of the REST API v1: its name, prefix, expiry and read-only flag. Only the SHA-256 hash of the token is stored.                                     |
-| `item_events`        | The append-only history of every item, with its visibility.                                                                                                                |
-| `auth_sessions`      | A signed-in device (Better Auth). Deleting the row signs the device out.                                                                                                   |
-| `auth_accounts`      | A sign-in method from the OIDC provider. Its OAuth tokens are encrypted; no password is ever stored.                                                                       |
-| `auth_verifications` | Short-lived secrets: the magic links, stored hashed.                                                                                                                       |
-| `auth_passkeys`      | A passkey (WebAuthn credential): only its public key.                                                                                                                      |
+| Table                | Role                                                                                                                                                                                |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `users`              | An account. Owner of its lists, guest on the others: the role is per list or event. A deleted account is anonymised, never removed. Keeps the person's `theme` and `mode`.          |
+| `wish_lists`         | A durable list ("Books", "Home"), ordered by `position`, with an optional forced `theme`.                                                                                           |
+| `wishes`             | An item: `kind` (`unique`, `quantity`, `pool`), `repeatable`, price, pool target, quantity, optional series volume, the image shown (`image_id`) and its frame (`image_crop`).      |
+| `wish_images`        | The images of an item: up to four from the page of its link (`page`), and the one the owner sent (`upload`). Their files are in the S3 bucket under `key`. See [Images](images.md). |
+| `series`             | An ordered group of items (book volumes), with the external ids (ISBN, Open Library).                                                                                               |
+| `events`             | A dated occasion (`birthday`, `christmas`, `other`), its reveal delay and when the secret was lifted.                                                                               |
+| `event_wishes`       | The items an event selects. An event never owns an item.                                                                                                                            |
+| `contributions`      | A guest's pledge on an item, within an event or without one: an amount (pool) or copies (unique, quantity). Keeps the SHA-256 of its withdraw key.                                  |
+| `share_links`        | A share link for one list or one event, per guest or group. Only the SHA-256 hash of the token is stored.                                                                           |
+| `api_tokens`         | A personal access token of the REST API v1: its name, prefix, expiry and read-only flag. Only the SHA-256 hash of the token is stored.                                              |
+| `item_events`        | The append-only history of every item, with its visibility.                                                                                                                         |
+| `auth_sessions`      | A signed-in device (Better Auth). Deleting the row signs the device out.                                                                                                            |
+| `auth_accounts`      | A sign-in method from the OIDC provider. Its OAuth tokens are encrypted; no password is ever stored.                                                                                |
+| `auth_verifications` | Short-lived secrets: the magic links, stored hashed.                                                                                                                                |
+| `auth_passkeys`      | A passkey (WebAuthn credential): only its public key.                                                                                                                               |
 
 ## Rules enforced by the database
 

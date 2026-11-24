@@ -57,6 +57,13 @@
       "when": 1795510931354,
       "tag": "0007_enrichment",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795526109356,
+      "tag": "0008_images",
+      "breakpoints": true
     }
   ]
 }

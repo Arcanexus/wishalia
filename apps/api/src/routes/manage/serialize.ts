@@ -1,5 +1,6 @@
 import type { schema } from "@wishalia/db";
 import { canRevealSecret, isSecretLifted, revealAvailableAt } from "@wishalia/domain";
+import type { ImageSources } from "@wishalia/storage";
 
 type WishRow = typeof schema.wishes.$inferSelect;
 type ListRow = typeof schema.wishLists.$inferSelect;
@@ -9,7 +10,7 @@ type EventRow = typeof schema.events.$inferSelect;
  * An item as the owner sees it. Built field by field, never by spreading a row: no contribution
  * data can slip into a /manage response (spec §3), even when a column is added later.
  */
-export function ownerItem(row: WishRow) {
+export function ownerItem(row: WishRow, image: ImageSources | null = null) {
   return {
     id: row.id,
     listId: row.listId,
@@ -18,7 +19,9 @@ export function ownerItem(row: WishRow) {
     title: row.title,
     url: row.url,
     notes: row.notes,
-    imageKey: row.imageKey,
+    /** Signed thumbnail paths (small, medium, large), served by the frontends under /img. */
+    image,
+    imageCrop: row.imageCrop,
     priceCents: row.priceCents,
     targetCents: row.targetCents,
     quantity: row.quantity,

@@ -22,7 +22,8 @@
   },
   "dependencies": {
     "@wishalia/domain": "workspace:*",
-    "@wishalia/metrics": "workspace:*"
+    "@wishalia/metrics": "workspace:*",
+    "@wishalia/storage": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^6.0.5",

@@ -4,6 +4,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
 import { first, HttpError, notFound, parse, userId } from "../../http.js";
+import { imagesOf } from "../../images.js";
 import type { ManageDeps } from "./index.js";
 import { ownerItem, ownerList } from "./serialize.js";
 
@@ -27,7 +28,7 @@ export const orderInput = z.object({ itemIds: z.array(z.uuid()).min(1).max(1000)
 /** The default list of a new owner, created by the first quick add. */
 export const DEFAULT_LIST_NAME = "Mes envies";
 
-export const listRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now }) => {
+export const listRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now, images }) => {
   /** The owner's lists, in their order, with the number of open items. */
   app.get("/lists", async (request) => {
     const ownerId = userId(request);
@@ -148,6 +149,7 @@ export const listRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now 
         asc(schema.wishes.position),
         asc(schema.wishes.createdAt),
       );
-    return rows.map(ownerItem);
+    const pictures = await imagesOf(db, images, rows);
+    return rows.map((row) => ownerItem(row, pictures.get(row.id) ?? null));
   });
 };

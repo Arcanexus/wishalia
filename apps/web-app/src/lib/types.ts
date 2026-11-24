@@ -6,6 +6,8 @@ export interface Me {
   email: string;
   theme: "auto" | "neutral" | "christmas";
   mode: "device" | "light" | "dark";
+  /** What this server offers: images need its S3 bucket and imgproxy. */
+  features?: { images: boolean };
 }
 
 export interface List {
@@ -31,6 +33,9 @@ export interface Item {
   title: string;
   url: string | null;
   notes: string | null;
+  /** The image shown, framed, in three sizes (signed paths under /img); null without one. */
+  image?: ImageSources | null;
+  imageCrop?: Crop | null;
   priceCents: number | null;
   /** A pool's target. */
   targetCents: number | null;
@@ -41,6 +46,34 @@ export interface Item {
   /** The completion from the link (title, price): "pending" while the worker has it to do. */
   enrichment?: "pending" | "done" | "failed" | null;
   createdAt: string;
+}
+
+/** Signed thumbnail paths: small 192 px, medium 480 px (both framed), large whole. */
+export interface ImageSources {
+  small: string;
+  medium: string;
+  large: string;
+}
+
+/** A frame, as fractions (0 to 1) of the image's width and height. */
+export interface Crop {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** The images of an item to choose from: the owner's own, then the page's proposals. */
+export interface ItemImages {
+  imageId: string | null;
+  crop: Crop | null;
+  images: {
+    id: string;
+    source: "page" | "upload";
+    width: number | null;
+    height: number | null;
+    sources: ImageSources;
+  }[];
 }
 
 /** The quick add's answer: the item, and the open items that already have its link. */

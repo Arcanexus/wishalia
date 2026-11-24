@@ -29,10 +29,10 @@ JSON only: `{ "error": "<code>" }`, with `issues` (`path`, `message`) for a `400
 
 ## The signed-in person
 
-| Route              | Body                              | Answer                                                                                  |
-| ------------------ | --------------------------------- | --------------------------------------------------------------------------------------- |
-| `GET /manage/me`   |                                   | `id`, `displayName`, `email`, and the display settings `theme` and `mode`.              |
-| `PATCH /manage/me` | `displayName`?, `theme`?, `mode`? | The person. `theme`: `auto`, `neutral`, `christmas`; `mode`: `device`, `light`, `dark`. |
+| Route              | Body                              | Answer                                                                                        |
+| ------------------ | --------------------------------- | --------------------------------------------------------------------------------------------- |
+| `GET /manage/me`   |                                   | `id`, `displayName`, `email`, the display settings `theme` and `mode`, and `features.images`. |
+| `PATCH /manage/me` | `displayName`?, `theme`?, `mode`? | The person. `theme`: `auto`, `neutral`, `christmas`; `mode`: `device`, `light`, `dark`.       |
 
 ## Lists
 
@@ -47,12 +47,19 @@ JSON only: `{ "error": "<code>" }`, with `issues` (`path`, `message`) for a `400
 
 ## Items
 
-| Route                           | Body                                                                                                                   | Answer                                                              |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `POST /manage/items`            | `input` (URL and/or text), `listId`?                                                                                   | `201`, the item, plus `duplicateOf`: open items with the same link. |
-| `GET /manage/items/:id`         |                                                                                                                        | The item.                                                           |
-| `PATCH /manage/items/:id`       | `title`, `url`, `notes`, `priceCents`, `targetCents`, `quantity`, `kind`, `repeatable`, `status`, `listId`, `position` | The item.                                                           |
-| `GET /manage/items/:id/history` |                                                                                                                        | The history entries the owner may see, oldest first.                |
+| Route                           | Body                                                                                                                   | Answer                                                                                                                     |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `POST /manage/items`            | `input` (URL and/or text), `listId`?                                                                                   | `201`, the item, plus `duplicateOf`: open items with the same link.                                                        |
+| `GET /manage/items/:id`         |                                                                                                                        | The item.                                                                                                                  |
+| `PATCH /manage/items/:id`       | `title`, `url`, `notes`, `priceCents`, `targetCents`, `quantity`, `kind`, `repeatable`, `status`, `listId`, `position` | The item.                                                                                                                  |
+| `GET /manage/items/:id/history` |                                                                                                                        | The history entries the owner may see, oldest first.                                                                       |
+| `GET /manage/items/:id/images`  |                                                                                                                        | `imageId`, `crop`, and `images`: the owner's own, then the page's, each with `source` and signed `sources`.                |
+| `PUT /manage/items/:id/image`   | the image itself (`image/*` or `application/octet-stream`), 10 MB at most                                              | The item, showing it. `415 not_an_image` (read from the bytes; never SVG), `413`, `422 image_too_large`, `503 images_off`. |
+| `PATCH /manage/items/:id/image` | `imageId`? (one of the item's, or `null` for none), `crop`? (`{ x, y, width, height }` fractions, or `null`)           | The item. Another image starts whole. History: `image_changed`.                                                            |
+
+An item carries `image`: signed paths of its picture in three sizes (`small`, `medium`, `large`),
+served by the frontends under `/img/`, or `null`; and `imageCrop`. The files' place in the bucket is
+never given. See [Images](images.md).
 
 The quick add takes what the person typed or shared: a URL, free text, or text with a URL in it.
 The item is created at once, first in its list (the first list of the owner when `listId` is left

@@ -97,6 +97,14 @@ the page, and the page says so. The API writes the history: `updated`, `price_ch
 
 ![Editing an item into a pool, on a phone](images/app-edit-item.png)
 
+## Images
+
+Each item has an **Image** button. Its page shows the image the family sees, lets the owner frame it
+in a square (drag, tap, arrow keys or a slider), choose another of the images found on the page of
+the link, or send their own photo, up to 10 MB. See [Images](images.md) for the details.
+
+![The image page of an item, on a phone](images/app-item-image.png)
+
 ## Events
 
 « Événements » (`/evenements`) lists the person's events, upcoming first, then past ones, the most
