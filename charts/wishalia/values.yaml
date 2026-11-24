@@ -121,7 +121,8 @@ externalDatabase:
 images:
   enabled: false
   # Where the files live: "volume" (a PersistentVolumeClaim, created by the chart or existing) or
-  # "s3" (MinIO or any S3-compatible bucket). docs/images.md compares the two.
+  # "s3" (a bucket of yours, or Garage deployed with the chart: images.garage). docs/images.md
+  # compares them.
   storage: volume
   persistence:
     # An existing PersistentVolumeClaim; empty: the chart creates one (kept on helm uninstall)
@@ -134,10 +135,31 @@ images:
     accessModes: [ReadWriteOnce]
     annotations: {}
   s3:
-    # e.g. http://minio.storage.svc:9000 or https://s3.nas.example.com
+    # e.g. http://minio.storage.svc:9000 or https://s3.nas.example.com; empty with images.garage
     endpoint: ""
     region: us-east-1
     bucket: wishalia
+  # An S3 bucket deployed with the chart: Garage (https://garagehq.deuxfleurs.fr), on one node, inside
+  # the cluster only. Needs images.storage=s3 and an empty images.s3.endpoint (the chart points it
+  # at Garage). existingSecret then also holds GARAGE_RPC_SECRET (openssl rand -hex 32), and the
+  # bucket's key in Garage's format: S3_ACCESS_KEY="GK$(openssl rand -hex 16)" and
+  # S3_SECRET_KEY="$(openssl rand -hex 32)". Garage makes the bucket and that key at its first start.
+  garage:
+    enabled: false
+    image:
+      repository: dxflrs/garage
+      tag: v2.5.0
+      pullPolicy: IfNotPresent
+    persistence:
+      # An existing PersistentVolumeClaim; empty: the chart makes one (kept on helm uninstall)
+      existingClaim: ""
+      size: 10Gi
+      # Empty: the cluster's default StorageClass; "-": no class
+      storageClass: ""
+      accessModes: [ReadWriteOnce]
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { memory: 256Mi }
   # Largest request of the management app (adapter-node BODY_SIZE_LIMIT): an image is 10 MB at most
   uploadLimit: 12M
   imgproxy:

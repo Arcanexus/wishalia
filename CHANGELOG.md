@@ -19,6 +19,11 @@ All notable changes to this project are documented here. The format follows
   page, or in the background with a REST API v1 token.
 - « Réglages » shows how to install the app on the device in hand, an « Installer Wishalia » button
   where the browser offers one, and the address for the iPhone Shortcut.
+- The chart can deploy the images' S3 bucket itself: [Garage](https://garagehq.deuxfleurs.fr), one
+  node, with its volume (or an existing claim), inside the cluster only (`images.garage.enabled`,
+  off by default; the images stay on a volume by default). Garage makes the bucket and its key from
+  `existingSecret` at its first start. MinIO is not offered: its community edition is no longer
+  maintained.
 - The Helm chart deploys its own PostgreSQL when you have none (`postgresql.enabled`, the default):
   the official image as a StatefulSet with its volume (or an existing claim), a password made once and kept, a
   NetworkPolicy, and `DATABASE_URL` given to the API and the worker. With your own PostgreSQL, set

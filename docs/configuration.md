@@ -30,14 +30,15 @@ ConfigMap and loads the sensitive ones from `existingSecret`. Nothing is hard-co
 
 ## In the Secret
 
-| Key                              | Used from                              | Content                                                                                                                                                       |
-| -------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                   | the API, the worker, the migration Job | `postgres://user:password@host:5432/database`. Only with your own database (`postgresql.enabled=false`); the built-in one is wired by the chart.              |
-| `AUTH_SECRET`                    | the API                                | 32 random characters or more (`openssl rand -base64 32`): signs the session cookies and the device marker, encrypts the OAuth tokens. Required in production. |
-| `OIDC_CLIENT_SECRET`             | the API                                | Client secret of the OIDC provider, with `auth.oidc.*`.                                                                                                       |
-| `SMTP_URL`                       | the API                                | `smtp://user:password@host:587` (STARTTLS) or `smtps://...:465`. Unset: no magic links, passkeys and OIDC only.                                               |
-| `S3_ACCESS_KEY`, `S3_SECRET_KEY` | the API, the worker, imgproxy          | The keys of the images' bucket, with `images.storage: s3`.                                                                                                    |
-| `IMGPROXY_KEY`, `IMGPROXY_SALT`  | the API, imgproxy                      | Hex, 32 characters or more each (`openssl rand -hex 32`): the API signs the thumbnail paths, imgproxy checks them.                                            |
+| Key                              | Used from                              | Content                                                                                                                                                           |
+| -------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                   | the API, the worker, the migration Job | `postgres://user:password@host:5432/database`. Only with your own database (`postgresql.enabled=false`); the built-in one is wired by the chart.                  |
+| `AUTH_SECRET`                    | the API                                | 32 random characters or more (`openssl rand -base64 32`): signs the session cookies and the device marker, encrypts the OAuth tokens. Required in production.     |
+| `OIDC_CLIENT_SECRET`             | the API                                | Client secret of the OIDC provider, with `auth.oidc.*`.                                                                                                           |
+| `SMTP_URL`                       | the API                                | `smtp://user:password@host:587` (STARTTLS) or `smtps://...:465`. Unset: no magic links, passkeys and OIDC only.                                                   |
+| `S3_ACCESS_KEY`, `S3_SECRET_KEY` | the API, the worker, imgproxy          | The keys of the images' bucket, with `images.storage: s3`.                                                                                                        |
+| `IMGPROXY_KEY`, `IMGPROXY_SALT`  | the API, imgproxy                      | Hex, 32 characters or more each (`openssl rand -hex 32`): the API signs the thumbnail paths, imgproxy checks them.                                                |
+| `GARAGE_RPC_SECRET`              | Garage                                 | With `images.garage.enabled`: hex, 64 characters (`openssl rand -hex 32`). `S3_ACCESS_KEY` is then `GK` and 32 hex characters, `S3_SECRET_KEY` 64 hex characters. |
 
 The API refuses to start when a variable is invalid, and lists every problem at once.
 
