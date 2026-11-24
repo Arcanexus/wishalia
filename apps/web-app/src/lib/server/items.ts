@@ -129,3 +129,59 @@ export async function editItem(event: FormEvent) {
     throw failure;
   }
 }
+
+/** Saves the order of a list's open items; 409 « order_changed » when the list changed meanwhile. */
+async function saveOrder(event: FormEvent, listId: string, itemIds: string[]) {
+  await apiJson<undefined>(event, `/manage/lists/${encodeURIComponent(listId)}/order`, {
+    method: "PUT",
+    body: { itemIds },
+  });
+}
+
+const moveFailure = (failure: unknown) => {
+  if (failure instanceof ApiError) return fail(failure.status, { move: { error: failure.code } });
+  throw failure;
+};
+
+/**
+ * Moves an item one place up or down among the list's open items: the buttons next to the drag
+ * handle, which also work without JavaScript, with one tap and from the keyboard (WCAG 2.5.7).
+ */
+export async function moveItem(event: FormEvent, listId: string) {
+  const form = await event.request.formData();
+  const itemId = String(form.get("itemId") ?? "");
+  const direction = String(form.get("direction") ?? "");
+  if (!UUID.test(itemId) || (direction !== "up" && direction !== "down")) {
+    return fail(400, { move: { error: "invalid_request" } });
+  }
+  try {
+    const items = await apiJson<Item[]>(event, `/manage/lists/${encodeURIComponent(listId)}/items`);
+    const open = items.filter((item) => item.status === "open");
+    const from = open.findIndex((item) => item.id === itemId);
+    const moving = open[from];
+    if (!moving) return fail(409, { move: { error: "order_changed" } });
+    const to = Math.min(open.length - 1, Math.max(0, from + (direction === "up" ? -1 : 1)));
+    const order = open.map((item) => item.id);
+    order.splice(from, 1);
+    order.splice(to, 0, itemId);
+    if (to !== from) await saveOrder(event, listId, order);
+    return { move: { title: moving.title, position: to + 1, count: open.length } };
+  } catch (failure) {
+    return moveFailure(failure);
+  }
+}
+
+/** Saves a whole new order, once an item is dropped where the person wants it. */
+export async function orderItems(event: FormEvent, listId: string) {
+  const form = await event.request.formData();
+  const itemIds = form.getAll("itemIds").map(String);
+  if (itemIds.length === 0 || !itemIds.every((id) => UUID.test(id))) {
+    return fail(400, { move: { error: "invalid_request" } });
+  }
+  try {
+    await saveOrder(event, listId, itemIds);
+    return { move: { ordered: true } };
+  } catch (failure) {
+    return moveFailure(failure);
+  }
+}

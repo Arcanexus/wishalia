@@ -33,6 +33,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Reordering a list's items: a handle to drag with a mouse or a finger, and « Monter » / « Descendre »
+  arrows for one tap, the keyboard or without JavaScript; the new place is announced. The API takes
+  the whole new order at once (`PUT /manage/lists/:id/order`), or nothing when the list changed.
 - « Aperçu » on a list page: the list as relatives see it, with made-up gifts plainly marked as
   examples, built without reading any real contribution. The guests' item card and drawings moved
   to `@wishalia/ui` so that both apps draw them the same way.

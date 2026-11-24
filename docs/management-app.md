@@ -40,6 +40,15 @@ A list page shows its items, newest first, with what kind of gift they are, thei
 of their link. Each item can be marked **received** or **archived**; received and archived items wait under « Reçues et
 archivées », where they can be put back in the list. Every change lands in the item's history.
 
+The open items can be put in any order, the one relatives see them in. Each card has a handle to
+drag with a mouse or a finger, and two arrows, « Monter » and « Descendre », that move the item one
+place in a single tap or from the keyboard (they also work without JavaScript). The new place shows
+at once and a screen reader hears it (« « Lampe » est maintenant en position 2 sur 5. »); the
+keyboard stays on the moved item. When the list changed on another device meanwhile, nothing moves
+and the page says so, with the current order.
+
+![Dragging an item to a new place, on a phone](images/app-reorder.png)
+
 ### The preview
 
 « Aperçu », next to the list's title, shows the list as the owner's relatives see it through a share
