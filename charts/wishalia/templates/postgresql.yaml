@@ -123,6 +123,10 @@ spec:
         # Without persistence the data is lost with the pod: for a trial only
         - name: data
           emptyDir: {}
+        {{- else if $pg.persistence.existingClaim }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ $pg.persistence.existingClaim }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -136,7 +140,7 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-  {{- if $pg.persistence.enabled }}
+  {{- if and $pg.persistence.enabled (not $pg.persistence.existingClaim) }}
   # Kept when the release is uninstalled (the StatefulSet default): the data outlives the chart
   volumeClaimTemplates:
     - metadata:

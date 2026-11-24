@@ -83,6 +83,9 @@ postgresql:
   persistence:
     # Off: the data lives in the pod and is lost with it (for a trial only)
     enabled: true
+    # A PersistentVolumeClaim you already have (e.g. bound to an existing volume): the chart then
+    # makes none, and size, storageClass and accessModes are not used
+    existingClaim: ""
     size: 5Gi
     # Empty: the cluster's default class; "-": no class
     storageClass: ""

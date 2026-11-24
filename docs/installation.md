@@ -34,7 +34,7 @@ listed in [Configuration](configuration.md).
 ### Without a database: the chart deploys PostgreSQL
 
 The default (`postgresql.enabled=true`). The chart runs the official `postgres` image (18, Alpine)
-as a StatefulSet, with a 5 GiB volume (`postgresql.persistence`), as a non-root user, on a read-only
+as a StatefulSet, with a 5 GiB volume (`postgresql.persistence`; or a claim you already have, `existingClaim`), as a non-root user, on a read-only
 root filesystem, behind a NetworkPolicy that only lets the API and the worker in. It gives the API
 and the worker their `DATABASE_URL` by itself.
 

@@ -133,6 +133,10 @@ jobs:
           echo "$own" | yq -e "$api | .initContainers[0].name == \"migrations\"" > /dev/null
           echo "$own" | yq -e "$api | .containers[0].env[] | select(.name == \"DATABASE_URL\") | .value == \"postgres://wishalia@t-wishalia-postgresql:5432/wishalia\"" > /dev/null
           echo "$own" | yq -e 'select(.kind == "NetworkPolicy" and .metadata.name == "t-wishalia-postgresql") | .spec.ingress[0].from | length == 2' > /dev/null
+          # An existing claim: mounted, and no claim made
+          claim=$(helm template t charts/wishalia --set postgresql.persistence.existingClaim=pgdata --show-only templates/postgresql.yaml)
+          echo "$claim" | yq -e 'select(.kind == "StatefulSet") | .spec.template.spec.volumes[] | select(.name == "data") | .persistentVolumeClaim.claimName == "pgdata"' > /dev/null
+          echo "$claim" | yq -e 'select(.kind == "StatefulSet") | .spec.volumeClaimTemplates == null' > /dev/null
           # Yours: the hook Job, DATABASE_URL from its Secret, no PostgreSQL
           yours=$(helm template t charts/wishalia --set postgresql.enabled=false --set externalDatabase.existingSecret=db)
           echo "$yours" | yq -e 'select(.kind == "Job") | .spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name == "db"' > /dev/null
