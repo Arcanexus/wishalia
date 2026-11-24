@@ -11,6 +11,7 @@ list never sees who gave what, until they choose to lift the secret after the ev
 | ------------------------------- | ------------------------------------------------------------------ |
 | Run it on my machine            | [Quick start](quick-start.md)                                      |
 | Find my way in the app          | [Management app](management-app.md)                                |
+| See what my family sees         | [Public view](public-view.md)                                      |
 | Deploy it on Kubernetes         | [Installation](installation.md)                                    |
 | Set a variable or a chart value | [Configuration](configuration.md), [Chart values](chart-values.md) |
 | Understand the security model   | [Security](security.md)                                            |
@@ -21,4 +22,5 @@ list never sees who gave what, until they choose to lift the secret after the ev
 The project is under way: the four components ship as images and a Helm chart, the APIs (management,
 public view, REST v1) and the business rules (funding, anti-spoil) are in place, and the management
 app has its first screens: signing in, the lists, the quick add, the events, sharing and the
-settings, with passkeys. The guests' screens come next.
+settings, with passkeys. The public view shows a shared list or event to the family; contributing
+from it comes next.

@@ -4,7 +4,7 @@
   import { enhance } from "$app/forms";
   import { resolve } from "$app/paths";
 
-  import Logo from "#lib/Logo.svelte";
+  import Logo from "@wishalia/ui/Logo.svelte";
   import {
     passkeyAutofillSupported,
     passkeysSupported,

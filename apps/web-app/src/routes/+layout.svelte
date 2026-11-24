@@ -1,7 +1,5 @@
 <script lang="ts">
-  import "@fontsource-variable/inter";
-  import "@fontsource-variable/nunito";
-  import "../app.css";
+  import "@wishalia/ui/styles.css";
 
   let { children } = $props();
 </script>

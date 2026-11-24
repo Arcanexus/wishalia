@@ -5,10 +5,29 @@ import { handle, init } from "./hooks.server.ts";
 
 type HandleInput = Parameters<typeof handle>[0];
 
-function request(routeId: string | null, url: string, status = 200): HandleInput {
+function request(
+  routeId: string | null,
+  url: string,
+  status = 200,
+  cookies: Record<string, string> = {},
+): HandleInput {
   return {
-    event: { request: new Request(`https://example.test${url}`), route: { id: routeId } },
-    resolve: async () => new Response("ok", { status }),
+    event: {
+      request: new Request(`https://example.test${url}`),
+      route: { id: routeId },
+      cookies: { get: (name: string) => cookies[name] },
+      locals: {},
+    },
+    resolve: async (
+      event: { locals: App.Locals },
+      options?: { transformPageChunk?: (input: { html: string }) => string },
+    ) =>
+      new Response(
+        options?.transformPageChunk?.({
+          html: '<html data-theme="%wishalia.theme%" data-mode="%wishalia.mode%">',
+        }) ?? "ok",
+        { status },
+      ),
   } as unknown as HandleInput;
 }
 
@@ -20,6 +39,18 @@ describe("hooks", () => {
     expect(response.headers.get("x-frame-options")).toBe("DENY");
     expect(response.headers.get("cross-origin-opener-policy")).toBe("same-origin");
     expect(response.headers.get("permissions-policy")).toContain("camera=()");
+  });
+
+  it("keeps every page out of search engines", async () => {
+    const response = await handle(request("/s/[token]", "/s/x"));
+    expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
+  });
+
+  it("renders the person's theme and mode from the first byte", async () => {
+    const response = await handle(
+      request("/", "/", 200, { "wishalia.theme": "christmas", "wishalia.mode": "dark" }),
+    );
+    expect(await response.text()).toBe('<html data-theme="christmas" data-mode="dark">');
   });
 
   it("records the route id, never the URL", async () => {

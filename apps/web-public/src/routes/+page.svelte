@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Logo from "@wishalia/ui/Logo.svelte";
+
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -12,7 +14,17 @@
   <meta property="og:type" content={data.meta["og:type"]} />
 </svelte:head>
 
-<main>
+<main id="contenu" class="home">
+  <Logo size={72} />
   <h1>Une liste de souhaits partagée avec vous</h1>
   <p>Ouvrez le lien que l'on vous a envoyé pour voir la liste.</p>
 </main>
+
+<style>
+  .home {
+    max-width: 32rem;
+    margin: 0 auto;
+    padding: 3rem 1rem;
+    text-align: center;
+  }
+</style>
