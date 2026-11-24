@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The Helm chart deploys its own PostgreSQL when you have none (`postgresql.enabled`, the default):
+  the official image as a StatefulSet with its volume, a password made once and kept, a
+  NetworkPolicy, and `DATABASE_URL` given to the API and the worker. With your own PostgreSQL, set
+  `postgresql.enabled=false` and give its URL in `externalDatabase.existingSecret` (any key) or in
+  `existingSecret`. The migrations wait for the database to start, and take a lock so that several
+  API pods never apply them at once.
+
 ### Changed
 
 - The product is named **Wishalia**, and the code name `wishlist` is gone: default `APP_NAME` and

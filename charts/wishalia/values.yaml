@@ -57,10 +57,59 @@ auth:
   # Sender of the magic links, e.g. "wishalia <noreply@example.com>". SMTP_URL goes in existingSecret.
   mailFrom: ""
 
-# Secret holding the sensitive settings (DATABASE_URL, S3 keys, auth secrets...), loaded as
-# environment variables by every component. Create it with your secret manager (External Secrets,
+# Secret holding the sensitive settings (S3 keys, auth secrets, and DATABASE_URL when you bring
+# your own database), loaded as environment variables by every component. Create it with your secret manager (External Secrets,
 # Sealed Secrets...): the chart never holds a secret value.
 existingSecret: ""
+
+# The database. Either the chart deploys its own PostgreSQL (postgresql.enabled, the default), or
+# you already have one: set postgresql.enabled=false and give its DATABASE_URL, in
+# externalDatabase.existingSecret or in existingSecret. See docs/installation.md.
+postgresql:
+  enabled: true
+  # The official image (docker-library), the same major version as docker-compose.yml
+  image:
+    registry: docker.io
+    repository: library/postgres
+    tag: "18-alpine"
+    pullPolicy: IfNotPresent
+  auth:
+    database: wishalia
+    username: wishalia
+    # Secret holding the password (key passwordKey). Empty: the chart makes one at the first install
+    # and keeps it. Set it with ArgoCD or helm template, which cannot read the cluster back.
+    existingSecret: ""
+    passwordKey: password
+  persistence:
+    # Off: the data lives in the pod and is lost with it (for a trial only)
+    enabled: true
+    size: 5Gi
+    # Empty: the cluster's default class; "-": no class
+    storageClass: ""
+    accessModes: [ReadWriteOnce]
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 512Mi }
+  # The postgres user of the Alpine image (uid 70)
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 70
+    runAsGroup: 70
+    fsGroup: 70
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: ["ALL"]
+
+# An existing PostgreSQL (16+), when postgresql.enabled=false: the Secret and its key holding the
+# full DATABASE_URL (postgres://user:password@host:5432/database). Empty: DATABASE_URL is read from
+# existingSecret.
+externalDatabase:
+  existingSecret: ""
+  urlKey: DATABASE_URL
 
 api:
   enabled: true
@@ -98,8 +147,9 @@ webPublic:
     limits: { memory: 192Mi }
   env: {}
 
-# Database migrations, run by a Job before each install and upgrade (Helm hook). Needs DATABASE_URL
-# in existingSecret.
+# Database migrations. With an existing database: a Job before each install and upgrade (Helm hook,
+# PreSync with ArgoCD). With the built-in PostgreSQL, which does not exist yet before the first
+# install: a step of each API pod, before it starts (initContainer).
 migrations:
   enabled: true
   resources:
