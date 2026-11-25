@@ -58,7 +58,8 @@ Each one is:
 - at least 120 px on each side when its size is known, and 50 megapixels at most;
 - stored under a random key, on the volume or in the bucket.
 
-The item shows the first one, unless the owner chose their own: a later run (a new link) replaces the
+The item shows the first one, unless the owner chose their own: a later run (a new link, or
+« Recharger ») replaces the
 page's images, and keeps the owner's. When the images arrive, an `image_changed` entry is written to
 the history. Items that already had a link when images came in are read once more, for their images
 only (the owner's title and price stay).

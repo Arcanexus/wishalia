@@ -8,6 +8,23 @@ All notable changes to this project are documented here. The format follows
 
 ## [0.0.5] - 2026-11-25
 
+### Added
+
+- A reload button (two turning arrows, its name in a tip on hover and focus) on each item, « Recharger », and on a list page, « Recharger les liens », read the links again: a new
+  price, a better photo, or what an improved reader now finds (the Amazon photo fixed below also
+  reaches the wishes added before). The items show « Lecture du lien… » as for a new one, and a
+  « Lien illisible » can be tried again. The owner's words win: a title or a price they typed or
+  changed is kept, a photo they sent stays; the page's own values follow the page. No burst
+  towards a site: the items of a same site are read 5 seconds apart, and each owner may ask 30
+  item reads and 3 list reads per minute. API: `POST /manage/items/:id/refresh` and
+  `POST /manage/lists/:id/refresh` (also in the REST API v1). Migration 0010 adds `found_title`
+  and `found_price_cents` to the items, filled from their history.
+- On a list page, the buttons speak with icons: « Je l'ai reçu » with a tick (it said « Reçu »),
+  and an eye for « Aperçu » and three linked dots for « Partager cette liste », their words in a
+  tip on hover and on keyboard focus (and their full name for a screen reader). « Se déconnecter »
+  stays at the top right of the bar on every width: the links go under it when the bar is narrow,
+  and on a phone it is a door with an arrow.
+
 ### Fixed
 
 - The image of an Amazon page is the product's photo: the worker took the first pictures of the

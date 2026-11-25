@@ -1,7 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { fakeApi, fakeEvent, json, outcome } from "../../test/event.ts";
-import { editItem, moveItem, orderItems, quickAdd, setItemStatus } from "./items.ts";
+import {
+  editItem,
+  moveItem,
+  orderItems,
+  quickAdd,
+  refreshItem,
+  refreshList,
+  setItemStatus,
+} from "./items.ts";
 
 const ITEM = "0b6f8a4e-6a52-4a6c-9a39-6f4f3c0b9a11";
 const LIST = "4f1f3f2e-1c2d-4e5f-8a9b-0c1d2e3f4a5b";
@@ -296,5 +304,49 @@ describe("moving items", () => {
         )
       ).value,
     ).toMatchObject({ status: 404 });
+  });
+});
+
+describe("reading links again", () => {
+  it("reads one item's link again", async () => {
+    const api = fakeApi({
+      [`POST /manage/items/${ITEM}/refresh`]: () =>
+        json({ id: ITEM, title: "Une lampe", enrichment: "pending" }),
+    });
+    expect(await refreshItem(fakeEvent({ form: { itemId: ITEM } }).event)).toEqual({
+      refresh: { itemId: ITEM, title: "Une lampe" },
+    });
+    expect(api.calls).toHaveLength(1);
+  });
+
+  it("refuses an id that is not one, and says when the API refuses", async () => {
+    const api = fakeApi({
+      [`POST /manage/items/${ITEM}/refresh`]: () => json({ error: "rate_limited" }, 429),
+    });
+    expect(await refreshItem(fakeEvent({ form: { itemId: "../x" } }).event)).toMatchObject({
+      status: 400,
+      data: { refresh: { error: "invalid_request" } },
+    });
+    expect(api.calls).toHaveLength(0);
+    expect(await refreshItem(fakeEvent({ form: { itemId: ITEM } }).event)).toMatchObject({
+      status: 429,
+      data: { refresh: { error: "rate_limited", itemId: ITEM } },
+    });
+  });
+
+  it("reads a whole list again, and says when the API refuses", async () => {
+    fakeApi({ [`POST /manage/lists/${LIST}/refresh`]: () => json({ queued: 4 }) });
+    expect(await refreshList(fakeEvent({ form: {} }).event, LIST)).toEqual({ refresh: { queued: 4 } });
+    fakeApi({ [`POST /manage/lists/${LIST}/refresh`]: () => json({ error: "rate_limited" }, 429) });
+    expect(await refreshList(fakeEvent({ form: {} }).event, LIST)).toMatchObject({
+      status: 429,
+      data: { refresh: { error: "rate_limited" } },
+    });
+  });
+
+  it("lets an unexpected failure through", async () => {
+    vi.stubGlobal("fetch", () => Promise.reject(new Error("down")));
+    await expect(refreshItem(fakeEvent({ form: { itemId: ITEM } }).event)).rejects.toThrow("down");
+    await expect(refreshList(fakeEvent({ form: {} }).event, LIST)).rejects.toThrow("down");
   });
 });

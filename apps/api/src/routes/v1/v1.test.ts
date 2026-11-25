@@ -107,6 +107,9 @@ describe("the REST API v1", () => {
     const quickAdd = document.body.paths["/items"].post.requestBody.content["application/json"].schema;
     expect(quickAdd.properties).toHaveProperty("input");
     expect(Object.keys(document.body.paths)).not.toContain("/share-links");
+    expect(Object.keys(document.body.paths)).toEqual(
+      expect.arrayContaining(["/items/{itemId}/refresh", "/lists/{listId}/refresh"]),
+    );
   });
 
   it("answers 401 without a valid token, and never takes a session cookie", async () => {

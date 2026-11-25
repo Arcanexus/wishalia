@@ -232,6 +232,21 @@ export function openApiDocument(config: Config) {
           responses: { 200: json(ref("List")), 409: json(ref("Error"), "Not in manual mode") },
         },
       },
+      "/lists/{listId}/refresh": {
+        parameters: [uuidParam("listId")],
+        post: {
+          summary:
+            "Read the links of the list's open items again (title, price, images), spaced site by site. " +
+            "What the owner typed or sent is kept",
+          responses: {
+            200: json(
+              { type: "object", properties: { queued: { type: "integer" } } },
+              "How many were queued",
+            ),
+            429: json(ref("Error"), "Asked too often"),
+          },
+        },
+      },
       "/items": {
         post: {
           summary: "Quick add: a URL and/or text",
@@ -246,6 +261,17 @@ export function openApiDocument(config: Config) {
           summary: "Edit an item",
           requestBody: body(itemPatch),
           responses: { 200: json(ref("Item")) },
+        },
+      },
+      "/items/{itemId}/refresh": {
+        parameters: [uuidParam("itemId")],
+        post: {
+          summary: "Read the item's link again (title, price, images). What the owner typed or sent is kept",
+          responses: {
+            200: json(ref("Item"), "Queued, enrichment pending"),
+            409: json(ref("Error"), "No link"),
+            429: json(ref("Error"), "Asked too often"),
+          },
         },
       },
       "/items/{itemId}/history": {

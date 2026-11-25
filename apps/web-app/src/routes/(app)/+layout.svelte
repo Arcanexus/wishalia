@@ -37,7 +37,15 @@
     <div class="tools">
       <ModeButton mode={data.mode} nextMode={data.nextMode} returnPath={page.url.pathname} />
       <form method="POST" action="/deconnexion">
-        <button type="submit" class="secondary">Se déconnecter</button>
+        <button type="submit" class="secondary logout">
+          <!-- A door and an arrow going out: alone on a phone, where the words would push it down -->
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+            <path d="M15 8l4 4-4 4" />
+            <path d="M19 12H9" />
+          </svg>
+          <span class="word">Se déconnecter</span>
+        </button>
       </form>
     </div>
   </div>
@@ -73,11 +81,20 @@
     font-weight: 800;
     font-size: 1.3rem;
   }
+  /* The way out stays at the top right: the links go under it when the bar is narrow */
   nav {
+    order: 3;
+    flex-basis: 100%;
     display: flex;
     flex-wrap: wrap;
     gap: 0 0.25rem;
-    margin-right: auto;
+  }
+  @media (min-width: 62rem) {
+    nav {
+      order: 0;
+      flex-basis: auto;
+      margin-right: auto;
+    }
   }
   nav a {
     display: inline-flex;
@@ -99,6 +116,32 @@
   .tools {
     display: flex;
     gap: 0.5rem;
+    margin-left: auto;
+  }
+  .logout svg {
+    width: 1.3rem;
+    height: 1.3rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  @media (max-width: 30rem) {
+    .logout {
+      width: 48px;
+      padding: 0;
+    }
+    /* Still the button's name for a screen reader */
+    .logout .word {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
   }
   .page {
     max-width: 52rem;

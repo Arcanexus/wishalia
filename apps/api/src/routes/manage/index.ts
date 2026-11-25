@@ -10,6 +10,7 @@ import { apiTokenRoutes } from "./api-tokens.js";
 import { eventRoutes } from "./events.js";
 import { importRoutes } from "./imports.js";
 import { itemRoutes } from "./items.js";
+import { refreshRoutes } from "./refresh.js";
 import { listRoutes } from "./lists.js";
 import { meRoutes } from "./me.js";
 import { shareLinkRoutes } from "./share-links.js";
@@ -71,6 +72,7 @@ export const manageRoutes: FastifyPluginAsync<ShareDeps & { auth: Auth; fetchPag
   await app.register(meRoutes, { db, now, images });
   await app.register(listRoutes, { db, now, images, publicOrigin: config.PUBLIC_ORIGIN });
   await app.register(itemRoutes, { db, now, images });
+  await app.register(refreshRoutes, { db, now, images });
   await app.register(eventRoutes, { db, now, images });
   await app.register(shareLinkRoutes, { config, db, now, secret, images });
   await app.register(apiTokenRoutes, { db, now, images });

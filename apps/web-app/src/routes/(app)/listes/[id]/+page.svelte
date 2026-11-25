@@ -10,6 +10,7 @@
   import ItemEditor from "#lib/ItemEditor.svelte";
   import ListSettings from "#lib/ListSettings.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
+  import IconButton from "#lib/IconButton.svelte";
   import { dropIndex, moveId, placeLine } from "#lib/reorder.ts";
   import type { Item } from "#lib/types.ts";
 
@@ -26,8 +27,11 @@
   // queue). It never polls without a reason.
   const completing = $derived(open.some((item) => item.enrichment === "pending"));
   let polls = 0;
+  // Asking to read links again starts the looking over
+  let refreshes = $state(0);
   let timer: ReturnType<typeof setTimeout> | undefined;
   $effect(() => {
+    void refreshes;
     if (!completing || polls >= 56 || order || dragging) return;
     timer = setTimeout(
       () => {
@@ -113,6 +117,23 @@
   }
   const closed = $derived(data.items.filter((item) => item.status !== "open"));
 
+  /** After a « Recharger »: the page shows « Lecture du lien… » and looks again, from the start. */
+  const reread =
+    () =>
+    async ({ update }: { update: (options?: { reset?: boolean }) => Promise<void> }) => {
+      await update({ reset: false });
+      polls = 0;
+      refreshes += 1;
+    };
+  const linked = $derived(open.some((item) => webLink(item) !== null));
+  const refreshError = $derived(
+    form?.refresh && "error" in form.refresh
+      ? form.refresh.error === "rate_limited"
+        ? "Vous avez demandé beaucoup de rechargements d'un coup : réessayez dans une minute."
+        : "Le rechargement n'a pas pu être demandé. Réessayez dans un instant."
+      : null,
+  );
+
   /** Only web links become links: never a javascript: or data: address from an old item. */
   const webLink = (item: Item) => (item.url && /^https?:\/\//i.test(item.url) ? item.url : null);
   const kindLine = (item: Item) =>
@@ -140,10 +161,23 @@
 <div class="heading">
   <h1>{data.list.name}</h1>
   <div class="actions">
-    <a class="button secondary" href={resolve("/(app)/listes/[id]/apercu", { id: data.list.id })}>Aperçu</a>
-    <a class="button secondary" href="{resolve('/(app)/partage')}?liste={data.list.id}">
-      Partager cette liste
-    </a>
+    {#if linked}
+      <form method="POST" action="?/refreshAll" use:enhance={reread}>
+        <IconButton icon="reload" label="Recharger les liens de la liste" tip="Recharger les liens" />
+      </form>
+    {/if}
+    <IconButton
+      icon="eye"
+      label="Aperçu : la liste comme vos proches la voient"
+      tip="Aperçu"
+      href={resolve("/(app)/listes/[id]/apercu", { id: data.list.id })}
+    />
+    <IconButton
+      icon="share"
+      label="Partager cette liste"
+      tip="Partager cette liste"
+      href="{resolve('/(app)/partage')}?liste={data.list.id}"
+    />
   </div>
 </div>
 
@@ -161,6 +195,21 @@
   </p>
 {/if}
 
+{#if refreshError}
+  <p class="notice error" role="alert">{refreshError}</p>
+{:else if form?.refresh && "queued" in form.refresh}
+  {@const queued = form.refresh.queued}
+  <p class="notice" role="status">
+    {queued === 0
+      ? "Aucun lien à recharger : les envies sans lien ou déjà en lecture ne changent pas."
+      : `${queued === 1 ? "1 envie va être rechargée" : `${queued} envies vont être rechargées`} depuis ${
+          queued === 1 ? "son lien" : "leur lien, l'une après l'autre"
+        }.`}
+    Le titre et le prix suivent la page tant que vous ne les avez pas changés ; ce que vous avez saisi ou envoyé
+    vous-même est gardé.
+  </p>
+{/if}
+
 <ListSettings list={data.list} {form} />
 
 <QuickAdd listName={data.list.name} result={form?.add ?? null} />
@@ -174,6 +223,8 @@
     Réglages de la liste enregistrés.
   {:else if form?.reveal && "lifted" in form.reveal}
     Le secret de la liste est levé.
+  {:else if form?.refresh && "itemId" in form.refresh && "title" in form.refresh}
+    Rechargement de « {form.refresh.title} » demandé.
   {:else if form?.edit && "title" in form.edit}
     « {form.edit.title} » est enregistré{form.edit.listId !== data.list.id ? " et a changé de liste" : ""}.
   {:else if form?.status && "status" in form.status}
@@ -305,7 +356,8 @@
                 <p class="completing">
                   <span class="badge failed">Lien illisible</span>
                   <span class="muted">
-                    La page n'a pas pu être lue : complétez l'envie avec « Modifier » si besoin.
+                    La page n'a pas pu être lue : réessayez avec le bouton «&nbsp;Recharger&nbsp;» (les
+                    flèches), ou complétez l'envie avec «&nbsp;Modifier&nbsp;».
                   </span>
                 </p>
               {/if}
@@ -321,10 +373,24 @@
                   Image
                 </a>
               {/if}
+              {#if link && item.enrichment !== "pending"}
+                <form method="POST" action="?/refresh" use:enhance={reread}>
+                  <input type="hidden" name="itemId" value={item.id} />
+                  <IconButton icon="reload" label="Recharger le lien de « {item.title} »" tip="Recharger" />
+                </form>
+              {/if}
               <form method="POST" action="?/status" use:enhance>
                 <input type="hidden" name="itemId" value={item.id} />
-                <button type="submit" name="status" value="received" aria-label="J'ai reçu « {item.title} »">
-                  Reçu
+                <button
+                  type="submit"
+                  name="status"
+                  value="received"
+                  aria-label="Je l'ai reçu : « {item.title} »"
+                >
+                  <svg class="check" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M5 12.5l4.5 4.5L19 7.5" />
+                  </svg>
+                  Je l'ai reçu
                 </button>
               </form>
               <form method="POST" action="?/status" use:enhance>
@@ -447,6 +513,16 @@
   }
   .mover button:disabled {
     visibility: hidden;
+  }
+  .check {
+    width: 1.3rem;
+    height: 1.3rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
   .mover svg {
     width: 1.4rem;
