@@ -48,6 +48,8 @@ export interface ImageSources {
   small: string;
   medium: string;
   large: string;
+  /** The item's other images, whole, for the viewer that opens them big. */
+  gallery?: string[];
 }
 
 export interface PublicItem {

@@ -20,6 +20,11 @@
     },
     "./public/*.ts": "./src/public/*.ts",
     "./i18n.ts": "./src/i18n.ts",
+    "./gallery.ts": "./src/gallery.ts",
+    "./Gallery.svelte": {
+      "svelte": "./src/Gallery.svelte",
+      "default": "./src/Gallery.svelte"
+    },
     "./LanguageButtons.svelte": {
       "svelte": "./src/LanguageButtons.svelte",
       "default": "./src/LanguageButtons.svelte"

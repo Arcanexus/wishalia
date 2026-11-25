@@ -49,7 +49,8 @@ The page greets the person the link was made for (« Bonjour Mamie ! »), then s
 - the list's name and whose wishes they are, or the event's name and day;
 - on a list link, the open events coming up (« Prochaine occasion : Noël en famille »), and under
   each item the events it is picked for;
-- every item with its image, when the owner has one ([Images](images.md)), its price (or the pool's target), its notes, a link to the site it comes from
+- every item with its image, when the owner has one, which opens big with the item's other images
+  ([Images](images.md#opening-the-images-big)), its price (or the pool's target), its notes, a link to the site it comes from
   (opened in a new tab, only an `http(s)` address), and where it stands:
   - a gift: « Libre. » or « Réservé par Paul. »;
   - several copies: one box per copy, filled when reserved, and « 1 sur 4 déjà réservé, par

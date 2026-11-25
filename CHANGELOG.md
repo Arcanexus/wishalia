@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- An item's image opens big, in the page, on the owner's lists, in the preview and on the family's
+  page: the image shown, whole, then the item's other images (those found on the page of its link,
+  Amazon's gallery included), with arrow buttons and dots, the arrow keys, Home and End, or a swipe.
+  The cross, Escape or a click outside the frame closes it, and the focus goes back to the image. A
+  real modal dialog, named for a screen reader; nothing big is loaded before it opens. Every item's
+  `image` (management API, REST API v1 and the public view) now carries `gallery`, the signed paths
+  of its other images, whole (seven at most).
+
 ## [0.0.5] - 2026-11-25
 
 ### Added

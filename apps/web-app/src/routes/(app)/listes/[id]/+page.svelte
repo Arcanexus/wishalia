@@ -5,6 +5,7 @@
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { appMessages } from "@wishalia/i18n/messages/app";
+  import Gallery from "@wishalia/ui/Gallery.svelte";
   import { useI18n } from "@wishalia/ui/i18n.ts";
 
   import Gifts from "#lib/Gifts.svelte";
@@ -292,16 +293,18 @@
             <!-- Its image may come with the link: a place kept for it, that breathes while it waits -->
             <span class="thumb waiting" aria-hidden="true"></span>
           {:else if item.image}
-            <!-- The name next to it says what it is: decorative for a screen reader -->
-            <img
-              class="thumb"
-              src={item.image.small}
-              alt=""
-              width="192"
-              height="192"
-              loading="lazy"
-              decoding="async"
-            />
+            <!-- The link that opens it big carries the words: the thumbnail itself is decorative -->
+            <Gallery title={item.title} image={item.image}>
+              <img
+                class="thumb"
+                src={item.image.small}
+                alt=""
+                width="192"
+                height="192"
+                loading="lazy"
+                decoding="async"
+              />
+            </Gallery>
           {/if}
           <div class="body">
             <div class="text">

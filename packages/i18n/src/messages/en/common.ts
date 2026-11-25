@@ -14,4 +14,15 @@ export const common: CommonMessages = {
     title: { notFound: "Not found", other: "Error" },
     somethingWrong: "Something went wrong",
   },
+  gallery: {
+    open: (title, count) =>
+      count > 1 ? `Enlarge the ${count} images of “${title}”` : `Enlarge the image of “${title}”`,
+    dialog: (title) => `Images of “${title}”`,
+    image: (title, position, count) => (count > 1 ? `${title}, image ${position} of ${count}` : `${title}`),
+    position: (position, count) => `Image ${position} of ${count}`,
+    show: (position) => `Show image ${position}`,
+    previous: "Previous image",
+    next: "Next image",
+    close: "Close",
+  },
 };
