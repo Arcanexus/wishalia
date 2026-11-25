@@ -27,7 +27,7 @@ ConfigMap and loads the sensitive ones from `existingSecret`. Nothing is hard-co
 | `IMAGE_CLEANUP_GRACE_HOURS`             | worker              | A file younger than this is never removed by the sweep, `24` by default (1 at least).                                                                                          |
 | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET` | api, worker         | With `s3`: `images.s3.*`, the bucket of the images.                                                                                                                            |
 | `IMGPROXY_URL`                          | web-app, web-public | When `images.enabled`: the internal URL of imgproxy, whose thumbnails the frontends serve under `/img/`.                                                                       |
-| `BODY_SIZE_LIMIT`                       | web-app             | `images.uploadLimit` (`12M`) when `images.enabled`: the largest form, for the images the owner sends.                                                                          |
+| `BODY_SIZE_LIMIT`                       | web-app             | `images.uploadLimit` (`12M`) when `images.enabled`, else `3M`: the largest form, for the images the owner sends and the imported lists.                                        |
 | `APP_VERSION`                           | all                 | Set in the image from the release tag, shown by `/healthz`.                                                                                                                    |
 
 ## In the Secret

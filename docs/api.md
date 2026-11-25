@@ -78,6 +78,7 @@ A `quantity` item needs a `quantity`. A repeatable item is never `received` (`40
 | Change                           | Entry                                   | Payload                              |
 | -------------------------------- | --------------------------------------- | ------------------------------------ |
 | Quick add                        | `created`                               | `title`, `url`                       |
+| Import                           | `created`                               | `title`, `url`, `importedFrom`       |
 | Fields edited                    | `updated`                               | `changes`: `{ field: { from, to } }` |
 | Price edited                     | `price_changed`                         | `from`, `to` (cents)                 |
 | Moved to another list            | `moved`                                 | `from`, `to` (list ids)              |
@@ -87,6 +88,17 @@ A `quantity` item needs a `quantity`. A repeatable item is never `received` (`40
 
 Each entry is written in the transaction of the change: a change is never stored without it.
 Reordering (`position`) writes no entry.
+
+## Imports
+
+| Route                          | Body                                                                                         | Answer                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------ | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /manage/imports/preview` | `{ source: "wishlistr", address }` or `{ source: "csv" \| "json" \| "text", content }`       | What it would add, nothing stored: `source`, `listName`, `items` (`title`, `url`, `notes`, `priceCents`, `quantity`), `skipped` (`row`, `reason`: `no_title`, `too_many`), and `address` (the page read) for Wishlistr. `422` `invalid_address`, `invalid_csv`, `invalid_json`, `no_columns`, `not_a_wishlistr_list`, `too_large`, `empty`; `404 remote_not_found`, `502 remote_unreachable`, `429 rate_limited` (10 remote reads a minute). |
+| `POST /manage/imports`         | `source`, `listId` or `listName` (a new list), `items` (1 to 500, as the preview gives them) | `201`, `listId`, `added`, `duplicates` (links already open in that list, not added), `skipped` (no title or link). Every item is cleaned again; an archived or someone else's list is `404`.                                                                                                                                                                                                                                                 |
+
+The address of a Wishlistr list is never fetched as typed: the API builds
+`https://www.wishlistr.com/<name>/` from it and refuses anything else. Not in the REST API v1. See
+[Importing a list](import.md).
 
 ## Events
 

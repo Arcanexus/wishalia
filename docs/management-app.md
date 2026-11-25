@@ -42,6 +42,12 @@ person sees what will be added and confirms with one tap. On iPhone, a Shortcut 
 
 ![An add whose link is already in the list](images/app-quick-add.png)
 
+Wishes kept on another service come in with « Importer une liste » (`/importer`, linked under the
+lists): a Wishlistr list from its address, a CSV or JSON file (an export, a spreadsheet), or a text
+pasted with one wish per line. The page shows what it found, every wish ticked, and the person
+unticks what they leave out, then picks a list (a new one, named after the source's list, or one of
+theirs) and confirms. The list page then says how many came in. See [Importing a list](import.md).
+
 A list page shows its items, newest first, with what kind of gift they are, their price and the site
 of their link. Each item can be marked **received** or **archived**; received and archived items wait under « Reçues et
 archivées », where they can be put back in the list. Every change lands in the item's history.
