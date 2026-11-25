@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The worker removes, every 6 hours, the image files no image names any more (a write cut halfway,
+  a removal that failed, a file left half written), in the volume or the bucket, once they are a
+  day old. The images people see or can choose are never touched. Chart:
+  `images.cleanup.intervalHours` (`0`: off) and `images.cleanup.graceHours`; metrics
+  `wishalia_image_cleanup_*`.
+
 ## [0.0.3] - 2026-11-25
 
 ### Fixed

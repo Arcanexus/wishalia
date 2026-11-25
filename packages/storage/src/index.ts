@@ -15,10 +15,12 @@ export { sniffImage, type Sniffed } from "./sniff.js";
 export {
   memoryStorage,
   openStorage,
+  parseListing,
   s3Storage,
   StorageError,
   volumeStorage,
   type S3Settings,
   type Storage,
+  type StoredObject,
 } from "./storage.js";
 export { proxyImage } from "./proxy.js";

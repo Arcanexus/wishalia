@@ -1,0 +1,239 @@
+---
+# Source: wishalia/templates/garage.yaml
+# The bucket: only the API and the worker (which write) and imgproxy (which reads)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: t-wishalia-garage
+  labels:
+    helm.sh/chart: wishalia-0.0.3
+    app.kubernetes.io/name: wishalia
+    app.kubernetes.io/instance: t
+    app.kubernetes.io/version: "0.0.3"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: wishalia
+      app.kubernetes.io/instance: t
+      app.kubernetes.io/component: garage
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: wishalia
+              app.kubernetes.io/instance: t
+              app.kubernetes.io/component: api
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: wishalia
+              app.kubernetes.io/instance: t
+              app.kubernetes.io/component: worker
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: wishalia
+              app.kubernetes.io/instance: t
+              app.kubernetes.io/component: imgproxy
+      ports:
+        - port: s3
+    # The console (images.garage.ui): the files, and the administration API
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: wishalia
+              app.kubernetes.io/instance: t
+              app.kubernetes.io/component: garage-ui
+      ports:
+        - port: s3
+        - port: admin
+---
+# Source: wishalia/templates/garage.yaml
+# Garage (garagehq.deuxfleurs.fr): an S3 bucket for the images, on one node, inside the cluster only.
+# Its settings; the secrets (RPC secret, the key of the bucket) come from existingSecret.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: t-wishalia-garage
+  labels:
+    helm.sh/chart: wishalia-0.0.3
+    app.kubernetes.io/name: wishalia
+    app.kubernetes.io/instance: t
+    app.kubernetes.io/version: "0.0.3"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: garage
+data:
+  garage.toml: |
+    metadata_dir = "/var/lib/garage/meta"
+    data_dir = "/var/lib/garage/data"
+    db_engine = "sqlite"
+    replication_factor = 1
+    rpc_bind_addr = "[::]:3901"
+    rpc_public_addr = "127.0.0.1:3901"
+
+    [s3_api]
+    s3_region = "us-east-1"
+    api_bind_addr = "[::]:3900"
+
+    # Its health, for the probes. The administration needs a token: only with the console
+    # (images.garage.ui), from GARAGE_ADMIN_TOKEN in existingSecret
+    [admin]
+    api_bind_addr = "[::]:3903"
+---
+# Source: wishalia/templates/garage.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: t-wishalia-garage
+  labels:
+    helm.sh/chart: wishalia-0.0.3
+    app.kubernetes.io/name: wishalia
+    app.kubernetes.io/instance: t
+    app.kubernetes.io/version: "0.0.3"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: garage
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: wishalia
+    app.kubernetes.io/instance: t
+    app.kubernetes.io/component: garage
+  ports:
+    - name: s3
+      port: 3900
+      targetPort: s3
+    - name: admin
+      port: 3903
+      targetPort: admin
+---
+# Source: wishalia/templates/garage.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: t-wishalia-garage
+  labels:
+    helm.sh/chart: wishalia-0.0.3
+    app.kubernetes.io/name: wishalia
+    app.kubernetes.io/instance: t
+    app.kubernetes.io/version: "0.0.3"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: garage
+spec:
+  # One node (replication_factor = 1): for a family, the volume is the copy to back up
+  replicas: 1
+  serviceName: t-wishalia-garage
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wishalia
+      app.kubernetes.io/instance: t
+      app.kubernetes.io/component: garage
+  template:
+    metadata:
+      annotations:
+        checksum/config: 487d653406a6aebc3146cb844a4ce50265da74db272ee1c6002294850ef2e187
+      labels:
+        helm.sh/chart: wishalia-0.0.3
+        app.kubernetes.io/name: wishalia
+        app.kubernetes.io/instance: t
+        app.kubernetes.io/version: "0.0.3"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: garage
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: garage
+          image: "dxflrs/garage:v2.5.0"
+          imagePullPolicy: IfNotPresent
+          # One node, laid out at start; the bucket and its key made from the variables below
+          command: ["/garage", "server", "--single-node", "--default-bucket"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+          ports:
+            - name: s3
+              containerPort: 3900
+            - name: admin
+              containerPort: 3903
+          env:
+            - name: GARAGE_CONFIG_FILE
+              value: /etc/garage/garage.toml
+            - name: GARAGE_DEFAULT_BUCKET
+              value: "wishalia"
+            - name: GARAGE_ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: s
+                  key: GARAGE_ADMIN_TOKEN
+            - name: GARAGE_DEFAULT_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s
+                  key: S3_ACCESS_KEY
+            - name: GARAGE_DEFAULT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s
+                  key: S3_SECRET_KEY
+            - name: GARAGE_RPC_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: s
+                  key: GARAGE_RPC_SECRET
+          # /health reads the metadata database: on a slow volume (NFS) it can take more than the
+          # default second, so it only decides whether Garage gets traffic. Restarting is left to
+          # whether its S3 port still accepts connections.
+          startupProbe:
+            httpGet: { path: /health, port: admin }
+            periodSeconds: 5
+            timeoutSeconds: 10
+            failureThreshold: 60
+          livenessProbe:
+            tcpSocket: { port: s3 }
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+          readinessProbe:
+            httpGet: { path: /health, port: admin }
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              cpu: 25m
+              memory: 64Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/garage
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/garage
+      volumes:
+        - name: config
+          configMap:
+            name: t-wishalia-garage
+  # Kept when the release is uninstalled (the StatefulSet default): the photos outlive the chart
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app.kubernetes.io/name: wishalia
+          app.kubernetes.io/instance: t
+          app.kubernetes.io/component: garage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi

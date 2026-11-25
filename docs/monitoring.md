@@ -45,6 +45,13 @@ label `outcome`: `done`, `unchanged`, `retry`, `failed`, `skipped`) and
 `wishalia_enrichment_duration_seconds` (histogram, page fetch included, from 100 ms to 20 s). No
 label names an item, a link or a site.
 
+It also counts its sweeps of the [unused image files](images.md#unused-files):
+`wishalia_image_cleanup_runs_total` (counter, label `outcome`: `ok`, `error`),
+`wishalia_image_cleanup_removed_total` (files removed), `wishalia_image_cleanup_checked_files` (files
+the last sweep looked at) and `wishalia_image_cleanup_last_success_timestamp_seconds`. An alert on
+`time() - wishalia_image_cleanup_last_success_timestamp_seconds > 86400` tells a sweep that keeps
+failing (a bucket key that may not list, for instance).
+
 ## What is never measured
 
 No metric describes contributions: no amount, no count, no rate of funding. Whoever reads the

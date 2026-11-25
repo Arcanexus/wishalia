@@ -137,6 +137,11 @@ jobs:
           claim=$(helm template t charts/wishalia --set postgresql.persistence.existingClaim=pgdata --show-only templates/postgresql.yaml)
           echo "$claim" | yq -e 'select(.kind == "StatefulSet") | .spec.template.spec.volumes[] | select(.name == "data") | .persistentVolumeClaim.claimName == "pgdata"' > /dev/null
           echo "$claim" | yq -e 'select(.kind == "StatefulSet") | .spec.volumeClaimTemplates == null' > /dev/null
+          # The worker's sweep of the unused image files: on by default, and its settings pass through
+          helm template t charts/wishalia --set images.enabled=true --set existingSecret=s --show-only templates/configmap.yaml \
+            | yq -e '.data.IMAGE_CLEANUP_INTERVAL_HOURS == "6" and .data.IMAGE_CLEANUP_GRACE_HOURS == "24"' > /dev/null
+          helm template t charts/wishalia --set images.enabled=true --set existingSecret=s --set images.cleanup.intervalHours=0 --show-only templates/configmap.yaml \
+            | yq -e '.data.IMAGE_CLEANUP_INTERVAL_HOURS == "0"' > /dev/null
           # Garage as the images' bucket: the endpoint points at it, and it needs S3 with no endpoint of yours
           garage="--set images.enabled=true --set existingSecret=s --set images.storage=s3 --set images.garage.enabled=true"
           helm template t charts/wishalia $garage --show-only templates/configmap.yaml \

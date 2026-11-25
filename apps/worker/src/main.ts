@@ -1,8 +1,15 @@
 import { createDb } from "@wishalia/db";
-import { createEnrichmentMetrics, createRegistry, metricsPort, startMetricsServer } from "@wishalia/metrics";
+import {
+  createCleanupMetrics,
+  createEnrichmentMetrics,
+  createRegistry,
+  metricsPort,
+  startMetricsServer,
+} from "@wishalia/metrics";
 
 import { imageSettingsFromEnv, openStorage } from "@wishalia/storage";
 
+import { cleanupSettingsFromEnv, startCleanup } from "./cleanup.js";
 import { fetchImage, fetchPage } from "./fetch.js";
 import { createHealthServer } from "./health.js";
 import { runLoop } from "./loop.js";
@@ -14,6 +21,7 @@ let running = true;
 
 // The images of the pages (docs/images.md): only with a bucket or a volume, and imgproxy, configured
 const images = imageSettingsFromEnv();
+const cleanupSettings = cleanupSettingsFromEnv();
 const storage = images ? openStorage(images.storage) : null;
 await storage?.ensureBucket().catch((error: Error) => {
   process.stderr.write(`image storage not ready (${error.message}): images will be retried with each item\n`);
@@ -38,12 +46,23 @@ const loop = runLoop({
   log: (message) => process.stderr.write(`${message}\n`),
 });
 
+// The files no image names any more, now and then (docs/images.md)
+const cleanup = storage
+  ? startCleanup({
+      db,
+      storage,
+      ...cleanupSettings,
+      metrics: createCleanupMetrics(registry),
+      log: (message) => process.stderr.write(`${message}\n`),
+    })
+  : null;
+
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.once(signal, () => {
     running = false;
     metricsServer?.close();
     // The job under way ends first (a page takes 10 s at most), then the connections close
-    void loop.finally(async () => {
+    void Promise.allSettled([loop, cleanup?.stop()]).finally(async () => {
       await close();
       server.close(() => process.exit(0));
     });
