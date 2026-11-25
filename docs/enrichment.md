@@ -56,7 +56,7 @@ A page changes: a new price, a better photo, or a reader that improved since the
 Amazon photo, for one). The owner asks for a new read, from the list page:
 
 - **« Recharger »** on an item reads its link again;
-- **« Recharger les liens »**, next to « Aperçu », reads again the links of every open item of the list.
+- **« Recharger les liens »**, next to the eye of « Aperçu », reads again the links of every open item of the list.
 
 Both are a button with two turning arrows: their words show in a tip on hover and on keyboard focus
 (Escape hides it), and a screen reader says them (« Recharger le lien de « Lampe » »).

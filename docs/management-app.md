@@ -20,7 +20,8 @@ only: the browser never reaches the API.
   `auth.oidc.name`. See [Authentication](authentication.md).
 
 A page opened without a session leads to `/connexion`, then back to that page once signed in (only
-a path of the app: never another site). « Se déconnecter » ends the session on the API.
+a path of the app: never another site). « Se déconnecter », always at the top right of the bar (a door and an arrow
+alone on a phone, with the same name for a screen reader), ends the session on the API.
 
 ![Signing in](images/app-sign-in.png)
 
@@ -49,10 +50,10 @@ unticks what they leave out, then picks a list (a new one, named after the sourc
 theirs) and confirms. The list page then says how many came in. See [Importing a list](import.md).
 
 A list page shows its items, newest first, with what kind of gift they are, their price and the site
-of their link. Each item can be marked **received** or **archived**; received and archived items wait under « Reçues et
+of their link. Each item can be marked **received** (« Je l'ai reçu », with a tick) or **archived**; received and archived items wait under « Reçues et
 archivées », where they can be put back in the list. Every change lands in the item's history.
 The reload button (two turning arrows, « Recharger » in its tip) reads an item's link again (a new price, a better photo), and « Recharger les liens », next
-to « Aperçu », does it for the whole list; what the person typed or sent stays
+to the eye button, does it for the whole list; what the person typed or sent stays
 ([Reading a link again](enrichment.md#reading-a-link-again)).
 
 The open items can be put in any order, the one relatives see them in. Each card has a handle to
@@ -66,7 +67,7 @@ and the page says so, with the current order.
 
 ### The preview
 
-« Aperçu », next to the list's title, shows the list as the owner's relatives see it through a share
+The eye button next to the list's title (« Aperçu » in its tip), shows the list as the owner's relatives see it through a share
 link: the same cards, drawings and words, the list's theme, what is still to give first. The gifts
 on it are **made up** for the preview (« Camille (exemple) », « Hugo (exemple) », someone anonymous),
 and the page says so: they are built from the items alone, and the page never asks the API for a
@@ -158,7 +159,7 @@ décide » mode.
 ## Sharing
 
 « Partager » (`/partage`) makes one link per guest or per group, « Mamie », « Les cousins », for a
-list or an event. A list page and an event page lead there with that one already chosen. A link may
+list or an event. A list page (the share button, three linked dots, next to its title) and an event page lead there with that one already chosen. A link may
 end on a chosen day; without one, it works until it is revoked.
 
 The link's address is shown **once**, right after it is made, with « Copier le lien » (and « Envoyer…

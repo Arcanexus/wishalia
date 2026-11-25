@@ -17,6 +17,11 @@ All notable changes to this project are documented here. The format follows
   item reads and 3 list reads per minute. API: `POST /manage/items/:id/refresh` and
   `POST /manage/lists/:id/refresh` (also in the REST API v1). Migration 0010 adds `found_title`
   and `found_price_cents` to the items, filled from their history.
+- On a list page, the buttons speak with icons: « Je l'ai reçu » with a tick (it said « Reçu »),
+  and an eye for « Aperçu » and three linked dots for « Partager cette liste », their words in a
+  tip on hover and on keyboard focus (and their full name for a screen reader). « Se déconnecter »
+  stays at the top right of the bar on every width: the links go under it when the bar is narrow,
+  and on a phone it is a door with an arrow.
 
 ### Fixed
 

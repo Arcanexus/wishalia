@@ -10,7 +10,7 @@
   import ItemEditor from "#lib/ItemEditor.svelte";
   import ListSettings from "#lib/ListSettings.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
-  import ReloadButton from "#lib/ReloadButton.svelte";
+  import IconButton from "#lib/IconButton.svelte";
   import { dropIndex, moveId, placeLine } from "#lib/reorder.ts";
   import type { Item } from "#lib/types.ts";
 
@@ -163,13 +163,21 @@
   <div class="actions">
     {#if linked}
       <form method="POST" action="?/refreshAll" use:enhance={reread}>
-        <ReloadButton label="Recharger les liens de la liste" tip="Recharger les liens" />
+        <IconButton icon="reload" label="Recharger les liens de la liste" tip="Recharger les liens" />
       </form>
     {/if}
-    <a class="button secondary" href={resolve("/(app)/listes/[id]/apercu", { id: data.list.id })}>Aperçu</a>
-    <a class="button secondary" href="{resolve('/(app)/partage')}?liste={data.list.id}">
-      Partager cette liste
-    </a>
+    <IconButton
+      icon="eye"
+      label="Aperçu : la liste comme vos proches la voient"
+      tip="Aperçu"
+      href={resolve("/(app)/listes/[id]/apercu", { id: data.list.id })}
+    />
+    <IconButton
+      icon="share"
+      label="Partager cette liste"
+      tip="Partager cette liste"
+      href="{resolve('/(app)/partage')}?liste={data.list.id}"
+    />
   </div>
 </div>
 
@@ -368,13 +376,21 @@
               {#if link && item.enrichment !== "pending"}
                 <form method="POST" action="?/refresh" use:enhance={reread}>
                   <input type="hidden" name="itemId" value={item.id} />
-                  <ReloadButton label="Recharger le lien de « {item.title} »" tip="Recharger" />
+                  <IconButton icon="reload" label="Recharger le lien de « {item.title} »" tip="Recharger" />
                 </form>
               {/if}
               <form method="POST" action="?/status" use:enhance>
                 <input type="hidden" name="itemId" value={item.id} />
-                <button type="submit" name="status" value="received" aria-label="J'ai reçu « {item.title} »">
-                  Reçu
+                <button
+                  type="submit"
+                  name="status"
+                  value="received"
+                  aria-label="Je l'ai reçu : « {item.title} »"
+                >
+                  <svg class="check" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M5 12.5l4.5 4.5L19 7.5" />
+                  </svg>
+                  Je l'ai reçu
                 </button>
               </form>
               <form method="POST" action="?/status" use:enhance>
@@ -497,6 +513,16 @@
   }
   .mover button:disabled {
     visibility: hidden;
+  }
+  .check {
+    width: 1.3rem;
+    height: 1.3rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
   .mover svg {
     width: 1.4rem;
