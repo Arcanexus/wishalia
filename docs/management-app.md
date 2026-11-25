@@ -51,7 +51,7 @@ theirs) and confirms. The list page then says how many came in. See [Importing a
 A list page shows its items, newest first, with what kind of gift they are, their price and the site
 of their link. Each item can be marked **received** or **archived**; received and archived items wait under « Reçues et
 archivées », where they can be put back in the list. Every change lands in the item's history.
-« Recharger » reads an item's link again (a new price, a better photo), and « Recharger les liens », next
+The reload button (two turning arrows, « Recharger » in its tip) reads an item's link again (a new price, a better photo), and « Recharger les liens », next
 to « Aperçu », does it for the whole list; what the person typed or sent stays
 ([Reading a link again](enrichment.md#reading-a-link-again)).
 

@@ -8,7 +8,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- « Recharger » on each item, and « Recharger les liens » on a list page, read the links again: a new
+- A reload button (two turning arrows, its name in a tip on hover and focus) on each item, « Recharger », and on a list page, « Recharger les liens », read the links again: a new
   price, a better photo, or what an improved reader now finds (the Amazon photo fixed below also
   reaches the wishes added before). The items show « Lecture du lien… » as for a new one, and a
   « Lien illisible » can be tried again. The owner's words win: a title or a price they typed or

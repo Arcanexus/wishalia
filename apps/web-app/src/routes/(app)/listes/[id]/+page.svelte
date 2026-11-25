@@ -10,6 +10,7 @@
   import ItemEditor from "#lib/ItemEditor.svelte";
   import ListSettings from "#lib/ListSettings.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
+  import ReloadButton from "#lib/ReloadButton.svelte";
   import { dropIndex, moveId, placeLine } from "#lib/reorder.ts";
   import type { Item } from "#lib/types.ts";
 
@@ -162,12 +163,7 @@
   <div class="actions">
     {#if linked}
       <form method="POST" action="?/refreshAll" use:enhance={reread}>
-        <button type="submit" class="secondary with-icon">
-          <svg class="reload" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M20 12a8 8 0 1 1-2.34-5.66" /><path d="M20 4v5h-5" />
-          </svg>
-          Recharger les liens
-        </button>
+        <ReloadButton label="Recharger les liens de la liste" tip="Recharger les liens" />
       </form>
     {/if}
     <a class="button secondary" href={resolve("/(app)/listes/[id]/apercu", { id: data.list.id })}>Aperçu</a>
@@ -352,8 +348,8 @@
                 <p class="completing">
                   <span class="badge failed">Lien illisible</span>
                   <span class="muted">
-                    La page n'a pas pu être lue : réessayez avec «&nbsp;Recharger&nbsp;», ou complétez l'envie
-                    avec «&nbsp;Modifier&nbsp;».
+                    La page n'a pas pu être lue : réessayez avec le bouton «&nbsp;Recharger&nbsp;» (les
+                    flèches), ou complétez l'envie avec «&nbsp;Modifier&nbsp;».
                   </span>
                 </p>
               {/if}
@@ -372,16 +368,7 @@
               {#if link && item.enrichment !== "pending"}
                 <form method="POST" action="?/refresh" use:enhance={reread}>
                   <input type="hidden" name="itemId" value={item.id} />
-                  <button
-                    type="submit"
-                    class="secondary with-icon"
-                    aria-label="Recharger le lien de « {item.title} »"
-                  >
-                    <svg class="reload" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M20 12a8 8 0 1 1-2.34-5.66" /><path d="M20 4v5h-5" />
-                    </svg>
-                    Recharger
-                  </button>
+                  <ReloadButton label="Recharger le lien de « {item.title} »" tip="Recharger" />
                 </form>
               {/if}
               <form method="POST" action="?/status" use:enhance>
@@ -510,22 +497,6 @@
   }
   .mover button:disabled {
     visibility: hidden;
-  }
-  /* The turning arrows of « Recharger »: next to its word, never instead of it */
-  .with-icon {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-  .reload {
-    width: 1.2rem;
-    height: 1.2rem;
-    flex: none;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
   }
   .mover svg {
     width: 1.4rem;

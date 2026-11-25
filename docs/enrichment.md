@@ -58,7 +58,10 @@ Amazon photo, for one). The owner asks for a new read, from the list page:
 - **« Recharger »** on an item reads its link again;
 - **« Recharger les liens »**, next to « Aperçu », reads again the links of every open item of the list.
 
-![A list with « Recharger les liens » at the top and « Recharger » on the items with a link](images/app-refresh.png)
+Both are a button with two turning arrows: their words show in a tip on hover and on keyboard focus
+(Escape hides it), and a screen reader says them (« Recharger le lien de « Lampe » »).
+
+![A list with the reload buttons at the top and on the items with a link, one showing its tip « Recharger »](images/app-refresh.png)
 
 The items show « Lecture du lien… » again, and the page looks again, as for a new item. A link that
 said « Lien illisible » can be tried again the same way. What the owner typed or sent is kept (see
