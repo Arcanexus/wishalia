@@ -121,12 +121,34 @@ export function s3Storage(settings: S3Settings): Storage {
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
 const unescapeXml = (text: string) =>
   text.replace(/&(amp|lt|gt|quot|apos);/g, (_, name: string) => ENTITIES[name] ?? "");
-const tag = (xml: string, name: string) => new RegExp(`<${name}>([^<]*)</${name}>`).exec(xml)?.[1];
+/** The text of the first <name> element, read with indexOf: linear, whatever the bucket answers. */
+function tag(xml: string, name: string): string | undefined {
+  const open = `<${name}>`;
+  const start = xml.indexOf(open);
+  if (start < 0) return undefined;
+  const end = xml.indexOf(`</${name}>`, start + open.length);
+  return end < 0 ? undefined : xml.slice(start + open.length, end);
+}
+
+/** The bodies of the <name> elements, in order, read the same way. */
+function* elements(xml: string, name: string): Generator<string> {
+  const open = `<${name}>`;
+  const close = `</${name}>`;
+  let from = 0;
+  for (;;) {
+    const start = xml.indexOf(open, from);
+    if (start < 0) return;
+    const end = xml.indexOf(close, start + open.length);
+    if (end < 0) return;
+    yield xml.slice(start + open.length, end);
+    from = end + close.length;
+  }
+}
 
 /** A ListObjectsV2 answer: its files, and the token of the next page when it is cut. */
 export function parseListing(xml: string): { objects: StoredObject[]; next?: string } {
   const objects: StoredObject[] = [];
-  for (const [, entry = ""] of xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)) {
+  for (const entry of elements(xml, "Contents")) {
     const key = tag(entry, "Key");
     const modified = new Date(tag(entry, "LastModified") ?? "");
     // A file without a readable date is kept: the cleanup never removes what it cannot date
@@ -181,7 +203,8 @@ export function volumeStorage(dir: string): Storage {
   return {
     async *list(prefix) {
       // The prefix is a folder ("wishes/"), as Wishalia writes them
-      const folder = prefix.replace(/\/+$/, "");
+      let folder = prefix;
+      while (folder.endsWith("/")) folder = folder.slice(0, -1);
       if (folder && !SAFE_KEY.test(folder)) throw new StorageError(`Invalid prefix: ${prefix}`, 400);
       let page: StoredObject[] = [];
       for await (const object of walk(folder)) {

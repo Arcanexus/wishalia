@@ -125,6 +125,12 @@ describe("the S3 bucket", () => {
         "<ListBucketResult><Contents><Key>k</Key><LastModified>soon</LastModified></Contents></ListBucketResult>",
       ),
     ).toEqual({ objects: [] });
+    // A broken answer gives what it can, quickly: no backtracking on a hostile body
+    const hostile = `<Contents>${"<Contents>a".repeat(50_000)}`;
+    const started = performance.now();
+    expect(parseListing(hostile)).toEqual({ objects: [] });
+    expect(parseListing("<Contents><Key>k</Key></Contents><Contents><Key>j")).toEqual({ objects: [] });
+    expect(performance.now() - started).toBeLessThan(500);
     // Cut without a token: nothing more to ask for
     expect(parseListing("<ListBucketResult><IsTruncated>true</IsTruncated></ListBucketResult>")).toEqual({
       objects: [],
