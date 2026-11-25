@@ -35,6 +35,7 @@ PAGES: list[tuple[str, list[tuple[str, str]]]] = [
         ("install-app.md", "Install-the-app"),
         ("public-view.md", "Public-view"),
         ("enrichment.md", "Enrichment"),
+        ("live-updates.md", "Live-updates"),
         ("images.md", "Images"),
         ("import.md", "Import"),
     ]),

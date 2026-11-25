@@ -29,7 +29,8 @@ alone on a phone, with the same name for a screen reader), ends the session on t
 
 The home page greets the person, then offers the **quick add**: one field for a link or a few words.
 The item shows at once and the field empties for the next one; the worker completes the title and the
-price from the link later ([Completing items from their link](enrichment.md)). From the home page the item goes into the first list (« Mes
+price from the link later ([Completing items from their link](enrichment.md)), and the page shows
+each step by itself, with no reload ([Live updates](live-updates.md)). From the home page the item goes into the first list (« Mes
 envies », created by the very first add), from a list page into that list.
 
 When the link is already in one of the person's open items, the app says so and offers to undo the

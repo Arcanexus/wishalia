@@ -53,6 +53,8 @@ export interface Item {
   position: number;
   /** The completion from the link (title, price): "pending" while the worker has it to do. */
   enrichment?: "pending" | "done" | "failed" | null;
+  /** While pending: "images" once the title and price are written and the images are on their way. */
+  enrichmentStep?: "images" | null;
   createdAt: string;
 }
 

@@ -123,6 +123,14 @@ export const app = {
     reading: "Lecture du lien…",
     readingWhat: (images: boolean) =>
       `Le titre, le prix${images ? " et les images" : ""} arrivent depuis la page.`,
+    findingImages: "Recherche des images…",
+    findingImagesWhat: "Le titre et le prix sont à jour : les images de la page arrivent.",
+    live: {
+      details: (title: string) => `« ${title} » : titre et prix trouvés.`,
+      image: (title: string) => `« ${title} » : image ajoutée.`,
+      done: (title: string) => `« ${title} » est à jour.`,
+      failed: (title: string) => `« ${title} » : le lien n'a pas pu être lu.`,
+    },
     unreadable: "Lien illisible",
     unreadableHelp:
       "La page n'a pas pu être lue : réessayez avec le bouton « Recharger » (les flèches), ou complétez l'envie avec « Modifier ».",

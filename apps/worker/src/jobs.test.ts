@@ -307,6 +307,50 @@ describe("the images of the page", () => {
     expect(await read(item.id)).toMatchObject({ imageId: upload.id, imageCrop: { width: 0.5 } });
   });
 
+  it("writes the page's words first, then its images: the pages show each step", async () => {
+    const storage = memoryStorage();
+    const item = await wish();
+    const seen: unknown[] = [];
+    const watching = async (link: string) => {
+      const now = await read(item.id);
+      seen.push([now.title, now.priceCents, now.enrichment, now.enrichmentStep]);
+      return fetchImage(link);
+    };
+    expect(await enrichNext({ db, fetchPage: page(gallery), storage, fetchImage: watching, now })).toBe(
+      "done",
+    );
+    expect(seen[0]).toEqual(["Lampe en laiton", null, "running", "images"]);
+    expect(await read(item.id)).toMatchObject({ enrichment: "done", enrichmentStep: null });
+  });
+
+  it("keeps the words but drops the images when the link changes while they load", async () => {
+    const storage = memoryStorage();
+    const item = await wish();
+    const moving = async (link: string) => {
+      await db
+        .update(schema.wishes)
+        .set({ url: "https://www.example.com/ailleurs" })
+        .where(eq(schema.wishes.id, item.id));
+      return fetchImage(link);
+    };
+    expect(await enrichNext({ db, fetchPage: page(gallery), storage, fetchImage: moving, now })).toBe("done");
+    expect(storage.objects.size).toBe(0);
+    expect(await images(item.id)).toEqual([]);
+    expect(await read(item.id)).toMatchObject({ title: "Lampe en laiton", enrichment: "running" });
+    await db.update(schema.wishes).set({ enrichment: null }).where(eq(schema.wishes.id, item.id));
+  });
+
+  it("forgets the step when a read fails or starts again", async () => {
+    const item = await wish({ enrichment: "running", enrichmentStep: "images", enrichmentAt: clock });
+    clock = new Date(clock.getTime() + RUN_TIMEOUT_MS + 1);
+    const down = async () => {
+      throw new FetchError("timeout");
+    };
+    expect(await enrichNext({ db, fetchPage: down, now })).toBe("retry");
+    expect(await read(item.id)).toMatchObject({ enrichment: "pending", enrichmentStep: null });
+    await db.update(schema.wishes).set({ enrichment: null }).where(eq(schema.wishes.id, item.id));
+  });
+
   it("removes the files of a result that came too late, and works without images", async () => {
     const storage = memoryStorage();
     const item = await wish();

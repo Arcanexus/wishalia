@@ -102,6 +102,10 @@ const schemas: Record<string, Schema> = {
         enum: ["pending", "done", "failed", null],
         description: "The completion from the link: pending while the worker has it to do.",
       },
+      enrichmentStep: {
+        enum: ["images", null],
+        description: "While pending: images once the title and price are written and the images load.",
+      },
       createdAt: { type: "string", format: "date-time" },
       updatedAt: { type: "string", format: "date-time" },
     },

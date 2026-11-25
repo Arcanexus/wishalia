@@ -12,6 +12,8 @@ import {
   reservedUnits,
   timesGiven,
   totalFunded,
+  isLive,
+  stageOf,
   type SecretState,
   type ViewerRole,
 } from "@wishalia/domain";
@@ -21,6 +23,7 @@ import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 import type { Tx } from "../../history.js";
 import { HttpError } from "../../http.js";
 import { imagesOf, type Images } from "../../images.js";
+import { eventLive, listLive } from "../../live.js";
 import { itemSecret, revealState } from "../../secrets.js";
 import type { ShareContext } from "./index.js";
 
@@ -284,11 +287,33 @@ const publicEvent = (event: EventRow, now: Date) => ({
  * What a guest sees through their link. The order is the owner's, never the funding state: the
  * public view sorts complete items last itself, so that the owner's view gives nothing away.
  */
+/** The steps the guests see: only those still on their way, never why a link failed. */
+function liveStage(wish: WishRow): "reading" | "images" | null {
+  const stage = stageOf(wish.enrichment, wish.enrichmentStep);
+  return isLive(stage) ? (stage as "reading" | "images") : null;
+}
+
 export const viewRoutes: FastifyPluginAsync<{
   db: Database;
   now: () => Date;
   images: Images | null;
 }> = async (app, { db, now, images }) => {
+  /** What changed, in a few bytes: the page asks it while items are completed (docs/live-updates.md). */
+  app.get("/live", async (request, reply) => {
+    const { link } = shareOf(request);
+    reply.header("cache-control", "private, no-store");
+    if (link.scope === "list" && link.listId) {
+      const [list] = await db
+        .select({ id: schema.wishLists.id })
+        .from(schema.wishLists)
+        .where(and(eq(schema.wishLists.id, link.listId), isNull(schema.wishLists.archivedAt)));
+      if (!list) throw new HttpError(404, "link_not_found");
+      return listLive(db, list.id);
+    }
+    if (link.scope === "event" && link.eventId) return eventLive(db, link.eventId);
+    throw new HttpError(404, "link_not_found");
+  });
+
   app.get("/view", async (request) => {
     const { link, open, viewer, sessionUser } = shareOf(request);
     const at = now();
@@ -324,6 +349,8 @@ export const viewRoutes: FastifyPluginAsync<{
           notes: wish.notes,
           // Signed thumbnails only: the guests never learn where the files are
           image: pictures.get(wish.id) ?? null,
+          // Being completed from its link: the page follows it live (docs/live-updates.md)
+          stage: liveStage(wish),
           priceCents: wish.priceCents,
           targetCents: wish.targetCents,
           quantity: wish.quantity,

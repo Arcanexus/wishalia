@@ -2,10 +2,12 @@
 
 When an item is added with a link, it shows at once with the site's name as its title (« fnac.com »).
 The worker then reads the page behind the link and completes the item: its **title**, its
-**price** and its **images** ([Images](images.md)). Meanwhile the item shows a turning icon and
-« Lecture du lien… » (and, with images on, an empty frame where its image will go, that breathes;
-both stay still when the device asks for less motion), and the list page looks again: every 3 seconds for the first minute, then
-every 15 seconds, for 10 minutes at most. A link that could not be read says « Lien illisible ».
+**price** and its **images** ([Images](images.md)). Meanwhile the item shows a chain link in a
+turning ring and « Lecture du lien… », then a picture and « Recherche des images… » once its title
+and price are written (and, with images on, an empty frame where its image will go, that breathes;
+both stay still when the device asks for less motion). The pages follow each step by themselves,
+the guests' page included: see [Live updates](live-updates.md). A link that could not be read says
+« Lien illisible », with a warning sign.
 
 ![An item being completed from its link](images/app-enrichment.png)
 
@@ -63,7 +65,7 @@ Both are a button with two turning arrows: their words show in a tip on hover an
 
 ![A list with the reload buttons at the top and on the items with a link, one showing its tip « Recharger »](images/app-refresh.png)
 
-The items show « Lecture du lien… » again, and the page looks again, as for a new item. A link that
+The items show « Lecture du lien… » again, and the page follows them live, as for a new item. A link that
 said « Lien illisible » can be tried again the same way. What the owner typed or sent is kept (see
 below): the read only follows the page where the item still has what the page gave.
 
@@ -112,7 +114,9 @@ network (server-side request forgery). The worker:
 ## The queue
 
 The queue is the `enrichment` column of the items, in PostgreSQL: `pending` when there is a link to
-read, then `running`, `done` or `failed`. The worker takes the oldest pending item with
+read, then `running`, `done` or `failed`; while running, `enrichment_step` is `images` once the
+title and price are written (a first transaction), before the images are fetched and written (a
+second one), so that the pages show each step ([Live updates](live-updates.md)). The worker takes the oldest pending item with
 `FOR UPDATE SKIP LOCKED`, so several replicas never take the same one. A page that cannot be read
 is tried again later (1, then 2 minutes after), and the item is `failed` after 3 attempts, or at
 once for a refused address; an item may also wait for a later time (`enrichment_at`), when a list's

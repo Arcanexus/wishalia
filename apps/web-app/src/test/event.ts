@@ -68,12 +68,16 @@ export function fakeEvent({
     ...(formData ? { body: formData } : {}),
   });
   const jar = fakeCookies(cookies);
+  const dependencies: string[] = [];
   const event = {
     request,
     url: new URL(url),
     params,
     cookies: jar.cookies,
     getClientAddress: () => "10.0.0.7",
+    /** What a load said it depends on (invalidate), for the live pages. */
+    depends: (...keys: string[]) => void dependencies.push(...keys),
+    dependencies,
     locals: {
       themeChoice: "auto",
       mode: "device",
