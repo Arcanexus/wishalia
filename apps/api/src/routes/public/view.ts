@@ -1,5 +1,6 @@
 import { type Database, schema } from "@wishalia/db";
 import {
+  amountTarget,
   canSeeContributions,
   cents,
   fundingByEvent,
@@ -10,6 +11,7 @@ import {
   progress,
   remainingToFund,
   reservedUnits,
+  takesShares,
   timesGiven,
   totalFunded,
   type SecretState,
@@ -229,20 +231,23 @@ function publicFunding(
     repeatable: wish.repeatable,
     targetCents: wish.targetCents === null ? null : cents(wish.targetCents),
     quantity: wish.quantity,
+    priceCents: wish.priceCents === null ? null : cents(wish.priceCents),
   };
   const total = totalFunded(funding);
-  const target = wish.targetCents === null ? null : cents(wish.targetCents);
+  const target = amountTarget(wishFunding);
+  const byAmounts = {
+    totalCents: total,
+    remainingCents: target === null ? null : remainingToFund(target, total),
+    overshootCents: target === null ? null : overshoot(target, total),
+    byEvent: [...fundingByEvent(funding)].map(([id, amountCents]) => ({ eventId: id, amountCents })),
+  };
   return {
     state: itemState(wishFunding, funding, eventId),
     progress: progress(wishFunding, funding),
     ...(wish.kind === "pool"
-      ? {
-          totalCents: total,
-          remainingCents: target === null ? null : remainingToFund(target, total),
-          overshootCents: target === null ? null : overshoot(target, total),
-          byEvent: [...fundingByEvent(funding)].map(([id, amountCents]) => ({ eventId: id, amountCents })),
-        }
-      : { reservedUnits: reservedUnits(funding) }),
+      ? byAmounts
+      : // A gift shared by amounts also says how much is gathered and what is left of its price
+        { reservedUnits: reservedUnits(funding), ...(takesShares(wishFunding) ? byAmounts : {}) }),
     ...(wish.repeatable ? { timesGiven: timesGiven(funding) } : {}),
     // Names only, none for an anonymous contribution, and only one's own on an open link: amounts
     // and messages stay with their author

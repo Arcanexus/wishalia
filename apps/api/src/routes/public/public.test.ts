@@ -243,6 +243,47 @@ describe("contributions through a list link", () => {
     expect(booksView.funding).toMatchObject({ state: "in_progress", reservedUnits: 2 });
   });
 
+  it("lets guests share a gift that has a price, up to its price, or one of them give it whole", async () => {
+    const lamp = await item("Lampe", listId, { priceCents: 16000 });
+    const plain = await item("Plaid", listId, { priceCents: 5000 });
+    for (const id of [lamp, plain]) await manage(owner, "PUT", `/events/${christmas}/items/${id}`);
+    const token = listLink.body.token;
+    const give = (id: string, payload: object) =>
+      guest(token, "POST", `/items/${id}/contributions`, {
+        payload: { eventId: christmas, guestName: "Tata", ...payload },
+      });
+
+    const first = await give(lamp, { amountCents: 4000 });
+    expect(first.status).toBe(201);
+    expect(first.body.contribution).toMatchObject({ amountCents: 4000, units: null });
+    expect((await give(lamp, {})).body).toEqual({ error: "already_shared" });
+    expect((await give(lamp, { amountCents: 12001 })).body).toEqual({ error: "amount_too_high" });
+    let lampView = (await guest(token, "GET", "/view")).body.items.find(
+      (entry: { id: string }) => entry.id === lamp,
+    );
+    expect(lampView.funding).toMatchObject({
+      state: "in_progress",
+      progress: 0.25,
+      totalCents: 4000,
+      remainingCents: 12000,
+      reservedUnits: 0,
+    });
+    expect((await give(lamp, { amountCents: 12000 })).status).toBe(201);
+    lampView = (await guest(token, "GET", "/view")).body.items.find(
+      (entry: { id: string }) => entry.id === lamp,
+    );
+    expect(lampView.funding).toMatchObject({ state: "complete", totalCents: 16000, remainingCents: 0 });
+    expect((await give(lamp, { amountCents: 100 })).body).toEqual({ error: "already_reserved" });
+
+    // Given whole, it takes no share any more; without a price, it takes none at all
+    expect((await give(plain, {})).status).toBe(201);
+    expect((await give(plain, { amountCents: 100 })).body).toEqual({ error: "already_reserved" });
+    expect((await give(lonely, { amountCents: 100 })).status).toBe(404);
+    const noPrice = await item("Bougie", listId);
+    await manage(owner, "PUT", `/events/${christmas}/items/${noPrice}`);
+    expect((await give(noPrice, { amountCents: 100 })).body).toEqual({ error: "shares_not_taken" });
+  });
+
   it("takes a contribution without an event: a list is not always tied to one", async () => {
     const made = await guest(listLink.body.token, "POST", `/items/${lonely}/contributions`, {
       payload: { guestName: "Parrain", message: "Bon appétit" },
