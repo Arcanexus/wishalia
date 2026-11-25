@@ -6,6 +6,7 @@ import { buildApp } from "../app.js";
 import type { Mail, Mailer } from "../auth/mailer.js";
 import { loadConfig } from "../config.js";
 import type { Images } from "../images.js";
+import type { FetchPage } from "../remote.js";
 
 export const OWNER_EMAIL = "owner@example.test";
 
@@ -22,6 +23,7 @@ export async function createTestApp(
   env: NodeJS.ProcessEnv = {},
   now?: () => Date,
   images: Images | null = null,
+  fetchPage?: FetchPage,
 ): Promise<TestApp> {
   const { db, close: closeDb } = await createTestDb();
   const mails: Mail[] = [];
@@ -34,7 +36,13 @@ export async function createTestApp(
     OWNER_EMAILS: OWNER_EMAIL,
     ...env,
   });
-  const app = await buildApp(config, { db, mailer, images, ...(now ? { now } : {}) });
+  const app = await buildApp(config, {
+    db,
+    mailer,
+    images,
+    ...(now ? { now } : {}),
+    ...(fetchPage ? { fetchPage } : {}),
+  });
   return {
     app,
     db,

@@ -69,6 +69,11 @@
       <p class="notice error" role="alert">Donnez un nom à la liste, en 100 caractères au plus.</p>
     {/if}
   </form>
+
+  <p class="import">
+    Vos envies sont sur un autre site (Wishlistr, un tableur…) ?
+    <a href={resolve("/(app)/importer")}>Importer une liste</a>
+  </p>
 </section>
 
 <style>
@@ -106,6 +111,9 @@
   }
   .error {
     margin-top: 0.75rem;
+  }
+  .import {
+    margin-top: 1.5rem;
   }
   @media (max-width: 30rem) {
     .row {

@@ -201,7 +201,8 @@ images:
       resources:
         requests: { cpu: 10m, memory: 32Mi }
         limits: { memory: 128Mi }
-  # Largest request of the management app (adapter-node BODY_SIZE_LIMIT): an image is 10 MB at most
+  # Largest request of the management app (adapter-node BODY_SIZE_LIMIT): an image is 10 MB at most.
+  # With images off, the limit is 3M (the lists imported from a file, docs/import.md)
   uploadLimit: 12M
   imgproxy:
     image:

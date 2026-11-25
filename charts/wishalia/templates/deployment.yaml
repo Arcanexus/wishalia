@@ -84,11 +84,10 @@ spec:
             {{- else if eq $component "web-app" }}
             - name: ORIGIN
               value: {{ printf "https://%s" $.Values.hosts.app | quote }}
-            {{- if $.Values.images.enabled }}
-            # The images the owner sends (10 MB at most) go through the app's form
+            # The largest form: the images the owner sends (10 MB at most) when images are on, else
+            # the lists imported from a file (1 MB at most, docs/import.md)
             - name: BODY_SIZE_LIMIT
-              value: {{ $.Values.images.uploadLimit | quote }}
-            {{- end }}
+              value: {{ ternary $.Values.images.uploadLimit "3M" $.Values.images.enabled | quote }}
             {{- end }}
             {{- if has $component (list "api" "worker") }}
             {{- include "wishalia.database.env" $ | trim | nindent 12 }}

@@ -3,6 +3,7 @@
   import { enhance } from "$app/forms";
   import { invalidateAll } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { page } from "$app/state";
   import { cents, formatAmount } from "@wishalia/domain";
 
   import Gifts from "#lib/Gifts.svelte";
@@ -145,6 +146,20 @@
     </a>
   </div>
 </div>
+
+{#if page.url.searchParams.has("importees")}
+  {@const added = Number(page.url.searchParams.get("importees")) || 0}
+  {@const twice = Number(page.url.searchParams.get("doublons")) || 0}
+  <p class="notice" role="status">
+    {added === 0
+      ? "Aucune envie importée"
+      : added === 1
+        ? "1 envie importée"
+        : `${added} envies importées`}{twice > 0
+      ? `, ${twice === 1 ? "1 lien était" : `${twice} liens étaient`} déjà dans la liste`
+      : ""}. Les titres et les prix se complètent tout seuls depuis les liens.
+  </p>
+{/if}
 
 <ListSettings list={data.list} {form} />
 
