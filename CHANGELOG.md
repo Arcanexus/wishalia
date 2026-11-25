@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-11-25
+
 ### Added
 
 - A reload button (two turning arrows, its name in a tip on hover and focus) on each item, « Recharger », and on a list page, « Recharger les liens », read the links again: a new

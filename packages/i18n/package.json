@@ -1,6 +1,6 @@
 {
   "name": "@wishalia/i18n",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "private": true,
   "type": "module",
   "description": "The languages of Wishalia: which one a person reads, the words of every screen and email, and dates and amounts in their language.",
