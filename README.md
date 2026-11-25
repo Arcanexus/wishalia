@@ -43,6 +43,7 @@ server, not hidden in the page.
 > and finds the lists their owners made public. The worker completes the items added with a link (title,
 > price, images; Amazon included), and the owner can choose, send and frame the image of each item (on a volume or in S3, through imgproxy).
 > The app installs on a phone, and a wish comes in from the share menu of any app (a Shortcut on iPhone).
+> Lists kept elsewhere come in by import: Wishlistr, a CSV or JSON file, or pasted text.
 
 <p align="center">
   <img src="docs/images/app-lists.png" alt="The management app: a greeting, the quick add field and two lists" width="640">
@@ -56,6 +57,7 @@ server, not hidden in the page.
 | 📅 **Lists and events**  | Durable lists, recurring events, series of books, recurring wishes.      |
 | 👵 **For every age**     | Large touch targets, no password, an item added in under five seconds.   |
 | 📱 **On the phone**      | Installs like an app; « Partager » from any shop adds a wish.            |
+| 📥 **Bring your lists**  | Import from Wishlistr, a CSV or JSON export, or a pasted list.           |
 | ⚡ **Light**             | Little JavaScript, quick on a modest phone.                              |
 | 🏠 **Self-hosted**       | Four images, one Helm chart (PostgreSQL included, or yours), a REST API. |
 | 📈 **Observable**        | Prometheus metrics and a ServiceMonitor, with nothing that spoils.       |

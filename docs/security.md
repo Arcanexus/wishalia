@@ -77,6 +77,12 @@ The API is internal: only the two frontends reach it, server side, and a Network
   post behind SvelteKit's CSRF check. The service worker caches only the app's code and static
   files, never a page, an API answer or an image, and leaves every other request to the network.
   The manifest is public and holds only the app's name. See [Install the app](install-app.md).
+- Imports: a file or a pasted text is 1 MB and 500 wishes at most, parsed as data only (CSV,
+  JSON, lines), never run or rendered: text is kept as text, links go through the same cleaning,
+  amounts are integers in cents. A Wishlistr list is read from `https://www.wishlistr.com/<name>/`
+  only, an address the API builds itself (never the one typed), without following redirects, with a
+  time and size limit and 10 reads a minute per person. No password of another service is ever asked
+  for. See [Importing a list](import.md).
 - History: `item_events` is append-only, enforced by a database trigger.
 - Metrics: `/metrics` listens on a port of its own that the ingress never routes, and only the
   `metrics.allowFrom` peers may scrape the API and the worker. Labels carry route patterns, never a

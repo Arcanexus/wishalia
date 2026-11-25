@@ -10,6 +10,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- « Importer une liste » (`/importer`, linked from the home page) brings wishes kept elsewhere: a
+  Wishlistr list from its public address, a CSV or JSON file (exports of other services, a
+  spreadsheet, columns named in French, English, German or Spanish) or a text pasted with one wish
+  per line. The page shows what it found before anything is added; the person keeps what they want
+  and picks a new or existing list. Titles, links, notes, prices in euros and quantities come along;
+  links already in the list are not added twice, and the worker completes the rest from the links.
+  API: `POST /manage/imports/preview` and `POST /manage/imports`. Chart: the management app's form
+  limit is `3M` when images are off (it was the 512 KB default).
+
 - An item waiting for its link to be read shows it at a glance: a turning icon with « Lecture du
   lien… » and, with images on, an empty frame where its image will go (both still for those who ask
   for less motion). The

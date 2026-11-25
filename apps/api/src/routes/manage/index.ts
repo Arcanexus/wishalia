@@ -5,8 +5,10 @@ import type { Auth } from "../../auth/auth.js";
 import { toHeaders } from "../../auth/fastify.js";
 import type { Config } from "../../config.js";
 import type { Images } from "../../images.js";
+import type { FetchPage } from "../../remote.js";
 import { apiTokenRoutes } from "./api-tokens.js";
 import { eventRoutes } from "./events.js";
+import { importRoutes } from "./imports.js";
 import { itemRoutes } from "./items.js";
 import { listRoutes } from "./lists.js";
 import { meRoutes } from "./me.js";
@@ -49,9 +51,9 @@ declare module "fastify" {
  * needs a session: the guard answers 401 before any handler runs.
  * Rule: no response of this scope ever carries contribution data (spec, section 3).
  */
-export const manageRoutes: FastifyPluginAsync<ShareDeps & { auth: Auth }> = async (
+export const manageRoutes: FastifyPluginAsync<ShareDeps & { auth: Auth; fetchPage: FetchPage }> = async (
   app,
-  { auth, config, db, now, secret, images },
+  { auth, config, db, now, secret, images, fetchPage },
 ) => {
   app.addHook("onRequest", async (request, reply) => {
     request.scope = "manage";
@@ -72,4 +74,5 @@ export const manageRoutes: FastifyPluginAsync<ShareDeps & { auth: Auth }> = asyn
   await app.register(eventRoutes, { db, now, images });
   await app.register(shareLinkRoutes, { config, db, now, secret, images });
   await app.register(apiTokenRoutes, { db, now, images });
+  await app.register(importRoutes, { db, now, images, fetchPage });
 };
