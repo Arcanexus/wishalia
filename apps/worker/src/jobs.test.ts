@@ -80,7 +80,7 @@ describe("the enrichment queue", () => {
     expect(await enrichNext({ db, fetchPage: page(product), now })).toBe("done");
     expect(await read(item.id)).toMatchObject({ foundTitle: "Lampe en laiton", foundPriceCents: 4990 });
 
-    // Read again (the owner's « Relire »): the new price follows, the title too
+    // Read again (the owner's « Recharger »): the new price follows, the title too
     await db
       .update(schema.wishes)
       .set({ enrichment: "pending", enrichmentAttempts: 0, enrichmentAt: null })

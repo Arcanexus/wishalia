@@ -55,10 +55,10 @@ When a shop keeps refusing it, the price is typed with « Modifier ».
 A page changes: a new price, a better photo, or a reader that improved since the item came in (the
 Amazon photo, for one). The owner asks for a new read, from the list page:
 
-- **« Relire »** on an item reads its link again;
-- **« Relire les liens »**, next to « Aperçu », reads again the links of every open item of the list.
+- **« Recharger »** on an item reads its link again;
+- **« Recharger les liens »**, next to « Aperçu », reads again the links of every open item of the list.
 
-![A list with « Relire les liens » at the top and « Relire » on the items with a link](images/app-refresh.png)
+![A list with « Recharger les liens » at the top and « Recharger » on the items with a link](images/app-refresh.png)
 
 The items show « Lecture du lien… » again, and the page looks again, as for a new item. A link that
 said « Lien illisible » can be tried again the same way. What the owner typed or sent is kept (see

@@ -116,7 +116,7 @@
   }
   const closed = $derived(data.items.filter((item) => item.status !== "open"));
 
-  /** After a « Relire »: the page shows « Lecture du lien… » and looks again, from the start. */
+  /** After a « Recharger »: the page shows « Lecture du lien… » and looks again, from the start. */
   const reread =
     () =>
     async ({ update }: { update: (options?: { reset?: boolean }) => Promise<void> }) => {
@@ -128,8 +128,8 @@
   const refreshError = $derived(
     form?.refresh && "error" in form.refresh
       ? form.refresh.error === "rate_limited"
-        ? "Vous avez demandé beaucoup de relectures d'un coup : réessayez dans une minute."
-        : "La relecture n'a pas pu être demandée. Réessayez dans un instant."
+        ? "Vous avez demandé beaucoup de rechargements d'un coup : réessayez dans une minute."
+        : "Le rechargement n'a pas pu être demandé. Réessayez dans un instant."
       : null,
   );
 
@@ -162,7 +162,12 @@
   <div class="actions">
     {#if linked}
       <form method="POST" action="?/refreshAll" use:enhance={reread}>
-        <button type="submit" class="secondary">Relire les liens</button>
+        <button type="submit" class="secondary with-icon">
+          <svg class="reload" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 12a8 8 0 1 1-2.34-5.66" /><path d="M20 4v5h-5" />
+          </svg>
+          Recharger les liens
+        </button>
       </form>
     {/if}
     <a class="button secondary" href={resolve("/(app)/listes/[id]/apercu", { id: data.list.id })}>Aperçu</a>
@@ -192,8 +197,8 @@
   {@const queued = form.refresh.queued}
   <p class="notice" role="status">
     {queued === 0
-      ? "Aucun lien à relire : les envies sans lien ou déjà en lecture ne changent pas."
-      : `${queued === 1 ? "1 envie va être relue" : `${queued} envies vont être relues`} depuis ${
+      ? "Aucun lien à recharger : les envies sans lien ou déjà en lecture ne changent pas."
+      : `${queued === 1 ? "1 envie va être rechargée" : `${queued} envies vont être rechargées`} depuis ${
           queued === 1 ? "son lien" : "leur lien, l'une après l'autre"
         }.`}
     Le titre et le prix suivent la page tant que vous ne les avez pas changés ; ce que vous avez saisi ou envoyé
@@ -215,7 +220,7 @@
   {:else if form?.reveal && "lifted" in form.reveal}
     Le secret de la liste est levé.
   {:else if form?.refresh && "itemId" in form.refresh && "title" in form.refresh}
-    Relecture du lien de « {form.refresh.title} » demandée.
+    Rechargement de « {form.refresh.title} » demandé.
   {:else if form?.edit && "title" in form.edit}
     « {form.edit.title} » est enregistré{form.edit.listId !== data.list.id ? " et a changé de liste" : ""}.
   {:else if form?.status && "status" in form.status}
@@ -347,8 +352,8 @@
                 <p class="completing">
                   <span class="badge failed">Lien illisible</span>
                   <span class="muted">
-                    La page n'a pas pu être lue : réessayez avec « Relire », ou complétez l'envie avec «
-                    Modifier ».
+                    La page n'a pas pu être lue : réessayez avec «&nbsp;Recharger&nbsp;», ou complétez l'envie
+                    avec «&nbsp;Modifier&nbsp;».
                   </span>
                 </p>
               {/if}
@@ -367,8 +372,15 @@
               {#if link && item.enrichment !== "pending"}
                 <form method="POST" action="?/refresh" use:enhance={reread}>
                   <input type="hidden" name="itemId" value={item.id} />
-                  <button type="submit" class="secondary" aria-label="Relire le lien de « {item.title} »">
-                    Relire
+                  <button
+                    type="submit"
+                    class="secondary with-icon"
+                    aria-label="Recharger le lien de « {item.title} »"
+                  >
+                    <svg class="reload" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M20 12a8 8 0 1 1-2.34-5.66" /><path d="M20 4v5h-5" />
+                    </svg>
+                    Recharger
                   </button>
                 </form>
               {/if}
@@ -498,6 +510,22 @@
   }
   .mover button:disabled {
     visibility: hidden;
+  }
+  /* The turning arrows of « Recharger »: next to its word, never instead of it */
+  .with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .reload {
+    width: 1.2rem;
+    height: 1.2rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
   .mover svg {
     width: 1.4rem;
