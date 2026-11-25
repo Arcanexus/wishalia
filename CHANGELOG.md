@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-11-25
+
 ### Fixed
 
 - The image of an Amazon page is the product's photo: the worker took the first pictures of the
