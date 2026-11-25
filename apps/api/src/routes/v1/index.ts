@@ -9,6 +9,7 @@ import { hashToken } from "../../tokens.js";
 import { isApiTokenActive, isWellFormedApiToken } from "../manage/api-tokens.js";
 import { eventRoutes } from "../manage/events.js";
 import { itemRoutes } from "../manage/items.js";
+import { refreshRoutes } from "../manage/refresh.js";
 import { listRoutes } from "../manage/lists.js";
 import { openApiDocument } from "./openapi.js";
 
@@ -84,6 +85,7 @@ export const v1Routes: FastifyPluginAsync<V1Deps> = async (app, { config, db, no
     secured.get("/me", async (request) => request.user);
     await secured.register(listRoutes, { db, now, images, publicOrigin: config.PUBLIC_ORIGIN });
     await secured.register(itemRoutes, { db, now, images });
+    await secured.register(refreshRoutes, { db, now, images });
     await secured.register(eventRoutes, { db, now, images });
   });
 };

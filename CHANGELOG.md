@@ -6,6 +6,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- « Relire » on each item, and « Relire les liens » on a list page, read the links again: a new
+  price, a better photo, or what an improved reader now finds (the Amazon photo fixed below also
+  reaches the wishes added before). The items show « Lecture du lien… » as for a new one, and a
+  « Lien illisible » can be tried again. The owner's words win: a title or a price they typed or
+  changed is kept, a photo they sent stays; the page's own values follow the page. No burst
+  towards a site: the items of a same site are read 5 seconds apart, and each owner may ask 30
+  item reads and 3 list reads per minute. API: `POST /manage/items/:id/refresh` and
+  `POST /manage/lists/:id/refresh` (also in the REST API v1). Migration 0010 adds `found_title`
+  and `found_price_cents` to the items, filled from their history.
+
 ### Fixed
 
 - The image of an Amazon page is the product's photo: the worker took the first pictures of the

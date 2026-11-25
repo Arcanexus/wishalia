@@ -220,7 +220,14 @@ export async function enrichNext({
 
       await tx
         .update(schema.wishes)
-        .set({ ...patch, enrichment: "done", ...(changed || imageChanged ? { updatedAt: now() } : {}) })
+        .set({
+          ...patch,
+          // What the page gave, so that a later read may follow it while the owner keeps it
+          ...(patch.title !== undefined ? { foundTitle: patch.title } : {}),
+          ...(patch.priceCents !== undefined ? { foundPriceCents: patch.priceCents } : {}),
+          enrichment: "done",
+          ...(changed || imageChanged ? { updatedAt: now() } : {}),
+        })
         .where(eq(schema.wishes.id, job.id));
       if (changed) {
         await tx.insert(schema.itemEvents).values({

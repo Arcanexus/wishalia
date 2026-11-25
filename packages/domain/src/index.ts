@@ -67,6 +67,8 @@ export {
   completion,
   MAX_ENRICHMENT_ATTEMPTS,
   MAX_FOUND_CENTS,
+  REFRESH_SPACING_MS,
+  refreshSchedule,
   type Completable,
   type Found,
 } from "./enrichment.js";

@@ -75,6 +75,40 @@ describe("the enrichment queue", () => {
     expect(await enrichNext({ db, fetchPage: page(product), now })).toBe("idle");
   });
 
+  it("follows the page on a new read, but only where the owner kept what the page gave", async () => {
+    const item = await wish();
+    expect(await enrichNext({ db, fetchPage: page(product), now })).toBe("done");
+    expect(await read(item.id)).toMatchObject({ foundTitle: "Lampe en laiton", foundPriceCents: 4990 });
+
+    // Read again (the owner's « Relire »): the new price follows, the title too
+    await db
+      .update(schema.wishes)
+      .set({ enrichment: "pending", enrichmentAttempts: 0, enrichmentAt: null })
+      .where(eq(schema.wishes.id, item.id));
+    const cheaper = product.replace("Lampe en laiton", "Lampe en laiton doré").replace("49.90", "39.90");
+    expect(await enrichNext({ db, fetchPage: page(cheaper), now })).toBe("done");
+    expect(await read(item.id)).toMatchObject({
+      title: "Lampe en laiton doré",
+      priceCents: 3990,
+      foundPriceCents: 3990,
+    });
+
+    // The owner names it: the next read keeps their title, the price still follows the page
+    await db
+      .update(schema.wishes)
+      .set({ title: "La lampe de Léa", enrichment: "pending", enrichmentAttempts: 0, enrichmentAt: null })
+      .where(eq(schema.wishes.id, item.id));
+    expect(await enrichNext({ db, fetchPage: page(product), now })).toBe("done");
+    expect(await read(item.id)).toMatchObject({ title: "La lampe de Léa", priceCents: 4990 });
+  });
+
+  it("waits for the time a read was planned at", async () => {
+    const item = await wish({ enrichmentAt: new Date(clock.getTime() + 5_000) });
+    expect(await claim(db, clock)).toBeNull();
+    expect(await claim(db, new Date(clock.getTime() + 6_000))).toMatchObject({ id: item.id });
+    await db.update(schema.wishes).set({ enrichment: null }).where(eq(schema.wishes.id, item.id));
+  });
+
   it("keeps what the owner wrote, even when they change it while the page loads", async () => {
     const item = await wish();
     const result = await enrichNext({

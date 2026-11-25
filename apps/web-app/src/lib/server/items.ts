@@ -189,3 +189,37 @@ export async function orderItems(event: FormEvent, listId: string) {
     return moveFailure(failure);
   }
 }
+
+/**
+ * Reads an item's link again (docs/enrichment.md): the title, the price and the images come
+ * back from the page, while the owner's own words and photo stay. The page then shows
+ * « Lecture du lien… » as for a new item.
+ */
+export async function refreshItem(event: FormEvent) {
+  const form = await event.request.formData();
+  const itemId = String(form.get("itemId") ?? "");
+  if (!UUID.test(itemId)) return fail(400, { refresh: { error: "invalid_request" } });
+  try {
+    const item = await apiJson<Item>(event, `/manage/items/${itemId}/refresh`, { method: "POST" });
+    return { refresh: { itemId: item.id, title: item.title } };
+  } catch (failure) {
+    if (failure instanceof ApiError)
+      return fail(failure.status, { refresh: { error: failure.code, itemId } });
+    throw failure;
+  }
+}
+
+/** Reads the links of every open item of the list again, one site at a time. */
+export async function refreshList(event: FormEvent, listId: string) {
+  try {
+    const { queued } = await apiJson<{ queued: number }>(
+      event,
+      `/manage/lists/${encodeURIComponent(listId)}/refresh`,
+      { method: "POST" },
+    );
+    return { refresh: { queued } };
+  } catch (failure) {
+    if (failure instanceof ApiError) return fail(failure.status, { refresh: { error: failure.code } });
+    throw failure;
+  }
+}

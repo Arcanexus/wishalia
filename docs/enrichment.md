@@ -50,16 +50,47 @@ and takes them for a page not read yet: it tries again later (1, then 2 minutes 
 The worker never tries to get past a wall: it says who it is (`Wishalia/1.0` in its user agent).
 When a shop keeps refusing it, the price is typed with « Modifier ».
 
+## Reading a link again
+
+A page changes: a new price, a better photo, or a reader that improved since the item came in (the
+Amazon photo, for one). The owner asks for a new read, from the list page:
+
+- **« Relire »** on an item reads its link again;
+- **« Relire les liens »**, next to « Aperçu », reads again the links of every open item of the list.
+
+![A list with « Relire les liens » at the top and « Relire » on the items with a link](images/app-refresh.png)
+
+The items show « Lecture du lien… » again, and the page looks again, as for a new item. A link that
+said « Lien illisible » can be tried again the same way. What the owner typed or sent is kept (see
+below): the read only follows the page where the item still has what the page gave.
+
+So that no site gets a burst of requests, and nobody can use Wishalia to hammer one:
+
+- the items of a same site are spaced 5 seconds apart (the others go side by side): a list of 20
+  Amazon wishes takes under two minutes;
+- each owner may ask 30 item reads and 3 list reads per minute (`429 rate_limited` beyond, and the
+  page asks to try again in a minute);
+- an item being read already is left as it is.
+
+Each request writes a `refresh_requested` entry to the item's history (owner only). API:
+`POST /manage/items/:id/refresh` and `POST /manage/lists/:id/refresh`, also in the
+[REST API v1](rest-api.md).
+
 ## The owner's words win
 
-- The title is replaced only while it is still the site's name: words typed with the link, or a title
-  changed since, are kept.
-- The price only fills an empty one.
+- The title is replaced only while it is still the site's name, or the title the page gave the last
+  time: words typed with the link, or a title changed since, are kept.
+- The price fills an empty one, or follows the page while it is still the price the page gave the
+  last time; a price the owner typed or changed is kept. A page that no longer shows a price leaves
+  the item's.
+- The page's images replace the page's older ones; a photo the owner sent stays, and stays shown when
+  they chose it. A frame drawn on a page image starts again on the new one.
 - When the owner changes the item while the page loads, the worker applies the rules to the item as
   it is then. When they change its link, the item is queued again for the new link and the old
   result is dropped.
 
-Each completion writes an `enriched` entry to the item's history (visible to the owner only), with
+The worker keeps what it wrote (`found_title`, `found_price_cents`), to tell the page's values from
+the owner's. Each completion writes an `enriched` entry to the item's history (visible to the owner only), with
 what changed.
 
 ## Safety
@@ -81,7 +112,8 @@ The queue is the `enrichment` column of the items, in PostgreSQL: `pending` when
 read, then `running`, `done` or `failed`. The worker takes the oldest pending item with
 `FOR UPDATE SKIP LOCKED`, so several replicas never take the same one. A page that cannot be read
 is tried again later (1, then 2 minutes after), and the item is `failed` after 3 attempts, or at
-once for a refused address; the page then says the link could not be read, and the item stays as
+once for a refused address; an item may also wait for a later time (`enrichment_at`), when a list's
+links are read again; the page then says the link could not be read, and the item stays as
 it was. A run whose worker stopped is taken again after 2 minutes.
 
 The worker needs `DATABASE_URL` (see [Configuration](configuration.md)) and outgoing HTTP(S) access to
