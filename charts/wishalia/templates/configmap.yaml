@@ -45,5 +45,8 @@ data:
   S3_REGION: {{ .Values.images.s3.region | quote }}
   S3_BUCKET: {{ .Values.images.s3.bucket | quote }}
   {{- end }}
+  # The worker's sweep of the unused files (docs/images.md#unused-files)
+  IMAGE_CLEANUP_INTERVAL_HOURS: {{ .Values.images.cleanup.intervalHours | quote }}
+  IMAGE_CLEANUP_GRACE_HOURS: {{ .Values.images.cleanup.graceHours | quote }}
   IMGPROXY_URL: {{ printf "http://%s-imgproxy:%v" (include "wishalia.fullname" .) .Values.images.imgproxy.port | quote }}
   {{- end }}

@@ -134,6 +134,13 @@ images:
     # ReadWriteMany (NFS, CephFS...) lets them run anywhere.
     accessModes: [ReadWriteOnce]
     annotations: {}
+  # The worker removes, now and then, the files that no image names any more (a write cut halfway,
+  # a removal that failed): in the volume or the bucket. The images people see or can choose stay.
+  cleanup:
+    # Hours between two sweeps; 0 turns it off
+    intervalHours: 6
+    # A file younger than this is never removed (an upload being saved, a page being read)
+    graceHours: 24
   s3:
     # e.g. http://minio.storage.svc:9000 or https://s3.nas.example.com; empty with images.garage
     endpoint: ""

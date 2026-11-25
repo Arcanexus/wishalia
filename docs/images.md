@@ -155,6 +155,25 @@ state. It is off by default.
 Changing from one to the other does not move the files: the page images come back with the next
 enrichment of each item, the photos the owner sent have to be copied over (same keys, `wishes/...`).
 
+## Unused files
+
+Now and then (every 6 hours by default) the worker looks over the volume or the bucket and removes
+the files that no image names any more: a write cut halfway (the worker or the API stopped between
+the file and its row), a removal that failed (the bucket was away when the owner changed their
+photo), a file left half written on the volume. The images an item shows, the photos the owner sent
+and the page's images they can still choose all have their row: they are never touched. A file
+younger than a day is spared, so an upload being saved or a page being read is never hit.
+
+| Setting                                     | Chart                          | Default |
+| ------------------------------------------- | ------------------------------ | ------- |
+| `IMAGE_CLEANUP_INTERVAL_HOURS` (`0`: never) | `images.cleanup.intervalHours` | `6`     |
+| `IMAGE_CLEANUP_GRACE_HOURS` (1 at least)    | `images.cleanup.graceHours`    | `24`    |
+
+The first sweep runs 5 minutes after the worker starts. It reads the files a thousand at a time (a
+`ListObjectsV2` on S3: the bucket's key needs to list it, which Garage's and MinIO's bucket keys
+can), with one query per thousand. Several workers may sweep at once: a removal is the same from
+each. The worker logs what it removed, and [Monitoring](monitoring.md) counts it.
+
 ## Set-up
 
 | Where              | What                                                                                                                                                                                                                                                                                                                         |
