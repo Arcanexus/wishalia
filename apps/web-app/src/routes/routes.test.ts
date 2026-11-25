@@ -30,6 +30,7 @@ describe("the root layout", () => {
     event.locals.mode = "light";
     expect((await run(rootLayout, event)).value).toEqual({
       appName: "Les envies",
+      locale: "fr",
       mode: "light",
       nextMode: "dark",
     });
@@ -53,6 +54,14 @@ describe("/preferences", () => {
     expect(away.setCookies[0]?.options?.secure).toBe(false);
     // Only the signed-in request went to the API
     expect(api.calls).toEqual([expect.objectContaining({ method: "PATCH", body: { mode: "device" } })]);
+  });
+
+  it("switches to the language the button names, with the account too", async () => {
+    const api = fakeApi({ "PATCH /manage/me": () => json({}) });
+    const { event, setCookies } = fakeEvent({ form: { retour: "/reglages", langue: "en" }, cookie: "s=1" });
+    expect((await run(preferences, event)).thrown).toMatchObject({ status: 303, location: "/reglages" });
+    expect(setCookies).toEqual([expect.objectContaining({ name: "wishalia.locale", value: "en" })]);
+    expect(api.calls).toEqual([expect.objectContaining({ body: { locale: "en" } })]);
   });
 
   it("keeps the choice on the device when the API cannot be reached", async () => {
@@ -180,10 +189,22 @@ describe("the app pages", () => {
       status: 303,
       location: "/connexion?retour=%2Flistes%2F1",
     });
-    const me = { id: "u", displayName: "Marie", email: "m@x.test", theme: "christmas", mode: "dark" };
+    const me = {
+      id: "u",
+      displayName: "Marie",
+      email: "m@x.test",
+      theme: "christmas",
+      mode: "dark",
+      locale: "auto",
+    };
     fakeApi({ "GET /manage/me": () => json(me) });
     const signedIn = fakeEvent();
-    expect((await run(appLayout, signedIn.event)).value).toEqual({ me, mode: "dark", nextMode: "device" });
+    expect((await run(appLayout, signedIn.event)).value).toEqual({
+      me,
+      locale: "fr",
+      mode: "dark",
+      nextMode: "device",
+    });
     // The account's settings win, and the device follows them
     expect(signedIn.event.locals).toMatchObject({ themeChoice: "christmas", mode: "dark" });
     expect(signedIn.setCookies.map((cookie) => [cookie.name, cookie.value])).toEqual([
@@ -195,6 +216,40 @@ describe("the app pages", () => {
     same.event.locals.mode = "dark";
     await run(appLayout, same.event);
     expect(same.setCookies).toHaveLength(0);
+  });
+
+  it("speak the account's language, on this device too", async () => {
+    fakeApi({
+      "GET /manage/me": () =>
+        json({
+          id: "u",
+          displayName: "Mary",
+          email: "m@x.test",
+          theme: "auto",
+          mode: "device",
+          locale: "en",
+        }),
+    });
+    const { event, setCookies } = fakeEvent();
+    expect((await run(appLayout, event)).value).toMatchObject({ locale: "en" });
+    expect(event.locals.locale).toBe("en");
+    expect(setCookies).toEqual([expect.objectContaining({ name: "wishalia.locale", value: "en" })]);
+
+    fakeApi({
+      "GET /manage/me": () =>
+        json({
+          id: "u",
+          displayName: "Mary",
+          email: "m@x.test",
+          theme: "auto",
+          mode: "device",
+          locale: "auto",
+        }),
+    });
+    const back = fakeEvent({ cookies: { "wishalia.locale": "en" } });
+    back.event.locals.localeChoice = "en";
+    await run(appLayout, back.event);
+    expect(back.event.cookies.get("wishalia.locale")).toBeUndefined();
   });
 
   it("list the lists, and open a new one once created", async () => {

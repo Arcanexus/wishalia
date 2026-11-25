@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { eventKindLabel, formatAvailable, formatDay, today } from "../format.ts";
+import { EVENT_KINDS, today } from "../format.ts";
 import { giftsFor, readEventForm } from "./events.ts";
 
 const form = (fields: Record<string, string>) => ({
@@ -93,11 +93,8 @@ describe("giftsFor", () => {
 });
 
 describe("format", () => {
-  it("writes days and kinds the French way", () => {
-    expect(formatDay("2026-12-24")).toBe("jeudi 24 décembre 2026");
-    expect(formatAvailable("2026-12-28T00:00:00.000Z")).toBe("28 décembre 2026");
-    expect(eventKindLabel("birthday")).toBe("Anniversaire");
-    expect(eventKindLabel("unknown" as never)).toBe("Autre");
+  it("lists the kinds of event and tells today", () => {
+    expect(EVENT_KINDS).toEqual(["birthday", "christmas", "other"]);
     expect(today(new Date("2026-11-23T23:30:00Z"))).toBe("2026-11-23");
   });
 });

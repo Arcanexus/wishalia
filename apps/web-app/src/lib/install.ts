@@ -1,4 +1,6 @@
 import type { ModeChoice, ThemeName } from "@wishalia/domain";
+import { LOCALE_TAGS, type Locale } from "@wishalia/i18n";
+import { appMessages } from "@wishalia/i18n/messages/app";
 
 /**
  * What makes the app installable (docs/install.md): the web app manifest, with the share target
@@ -30,13 +32,14 @@ export function themeColorTags(theme: ThemeName, mode: ModeChoice): string {
 /** Where the share menu sends what was shared: a page that fills the quick add, never adds alone. */
 export const SHARE_PATH = "/ajouter";
 
-export function manifest(appName: string) {
+export function manifest(appName: string, locale: Locale) {
+  const m = appMessages(locale).manifest;
   return {
     id: "/",
     name: appName,
     short_name: appName,
-    description: "Vos listes d'envies, à partager en famille sans rien gâcher de la surprise.",
-    lang: "fr",
+    description: m.description,
+    lang: LOCALE_TAGS[locale],
     dir: "ltr",
     start_url: "/",
     scope: "/",
@@ -53,12 +56,12 @@ export function manifest(appName: string) {
     ],
     shortcuts: [
       {
-        name: "Ajouter une envie",
+        name: m.add,
         url: SHARE_PATH,
         icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
       },
       {
-        name: "Mes événements",
+        name: m.events,
         url: "/evenements",
         icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
       },

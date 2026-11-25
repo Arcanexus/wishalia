@@ -1,6 +1,8 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
   import { MIN_CROP } from "@wishalia/domain";
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
 
   import type { Crop } from "./types.ts";
 
@@ -10,6 +12,8 @@
    * tap where it should be (WCAG 2.5.7), the arrow keys, and the size slider.
    */
   let { src, crop, title }: { src: string; crop: Crop | null; title: string } = $props();
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale).cropper);
 
   // The image's size, once it is loaded: the frame's fractions depend on its shape
   let width = $state(0);
@@ -120,19 +124,16 @@
       };
     }}
   >
-    <p class="muted" id="cadre-aide">
-      Faites glisser le cadre, ou touchez l'endroit à garder. Au clavier : les flèches le déplacent, + et −
-      changent sa taille.
-    </p>
+    <p class="muted" id="cadre-aide">{m.help}</p>
     <!-- An application area: the arrow keys and the pointer move the frame (described above) -->
     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
     <svg
       bind:this={svg}
       viewBox="0 0 {width} {height}"
       role="application"
-      aria-roledescription="cadre"
+      aria-roledescription={m.role}
       tabindex="0"
-      aria-label="Cadre de l'image de « {title} » : {percent} % de la largeur"
+      aria-label={m.label(title, percent)}
       aria-describedby="cadre-aide"
       onpointerdown={down}
       onpointermove={move}
@@ -146,7 +147,7 @@
       <rect class="frame inner" {x} {y} width={side} height={side} />
     </svg>
 
-    <label for="cadre-taille">Taille du cadre : {percent} %</label>
+    <label for="cadre-taille">{m.size(percent)}</label>
     <input
       id="cadre-taille"
       type="range"
@@ -164,14 +165,14 @@
       <input type="hidden" name="height" value={fractions.height} />
     {/if}
     <div class="buttons">
-      <button type="submit" disabled={saving}>{saving ? "Enregistrement…" : "Enregistrer le cadrage"}</button>
+      <button type="submit" disabled={saving}>{saving ? m.saving : m.save}</button>
       <button type="submit" name="whole" value="1" class="secondary" disabled={saving}>
-        Garder l'image entière
+        {m.whole}
       </button>
     </div>
   </form>
 {:else}
-  <p class="muted">Chargement de l'image…</p>
+  <p class="muted">{m.loading}</p>
 {/if}
 
 <style>

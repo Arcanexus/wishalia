@@ -1,6 +1,9 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
 
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
+
   import type { List } from "./types.ts";
 
   /** A list's settings, folded under its title until asked for. */
@@ -16,20 +19,15 @@
     } | null;
   } = $props();
 
-  const errors: Record<string, string> = {
-    invalid_name: "Donnez un nom à la liste, en 100 caractères au plus.",
-    secret_already_lifted: "Le secret est levé : il ne se referme plus.",
-    reveal_on_received: "Cette liste lève le secret à la réception de chaque envie.",
-    confirm: "Cochez la case pour confirmer.",
-  };
-  const message = (code: string | undefined) =>
-    code ? (errors[code] ?? "Le changement n'a pas abouti. Réessayez dans un instant.") : null;
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale).listSettings);
+  const message = (code: string | undefined) => (code ? (m.errors[code] ?? m.failed) : null);
   const failed = $derived(Boolean(form?.settings?.error || form?.reveal?.error || form?.archive?.error));
   const theme = $derived(list.theme ?? "none");
 </script>
 
 <details class="settings card" open={failed}>
-  <summary>Réglages de la liste</summary>
+  <summary>{m.title}</summary>
 
   <form
     method="POST"
@@ -49,7 +47,7 @@
     {#if message(form?.settings?.error)}
       <p class="notice error" role="alert">{message(form?.settings?.error)}</p>
     {/if}
-    <label for="liste-nom">Nom</label>
+    <label for="liste-nom">{m.name}</label>
     <input
       id="liste-nom"
       name="name"
@@ -60,108 +58,96 @@
     />
 
     <fieldset>
-      <legend>Qui peut voir la liste ?</legend>
+      <legend>{m.visibility}</legend>
       <label class="choice">
         <input type="radio" name="visibility" value="private" checked={list.visibility === "private"} />
         <span>
-          <strong>Privée</strong>
-          <span class="muted">Seules les personnes à qui vous envoyez un lien de partage la voient.</span>
+          <strong>{m.private.name}</strong>
+          <span class="muted">{m.private.help}</span>
         </span>
       </label>
       <label class="choice">
         <input type="radio" name="visibility" value="public" checked={list.visibility === "public"} />
         <span>
-          <strong>Publique</strong>
-          <span class="muted">
-            On la trouve depuis la page d'accueil, par votre nom ou celui de la liste, et tout le monde peut y
-            participer. Les noms de ceux qui offrent n'y sont pas montrés.
-          </span>
+          <strong>{m.public.name}</strong>
+          <span class="muted">{m.public.help}</span>
         </span>
       </label>
       {#if list.visibility === "public" && list.openUrl}
-        <label for="liste-adresse" class="address-label">Adresse de la liste publique</label>
+        <label for="liste-adresse" class="address-label">{m.address}</label>
         <input id="liste-adresse" class="address" readonly value={list.openUrl} />
-        <p class="muted help">
-          Repasser la liste en privée coupe cette adresse aussitôt ; vos liens de partage continuent de
-          marcher.
-        </p>
+        <p class="muted help">{m.addressHelp}</p>
       {/if}
     </fieldset>
 
     <fieldset>
-      <legend>Thème</legend>
-      <p class="muted help">
-        Le thème imposé s'applique à tous ceux qui ouvrent la liste ; le mode clair ou sombre reste celui de
-        chacun.
-      </p>
-      {#each [["none", "Celui de chacun", "Chacun voit la liste avec son propre thème."], ["neutral", "Neutre", "Ardoise, grenat et lin, en toute saison."], ["christmas", "Noël", "Sapin, houx et or."]] as [value, label, hint] (value)}
+      <legend>{m.theme}</legend>
+      <p class="muted help">{m.themeHelp}</p>
+      {#each ["none", "neutral", "christmas"] as const as value (value)}
         <label class="choice">
           <input type="radio" name="theme" {value} checked={theme === value} />
-          <span><strong>{label}</strong><span class="muted">{hint}</span></span>
+          <span>
+            <strong>{m.themes[value].name}</strong><span class="muted">{m.themes[value].help}</span>
+          </span>
         </label>
       {/each}
     </fieldset>
 
     <fieldset disabled={list.secretLifted}>
-      <legend>Les cadeaux faits sans occasion</legend>
-      <p class="muted help">
-        Un proche peut offrir une envie de cette liste en dehors de tout événement. Quand découvrez-vous qui
-        l'a offerte ?
-      </p>
+      <legend>{m.reveal}</legend>
+      <p class="muted help">{m.revealHelp}</p>
       <label class="choice">
         <input type="radio" name="revealMode" value="received" checked={list.revealMode === "received"} />
         <span>
-          <strong>Quand je marque l'envie reçue</strong>
-          <span class="muted">Le secret de chaque envie se lève à sa réception.</span>
+          <strong>{m.revealReceived.name}</strong>
+          <span class="muted">{m.revealReceived.help}</span>
         </span>
       </label>
       <label class="choice">
         <input type="radio" name="revealMode" value="manual" checked={list.revealMode === "manual"} />
         <span>
-          <strong>Quand je le décide</strong>
-          <span class="muted">Vous levez le secret de toute la liste d'un coup, quand vous voulez.</span>
+          <strong>{m.revealManual.name}</strong>
+          <span class="muted">{m.revealManual.help}</span>
         </span>
       </label>
     </fieldset>
 
-    <button type="submit">Enregistrer</button>
+    <button type="submit">{m.save}</button>
   </form>
 
   {#if list.revealMode === "manual"}
     <section class="part" aria-labelledby="liste-secret">
-      <h2 id="liste-secret">Le secret</h2>
+      <h2 id="liste-secret">{m.secret}</h2>
       {#if list.secretLifted}
-        <p>Le secret de cette liste est levé.</p>
+        <p>{m.lifted}</p>
       {:else}
-        <p>
-          Une fois levé, vous voyez qui vous a offert quoi en dehors des événements. Ce choix est définitif.
-        </p>
+        <p>{m.liftHelp}</p>
         <form method="POST" action="?/reveal" use:enhance>
           {#if message(form?.reveal?.error)}
             <p class="notice error" role="alert">{message(form?.reveal?.error)}</p>
           {/if}
           <label class="choice">
             <input type="checkbox" name="confirm" value="oui" required />
-            <span>Je veux voir qui m'a offert quoi</span>
+            <span>{m.liftConfirm}</span>
           </label>
-          <button type="submit" class="accent">Lever le secret de la liste</button>
+          <button type="submit" class="accent">{m.lift}</button>
         </form>
       {/if}
     </section>
   {/if}
 
   <section class="part" aria-labelledby="liste-archiver">
-    <h2 id="liste-archiver">Archiver la liste</h2>
-    <p>La liste disparaît de vos listes, et ses liens de partage n'affichent plus rien.</p>
+    <h2 id="liste-archiver">{m.archive}</h2>
+    <p>{m.archiveHelp}</p>
     <form method="POST" action="?/archive" use:enhance>
       {#if message(form?.archive?.error)}
         <p class="notice error" role="alert">{message(form?.archive?.error)}</p>
       {/if}
       <label class="choice">
         <input type="checkbox" name="confirm" value="oui" required />
-        <span>Je veux archiver « {list.name} »</span>
+        <span>{m.archiveConfirm(list.name)}</span>
       </label>
-      <button type="submit" class="secondary">Archiver la liste</button>
+      <button type="submit" class="secondary">{m.archive}</button>
     </form>
   </section>
 </details>

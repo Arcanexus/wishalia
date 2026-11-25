@@ -1,5 +1,6 @@
 import helmet from "@fastify/helmet";
 import type { Database } from "@wishalia/db";
+import { negotiateLocale, type Locale } from "@wishalia/i18n";
 import type { HttpMetrics } from "@wishalia/metrics";
 import Fastify, { type FastifyInstance } from "fastify";
 
@@ -21,6 +22,8 @@ declare module "fastify" {
   interface FastifyRequest {
     /** Which API the request belongs to. The two scopes never share a route. */
     scope: Scope | null;
+    /** The language of the request (Accept-Language, then DEFAULT_LOCALE), for the words it stores. */
+    locale: Locale;
   }
 }
 
@@ -52,6 +55,10 @@ export async function buildApp(
   app.decorateRequest("scope", null);
   app.decorateRequest("user", null);
   app.decorateRequest("share", null);
+  app.decorateRequest("locale", config.DEFAULT_LOCALE);
+  app.addHook("onRequest", async (request) => {
+    request.locale = negotiateLocale(request.headers["accept-language"], config.DEFAULT_LOCALE);
+  });
   registerErrorHandler(app);
 
   const secret = authSecret(config);

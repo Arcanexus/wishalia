@@ -76,7 +76,14 @@ function event(form?: Record<string, string>, cookies: Record<string, string> = 
       }),
       cookies: box.cookies,
       getClientAddress: () => "10.0.0.9",
-      locals: { themeChoice: "auto", mode: "device", listTheme: null, christmas: false },
+      locals: {
+        themeChoice: "auto",
+        mode: "device",
+        listTheme: null,
+        christmas: false,
+        localeChoice: "auto",
+        locale: "fr",
+      },
       setHeaders: () => {},
     },
   };

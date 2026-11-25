@@ -29,10 +29,10 @@ JSON only: `{ "error": "<code>" }`, with `issues` (`path`, `message`) for a `400
 
 ## The signed-in person
 
-| Route              | Body                              | Answer                                                                                        |
-| ------------------ | --------------------------------- | --------------------------------------------------------------------------------------------- |
-| `GET /manage/me`   |                                   | `id`, `displayName`, `email`, the display settings `theme` and `mode`, and `features.images`. |
-| `PATCH /manage/me` | `displayName`?, `theme`?, `mode`? | The person. `theme`: `auto`, `neutral`, `christmas`; `mode`: `device`, `light`, `dark`.       |
+| Route              | Body                                         | Answer                                                                                                                                                         |
+| ------------------ | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /manage/me`   |                                              | `id`, `displayName`, `email`, the display settings `theme` and `mode`, the `locale` (`auto`, `fr` or `en`), and `features.images`.                             |
+| `PATCH /manage/me` | `displayName`?, `theme`?, `mode`?, `locale`? | The person. `theme`: `auto`, `neutral`, `christmas`; `mode`: `device`, `light`, `dark`; `locale`: `auto` (the browser's), `fr` or `en` ([Languages](i18n.md)). |
 
 ## Lists
 

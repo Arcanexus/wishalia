@@ -20,6 +20,7 @@
     "@fastify/helmet": "^13.2.0",
     "@wishalia/db": "workspace:*",
     "@wishalia/domain": "workspace:*",
+    "@wishalia/i18n": "workspace:*",
     "@wishalia/metrics": "workspace:*",
     "@wishalia/storage": "workspace:*",
     "better-auth": "^1.7.27",

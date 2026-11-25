@@ -5,6 +5,8 @@ import {
   startRegistration,
   WebAuthnError,
 } from "@simplewebauthn/browser";
+import type { Locale } from "@wishalia/i18n";
+import { appMessages } from "@wishalia/i18n/messages/app";
 
 /**
  * The two WebAuthn ceremonies, in the browser. They talk to /auth/passkey on this host, which the
@@ -105,13 +107,14 @@ export async function signInWithPasskey(
 }
 
 /** A first name for a new passkey, from the browser: the person can rename it later. */
-export function deviceName(userAgent: string): string {
+export function deviceName(userAgent: string, locale: Locale): string {
+  const m = appMessages(locale).devices;
   if (/iPhone/.test(userAgent)) return "iPhone";
   if (/iPad/.test(userAgent)) return "iPad";
-  if (/Android/.test(userAgent)) return "Téléphone Android";
+  if (/Android/.test(userAgent)) return m.android;
   if (/Macintosh|Mac OS X/.test(userAgent)) return "Mac";
-  if (/Windows/.test(userAgent)) return "Ordinateur Windows";
+  if (/Windows/.test(userAgent)) return m.windows;
   if (/CrOS/.test(userAgent)) return "Chromebook";
-  if (/Linux/.test(userAgent)) return "Ordinateur Linux";
-  return "Cet appareil";
+  if (/Linux/.test(userAgent)) return m.linux;
+  return m.other;
 }

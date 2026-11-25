@@ -2,10 +2,14 @@
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
 
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
   import Logo from "@wishalia/ui/Logo.svelte";
   import ModeButton from "@wishalia/ui/ModeButton.svelte";
 
   let { data, children } = $props();
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale));
 
   const section = $derived(
     page.url.pathname.startsWith("/evenements")
@@ -24,14 +28,16 @@
       <Logo size={36} ring={false} />
       <span>{data.appName}</span>
     </a>
-    <nav aria-label="Principale">
-      <a href={resolve("/(app)")} aria-current={section === "lists" ? "page" : undefined}>Mes listes</a>
+    <nav aria-label={m.nav.label}>
+      <a href={resolve("/(app)")} aria-current={section === "lists" ? "page" : undefined}>{m.nav.lists}</a>
       <a href={resolve("/(app)/evenements")} aria-current={section === "events" ? "page" : undefined}>
-        Événements
+        {m.nav.events}
       </a>
-      <a href={resolve("/(app)/partage")} aria-current={section === "share" ? "page" : undefined}>Partager</a>
+      <a href={resolve("/(app)/partage")} aria-current={section === "share" ? "page" : undefined}>
+        {m.nav.share}
+      </a>
       <a href={resolve("/(app)/reglages")} aria-current={section === "settings" ? "page" : undefined}>
-        Réglages
+        {m.nav.settings}
       </a>
     </nav>
     <div class="tools">
@@ -44,7 +50,7 @@
             <path d="M15 8l4 4-4 4" />
             <path d="M19 12H9" />
           </svg>
-          <span class="word">Se déconnecter</span>
+          <span class="word">{m.nav.signOut}</span>
         </button>
       </form>
     </div>

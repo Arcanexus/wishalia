@@ -104,10 +104,12 @@ describe("preferences", () => {
     ).toEqual({
       themeChoice: "christmas",
       mode: "dark",
+      localeChoice: "auto",
     });
-    expect(readPreferences(fakeCookies({ [MODE_COOKIE]: "neon" }).cookies)).toEqual({
+    expect(readPreferences(fakeCookies({ [MODE_COOKIE]: "neon", "wishalia.locale": "en" }).cookies)).toEqual({
       themeChoice: "auto",
       mode: "device",
+      localeChoice: "en",
     });
   });
 

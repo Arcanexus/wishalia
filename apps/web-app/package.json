@@ -23,6 +23,7 @@
   "dependencies": {
     "@simplewebauthn/browser": "^13.3.0",
     "@wishalia/domain": "workspace:*",
+    "@wishalia/i18n": "workspace:*",
     "@wishalia/metrics": "workspace:*",
     "@wishalia/storage": "workspace:*"
   },

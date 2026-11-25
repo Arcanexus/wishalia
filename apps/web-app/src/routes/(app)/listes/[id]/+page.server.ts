@@ -1,4 +1,5 @@
 import { error } from "@sveltejs/kit";
+import { appMessages } from "@wishalia/i18n/messages/app";
 
 import { ApiError, apiJson } from "#lib/server/api.ts";
 import {
@@ -28,12 +29,12 @@ export const load: PageServerLoad = async (event) => {
   } catch (failure) {
     // Someone else's list, a deleted one or a mistyped address: the same answer
     if (failure instanceof ApiError && (failure.status === 404 || failure.status === 400)) {
-      error(404, "Cette liste n'existe pas, ou plus.");
+      error(404, appMessages(event.locals.locale).missing.list);
     }
     throw failure;
   }
   const list = lists.find((candidate) => candidate.id === id);
-  if (!list) error(404, "Cette liste n'existe pas, ou plus.");
+  if (!list) error(404, appMessages(event.locals.locale).missing.list);
   // A theme the owner forces on the list colours the whole page (docs/branding.md)
   event.locals.listTheme = list.theme;
   // The lists an item can move to

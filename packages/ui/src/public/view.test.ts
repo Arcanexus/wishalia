@@ -1,25 +1,26 @@
 import { describe, expect, it } from "vitest";
 
 import type { Funding, PublicItem } from "./types.ts";
-import {
-  canGive,
-  formatDay,
-  formatEuros,
-  gauge,
-  gaugeLine,
-  giveError,
-  giveLabel,
-  givers,
-  heading,
-  initials,
-  joinNames,
-  myGiftLine,
-  poolBar,
-  sortForGuests,
-  standing,
-  unitsLeft,
-  withdrawError,
-} from "./view.ts";
+import * as view from "./view.ts";
+
+const { canGive, gauge, sortForGuests, unitsLeft } = view;
+
+// The French words: the source language (packages/i18n). English is checked at the end
+const formatDay = (date: string) => view.formatDay(date, "fr");
+const formatEuros = (cents: number) => view.formatEuros(cents, "fr");
+const gaugeLine = (value: view.Gauge) => view.gaugeLine(value, "fr");
+const giveError = (code: string) => view.giveError(code, "fr");
+const giveLabel = (entry: PublicItem) => view.giveLabel(entry, "fr");
+const givers = (value: Funding) => view.givers(value, "fr");
+const heading = (value: Parameters<typeof view.heading>[0]) => view.heading(value, "fr");
+const initials = (name: string | null) => view.initials(name, "fr");
+const joinNames = (names: string[]) => view.joinNames(names, "fr");
+const myGiftLine = (gift: Parameters<typeof view.myGiftLine>[0], entry: PublicItem) =>
+  view.myGiftLine(gift, entry, "fr");
+const poolBar = (entry: PublicItem, events: Parameters<typeof view.poolBar>[1]) =>
+  view.poolBar(entry, events, "fr");
+const standing = (entry: PublicItem) => view.standing(entry, "fr");
+const withdrawError = (code: string) => view.withdrawError(code, "fr");
 
 const funding = (patch: Partial<Funding> = {}): Funding => ({
   state: "free",
@@ -262,5 +263,66 @@ describe("the drawings", () => {
     expect(initials("Camille (exemple)")).toBe("C");
     expect(initials("(42)")).toBe("?");
     expect(initials(null)).toBe("?");
+  });
+});
+
+describe("in English", () => {
+  const en = "en" as const;
+
+  it("writes amounts, days and names the English way", () => {
+    expect(view.formatEuros(4990, en)).toBe("€49.90");
+    expect(view.formatEuros(12000, en)).toBe("€120");
+    expect(view.formatDay("2026-12-24", en)).toBe("Thursday, 24 December 2026");
+    expect(view.joinNames(["Paul", "Jeanne", "Léa"], en)).toBe("Paul, Jeanne and Léa");
+  });
+
+  it("says where an item stands", () => {
+    const paul = [{ name: "Paul", mine: false }];
+    expect(view.standing(item({ status: "received", funding: null }), en)).toBe(
+      "Already received: thank you!",
+    );
+    expect(view.standing(item({ funding: funding({ state: "complete", contributors: paul }) }), en)).toBe(
+      "Reserved by Paul.",
+    );
+    expect(view.standing(item({ repeatable: true, funding: funding({ timesGiven: 2 }) }), en)).toContain(
+      "twice",
+    );
+    expect(
+      view.standing(
+        item({
+          kind: "quantity",
+          quantity: 4,
+          funding: funding({ reservedUnits: 2, contributors: [...paul, { name: null, mine: false }] }),
+        }),
+        en,
+      ),
+    ).toBe("2 of 4 already reserved, by Paul and someone discreet.");
+    expect(
+      view.standing(
+        item({
+          kind: "pool",
+          targetCents: 10000,
+          funding: funding({ totalCents: 4000, remainingCents: 6000, contributors: paul }),
+        }),
+        en,
+      ),
+    ).toBe("€40 raised of €100: €60 to go, with Paul.");
+  });
+
+  it("names the buttons, the errors and the gauge", () => {
+    expect(view.giveLabel(item({ kind: "pool" }), en)).toBe("I'll chip in");
+    expect(view.giveError("weird", en)).toContain("Try again");
+    expect(view.withdrawError("list_closed", en)).toContain("lifted");
+    expect(view.heading({ list: null, event: null }, en)).toBe("Wishlist");
+    expect(view.gaugeLine({ complete: 2, inProgress: 1, free: 1 }, en)).toBe(
+      "2 complete, 1 in progress, 1 free.",
+    );
+    expect(
+      view.myGiftLine(
+        { id: "g", itemId: "i", eventId: null, amountCents: null, units: 2 },
+        item({ kind: "quantity" }),
+        en,
+      ),
+    ).toBe("You are reserving 2.");
   });
 });

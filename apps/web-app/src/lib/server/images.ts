@@ -5,7 +5,7 @@ import type { Item } from "#lib/types.ts";
 
 import { ApiError, apiJson } from "./api.ts";
 
-type FormEvent = Pick<RequestEvent, "request" | "getClientAddress" | "url" | "cookies">;
+type FormEvent = Pick<RequestEvent, "request" | "getClientAddress" | "url" | "cookies" | "locals">;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

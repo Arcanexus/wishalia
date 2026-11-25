@@ -73,6 +73,15 @@ describe("me", () => {
     await as(owner, "PATCH", "/me", { theme: "auto", mode: "device" });
   });
 
+  it("keeps the language with the account, « auto » following the browser", async () => {
+    expect((await as(owner, "GET", "/me")).body).toMatchObject({ locale: "auto" });
+    expect((await as(owner, "PATCH", "/me", { locale: "en" })).body).toMatchObject({ locale: "en" });
+    expect((await as(owner, "GET", "/me")).body).toMatchObject({ locale: "en" });
+    expect((await as(other, "GET", "/me")).body).toMatchObject({ locale: "auto" });
+    expect((await as(owner, "PATCH", "/me", { locale: "auto" })).body).toMatchObject({ locale: "auto" });
+    expect((await as(owner, "PATCH", "/me", { locale: "tlh" })).status).toBe(400);
+  });
+
   it("refuses an unknown setting or field", async () => {
     expect((await as(owner, "PATCH", "/me", { theme: "pink" })).status).toBe(400);
     expect((await as(owner, "PATCH", "/me", { mode: "sepia" })).status).toBe(400);
@@ -187,6 +196,23 @@ describe("quick add", () => {
       expect(response.statusCode).toBe(201);
       const lists = await fresh.app.inject({ method: "GET", url: "/manage/lists", headers: { cookie } });
       expect(lists.json()).toEqual([expect.objectContaining({ name: "Mes envies", itemCount: 1 })]);
+    } finally {
+      await fresh.close();
+    }
+  }, 30_000);
+
+  it("names that first list in the language of the request", async () => {
+    const fresh = await createTestApp({ DEFAULT_LOCALE: "en" }, () => clock);
+    try {
+      const cookie = await signIn(fresh, OWNER_EMAIL);
+      await fresh.app.inject({
+        method: "POST",
+        url: "/manage/items",
+        headers: { cookie, "accept-language": "de-DE" },
+        payload: { input: "A blue jumper" },
+      });
+      const lists = await fresh.app.inject({ method: "GET", url: "/manage/lists", headers: { cookie } });
+      expect(lists.json()).toEqual([expect.objectContaining({ name: "My wishes" })]);
     } finally {
       await fresh.close();
     }

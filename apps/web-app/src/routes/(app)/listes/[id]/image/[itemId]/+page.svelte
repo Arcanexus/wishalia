@@ -4,6 +4,9 @@
   import { invalidateAll } from "$app/navigation";
   import { resolve } from "$app/paths";
 
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
+
   import Cropper from "#lib/Cropper.svelte";
   import { shrinkPhoto } from "#lib/photo.ts";
 
@@ -17,31 +20,11 @@
   const mine = $derived(data.images.images.find((image) => image.source === "upload"));
   const chosen = $derived(data.images.images.find((image) => image.id === data.images.imageId));
 
-  const done: Record<string, string> = {
-    uploaded: "Votre image est enregistrée et s'affiche sur l'envie.",
-    chosen: "L'image choisie s'affiche sur l'envie.",
-    cropped: "Le cadrage est enregistré.",
-    whole: "L'image s'affiche entière.",
-    removed: "L'envie n'a plus d'image.",
-    forgotten: "Votre image est retirée : Wishalia relit la page du lien pour reprendre son image.",
-    forgotten_no_link:
-      "Votre image est retirée. Ajoutez un lien à l'envie pour reprendre l'image de sa page.",
-  };
-  const errors: Record<string, string> = {
-    no_file: "Choisissez d'abord une image sur votre appareil.",
-    too_heavy: "Cette image pèse plus de 10 Mo. Choisissez-en une plus légère.",
-    not_an_image:
-      "Ce fichier n'est pas une image que Wishalia sait lire (JPEG, PNG, WebP, GIF, AVIF ou HEIC).",
-    image_too_large: "Cette image est trop grande. Choisissez-en une plus petite.",
-    images_off: "Les images ne sont pas activées sur ce serveur.",
-    no_image: "Choisissez d'abord une image.",
-    no_upload: "Vous n'avez pas envoyé d'image pour cette envie.",
-  };
-  const message = $derived(form?.image && "done" in form.image ? done[form.image.done] : null);
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale).image);
+  const message = $derived(form?.image && "done" in form.image ? m.done[form.image.done] : null);
   const problem = $derived(
-    form?.image && "error" in form.image
-      ? (errors[form.image.error] ?? "L'enregistrement n'a pas abouti. Réessayez dans un instant.")
-      : null,
+    form?.image && "error" in form.image ? (m.errors[form.image.error] ?? m.failed) : null,
   );
 
   // While Wishalia reads the link, the page looks again every 3 seconds, for a minute at most
@@ -64,37 +47,34 @@
 </script>
 
 <svelte:head>
-  <title>Image de « {item.title} » · {data.appName}</title>
+  <title>{m.title(item.title)} · {data.appName}</title>
 </svelte:head>
 
-<p class="back"><a href={resolve("/(app)/listes/[id]", { id: item.listId })}>← Retour à la liste</a></p>
-<h1>Image de « {item.title} »</h1>
+<p class="back"><a href={resolve("/(app)/listes/[id]", { id: item.listId })}>{m.back}</a></p>
+<h1>{m.title(item.title)}</h1>
 
 <div role="status" class="visually-hidden">{message ?? ""}</div>
 {#if message}<p class="notice" aria-hidden="true">{message}</p>{/if}
 {#if problem}<p class="notice error" role="alert">{problem}</p>{/if}
 
 {#if !on}
-  <p class="notice">
-    Les images ne sont pas activées sur ce serveur. La personne qui l'installe peut les activer (stockage S3
-    et imgproxy).
-  </p>
+  <p class="notice">{m.off}</p>
 {:else}
   <section class="card current" aria-labelledby="actuelle-titre">
-    <h2 id="actuelle-titre">L'image affichée</h2>
+    <h2 id="actuelle-titre">{m.current}</h2>
     {#if item.image}
-      <img src={item.image.medium} alt="L'image affichée pour « {item.title} »" width="240" height="240" />
+      <img src={item.image.medium} alt={m.currentAlt(item.title)} width="240" height="240" />
       <form method="POST" action="?/remove" use:enhance>
-        <button type="submit" class="secondary">Ne plus afficher d'image</button>
+        <button type="submit" class="secondary">{m.remove}</button>
       </form>
     {:else}
-      <p class="muted">Pas encore d'image : choisissez-en une ci-dessous, ou envoyez la vôtre.</p>
+      <p class="muted">{m.none}</p>
     {/if}
   </section>
 
   {#if chosen && mounted}
     <section class="card" aria-labelledby="cadrer-titre">
-      <h2 id="cadrer-titre">Recadrer</h2>
+      <h2 id="cadrer-titre">{m.crop}</h2>
       <!-- Another image, another frame: the cropper starts again -->
       {#key chosen.id}
         <Cropper src={chosen.sources.large} crop={data.images.crop} title={item.title} />
@@ -103,20 +83,18 @@
   {/if}
 
   <section class="card" aria-labelledby="page-titre">
-    <h2 id="page-titre">Les images de la page</h2>
+    <h2 id="page-titre">{m.page}</h2>
     {#if item.enrichment === "pending"}
-      <p class="muted">Wishalia lit la page du lien : ses images arrivent dans un instant.</p>
+      <p class="muted">{m.reading}</p>
     {:else if proposals.length === 0 && !mine}
       <p class="muted">
-        {item.url
-          ? "La page du lien ne propose pas d'image que Wishalia puisse reprendre."
-          : "Ajoutez un lien à l'envie : Wishalia proposera les images de sa page."}
+        {item.url ? m.noneOnPage : m.addLink}
       </p>
     {/if}
     {#if proposals.length > 0 || mine}
       <form method="POST" action="?/choose" use:enhance>
         <fieldset>
-          <legend class="visually-hidden">Choisir l'image affichée</legend>
+          <legend class="visually-hidden">{m.choose}</legend>
           <div class="choices">
             {#if mine}
               <label class="choice">
@@ -127,7 +105,7 @@
                   checked={mine.id === data.images.imageId}
                 />
                 <img src={mine.sources.small} alt="" width="192" height="192" loading="lazy" />
-                <span>Votre image</span>
+                <span>{m.yours}</span>
               </label>
             {/if}
             {#each proposals as image, index (image.id)}
@@ -139,18 +117,18 @@
                   checked={image.id === data.images.imageId}
                 />
                 <img src={image.sources.small} alt="" width="192" height="192" loading="lazy" />
-                <span>Image {index + 1} de la page</span>
+                <span>{m.nth(index + 1)}</span>
               </label>
             {/each}
           </div>
         </fieldset>
-        <button type="submit">Afficher l'image choisie</button>
+        <button type="submit">{m.show}</button>
       </form>
     {/if}
   </section>
 
   <section class="card" aria-labelledby="envoyer-titre">
-    <h2 id="envoyer-titre">Envoyer votre image</h2>
+    <h2 id="envoyer-titre">{m.upload}</h2>
     <form
       method="POST"
       action="?/upload"
@@ -170,11 +148,8 @@
         };
       }}
     >
-      <label for="image-fichier">Une photo ou une image de votre appareil</label>
-      <p class="muted hint" id="image-aide">
-        JPEG, PNG, WebP, GIF, AVIF ou HEIC, 10 Mo au plus. Sur un téléphone, vous pouvez aussi prendre une
-        photo.
-      </p>
+      <label for="image-fichier">{m.file}</label>
+      <p class="muted hint" id="image-aide">{m.fileHelp}</p>
       <input
         id="image-fichier"
         name="image"
@@ -185,17 +160,15 @@
         onchange={(event) => (chosenFile = event.currentTarget.files?.[0]?.name ?? "")}
       />
       <button type="submit" disabled={sending}>
-        {sending ? "Envoi…" : chosenFile ? `Envoyer « ${chosenFile} »` : "Envoyer l'image"}
+        {sending ? m.sending : chosenFile ? m.sendFile(chosenFile) : m.send}
       </button>
     </form>
     {#if mine}
       <form method="POST" action="?/forget" use:enhance class="forget">
         <p class="muted hint" id="retirer-aide">
-          {item.url
-            ? "Votre image est effacée, et l'envie reprend l'image de la page du lien : Wishalia relit la page."
-            : "Votre image est effacée. Sans lien, l'envie n'aura plus d'image."}
+          {item.url ? m.forgetWithLink : m.forgetNoLink}
         </p>
-        <button type="submit" class="secondary" aria-describedby="retirer-aide">Retirer votre image</button>
+        <button type="submit" class="secondary" aria-describedby="retirer-aide">{m.forget}</button>
       </form>
     {/if}
   </section>

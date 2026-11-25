@@ -3,7 +3,11 @@
 
   import { enhance } from "$app/forms";
   import { resolve } from "$app/paths";
+  import { page } from "$app/state";
 
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
+  import LanguageButtons from "@wishalia/ui/LanguageButtons.svelte";
   import Logo from "@wishalia/ui/Logo.svelte";
   import {
     passkeyAutofillSupported,
@@ -15,6 +19,8 @@
   import type { PageProps } from "./$types";
 
   let { data, form }: PageProps = $props();
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale).signIn);
   let sending = $state(false);
   /** Passkeys need JavaScript: the button shows once the page runs in the browser. */
   let passkeys = $state(false);
@@ -43,55 +49,38 @@
     signingIn = outcome === "ok";
     settle(outcome);
   }
-
-  const passkeyErrors: Partial<Record<PasskeyOutcome, string>> = {
-    unknown_key:
-      "Cette clé d'accès n'ouvre plus aucun compte. Recevez un lien par e-mail, puis ajoutez une nouvelle clé dans les réglages.",
-    failed: "La connexion avec la clé d'accès n'a pas marché. Réessayez, ou recevez un lien par e-mail.",
-  };
-
-  const errors: Record<string, string> = {
-    invalid_email: "Cette adresse e-mail ne semble pas complète. Vérifiez-la, par exemple marie@exemple.fr.",
-    too_many: "Trop de demandes d'un coup. Patientez une minute, puis réessayez.",
-    unavailable: "La connexion est indisponible pour le moment. Réessayez dans quelques minutes.",
-  };
 </script>
 
 <svelte:head>
-  <title>Connexion · {data.appName}</title>
+  <title>{m.title} · {data.appName}</title>
 </svelte:head>
 
 <main id="contenu" class="sign-in">
   <div class="brand">
     <Logo size={72} />
     <p class="name">{data.appName}</p>
+    <LanguageButtons returnPath={page.url.pathname + page.url.search} />
   </div>
 
   <div class="card">
     {#if form && "sent" in form}
-      <h1>Regardez vos e-mails</h1>
-      <p role="status">
-        Nous avons envoyé un lien de connexion à <strong>{form.sent}</strong>. Ouvrez-le sur cet appareil : il
-        reste valable quelques minutes.
-      </p>
-      <p class="muted">Rien reçu ? Regardez dans les indésirables, ou recommencez.</p>
-      <a class="button secondary" href={resolve("/connexion")}>Recommencer</a>
+      <h1>{m.checkMail}</h1>
+      <p role="status">{m.sent.before}<strong>{form.sent}</strong>{m.sent.after}</p>
+      <p class="muted">{m.nothing}</p>
+      <a class="button secondary" href={resolve("/connexion")}>{m.again}</a>
     {:else}
-      <h1>Connexion</h1>
+      <h1>{m.title}</h1>
       {#if data.signedOut}
-        <p class="notice" role="status">Vous êtes déconnecté. À bientôt !</p>
+        <p class="notice" role="status">{m.signedOut}</p>
       {/if}
       {#if data.failed}
-        <p class="notice error" role="alert">
-          Ce lien de connexion ne fonctionne plus. Il a peut-être déjà servi ou expiré : demandez-en un
-          nouveau.
-        </p>
+        <p class="notice error" role="alert">{m.linkFailed}</p>
       {/if}
       {#if form?.error}
-        <p class="notice error" role="alert">{errors[form.error] ?? errors.unavailable}</p>
+        <p class="notice error" role="alert">{m.errors[form.error] ?? m.errors.unavailable}</p>
       {/if}
-      {#if passkeyOutcome && passkeyErrors[passkeyOutcome]}
-        <p class="notice error" role="alert">{passkeyErrors[passkeyOutcome]}</p>
+      {#if passkeyOutcome && m.passkeyErrors[passkeyOutcome]}
+        <p class="notice error" role="alert">{m.passkeyErrors[passkeyOutcome]}</p>
       {/if}
 
       <form
@@ -105,7 +94,7 @@
           };
         }}
       >
-        <label for="email">Votre adresse e-mail</label>
+        <label for="email">{m.email}</label>
         <input
           id="email"
           name="email"
@@ -117,26 +106,24 @@
           aria-describedby="email-aide"
           aria-invalid={form?.error === "invalid_email" ? "true" : undefined}
         />
-        <p id="email-aide" class="muted help">
-          Nous vous envoyons un lien qui vous connecte, sans mot de passe.
-        </p>
+        <p id="email-aide" class="muted help">{m.emailHelp}</p>
         <button type="submit" disabled={sending}>
-          {sending ? "Envoi…" : "Recevoir mon lien de connexion"}
+          {sending ? m.sending : m.send}
         </button>
       </form>
 
       {#if passkeys}
-        <p class="or"><span>ou</span></p>
+        <p class="or"><span>{m.or}</span></p>
         <button type="button" class="secondary wide" disabled={signingIn} onclick={withPasskey}>
-          {signingIn ? "Connexion…" : "Se connecter avec une clé d'accès"}
+          {signingIn ? m.signingIn : m.passkey}
         </button>
-        <p class="muted help">Avec l'empreinte, le visage ou le code de cet appareil.</p>
+        <p class="muted help">{m.passkeyHelp}</p>
       {/if}
 
       {#if data.oidc}
-        <p class="or"><span>ou</span></p>
+        <p class="or"><span>{m.or}</span></p>
         <form method="POST" action="?/oidc">
-          <button type="submit" class="secondary wide">Se connecter avec {data.oidcName}</button>
+          <button type="submit" class="secondary wide">{m.oidc(data.oidcName)}</button>
         </form>
       {/if}
     {/if}

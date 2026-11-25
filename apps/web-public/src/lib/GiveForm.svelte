@@ -1,5 +1,7 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
+  import { publicMessages } from "@wishalia/i18n/messages/public";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
 
   import type { PublicEvent, PublicItem } from "@wishalia/ui/public/types.ts";
   import { formatEuros, giveLabel, giveError, unitsLeft } from "@wishalia/ui/public/view.ts";
@@ -32,6 +34,8 @@
     failed?: Values | null;
   } = $props();
 
+  const i18n = useI18n();
+  const m = $derived(publicMessages(i18n.locale).give);
   let sending = $state(false);
   const id = $derived(`don-${item.id}`);
   const left = $derived(unitsLeft(item));
@@ -39,7 +43,7 @@
 
 <details class="give" open={failed !== null}>
   <summary class="button secondary">
-    <span class="closed">{giveLabel(item)}</span><span class="opened">Fermer</span>
+    <span class="closed">{giveLabel(item, i18n.locale)}</span><span class="opened">{m.close}</span>
   </summary>
   <form
     method="POST"
@@ -54,14 +58,14 @@
   >
     <input type="hidden" name="itemId" value={item.id} />
     {#if failed?.error}
-      <p class="notice error" role="alert">{giveError(failed.error)}</p>
+      <p class="notice error" role="alert">{giveError(failed.error, i18n.locale)}</p>
     {/if}
 
     {#if events.length === 1}
       <input type="hidden" name="eventId" value={events[0]?.id} />
     {:else if events.length > 1}
       <fieldset>
-        <legend>Pour quelle occasion ?</legend>
+        <legend>{m.event}</legend>
         {#each events as event, index (event.id)}
           <label class="choice">
             <input type="radio" name="eventId" value={event.id} checked={index === 0} />
@@ -72,7 +76,7 @@
     {/if}
 
     {#if item.kind === "pool"}
-      <label for="{id}-montant">Votre participation, en euros</label>
+      <label for="{id}-montant">{m.amount}</label>
       <input
         id="{id}-montant"
         name="amount"
@@ -80,17 +84,17 @@
         autocomplete="off"
         required
         value={failed?.amount ?? ""}
-        placeholder="Par exemple 20"
+        placeholder={m.amountPlaceholder}
         aria-describedby="{id}-montant-aide"
         aria-invalid={failed?.error === "amount_required" ? "true" : undefined}
       />
       <p id="{id}-montant-aide" class="muted help">
         {item.funding?.remainingCents
-          ? `Il manque ${formatEuros(item.funding.remainingCents)}. Vous pouvez donner plus ou moins.`
-          : "Le montant que vous voulez, même au-delà de l'objectif."}
+          ? m.amountLeft(formatEuros(item.funding.remainingCents, i18n.locale))
+          : m.amountFree}
       </p>
     {:else if item.kind === "quantity" && left > 1}
-      <label for="{id}-nombre">Combien en offrez-vous ?</label>
+      <label for="{id}-nombre">{m.units}</label>
       <select id="{id}-nombre" name="units">
         {#each Array.from({ length: left }, (_, index) => index + 1) as count (count)}
           <option value={count} selected={String(count) === (failed?.units ?? "1")}>{count}</option>
@@ -99,7 +103,7 @@
     {/if}
 
     {#if needsName}
-      <label for="{id}-nom">Votre prénom</label>
+      <label for="{id}-nom">{m.name}</label>
       <input
         id="{id}-nom"
         name="guestName"
@@ -110,24 +114,24 @@
         aria-describedby="{id}-nom-aide"
         aria-invalid={failed?.error === "name_required" ? "true" : undefined}
       />
-      <p id="{id}-nom-aide" class="muted help">Pour que vos proches sachent qui s'en occupe.</p>
+      <p id="{id}-nom-aide" class="muted help">{m.nameHelp}</p>
     {/if}
 
-    <label for="{id}-mot">Un mot pour {owner} (facultatif)</label>
+    <label for="{id}-mot">{m.message(owner)}</label>
     <textarea id="{id}-mot" name="message" maxlength="500" rows="2" aria-describedby="{id}-mot-aide"
       >{failed?.message ?? ""}</textarea
     >
-    <p id="{id}-mot-aide" class="muted help">À lire après l'occasion, avec le cadeau.</p>
+    <p id="{id}-mot-aide" class="muted help">{m.messageHelp}</p>
 
     <label class="choice">
       <input type="checkbox" name="anonymous" checked={failed?.anonymous ?? false} />
       <span>
-        <strong>Rester discret</strong>
-        <span class="muted">Personne ne verra votre nom, pas même {owner}.</span>
+        <strong>{m.anonymous}</strong>
+        <span class="muted">{m.anonymousHelp(owner)}</span>
       </span>
     </label>
 
-    <button type="submit" disabled={sending}>{sending ? "Envoi…" : giveLabel(item)}</button>
+    <button type="submit" disabled={sending}>{sending ? m.sending : giveLabel(item, i18n.locale)}</button>
   </form>
 </details>
 

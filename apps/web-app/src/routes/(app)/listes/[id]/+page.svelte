@@ -4,19 +4,22 @@
   import { invalidateAll } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
-  import { cents, formatAmount } from "@wishalia/domain";
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
 
   import Gifts from "#lib/Gifts.svelte";
   import ItemEditor from "#lib/ItemEditor.svelte";
   import ListSettings from "#lib/ListSettings.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
   import IconButton from "#lib/IconButton.svelte";
-  import { dropIndex, moveId, placeLine } from "#lib/reorder.ts";
+  import { dropIndex, moveId } from "#lib/reorder.ts";
   import type { Item } from "#lib/types.ts";
 
   import type { PageProps } from "./$types";
 
   let { data, form }: PageProps = $props();
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale).list);
 
   const open = $derived(data.items.filter((item) => item.status === "open"));
   const images = $derived(data.me.features?.images ?? false);
@@ -54,7 +57,7 @@
 
   const place = (id: string, ids: string[]) => {
     const item = byId.get(id);
-    moved = item ? placeLine(item.title, ids.indexOf(id) + 1, ids.length) : "";
+    moved = item ? m.place(item.title, ids.indexOf(id) + 1, ids.length) : "";
   };
 
   /** After the server answered: its order is the truth, also when it refused (the list changed). */
@@ -129,8 +132,8 @@
   const refreshError = $derived(
     form?.refresh && "error" in form.refresh
       ? form.refresh.error === "rate_limited"
-        ? "Vous avez demandé beaucoup de rechargements d'un coup : réessayez dans une minute."
-        : "Le rechargement n'a pas pu être demandé. Réessayez dans un instant."
+        ? m.refreshRateLimited
+        : m.refreshFailed
       : null,
   );
 
@@ -139,12 +142,12 @@
   const kindLine = (item: Item) =>
     item.kind === "pool"
       ? item.targetCents
-        ? `Cagnotte, objectif ${formatAmount(cents(item.targetCents)).replace(/,00(?=\s*€)/u, "")}`
-        : "Cagnotte"
+        ? m.poolTarget(i18n.fmt.money(item.targetCents))
+        : m.pool
       : item.kind === "quantity"
-        ? `${item.quantity ?? 1} exemplaire${(item.quantity ?? 1) > 1 ? "s" : ""}`
+        ? m.copies(item.quantity ?? 1)
         : item.repeatable
-          ? "À chaque occasion"
+          ? m.everyOccasion
           : null;
   const failedEdit = (item: Item) =>
     form?.edit && "error" in form.edit && form.edit.itemId === item.id
@@ -157,25 +160,25 @@
   <title>{data.list.name} · {data.appName}</title>
 </svelte:head>
 
-<p class="back"><a href={resolve("/(app)")}>← Mes listes</a></p>
+<p class="back"><a href={resolve("/(app)")}>{m.back}</a></p>
 <div class="heading">
   <h1>{data.list.name}</h1>
   <div class="actions">
     {#if linked}
       <form method="POST" action="?/refreshAll" use:enhance={reread}>
-        <IconButton icon="reload" label="Recharger les liens de la liste" tip="Recharger les liens" />
+        <IconButton icon="reload" label={m.refreshAll.label} tip={m.refreshAll.tip} />
       </form>
     {/if}
     <IconButton
       icon="eye"
-      label="Aperçu : la liste comme vos proches la voient"
-      tip="Aperçu"
+      label={m.preview.label}
+      tip={m.preview.tip}
       href={resolve("/(app)/listes/[id]/apercu", { id: data.list.id })}
     />
     <IconButton
       icon="share"
-      label="Partager cette liste"
-      tip="Partager cette liste"
+      label={m.share.label}
+      tip={m.share.tip}
       href="{resolve('/(app)/partage')}?liste={data.list.id}"
     />
   </div>
@@ -184,15 +187,7 @@
 {#if page.url.searchParams.has("importees")}
   {@const added = Number(page.url.searchParams.get("importees")) || 0}
   {@const twice = Number(page.url.searchParams.get("doublons")) || 0}
-  <p class="notice" role="status">
-    {added === 0
-      ? "Aucune envie importée"
-      : added === 1
-        ? "1 envie importée"
-        : `${added} envies importées`}{twice > 0
-      ? `, ${twice === 1 ? "1 lien était" : `${twice} liens étaient`} déjà dans la liste`
-      : ""}. Les titres et les prix se complètent tout seuls depuis les liens.
-  </p>
+  <p class="notice" role="status">{m.imported(added, twice)}</p>
 {/if}
 
 {#if refreshError}
@@ -200,13 +195,8 @@
 {:else if form?.refresh && "queued" in form.refresh}
   {@const queued = form.refresh.queued}
   <p class="notice" role="status">
-    {queued === 0
-      ? "Aucun lien à recharger : les envies sans lien ou déjà en lecture ne changent pas."
-      : `${queued === 1 ? "1 envie va être rechargée" : `${queued} envies vont être rechargées`} depuis ${
-          queued === 1 ? "son lien" : "leur lien, l'une après l'autre"
-        }.`}
-    Le titre et le prix suivent la page tant que vous ne les avez pas changés ; ce que vous avez saisi ou envoyé
-    vous-même est gardé.
+    {m.refreshQueued(queued)}
+    {m.refreshKeeps}
   </p>
 {/if}
 
@@ -218,33 +208,27 @@
   {#if moved}
     {moved}
   {:else if form?.move && "title" in form.move}
-    {placeLine(form.move.title, form.move.position, form.move.count)}
+    {m.place(form.move.title, form.move.position, form.move.count)}
   {:else if form?.settings && "saved" in form.settings}
-    Réglages de la liste enregistrés.
+    {m.settingsSaved}
   {:else if form?.reveal && "lifted" in form.reveal}
-    Le secret de la liste est levé.
+    {m.secretLifted}
   {:else if form?.refresh && "itemId" in form.refresh && "title" in form.refresh}
-    Rechargement de « {form.refresh.title} » demandé.
+    {m.refreshAsked(form.refresh.title)}
   {:else if form?.edit && "title" in form.edit}
-    « {form.edit.title} » est enregistré{form.edit.listId !== data.list.id ? " et a changé de liste" : ""}.
+    {m.saved(form.edit.title, form.edit.listId !== data.list.id)}
   {:else if form?.status && "status" in form.status}
-    « {form.status.title} » : {form.status.status === "received"
-      ? "reçu"
-      : form.status.status === "archived"
-        ? "archivé"
-        : "remis dans la liste"}.
+    {m.statusChanged(form.status.title, form.status.status)}
   {/if}
 </div>
 
 <section aria-labelledby="envies-titre">
-  <h2 id="envies-titre">Envies ({open.length})</h2>
+  <h2 id="envies-titre">{m.wishes(open.length)}</h2>
   {#if open.length === 0}
-    <p class="muted">Aucune envie pour le moment. Ajoutez-en une ci-dessus.</p>
+    <p class="muted">{m.empty}</p>
   {:else}
     {#if form?.move && "error" in form.move}
-      <p class="notice error" role="alert">
-        L'ordre n'a pas pu être enregistré : la liste a changé entre-temps. Voici l'ordre actuel.
-      </p>
+      <p class="notice error" role="alert">{m.orderChanged}</p>
     {/if}
     <form method="POST" action="?/order" bind:this={orderForm} use:enhance={() => settle()} hidden>
       {#each order ?? [] as id (id)}<input type="hidden" name="itemIds" value={id} />{/each}
@@ -274,14 +258,14 @@
                 value="up"
                 class="secondary"
                 disabled={index === 0}
-                aria-label="Monter « {item.title} »"
+                aria-label={m.moveUp(item.title)}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
               </button>
               <span
                 class="grip"
                 aria-hidden="true"
-                title="Glisser pour déplacer"
+                title={m.grip}
                 onpointerdown={(event) => drag(event, item.id)}
               >
                 <svg viewBox="0 0 24 24">
@@ -298,7 +282,7 @@
                 value="down"
                 class="secondary"
                 disabled={index === shown.length - 1}
-                aria-label="Descendre « {item.title} »"
+                aria-label={m.moveDown(item.title)}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
               </button>
@@ -324,10 +308,10 @@
               <h3>{item.title}</h3>
               <p class="muted meta">
                 {#if kindLine(item)}<span class="kind">{kindLine(item)}</span>{/if}
-                {#if item.priceCents !== null}<span>{formatAmount(cents(item.priceCents))}</span>{/if}
+                {#if item.priceCents !== null}<span>{i18n.fmt.money(item.priceCents)}</span>{/if}
                 {#if link}
                   <a href={link} rel="noopener noreferrer external" target="_blank">
-                    {host(link)}<span class="visually-hidden"> (nouvel onglet)</span>
+                    {host(link)}<span class="visually-hidden">{m.newTab}</span>
                   </a>
                 {/if}
               </p>
@@ -346,19 +330,14 @@
                         stroke-linecap="round"
                       />
                     </svg>
-                    Lecture du lien…
+                    {m.reading}
                   </span>
-                  <span class="muted">
-                    Le titre, le prix{images ? " et les images" : ""} arrivent depuis la page.
-                  </span>
+                  <span class="muted">{m.readingWhat(images)}</span>
                 </p>
               {:else if item.enrichment === "failed"}
                 <p class="completing">
-                  <span class="badge failed">Lien illisible</span>
-                  <span class="muted">
-                    La page n'a pas pu être lue : réessayez avec le bouton «&nbsp;Recharger&nbsp;» (les
-                    flèches), ou complétez l'envie avec «&nbsp;Modifier&nbsp;».
-                  </span>
+                  <span class="badge failed">{m.unreadable}</span>
+                  <span class="muted">{m.unreadableHelp}</span>
                 </p>
               {/if}
               {#if data.gifts[item.id]?.length}<Gifts gifts={data.gifts[item.id] ?? []} none="" />{/if}
@@ -368,29 +347,24 @@
                 <a
                   class="button secondary"
                   href={resolve("/(app)/listes/[id]/image/[itemId]", { id: data.list.id, itemId: item.id })}
-                  aria-label="Image de « {item.title} »"
+                  aria-label={m.imageOf(item.title)}
                 >
-                  Image
+                  {m.image}
                 </a>
               {/if}
               {#if link && item.enrichment !== "pending"}
                 <form method="POST" action="?/refresh" use:enhance={reread}>
                   <input type="hidden" name="itemId" value={item.id} />
-                  <IconButton icon="reload" label="Recharger le lien de « {item.title} »" tip="Recharger" />
+                  <IconButton icon="reload" label={m.refresh.label(item.title)} tip={m.refresh.tip} />
                 </form>
               {/if}
               <form method="POST" action="?/status" use:enhance>
                 <input type="hidden" name="itemId" value={item.id} />
-                <button
-                  type="submit"
-                  name="status"
-                  value="received"
-                  aria-label="Je l'ai reçu : « {item.title} »"
-                >
+                <button type="submit" name="status" value="received" aria-label={m.receivedLabel(item.title)}>
                   <svg class="check" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M5 12.5l4.5 4.5L19 7.5" />
                   </svg>
-                  Je l'ai reçu
+                  {m.received}
                 </button>
               </form>
               <form method="POST" action="?/status" use:enhance>
@@ -400,9 +374,9 @@
                   name="status"
                   value="archived"
                   class="secondary"
-                  aria-label="Archiver « {item.title} »"
+                  aria-label={m.archiveLabel(item.title)}
                 >
-                  Archiver
+                  {m.archive}
                 </button>
               </form>
             </div>
@@ -416,18 +390,15 @@
 
 {#if closed.length > 0}
   <details class="closed">
-    <summary>Reçues et archivées ({closed.length})</summary>
+    <summary>{m.closed(closed.length)}</summary>
     <ul class="items">
       {#each closed as item (item.id)}
         <li class="card item">
           <div class="text">
             <h3>{item.title}</h3>
-            <p class="muted meta">{item.status === "received" ? "Reçu" : "Archivé"}</p>
+            <p class="muted meta">{item.status === "received" ? m.receivedState : m.archivedState}</p>
             {#if data.gifts[item.id]}
-              <Gifts
-                gifts={data.gifts[item.id] ?? []}
-                none="Personne ne l'a offert en dehors des événements."
-              />
+              <Gifts gifts={data.gifts[item.id] ?? []} none={m.noGiftOutside} />
             {/if}
           </div>
           <form method="POST" action="?/status" use:enhance class="actions">
@@ -437,9 +408,9 @@
               name="status"
               value="open"
               class="secondary"
-              aria-label="Remettre « {item.title} » dans la liste"
+              aria-label={m.reopenLabel(item.title)}
             >
-              Remettre dans la liste
+              {m.reopen}
             </button>
           </form>
         </li>

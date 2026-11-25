@@ -6,6 +6,7 @@ metadata:
     {{- include "wishalia.labels" . | nindent 4 }}
 data:
   APP_NAME: {{ .Values.config.appName | quote }}
+  DEFAULT_LOCALE: {{ .Values.config.defaultLocale | default "fr" | quote }}
   LOG_LEVEL: {{ .Values.config.logLevel | quote }}
   # The frontends call the API inside the cluster, server side
   API_URL: {{ include "wishalia.apiUrl" . | quote }}

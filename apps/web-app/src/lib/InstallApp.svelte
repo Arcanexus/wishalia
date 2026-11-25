@@ -1,9 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
+
   import { platform, shortcutAddress, type Platform } from "#lib/device.ts";
 
   let { appName, origin }: { appName: string; origin: string } = $props();
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale).install);
 
   /** Chromium's install prompt (Android, Windows, ChromeOS, Linux), kept for the button. */
   interface InstallPrompt extends Event {
@@ -51,54 +56,46 @@
 </script>
 
 <section class="card" aria-labelledby="installer">
-  <h2 id="installer">L'application sur votre téléphone</h2>
-  <p class="muted">
-    Installée, {appName} s'ouvre depuis l'écran d'accueil comme une application, et une envie s'ajoute depuis le
-    bouton Partager de n'importe quelle application ou site.
-  </p>
+  <h2 id="installer">{m.title}</h2>
+  <p class="muted">{m.intro(appName)}</p>
 
   <div role="status">
     {#if installed}
-      <p class="notice">{appName} est installée sur cet appareil.</p>
+      <p class="notice">{m.installed(appName)}</p>
     {/if}
   </div>
   {#if installPrompt && !installed}
-    <button type="button" class="accent install" onclick={install}>Installer {appName}</button>
+    <button type="button" class="accent install" onclick={install}>{m.install(appName)}</button>
   {/if}
 
   {#if show("android")}
-    <h3>Android</h3>
+    <h3>{m.android}</h3>
     <ol>
       <li>
-        Dans Chrome, ouvrez le menu <span aria-hidden="true">⋮</span><span class="visually-hidden">
-          (trois points)
-        </span> puis touchez «&nbsp;Installer l'application&nbsp;» ou «&nbsp;Ajouter à l'écran d'accueil&nbsp;».
+        {m.androidMenu.before}<span aria-hidden="true">⋮</span><span class="visually-hidden">
+          {m.androidMenu.dots}
+        </span>{m.androidMenu.after}
       </li>
       <li>
-        Ensuite, depuis un site ou une application de boutique, touchez <strong>Partager</strong> puis
-        <strong>{appName}</strong> : l'envie arrive remplie, il reste à toucher «&nbsp;Ajouter à ma liste&nbsp;».
+        {m.androidShare.before}<strong>{m.androidShare.share}</strong>{m.androidShare.then}<strong>
+          {appName}
+        </strong>{m.androidShare.after}
       </li>
     </ol>
   {/if}
 
   {#if show("ios")}
-    <h3>iPhone et iPad</h3>
+    <h3>{m.ios}</h3>
     <ol>
-      <li>Dans Safari, touchez <strong>Partager</strong> puis «&nbsp;Sur l'écran d'accueil&nbsp;».</li>
+      <li>{m.iosHome.before}<strong>{m.iosHome.share}</strong>{m.iosHome.after}</li>
       <li>
-        Apple ne laisse pas les sites entrer dans le menu Partager&nbsp;: un raccourci le fait. Dans
-        l'application Raccourcis, créez un raccourci «&nbsp;{appName}&nbsp;»&nbsp;:
+        {m.iosShortcut(appName)}
         <ol type="a">
-          <li>activez «&nbsp;Afficher dans la feuille de partage&nbsp;»&nbsp;;</li>
-          <li>ajoutez l'action «&nbsp;Encoder en URL&nbsp;», avec l'entrée du raccourci&nbsp;;</li>
-          <li>
-            ajoutez l'action «&nbsp;Texte&nbsp;»&nbsp;: l'adresse ci-dessous, suivie du texte encodé&nbsp;;
-          </li>
-          <li>ajoutez l'action «&nbsp;Ouvrir les URL&nbsp;».</li>
+          {#each m.iosSteps as step (step)}<li>{step}</li>{/each}
         </ol>
       </li>
     </ol>
-    <label for="adresse-raccourci">Adresse pour le raccourci</label>
+    <label for="adresse-raccourci">{m.address}</label>
     <div class="row">
       <input id="adresse-raccourci" readonly value={address} />
       {#if device !== null}
@@ -110,24 +107,23 @@
             copied = true;
           }}
         >
-          {copied ? "Adresse copiée" : "Copier l'adresse"}
+          {copied ? m.copied : m.copy}
         </button>
       {/if}
     </div>
     <p class="muted help">
-      Le pas-à-pas détaillé est dans
-      <a href="https://github.com/Arcanexus/wishalia/wiki/Install-the-app" rel="external noopener">
-        la documentation
-      </a>.
+      {m.docs.before}<a
+        href="https://github.com/Arcanexus/wishalia/wiki/Install-the-app"
+        rel="external noopener"
+      >
+        {m.docs.link}
+      </a>{m.docs.after}
     </p>
   {/if}
 
   {#if show("computer")}
-    <h3>Ordinateur</h3>
-    <p>
-      Dans Chrome ou Edge, cliquez sur l'icône d'installation à droite de la barre d'adresse. Sur Mac, dans
-      Safari, choisissez «&nbsp;Fichier&nbsp;» puis «&nbsp;Ajouter au Dock&nbsp;».
-    </p>
+    <h3>{m.computer}</h3>
+    <p>{m.computerSteps}</p>
   {/if}
 </section>
 

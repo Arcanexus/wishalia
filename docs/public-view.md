@@ -167,6 +167,8 @@ envoyé. » A token that cannot be one is answered the same way without asking t
 
 The page follows the list's forced theme when it has one; otherwise the person's choice, with the
 Christmas theme in December and for a Christmas event. The header button switches between the
-device's mode, light and dark, kept on the device (`wishalia.mode`). Every page passes axe (WCAG 2.2
+device's mode, light and dark, kept on the device (`wishalia.mode`). Next to it, a button for the
+other language keeps it on the device too (`wishalia.locale`); otherwise the page speaks the
+browser's language ([Languages](i18n.md)). Every page passes axe (WCAG 2.2
 AA) in light and dark, on a phone and a computer, and works without JavaScript, giving and
 withdrawing included.

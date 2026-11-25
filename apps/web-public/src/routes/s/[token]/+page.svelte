@@ -2,7 +2,11 @@
   import { enhance } from "$app/forms";
   import { page } from "$app/state";
 
+  import { publicMessages } from "@wishalia/i18n/messages/public";
+  import { viewMessages } from "@wishalia/i18n/messages/view";
+  import LanguageButtons from "@wishalia/ui/LanguageButtons.svelte";
   import Logo from "@wishalia/ui/Logo.svelte";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
   import ModeButton from "@wishalia/ui/ModeButton.svelte";
   import EventGauge from "@wishalia/ui/public/EventGauge.svelte";
   import ItemCard from "@wishalia/ui/public/ItemCard.svelte";
@@ -13,6 +17,9 @@
   import type { PageProps } from "./$types";
 
   let { data, form }: PageProps = $props();
+  const i18n = useI18n();
+  const m = $derived(publicMessages(i18n.locale).list);
+  const v = $derived(viewMessages(i18n.locale).page);
   const view = $derived(data.view);
   const owner = $derived(view.owner.displayName);
   const openEvents = $derived(view.events.filter((event) => event.open));
@@ -26,7 +33,10 @@
           return event?.open ? [event] : [];
         });
   const overall = $derived(view.viewer === "owner" || data.folded ? null : gauge(view.items));
-  const shortDay = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" });
+  // « 24 décembre », « 24 December »: the year goes without saying for the next occasions
+  const shortDay = $derived(
+    new Intl.DateTimeFormat(i18n.fmt.tag, { day: "numeric", month: "long", timeZone: "UTC" }),
+  );
   const short = (date: string) => shortDay.format(new Date(`${date}T00:00:00Z`));
 </script>
 
@@ -41,36 +51,30 @@
 <header class="top">
   <div class="bar">
     <span class="brand"><Logo size={36} ring={false} /><span>{data.appName}</span></span>
-    <ModeButton mode={data.mode} nextMode={data.nextMode} returnPath={page.url.pathname} />
+    <div class="tools">
+      <LanguageButtons returnPath={page.url.pathname} />
+      <ModeButton mode={data.mode} nextMode={data.nextMode} returnPath={page.url.pathname} />
+    </div>
   </div>
 </header>
 
 <main id="contenu" class="page">
-  <p class="hello">{view.open ? "Bienvenue !" : `Bonjour ${view.audience} !`}</p>
-  <h1 id="titre" tabindex="-1">{heading(view)}</h1>
+  <p class="hello">{view.open ? v.welcome : v.hello(view.audience)}</p>
+  <h1 id="titre" tabindex="-1">{heading(view, i18n.locale)}</h1>
   <p class="muted lead">
-    {#if view.event}
-      Les envies de {owner}, pour le {formatDay(view.event.date)}.
-    {:else}
-      Les envies de {owner}.
-    {/if}
+    {view.event ? v.wishesOfFor(owner, formatDay(view.event.date, i18n.locale)) : v.wishesOf(owner)}
   </p>
 
   {#if view.viewer === "owner"}
     <div class="notice owner" role="note">
       <p>
-        <strong>C'est votre propre lien.</strong> Vous voyez la liste comme vos proches, mais sans rien de ce qu'ils
-        vous offrent : la surprise reste entière.
+        <strong>{m.own.strong}</strong>{m.own.text}
       </p>
     </div>
   {:else if data.folded}
     <section class="card fold" aria-labelledby="fold-title">
-      <h2 id="fold-title">Vous n'êtes pas {owner} ?</h2>
-      <p>
-        Ce que vos proches offrent reste caché pour l'instant, au cas où cet appareil serait celui de {owner}.
-        Dites-nous que ce n'est pas le cas, et vous verrez ce qui est déjà pris, et pourrez offrir à votre
-        tour.
-      </p>
+      <h2 id="fold-title">{m.notOwner(owner)}</h2>
+      <p>{m.folded(owner)}</p>
       <form
         method="POST"
         action="?/unfold"
@@ -81,25 +85,27 @@
             document.getElementById("titre")?.focus();
           }}
       >
-        <button type="submit">Je ne suis pas {owner}, voir les cadeaux</button>
+        <button type="submit">{m.unfold(owner)}</button>
       </form>
-      <p class="muted small">Si vous êtes {owner}, ne cliquez pas : la surprise reste entière.</p>
+      <p class="muted small">{m.unfoldWarning(owner)}</p>
     </section>
   {:else if view.event && !view.event.open}
-    <p class="notice">Cet événement est passé : la liste reste à voir, mais on ne peut plus y participer.</p>
+    <p class="notice">{m.eventPast}</p>
   {:else if openEvents.length > 0 && view.scope === "list"}
     <p class="muted">
-      Prochaine{openEvents.length > 1 ? "s" : ""} occasion{openEvents.length > 1 ? "s" : ""} :
-      {openEvents.map((event) => `${event.name} (${short(event.date)})`).join(", ")}.
+      {m.next(
+        openEvents.length,
+        i18n.fmt.list(openEvents.map((event) => m.eventOn(event.name, short(event.date)))),
+      )}
     </p>
   {/if}
 
   {#if overall}
-    <EventGauge gauge={overall} label={view.event ? "Où en est l'occasion" : "Où en est la liste"} />
+    <EventGauge gauge={overall} label={view.event ? v.gaugeEvent : v.gaugeList} />
   {/if}
 
   {#if view.items.length === 0}
-    <p class="card empty">La liste est vide pour l'instant. Revenez un peu plus tard !</p>
+    <p class="card empty">{v.empty}</p>
   {:else}
     <ul class="items">
       {#each view.items as item (item.id)}
@@ -107,27 +113,25 @@
           {#each data.mine.filter((gift) => gift.itemId === item.id) as gift (gift.id)}
             <div class="mine">
               <p>
-                <strong>{myGiftLine(gift, item)}</strong>
+                <strong>{myGiftLine(gift, item, i18n.locale)}</strong>
                 {#if gift.eventId && view.scope === "list" && eventsById.get(gift.eventId)}
-                  <span class="muted">Pour {eventsById.get(gift.eventId)?.name}.</span>
+                  <span class="muted">{m.forEvent(eventsById.get(gift.eventId)?.name ?? "")}</span>
                 {/if}
               </p>
               <form method="POST" action="?/withdraw" use:enhance>
                 <input type="hidden" name="id" value={gift.id} />
-                <button type="submit" class="secondary" aria-label="Me retirer de « {item.title} »">
-                  Me retirer
+                <button type="submit" class="secondary" aria-label={m.withdrawLabel(item.title)}>
+                  {m.withdraw}
                 </button>
               </form>
               {#if form?.withdraw && "id" in form.withdraw && form.withdraw.id === gift.id}
-                <p class="notice error" role="alert">{withdrawError(form.withdraw.error)}</p>
+                <p class="notice error" role="alert">{withdrawError(form.withdraw.error, i18n.locale)}</p>
               {/if}
             </div>
           {/each}
 
           {#if form?.given?.itemId === item.id}
-            <p class="notice thanks">
-              Merci, c'est noté ! {owner} n'en saura rien avant l'occasion.
-            </p>
+            <p class="notice thanks">{m.thanks(owner)}</p>
           {/if}
 
           {#if !data.folded && canGive(item, view)}
@@ -146,14 +150,11 @@
   {/if}
 
   <div class="visually-hidden" role="status">
-    {#if form?.given}Merci, c'est noté !{:else if form?.withdrawn}C'est retiré.{:else if form?.unfolded}Les
-      cadeaux sont affichés.{/if}
+    {#if form?.given}{m.given}{:else if form?.withdrawn}{m.withdrawn}{:else if form?.unfolded}{m.unfolded}{/if}
   </div>
 
   {#if view.viewer !== "owner"}
-    <p class="muted secret">
-      Ce que vous offrez reste secret pour {owner}, jusqu'après l'occasion.
-    </p>
+    <p class="muted secret">{v.secret(owner)}</p>
   {/if}
 </main>
 
@@ -178,6 +179,11 @@
     font-family: "Nunito Variable", system-ui, sans-serif;
     font-weight: 800;
     font-size: 1.3rem;
+  }
+  .tools {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
   .page {
     max-width: 48rem;

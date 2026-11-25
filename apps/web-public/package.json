@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@wishalia/domain": "workspace:*",
+    "@wishalia/i18n": "workspace:*",
     "@wishalia/metrics": "workspace:*",
     "@wishalia/storage": "workspace:*"
   },

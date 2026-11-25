@@ -1,5 +1,8 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { viewMessages } from "@wishalia/i18n/messages/view";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
   import EventGauge from "@wishalia/ui/public/EventGauge.svelte";
   import ItemCard from "@wishalia/ui/public/ItemCard.svelte";
   import { gauge } from "@wishalia/ui/public/view.ts";
@@ -8,10 +11,13 @@
 
   let { data }: PageProps = $props();
   const overall = $derived(gauge(data.items));
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale).preview);
+  const v = $derived(viewMessages(i18n.locale).page);
 </script>
 
 <svelte:head>
-  <title>Aperçu de {data.list.name} · {data.appName}</title>
+  <title>{m.title(data.list.name)} · {data.appName}</title>
 </svelte:head>
 
 <p class="back">
@@ -19,25 +25,20 @@
 </p>
 
 <div class="notice preview" role="note">
-  <p>
-    <strong>Aperçu :</strong> voici ce que voient vos proches en ouvrant un lien de partage de cette liste.
-  </p>
-  <p>
-    Les participations affichées sont des <strong>exemples inventés</strong> pour l'aperçu : rien de ce que vos
-    proches vous offrent vraiment n'y figure. Eux voient aussi, sous chaque envie, un bouton pour l'offrir.
-  </p>
+  <p><strong>{m.notice.label}</strong>{m.notice.text}</p>
+  <p>{m.samples.before}<strong>{m.samples.strong}</strong>{m.samples.after}</p>
 </div>
 
 <div class="public">
   <h1>{data.list.name}</h1>
-  <p class="muted lead">Les envies de {data.me.displayName}.</p>
+  <p class="muted lead">{v.wishesOf(data.me.displayName)}</p>
 
   {#if overall}
-    <EventGauge gauge={overall} label="Où en est la liste" />
+    <EventGauge gauge={overall} label={v.gaugeList} />
   {/if}
 
   {#if data.items.length === 0}
-    <p class="card empty">La liste est vide pour l'instant. Revenez un peu plus tard !</p>
+    <p class="card empty">{v.empty}</p>
   {:else}
     <ul class="items">
       {#each data.items as item (item.id)}
@@ -46,9 +47,7 @@
     </ul>
   {/if}
 
-  <p class="muted secret">
-    Ce que vous offrez reste secret pour {data.me.displayName}, jusqu'après l'occasion.
-  </p>
+  <p class="muted secret">{v.secret(data.me.displayName)}</p>
 </div>
 
 <style>

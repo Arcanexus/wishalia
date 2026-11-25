@@ -19,10 +19,11 @@ list never sees who gave what, until they choose to lift the secret after the ev
 | Understand the security model   | [Security](security.md)                                            |
 | Understand how it is built      | [Architecture](architecture.md), [Data model](data-model.md)       |
 | Use the logo or the colours     | [Branding](branding.md)                                            |
+| Change or add a language        | [Languages](i18n.md)                                               |
 | Contribute                      | [Development](development.md)                                      |
 
 The project is under way: the four components ship as images and a Helm chart, the APIs (management,
 public view, REST v1) and the business rules (funding, anti-spoil) are in place, and the management
 app has its first screens: signing in, the lists, the quick add, editing items, the events, sharing and the
 settings, with passkeys, and imports lists from Wishlistr, a CSV or JSON file or pasted text. It installs on a phone, and the share menu adds a wish. The public view shows a shared list or event to the family, who reserve,
-chip in and withdraw from it.
+chip in and withdraw from it. Everything speaks French and English, in the reader's language.
