@@ -220,6 +220,9 @@ export const wishes = pgTable(
     /** The frame the owner chose in it, as fractions of the image: null shows it whole. */
     imageCrop: jsonb("image_crop").$type<{ x: number; y: number; width: number; height: number }>(),
     priceCents: integer("price_cents"),
+    /** What the worker last wrote from the page: while the item still has it, a new read may change it. */
+    foundTitle: text("found_title"),
+    foundPriceCents: integer("found_price_cents"),
     /** Pool only. */
     targetCents: integer("target_cents"),
     /** Quantity only. */
@@ -461,5 +464,6 @@ export const ITEM_EVENT_TYPES = [
   "archived",
   "enriched",
   "image_changed",
+  "refresh_requested",
 ] as const;
 export type ItemEventType = (typeof ITEM_EVENT_TYPES)[number];
