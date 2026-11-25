@@ -38,6 +38,8 @@ export const shareScope = pgEnum("share_scope", ["list", "event"]);
 export const historyVisibility = pgEnum("history_visibility", ["owner", "guests", "sealed"]);
 export const listTheme = pgEnum("list_theme", ["neutral", "christmas"]);
 export const listRevealMode = pgEnum("list_reveal_mode", ["received", "manual"]);
+/** Who finds a list: private (share links only, the default) or public (the home page's search). */
+export const listVisibility = pgEnum("list_visibility", ["private", "public"]);
 /** Where the completion of an item from its link stands (the worker's queue, docs/enrichment.md). */
 export const enrichmentState = pgEnum("enrichment_state", ["pending", "running", "done", "failed"]);
 /** A person's theme (docs/branding.md): automatic (Christmas in December), neutral or Christmas. */
@@ -167,10 +169,20 @@ export const wishLists = pgTable(
     revealMode: listRevealMode("reveal_mode").notNull().default("received"),
     /** When the owner lifted the secret of the list (manual mode), null while it is kept. */
     revealedAt: timestamp("revealed_at", { withTimezone: true }),
+    /**
+     * Private (default): seen only through a share link. Public: the home page's search finds it,
+     * and anyone may take part through its open link.
+     */
+    visibility: listVisibility("visibility").notNull().default("private"),
     createdAt: createdAt(),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
   },
-  (table) => [index("wish_lists_owner_idx").on(table.ownerId, table.position)],
+  (table) => [
+    index("wish_lists_owner_idx").on(table.ownerId, table.position),
+    index("wish_lists_public_idx")
+      .on(table.createdAt)
+      .where(sql`${table.visibility} = 'public' AND ${table.archivedAt} IS NULL`),
+  ],
 );
 
 /** An ordered group of items: volumes of a book, comic or manga series, box sets. */
@@ -322,12 +334,22 @@ export const shareLinks = pgTable(
     eventId: uuid("event_id").references(() => events.id),
     /** Who it was made for ("Grandma", "The cousins"): links are per guest or group. */
     audience: text("audience").notNull(),
+    /**
+     * The open link of a public list, for anyone: its token in clear, since the owner made the list
+     * public (the home page's search gives it). Made when the list turns public, revoked when it
+     * turns private. Null for a link per guest or group, of which only the hash is kept.
+     */
+    openToken: text("open_token"),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
     revokedAt: timestamp("revoked_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (table) => [
     uniqueIndex("share_links_token_idx").on(table.tokenHash),
+    check(
+      "share_links_open_list",
+      sql`${table.openToken} IS NULL OR (${table.scope} = 'list' AND ${table.listId} IS NOT NULL)`,
+    ),
     check(
       "share_links_target",
       sql`(${table.scope} = 'list' AND ${table.listId} IS NOT NULL AND ${table.eventId} IS NULL) OR (${table.scope} = 'event' AND ${table.eventId} IS NOT NULL AND ${table.listId} IS NULL)`,

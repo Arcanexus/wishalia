@@ -70,6 +70,8 @@ export interface PublicItem {
 export interface PublicView {
   /** Who the link was made for: « Mamie », « Les cousins ». */
   audience: string;
+  /** The open link of a public list: for anyone, so the page greets everyone. */
+  open?: boolean;
   scope: "list" | "event";
   viewer: Viewer;
   owner: { displayName: string };

@@ -46,7 +46,7 @@
 </header>
 
 <main id="contenu" class="page">
-  <p class="hello">Bonjour {view.audience} !</p>
+  <p class="hello">{view.open ? "Bienvenue !" : `Bonjour ${view.audience} !`}</p>
   <h1 id="titre" tabindex="-1">{heading(view)}</h1>
   <p class="muted lead">
     {#if view.event}

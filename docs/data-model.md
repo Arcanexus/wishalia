@@ -6,14 +6,14 @@ versioned migrations of `packages/db/migrations`. Amounts are integers in cents.
 | Table                | Role                                                                                                                                                                                              |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `users`              | An account. Owner of its lists, guest on the others: the role is per list or event. A deleted account is anonymised, never removed. Keeps the person's `theme` and `mode`.                        |
-| `wish_lists`         | A durable list ("Books", "Home"), ordered by `position`, with an optional forced `theme`.                                                                                                         |
+| `wish_lists`         | A durable list ("Books", "Home"), ordered by `position`, with an optional forced `theme` and its `visibility` (`private` by default, or `public`: found by the home page).                        |
 | `wishes`             | An item: `kind` (`unique`, `quantity`, `pool`), `repeatable`, price, pool target, quantity, optional series volume, the image shown (`image_id`) and its frame (`image_crop`).                    |
 | `wish_images`        | The images of an item: up to four from the page of its link (`page`), and the one the owner sent (`upload`). Their files are on the volume or in the bucket under `key`. See [Images](images.md). |
 | `series`             | An ordered group of items (book volumes), with the external ids (ISBN, Open Library).                                                                                                             |
 | `events`             | A dated occasion (`birthday`, `christmas`, `other`), its reveal delay and when the secret was lifted.                                                                                             |
 | `event_wishes`       | The items an event selects. An event never owns an item.                                                                                                                                          |
 | `contributions`      | A guest's pledge on an item, within an event or without one: an amount (pool) or copies (unique, quantity). Keeps the SHA-256 of its withdraw key.                                                |
-| `share_links`        | A share link for one list or one event, per guest or group. Only the SHA-256 hash of the token is stored.                                                                                         |
+| `share_links`        | A share link for one list or one event, per guest or group. Only the SHA-256 hash of the token is stored, except for the open link of a public list (`open_token`), public by design.             |
 | `api_tokens`         | A personal access token of the REST API v1: its name, prefix, expiry and read-only flag. Only the SHA-256 hash of the token is stored.                                                            |
 | `item_events`        | The append-only history of every item, with its visibility.                                                                                                                                       |
 | `auth_sessions`      | A signed-in device (Better Auth). Deleting the row signs the device out.                                                                                                                          |
@@ -27,7 +27,8 @@ versioned migrations of `packages/db/migrations`. Amounts are integers in cents.
 - A quantity item has a positive quantity; a pool target, when set, is positive.
 - A series volume has both a series and a number.
 - A contribution names someone (an account or a guest name) and pledges something (an amount or copies).
-- A share link targets exactly one list or one event; token hashes are unique.
+- A share link targets exactly one list or one event; token hashes are unique. An open link
+  (`open_token`) is always a list's.
 
 ## Computed, never stored
 

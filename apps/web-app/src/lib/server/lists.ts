@@ -8,6 +8,7 @@ type FormEvent = Pick<RequestEvent, "request" | "getClientAddress" | "url" | "co
 
 const THEMES = ["none", "neutral", "christmas"] as const;
 const REVEAL_MODES = ["received", "manual"] as const;
+const VISIBILITIES = ["private", "public"] as const;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Runs a call to the API; its refusal comes back as a code, anything else is a real error. */
@@ -22,8 +23,8 @@ async function refusal(run: () => Promise<unknown>): Promise<{ status: number; c
 }
 
 /**
- * A list's settings: its name, the theme forced on everyone who opens it, and how the secret of
- * the gifts without an event lifts (frozen by the API once lifted).
+ * A list's settings: its name, who finds it (private or public), the theme forced on everyone who
+ * opens it, and how the secret of the gifts without an event lifts (frozen by the API once lifted).
  */
 export async function saveListSettings(event: FormEvent, listId: string) {
   if (!UUID.test(listId)) return fail(400, { settings: { error: "invalid_request" } });
@@ -31,12 +32,18 @@ export async function saveListSettings(event: FormEvent, listId: string) {
   const name = String(form.get("name") ?? "").trim();
   const theme = THEMES.find((value) => value === form.get("theme"));
   const revealMode = REVEAL_MODES.find((value) => value === form.get("revealMode"));
+  const visibility = VISIBILITIES.find((value) => value === form.get("visibility"));
   if (!name || name.length > 100) return fail(400, { settings: { error: "invalid_name", name } });
   if (!theme) return fail(400, { settings: { error: "invalid_request", name } });
   const refused = await refusal(() =>
     apiJson<List>(event, `/manage/lists/${listId}`, {
       method: "PATCH",
-      body: { name, theme: theme === "none" ? null : theme, ...(revealMode ? { revealMode } : {}) },
+      body: {
+        name,
+        theme: theme === "none" ? null : theme,
+        ...(revealMode ? { revealMode } : {}),
+        ...(visibility ? { visibility } : {}),
+      },
     }),
   );
   if (refused) return fail(refused.status, { settings: { error: refused.code, name } });

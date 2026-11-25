@@ -63,6 +63,12 @@ const schemas: Record<string, Schema> = {
       theme: { enum: ["neutral", "christmas", null] },
       revealMode: { enum: ["received", "manual"] },
       secretLifted: { type: "boolean" },
+      visibility: {
+        enum: ["private", "public"],
+        description:
+          "Private: share links only. Public: the home page's search finds it, anyone may take part.",
+      },
+      openUrl: { ...nullable("string"), description: "The open link of a public list; null when private." },
       itemCount: { type: "integer", description: "Open items." },
       createdAt: { type: "string", format: "date-time" },
       archivedAt: nullable("string", "date-time"),

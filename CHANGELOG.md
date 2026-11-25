@@ -16,6 +16,15 @@ All notable changes to this project are documented here. The format follows
   `images.garage.ui.env`), or with Garage's admin token; its own host on the ingress,
   or none (port-forward). Garage then takes an administration token (`GARAGE_ADMIN_TOKEN`), which
   only the console may use (NetworkPolicy). See [Images](docs/images.md#its-console-garage-ui).
+- A home page on the public host (`hosts.public`): a welcome, « Vous avez reçu un lien ? » to open
+  or paste a link, « Se connecter » (or « Mes listes » once signed in) to the management app, and
+  « Trouver une liste publique », a search by first name or list name, without case or accents.
+  See [Public view](docs/public-view.md#the-home-page).
+- Each list is « Privée » (the default: seen only through a share link) or « Publique », in its
+  settings. A public list is found by the home page and gets an open link anyone may take part
+  through, without seeing who else gives, at 5 gifts a minute per address at most. Turning it
+  private cuts that address at once. API: `visibility` and `openUrl` on the lists (`/manage`, REST
+  API v1), `GET /public/home`, `open` in `GET /public/view`; migration `0009_public_lists`.
 
 ## [0.0.1] - 2026-11-24
 

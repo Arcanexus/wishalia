@@ -20,6 +20,11 @@ export interface ManageDeps {
   images: Images | null;
 }
 
+/** What the lists also need: the public host, for the address of a public list's open link. */
+export interface ListDeps extends ManageDeps {
+  publicOrigin: string;
+}
+
 /** What the share links also need: the public origin of their URL and the device marker secret. */
 export interface ShareDeps extends ManageDeps {
   config: Config;
@@ -62,7 +67,7 @@ export const manageRoutes: FastifyPluginAsync<ShareDeps & { auth: Auth }> = asyn
   app.get("/ping", async (request) => ({ scope: request.scope }));
 
   await app.register(meRoutes, { db, now, images });
-  await app.register(listRoutes, { db, now, images });
+  await app.register(listRoutes, { db, now, images, publicOrigin: config.PUBLIC_ORIGIN });
   await app.register(itemRoutes, { db, now, images });
   await app.register(eventRoutes, { db, now, images });
   await app.register(shareLinkRoutes, { config, db, now, secret, images });
