@@ -40,7 +40,16 @@ When the worker reads the page of a link ([Enrichment](enrichment.md)), it also 
 its images, best first: the product's own (`image` of the JSON-LD `Product`), the sharing image
 (`og:image`, `twitter:image`, `image_src`), then the photos of the page (`<img>`, leaving out logos,
 icons, sprites, SVG and anything declared under 120 px). It tries eight links at most and keeps four
-images at most. Each one is:
+images at most.
+
+An Amazon page has neither and starts with banners and ads, so the worker reads Amazon's own
+product photos instead: the photo shown big (`#landingImage`, or `#imgBlkFront` for a book) in its
+largest size (`data-old-hires`, the biggest of `data-a-dynamic-image`), then the gallery (one link
+per photo, its `hiRes` size); without a gallery, the product thumbnails of the page at 1500 px.
+Only Amazon's product photos (`/images/I/`) are taken, never a banner, a logo, an ad or a video,
+and never the same photo twice.
+
+Each one is:
 
 - fetched with **the same guard as the page** (public addresses only, checked after the DNS answer
   and at every redirect, standard ports, 10 seconds), and 10 MB at most;

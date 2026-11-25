@@ -2,7 +2,15 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { currencyOf, decodeEntities, extract, extractImages, isBotWall, priceToCents } from "./extract.js";
+import {
+  amazonLarge,
+  currencyOf,
+  decodeEntities,
+  extract,
+  extractImages,
+  isBotWall,
+  priceToCents,
+} from "./extract.js";
 
 const fixture = (name: string) => readFileSync(new URL(`../fixtures/${name}`, import.meta.url), "utf8");
 
@@ -90,6 +98,51 @@ describe("extract, on Amazon", () => {
 
   it("leaves a page that only looks like Amazon alone", () => {
     expect(extract(`<div class="a-offscreen">12 €</div>`)).toMatchObject({ priceCents: null });
+  });
+});
+
+describe("extractImages, on Amazon", () => {
+  const page = fixture("amazon-fr-product.html");
+
+  it("takes the photo shown big, then the gallery, never a banner, an ad or the same photo twice", () => {
+    expect(extractImages(page)).toEqual([
+      "https://m.media-amazon.com/images/I/81abcdEFGHL._AC_SL1500_.jpg",
+      "https://m.media-amazon.com/images/I/91zyxwVUTSL._AC_SL1500_.jpg",
+      "https://m.media-amazon.com/images/I/71qrstUVWXL._AC_.jpg",
+    ]);
+  });
+
+  it("takes the largest of the photo's sizes, and a book's cover", () => {
+    const sizes = `<div id="dp"><img id="landingImage" src="data:image/gif;base64,R0lGOD"
+      data-a-dynamic-image="{&quot;https://m.media-amazon.com/images/I/61small._SX300_.jpg&quot;:[300,300],&quot;https://m.media-amazon.com/images/I/61big._SX800_.jpg&quot;:[800,800],&quot;https://m.media-amazon.com/images/I/61odd.jpg&quot;:&quot;x&quot;}"></div>`;
+    expect(extractImages(sizes)).toEqual([
+      "https://m.media-amazon.com/images/I/61big._SX800_.jpg",
+      "https://m.media-amazon.com/images/I/61small._SX300_.jpg",
+      "https://m.media-amazon.com/images/I/61odd.jpg",
+    ]);
+    const book = `<div id="dp"><img id="imgBlkFront" data-a-dynamic-image="{broken"
+      src="https://images-eu.ssl-images-amazon.com/images/I/51cover._SY445_.jpg"></div>`;
+    expect(extractImages(book)).toEqual([
+      "https://images-eu.ssl-images-amazon.com/images/I/51cover._SY445_.jpg",
+    ]);
+  });
+
+  it("without a gallery, takes the product photos of the page at a larger size, never a video", () => {
+    const html = page.replace(/<script type="text\/javascript">[\s\S]*?<\/script>/, "");
+    expect(extractImages(html)).toEqual([
+      "https://m.media-amazon.com/images/I/81abcdEFGHL._AC_SL1500_.jpg",
+      "https://m.media-amazon.com/images/I/41abcdEFGHL._AC_SL1500_.jpg",
+      "https://m.media-amazon.com/images/I/51zyxwVUTSL._AC_SL1500_.jpg",
+    ]);
+  });
+
+  it("gives a thumbnail's link at 1500 pixels", () => {
+    expect(amazonLarge("https://m.media-amazon.com/images/I/41abc._AC_US40_.jpg")).toBe(
+      "https://m.media-amazon.com/images/I/41abc._AC_SL1500_.jpg",
+    );
+    expect(amazonLarge("https://m.media-amazon.com/images/I/41abc.jpg")).toBe(
+      "https://m.media-amazon.com/images/I/41abc.jpg",
+    );
   });
 });
 
