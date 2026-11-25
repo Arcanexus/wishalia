@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-11-25
+
 ### Added
 
 - An item waiting for its link to be read shows it at a glance: a turning icon with « Lecture du
