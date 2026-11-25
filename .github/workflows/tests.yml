@@ -143,6 +143,10 @@ jobs:
             | yq -e '.data.S3_ENDPOINT == "http://t-wishalia-garage:3900"' > /dev/null
           helm template t charts/wishalia $garage --show-only templates/garage.yaml \
             | yq -e 'select(.kind == "NetworkPolicy") | .spec.ingress[0].from | length == 3' > /dev/null
+          # A slow /health (metadata on NFS) must never restart Garage: liveness is the S3 port
+          sts=$(helm template t charts/wishalia $garage --show-only templates/garage.yaml | yq 'select(.kind == "StatefulSet") | .spec.template.spec.containers[0]')
+          echo "$sts" | yq -e '.livenessProbe.tcpSocket.port == "s3"' > /dev/null
+          echo "$sts" | yq -e '.readinessProbe.timeoutSeconds >= 5 and .startupProbe.timeoutSeconds >= 5' > /dev/null
           for bad in "--set images.storage=volume" "--set images.s3.endpoint=http://s3.example.com"; do
             if helm template t charts/wishalia $garage $bad > /dev/null 2>&1; then
               echo "::error::the chart rendered Garage with $bad"
