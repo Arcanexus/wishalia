@@ -12,8 +12,8 @@ All notable changes to this project are documented here. The format follows
 
 - An optional web console for the chart's Garage, [Garage UI](https://github.com/Noooste/garage-ui)
   (`images.garage.ui.enabled`, off by default): browse the images in the bucket, its key and the
-  node. Sign-in with your OIDC provider, limited to the members of `images.garage.ui.oidc.allowedGroups`,
-  or with Garage's admin token; its own host on the ingress,
+  node. Sign-in with your OIDC provider (who may sign in is set in
+  `images.garage.ui.env`), or with Garage's admin token; its own host on the ingress,
   or none (port-forward). Garage then takes an administration token (`GARAGE_ADMIN_TOKEN`), which
   only the console may use (NetworkPolicy). See [Images](docs/images.md#its-console-garage-ui).
 

@@ -177,13 +177,12 @@ jobs:
             exit 1
           fi
           # With OIDC and a host: its own Ingress, the secret from existingSecret, no token sign-in
-          oidc="$ui --set images.garage.ui.host=garage.example.com --set images.garage.ui.oidc.enabled=true --set images.garage.ui.oidc.issuer=https://idp.example.com/ --set images.garage.ui.oidc.clientId=g --set images.garage.ui.oidc.allowedGroups={admins,family}"
+          oidc="$ui --set images.garage.ui.host=garage.example.com --set images.garage.ui.oidc.enabled=true --set images.garage.ui.oidc.issuer=https://idp.example.com/ --set images.garage.ui.oidc.clientId=g --set images.garage.ui.env.GARAGE_UI_AUTH_OIDC_ADMIN_ROLES=admins"
           helm template t charts/wishalia $oidc --show-only templates/garage-ui.yaml > ui.yaml
           yq -e 'select(.kind == "Ingress") | .spec.rules[0].host == "garage.example.com"' ui.yaml > /dev/null
           yq -e 'select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select(.name == "GARAGE_UI_AUTH_OIDC_CLIENT_SECRET") | .valueFrom.secretKeyRef.key == "GARAGE_UI_OIDC_CLIENT_SECRET"' ui.yaml > /dev/null
-          # Only the allowed groups get in
-          yq -e 'select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select(.name == "GARAGE_UI_AUTH_OIDC_ADMIN_ROLES") | .value == "admins,family"' ui.yaml > /dev/null
-          yq -e 'select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select(.name == "GARAGE_UI_AUTH_OIDC_ROLE_ATTRIBUTE_PATH") | .value == "groups"' ui.yaml > /dev/null
+          # Your own settings pass through (images.garage.ui.env)
+          yq -e 'select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select(.name == "GARAGE_UI_AUTH_OIDC_ADMIN_ROLES") | .value == "admins"' ui.yaml > /dev/null
           if grep -q GARAGE_UI_AUTH_TOKEN_ENABLED ui.yaml; then
             echo "::error::token sign-in left on with OIDC"
             exit 1
@@ -191,8 +190,7 @@ jobs:
           # Refused: without Garage, OIDC without a host, a host of Wishalia
           for bad in "--set images.garage.enabled=false --set images.storage=volume" \
                      "--set images.garage.ui.oidc.enabled=true --set images.garage.ui.oidc.issuer=https://idp/ --set images.garage.ui.oidc.clientId=g" \
-                     "--set images.garage.ui.host=wishalia.example.com" \
-                     "--set images.garage.ui.host=garage.example.com --set images.garage.ui.oidc.enabled=true --set images.garage.ui.oidc.issuer=https://idp/ --set images.garage.ui.oidc.clientId=g"; do
+                     "--set images.garage.ui.host=wishalia.example.com"; do
             if helm template t charts/wishalia $ui $bad > /dev/null 2>&1; then
               echo "::error::the chart rendered the Garage console with $bad"
               exit 1

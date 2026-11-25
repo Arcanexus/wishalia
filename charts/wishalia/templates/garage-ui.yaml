@@ -10,9 +10,6 @@
 {{- if and $ui.oidc.enabled (not (and $ui.oidc.issuer $ui.oidc.clientId)) }}
 {{- fail "images.garage.ui.oidc.enabled needs images.garage.ui.oidc.issuer and clientId" }}
 {{- end }}
-{{- if and $ui.oidc.enabled (not $ui.oidc.allowedGroups) }}
-{{- fail "images.garage.ui.oidc.enabled needs images.garage.ui.oidc.allowedGroups: the console gives every right to whoever signs in" }}
-{{- end }}
 {{- if and $ui.host (has $ui.host (list .Values.hosts.public .Values.hosts.app .Values.hosts.api)) }}
 {{- fail "images.garage.ui.host must differ from the hosts of Wishalia" }}
 {{- end }}
@@ -99,15 +96,15 @@ spec:
                   key: GARAGE_UI_OIDC_CLIENT_SECRET
             - name: GARAGE_UI_AUTH_OIDC_COOKIE_SECURE
               value: "true"
-            # Only the members of these groups get in: the others are refused at sign-in (403)
-            - name: GARAGE_UI_AUTH_OIDC_ROLE_ATTRIBUTE_PATH
-              value: {{ $ui.oidc.groupsClaim | quote }}
-            - name: GARAGE_UI_AUTH_OIDC_ADMIN_ROLES
-              value: {{ join "," $ui.oidc.allowedGroups | quote }}
             {{- else }}
             # Without OIDC, the sign-in page asks for the Garage admin token
             - name: GARAGE_UI_AUTH_TOKEN_ENABLED
               value: "true"
+            {{- end }}
+            # Your own settings of garage-ui (GARAGE_UI_*), e.g. who may sign in with OIDC
+            {{- range $name, $value := $ui.env }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
             {{- end }}
           startupProbe:
             httpGet: { path: /health, port: http }

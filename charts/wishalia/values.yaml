@@ -182,11 +182,12 @@ images:
         issuer: ""
         clientId: ""
         name: SSO
-        # Required with OIDC: the groups whose members may sign in (any of them). Everyone else is
-        # refused, even when the provider lets them through.
-        allowedGroups: []
-        # The claim that lists a person's groups (Authentik, Keycloak with a groups mapper: groups)
-        groupsClaim: groups
+      # Extra settings of garage-ui, as GARAGE_UI_* variables. With OIDC, garage-ui needs to know
+      # who may sign in, or it does not start: the claim listing a person's groups and the groups
+      # allowed in (any of them, comma-separated), e.g.
+      #   GARAGE_UI_AUTH_OIDC_ROLE_ATTRIBUTE_PATH: groups
+      #   GARAGE_UI_AUTH_OIDC_ADMIN_ROLES: garage-admins
+      env: {}
       resources:
         requests: { cpu: 10m, memory: 32Mi }
         limits: { memory: 128Mi }

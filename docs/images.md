@@ -127,9 +127,19 @@ state. It is off by default.
 - **Sign-in**: with your OIDC provider (`images.garage.ui.oidc`, its client secret in
   `existingSecret` as `GARAGE_UI_OIDC_CLIENT_SECRET`, redirect URI
   `https://<images.garage.ui.host>/auth/oidc/callback`), or else the page asks for the admin token.
-  With OIDC, only the members of `images.garage.ui.oidc.allowedGroups` (required) get in, read from
-  the `groups` claim (`images.garage.ui.oidc.groupsClaim`); everyone else is refused, even when the
-  provider lets them through. Those who get in may do everything.
+  With OIDC, garage-ui needs to know who may sign in, or it does not start: give it in
+  `images.garage.ui.env`, the claim listing a person's groups and the groups allowed in. Everyone
+  else is refused, even when the provider lets them through; those who get in may do everything.
+
+  ```yaml
+  images:
+    garage:
+      ui:
+        env:
+          GARAGE_UI_AUTH_OIDC_ROLE_ATTRIBUTE_PATH: groups
+          GARAGE_UI_AUTH_OIDC_ADMIN_ROLES: garage-admins # comma-separated
+  ```
+
 - **Reaching it**: `images.garage.ui.host` gives it its own host on the ingress (the chart's
   `ingress.className` and `ingress.annotations`, TLS secret `images.garage.ui.tlsSecretName`).
   Without a host, it stays inside the cluster:
