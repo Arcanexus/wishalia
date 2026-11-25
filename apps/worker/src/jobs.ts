@@ -11,7 +11,7 @@ import {
 import { sniffImage, type Storage } from "@wishalia/storage";
 import { and, eq, inArray, sql } from "drizzle-orm";
 
-import { extract, extractImages } from "./extract.js";
+import { extract, extractImages, isBotWall } from "./extract.js";
 import { type Download, FetchError, type Page } from "./fetch.js";
 
 /**
@@ -145,6 +145,8 @@ export async function enrichNext({
   let page: Page;
   try {
     page = await fetchPage(job.url);
+    // A wall against robots instead of the product: nothing to read now, maybe later
+    if (isBotWall(page.html)) throw new FetchError("bot_wall");
     found = extract(page.html);
   } catch (error) {
     // A page that cannot be read now may be read later; a refused address never will

@@ -138,6 +138,18 @@ describe("the enrichment queue", () => {
     expect((await read(item.id)).enrichment).toBe("failed");
   });
 
+  it("takes a wall against robots for a page not read yet, never for a result", async () => {
+    const item = await wish({ url: "https://www.amazon.fr/dp/B0BSHF7WHW" });
+    const wall = page(`<title>Amazon.fr</title><form action="/errors/validateCaptcha"></form>`);
+    expect(await enrichNext({ db, fetchPage: wall, now })).toBe("retry");
+    expect(await read(item.id)).toMatchObject({
+      priceCents: null,
+      enrichment: "pending",
+      enrichmentAttempts: 1,
+    });
+    await db.update(schema.wishes).set({ enrichment: null }).where(eq(schema.wishes.id, item.id));
+  });
+
   it("sends no Date to the driver: the postgres driver refuses them in raw SQL", async () => {
     const params: unknown[] = [];
     const spy = {

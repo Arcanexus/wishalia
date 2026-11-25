@@ -6,3 +6,4 @@ charts/**/templates/**
 **/dist/**
 **/coverage/**
 .github/badges/**
+apps/worker/fixtures/**

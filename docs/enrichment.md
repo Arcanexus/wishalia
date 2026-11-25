@@ -17,11 +17,38 @@ In cascade, each piece of information from the first source that has it (spec §
    price of an `AggregateOffer`), also inside a `@graph`;
 2. the Open Graph and Twitter tags (`og:title`, `twitter:title`, `product:price:amount`,
    `product:price:currency`);
-3. the page's `<title>`.
+3. the price shown in the page itself, for the shops that write neither (see below), then the
+   microdata `itemprop="price"` and `itemprop="priceCurrency"`;
+4. the page's `<title>`.
 
 Only a title and a price are kept, as text and a number: no HTML of the page is ever stored or shown.
 Prices are read as pages write them (`49.9`, `49,90 €`, `1 299,00`, `1,299.00`). A price in another
 currency than the euro is left out.
+
+### Amazon
+
+Amazon (amazon.fr and the other countries) writes no JSON-LD and no price tag: the worker reads the
+product's title (`#productTitle`) and the price to pay as the page shows it, in this order:
+
+1. in the price block (`corePriceDisplay_desktop_feature_div`, `corePrice_feature_div`,
+   `apex_desktop` and the older `priceblock_*`), the price to pay (`priceToPay`), from its hidden
+   text for screen readers (`a-offscreen`) or from its whole and fraction parts; the struck-out
+   « Prix conseillé » after it is never taken;
+2. the hidden fields of the « Ajouter au panier » form (`attach-base-product-price`,
+   `customerVisiblePrice`);
+3. the data of the variants' selector (`twister-plus-price-data-price`, `priceAmount`).
+
+The currency comes with the price (`€`, `EUR`): an amazon.com price in dollars is left out, like
+any price that is not in euros. A range (« 19,99 € - 29,99 € ») gives its lowest price.
+
+### Walls against robots
+
+Some shops answer a program with a wall instead of the product: Amazon's « Continuer les achats »
+CAPTCHA, a « Robot Check », a Cloudflare or DataDome challenge. The worker recognises these pages
+and takes them for a page not read yet: it tries again later (1, then 2 minutes after), and after
+3 attempts the item says « Lien illisible » instead of keeping a title or a price from the wall.
+The worker never tries to get past a wall: it says who it is (`Wishalia/1.0` in its user agent).
+When a shop keeps refusing it, the price is typed with « Modifier ».
 
 ## The owner's words win
 
@@ -63,4 +90,4 @@ the Internet. Its metrics are described in [Monitoring](monitoring.md).
 The worker also takes up to four images from the page, through the same guard, when the images
 are configured (a volume or a bucket): see [Images](images.md).
 
-Coming next: site-specific readers, and a headless browser as a last resort.
+Coming next: more site-specific readers, and a headless browser as a last resort.
