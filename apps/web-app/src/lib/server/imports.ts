@@ -16,7 +16,7 @@ import { ApiError, apiJson } from "./api.ts";
  * to the list they chose. The API reads and checks everything again: this only carries the form.
  */
 
-type FormEvent = Pick<RequestEvent, "request" | "getClientAddress" | "url" | "cookies">;
+type FormEvent = Pick<RequestEvent, "request" | "getClientAddress" | "url" | "cookies" | "locals">;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SOURCES = ["wishlistr", "csv", "json", "text"] as const;

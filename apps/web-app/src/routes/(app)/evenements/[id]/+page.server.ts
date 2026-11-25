@@ -1,4 +1,5 @@
 import { error, fail, type RequestEvent } from "@sveltejs/kit";
+import { appMessages } from "@wishalia/i18n/messages/app";
 
 import { ApiError, apiJson } from "#lib/server/api.ts";
 import { giftsFor, readEventForm } from "#lib/server/events.ts";
@@ -7,7 +8,6 @@ import type { Gift, HistoryEntry, Item, List, WishEvent } from "#lib/types.ts";
 import type { Actions, PageServerLoad } from "./$types";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const NOT_FOUND = "Cet événement n'existe pas, ou plus.";
 
 type ApiEvent = Pick<RequestEvent, "request" | "getClientAddress" | "url" | "cookies" | "locals">;
 
@@ -29,6 +29,7 @@ async function itemIdFrom(event: ApiEvent) {
 
 export const load: PageServerLoad = async (event) => {
   const { id } = event.params;
+  const NOT_FOUND = appMessages(event.locals.locale).missing.event;
   if (!UUID.test(id)) error(404, NOT_FOUND);
   const [events, lists] = await Promise.all([
     apiJson<WishEvent[]>(event, "/manage/events"),

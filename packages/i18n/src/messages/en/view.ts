@@ -55,4 +55,14 @@ export const view: ViewMessages = {
   forEvents: (names) => `For ${names}`,
   almost: "Almost complete",
   sampleNames: ["Camille (example)", "Hugo (example)"],
+  page: {
+    welcome: "Welcome!",
+    hello: (who) => `Hello ${who}!`,
+    wishesOf: (owner) => `${owner}'s wishes.`,
+    wishesOfFor: (owner, day) => `${owner}'s wishes, for ${day}.`,
+    gaugeList: "How the list is doing",
+    gaugeEvent: "How the occasion is doing",
+    empty: "The list is empty for now. Come back a little later!",
+    secret: (owner) => `What you give stays secret from ${owner} until after the occasion.`,
+  },
 };

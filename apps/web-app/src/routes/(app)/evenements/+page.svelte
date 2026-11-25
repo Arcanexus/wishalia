@@ -1,12 +1,18 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
 
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
+
   import EventFields from "#lib/EventFields.svelte";
-  import { eventKindLabel, formatDay, today } from "#lib/format.ts";
+  import { today } from "#lib/format.ts";
 
   import type { PageProps } from "./$types";
 
   let { data, form }: PageProps = $props();
+  const i18n = useI18n();
+  const all = $derived(appMessages(i18n.locale));
+  const m = $derived(all.events);
 
   const now = today();
   const upcoming = $derived(data.events.filter((event) => event.date >= now));
@@ -15,33 +21,30 @@
 </script>
 
 <svelte:head>
-  <title>Événements · {data.appName}</title>
+  <title>{m.title} · {data.appName}</title>
 </svelte:head>
 
-<h1>Événements</h1>
-<p class="muted intro">
-  Un anniversaire, Noël… Choisissez les envies de chaque événement. Ce qu'on vous offre reste secret jusqu'à
-  ce que vous leviez le secret, quelques jours après.
-</p>
+<h1>{m.title}</h1>
+<p class="muted intro">{m.intro}</p>
 
 {#snippet eventCard(event: (typeof data.events)[number])}
   <li>
     <a class="card event" href={resolve("/(app)/evenements/[id]", { id: event.id })}>
       <span class="name">{event.name}</span>
-      <span class="muted">{eventKindLabel(event.kind)} · {formatDay(event.date)}</span>
+      <span class="muted">{all.eventKinds[event.kind]} · {i18n.fmt.day(event.date)}</span>
       {#if event.secretLifted}
-        <span class="tag">Secret levé</span>
+        <span class="tag">{m.lifted}</span>
       {:else if event.canReveal}
-        <span class="tag ready">Secret à lever</span>
+        <span class="tag ready">{m.ready}</span>
       {/if}
     </a>
   </li>
 {/snippet}
 
 <section aria-labelledby="a-venir">
-  <h2 id="a-venir">À venir</h2>
+  <h2 id="a-venir">{m.upcoming}</h2>
   {#if upcoming.length === 0}
-    <p class="muted">Aucun événement à venir. Créez-en un ci-dessous.</p>
+    <p class="muted">{m.noneUpcoming}</p>
   {:else}
     <ul class="events">
       {#each upcoming as event (event.id)}{@render eventCard(event)}{/each}
@@ -51,7 +54,7 @@
 
 {#if past.length > 0}
   <section aria-labelledby="passes">
-    <h2 id="passes">Passés</h2>
+    <h2 id="passes">{m.past}</h2>
     <ul class="events">
       {#each past as event (event.id)}{@render eventCard(event)}{/each}
     </ul>
@@ -59,10 +62,10 @@
 {/if}
 
 <section class="card create" aria-labelledby="nouvel-evenement">
-  <h2 id="nouvel-evenement">Nouvel événement</h2>
+  <h2 id="nouvel-evenement">{m.new}</h2>
   <form method="POST" action="?/create">
     <EventFields values={form?.create ?? null} error={form?.create?.error ?? null} />
-    <button type="submit">Créer l'événement</button>
+    <button type="submit">{m.create}</button>
   </form>
 </section>
 

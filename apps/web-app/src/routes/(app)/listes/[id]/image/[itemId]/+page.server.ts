@@ -1,4 +1,5 @@
 import { error } from "@sveltejs/kit";
+import { appMessages } from "@wishalia/i18n/messages/app";
 
 import { ApiError, apiJson } from "#lib/server/api.ts";
 import { chooseImage, cropImage, forgetUpload, removeImage, uploadImage } from "#lib/server/images.ts";
@@ -20,12 +21,12 @@ export const load: PageServerLoad = async (event) => {
     ]);
   } catch (failure) {
     if (failure instanceof ApiError && (failure.status === 404 || failure.status === 400)) {
-      error(404, "Cette envie n'existe pas, ou plus.");
+      error(404, appMessages(event.locals.locale).missing.item);
     }
     throw failure;
   }
   // The address names the list too: an item of another list is not found here
-  if (item.listId !== id) error(404, "Cette envie n'existe pas, ou plus.");
+  if (item.listId !== id) error(404, appMessages(event.locals.locale).missing.item);
   // The list's forced theme colours this page too, as the list's own (docs/branding.md)
   event.locals.listTheme = lists.find((list) => list.id === id)?.theme ?? null;
   return { item, images };

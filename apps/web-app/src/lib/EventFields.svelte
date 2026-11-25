@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
+
   import { EVENT_KINDS } from "./format.ts";
 
   /** The fields of an event, shared by the creation and the settings forms. */
@@ -13,41 +16,38 @@
     frozen?: boolean;
   } = $props();
 
-  const messages: Record<string, string> = {
-    invalid_name: "Donnez un nom à l'événement, en 100 caractères au plus.",
-    invalid_date: "Choisissez la date de l'événement.",
-    invalid_delay: "Le délai est un nombre de jours, de 0 à 365.",
-    secret_already_lifted: "Le secret est levé : la date et le délai ne changent plus.",
-  };
+  const i18n = useI18n();
+  const all = $derived(appMessages(i18n.locale));
+  const m = $derived(all.eventFields);
   const field = (name: string) => (error === `invalid_${name}` ? "true" : undefined);
 </script>
 
 {#if error}
-  <p class="notice error" role="alert">{messages[error] ?? "L'enregistrement n'a pas abouti. Réessayez."}</p>
+  <p class="notice error" role="alert">{m.errors[error] ?? m.failed}</p>
 {/if}
 <div class="fields">
   <div class="wide">
-    <label for="event-name">Nom</label>
+    <label for="event-name">{m.name}</label>
     <input
       id="event-name"
       name="name"
       required
       maxlength="100"
-      placeholder="Par exemple « Les 8 ans de Léa »"
+      placeholder={m.namePlaceholder}
       value={values?.name ?? ""}
       aria-invalid={field("name")}
     />
   </div>
   <div>
-    <label for="event-kind">Type</label>
+    <label for="event-kind">{m.kind}</label>
     <select id="event-kind" name="kind">
-      {#each EVENT_KINDS as kind (kind.value)}
-        <option value={kind.value} selected={(values?.kind ?? "other") === kind.value}>{kind.label}</option>
+      {#each EVENT_KINDS as kind (kind)}
+        <option value={kind} selected={(values?.kind ?? "other") === kind}>{all.eventKinds[kind]}</option>
       {/each}
     </select>
   </div>
   <div>
-    <label for="event-date">Date</label>
+    <label for="event-date">{m.date}</label>
     <input
       id="event-date"
       name="date"
@@ -59,7 +59,7 @@
     />
   </div>
   <div class="wide">
-    <label for="event-delay">Lever le secret au plus tôt</label>
+    <label for="event-delay">{m.delay}</label>
     <div class="delay">
       <input
         id="event-delay"
@@ -74,12 +74,10 @@
         aria-describedby="event-delay-aide"
         aria-invalid={field("delay")}
       />
-      <span>jours après l'événement</span>
+      <span>{m.delayUnit}</span>
     </div>
     <p id="event-delay-aide" class="muted help">
-      {frozen
-        ? "Le secret est levé : la date et le délai ne changent plus."
-        : "Le temps que les derniers cadeaux arrivent. 3 jours par défaut."}
+      {frozen ? m.frozen : m.delayHelp}
     </p>
   </div>
 </div>

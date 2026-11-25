@@ -2,6 +2,9 @@
   import { enhance } from "$app/forms";
   import { resolve } from "$app/paths";
 
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
+
   import type { AddResult } from "#lib/types.ts";
 
   import type { PageProps } from "./$types";
@@ -15,31 +18,27 @@
   const added = $derived(shown && "item" in shown ? shown : null);
   const addedList = $derived(added ? data.lists.find((list) => list.id === added.item.listId) : undefined);
 
-  const errors: Record<string, string> = {
-    empty: "Écrivez un lien ou quelques mots, par exemple « Livre de cuisine ».",
-    not_found: "Cette liste n'existe plus. Choisissez-en une autre.",
-  };
+  const i18n = useI18n();
+  const all = $derived(appMessages(i18n.locale));
+  const m = $derived(all.add);
 </script>
 
 <svelte:head>
-  <title>Ajouter une envie · {data.appName}</title>
+  <title>{m.title} · {data.appName}</title>
 </svelte:head>
 
-<h1>Ajouter une envie</h1>
+<h1>{m.title}</h1>
 
 {#if added}
   <div class="card done" role="status">
     {#if undone}
-      <p>L'ajout est annulé : « {added.item.title} » n'est pas dans vos listes.</p>
+      <p>{m.undone(added.item.title)}</p>
     {:else}
-      <p>
-        C'est ajouté : « {added.item.title} »{#if addedList}, dans « {addedList.name} »{/if}. Le titre et le
-        prix se complètent tout seuls depuis le lien.
-      </p>
+      <p>{m.added(added.item.title, addedList?.name ?? null)}</p>
     {/if}
     <p class="links">
-      <a class="button" href={resolve("/(app)/listes/[id]", { id: added.item.listId })}>Voir la liste</a>
-      <a class="button secondary" href={resolve("/(app)")}>Mes listes</a>
+      <a class="button" href={resolve("/(app)/listes/[id]", { id: added.item.listId })}>{m.seeList}</a>
+      <a class="button secondary" href={resolve("/(app)")}>{m.myLists}</a>
     </p>
   </div>
   {#if added.duplicate && !undone}
@@ -52,10 +51,10 @@
         }}
       class="notice duplicate"
     >
-      <p>Ce lien est déjà dans une de vos envies.</p>
+      <p>{all.quickAdd.duplicate}</p>
       <input type="hidden" name="itemId" value={added.item.id} />
       <input type="hidden" name="status" value="archived" />
-      <button type="submit" class="secondary">Annuler cet ajout</button>
+      <button type="submit" class="secondary">{all.quickAdd.undo}</button>
     </form>
   {/if}
 {:else}
@@ -74,14 +73,14 @@
       };
     }}
   >
-    <label for="envie">Le lien, ou quelques mots</label>
+    <label for="envie">{m.label}</label>
     <textarea id="envie" name="input" rows="3" maxlength="4000" required aria-describedby="envie-aide"
       >{shown && "error" in shown ? shown.input : data.input}</textarea
     >
-    <p id="envie-aide" class="muted help">Vous pouvez changer le texte avant d'ajouter.</p>
+    <p id="envie-aide" class="muted help">{m.help}</p>
 
     {#if data.lists.length > 1}
-      <label for="liste">Dans la liste</label>
+      <label for="liste">{m.list}</label>
       <select id="liste" name="listId">
         {#each data.lists as list (list.id)}
           <option value={list.id}>{list.name}</option>
@@ -89,19 +88,19 @@
       </select>
     {:else if data.lists.length === 1}
       <input type="hidden" name="listId" value={data.lists[0]?.id} />
-      <p class="muted">Elle va dans « {data.lists[0]?.name} ».</p>
+      <p class="muted">{m.goesTo(data.lists[0]?.name ?? "")}</p>
     {:else}
-      <p class="muted">Elle va dans une nouvelle liste, « Mes envies ».</p>
+      <p class="muted">{m.goesToNew}</p>
     {/if}
 
     {#if shown && "error" in shown}
       <p class="notice error" role="alert">
-        {errors[shown.error] ?? "L'ajout n'a pas abouti. Réessayez dans un instant."}
+        {m.errors[shown.error] ?? all.quickAdd.failed}
       </p>
     {/if}
 
     <button type="submit" class="accent add" disabled={adding} aria-busy={adding}>
-      {adding ? "Ajout…" : "Ajouter à ma liste"}
+      {adding ? m.adding : m.submit}
     </button>
   </form>
 {/if}

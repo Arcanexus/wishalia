@@ -16,7 +16,7 @@ describe("themeColorTags", () => {
 });
 
 describe("manifest", () => {
-  const app = manifest("Wishalia");
+  const app = manifest("Wishalia", "fr");
 
   it("makes the app installable, standalone, with its name and icons", () => {
     expect(app).toMatchObject({
@@ -27,7 +27,9 @@ describe("manifest", () => {
     });
     const sizes = app.icons.map((icon) => `${icon.sizes} ${icon.purpose}`);
     expect(sizes).toEqual(expect.arrayContaining(["192x192 any", "512x512 any", "512x512 maskable"]));
-    expect(manifest("Nos envies").name).toBe("Nos envies");
+    expect(manifest("Nos envies", "fr").name).toBe("Nos envies");
+    expect(app.lang).toBe("fr-FR");
+    expect(manifest("Wishalia", "en")).toMatchObject({ lang: "en-GB", description: expect.stringContaining("family") });
   });
 
   it("puts the app in the share menu, on a page that asks before adding", () => {

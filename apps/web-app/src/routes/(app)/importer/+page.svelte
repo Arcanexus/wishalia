@@ -2,7 +2,9 @@
   import { onMount } from "svelte";
   import { enhance } from "$app/forms";
   import { resolve } from "$app/paths";
-  import { formatAmount, cents, type ImportPreview } from "@wishalia/domain";
+  import type { ImportPreview } from "@wishalia/domain";
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
 
   import type { PageProps } from "./$types";
 
@@ -32,60 +34,27 @@
     unpicked = on ? unpicked.filter((other) => other !== index) : [...unpicked, index];
   };
 
-  const SOURCES: Record<string, string> = {
-    wishlistr: "Wishlistr",
-    csv: "un fichier CSV",
-    json: "un fichier JSON",
-    text: "un texte",
-  };
-
-  const errors: Record<string, string> = {
-    empty_address: "Collez l'adresse de la liste Wishlistr, par exemple « wishlistr.com/alex ».",
-    invalid_address:
-      "Ce n'est pas l'adresse d'une liste Wishlistr. Elle ressemble à « https://www.wishlistr.com/alex/ ».",
-    remote_not_found:
-      "Wishlistr ne trouve pas cette liste. Vérifiez l'adresse, et que la liste est bien publique.",
-    remote_unreachable: "Wishlistr ne répond pas pour l'instant. Réessayez dans quelques minutes.",
-    not_a_wishlistr_list: "Cette page de Wishlistr n'est pas une liste d'envies.",
-    rate_limited: "Beaucoup d'essais en peu de temps : attendez une minute avant de réessayer.",
-    empty_file: "Choisissez un fichier.",
-    empty: "Collez au moins une envie, une par ligne.",
-    too_large: "C'est trop long : 1 Mo au plus. Coupez le fichier en plusieurs.",
-    invalid_csv: "Ce fichier CSV est mal formé : un guillemet n'est pas refermé.",
-    invalid_json: "Ce fichier JSON est mal formé.",
-    no_columns:
-      "Les colonnes ne sont pas reconnues. Il faut au moins une colonne « Titre » (ou « Nom ») ou « Lien » (ou « URL »).",
-    nothing_picked: "Cochez au moins une envie à importer.",
-    invalid_name: "Donnez un nom à la nouvelle liste, en 100 caractères au plus.",
-    not_found: "Cette liste n'existe plus. Choisissez-en une autre.",
-  };
-  const message = (code: string) => errors[code] ?? "L'import n'a pas abouti. Réessayez dans un instant.";
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale).import);
+  const message = (code: string) => m.errors[code] ?? m.failed;
 
   const skippedLine = (preview: ImportPreview) => {
     const empty = preview.skipped.filter((skip) => skip.reason === "no_title").length;
     const over = preview.skipped.length - empty;
     const parts = [];
-    if (empty)
-      parts.push(
-        empty === 1
-          ? "1 ligne sans titre ni lien est laissée de côté"
-          : `${empty} lignes sans titre ni lien sont laissées de côté`,
-      );
-    if (over) parts.push(`${over} de plus dépassent la limite de 500 envies par import`);
-    return parts.join(" ; ");
+    if (empty) parts.push(m.skippedEmpty(empty));
+    if (over) parts.push(m.skippedOver(over));
+    return parts.join(m.skippedJoin);
   };
 </script>
 
 <svelte:head>
-  <title>Importer une liste · {data.appName}</title>
+  <title>{m.title} · {data.appName}</title>
 </svelte:head>
 
-<p class="back"><a href={resolve("/(app)")}>← Mes listes</a></p>
-<h1>Importer une liste</h1>
-<p class="muted lead">
-  Vos envies sont ailleurs ? Reprenez-les ici en deux étapes : vous voyez d'abord ce qui sera ajouté, rien
-  n'est ajouté avant que vous confirmiez.
-</p>
+<p class="back"><a href={resolve("/(app)")}>{m.back}</a></p>
+<h1>{m.title}</h1>
+<p class="muted lead">{m.lead}</p>
 
 {#if !preview}
   <form
@@ -102,33 +71,29 @@
     }}
   >
     <fieldset>
-      <legend>D'où viennent vos envies ?</legend>
+      <legend>{m.from}</legend>
       <label class="choice">
         <input type="radio" name="how" value="lien" bind:group={how} />
         <span>
-          <strong>Une liste Wishlistr</strong><br /><span class="muted">avec son adresse publique</span>
+          <strong>{m.wishlistr.name}</strong><br /><span class="muted">{m.wishlistr.help}</span>
         </span>
       </label>
       <label class="choice">
         <input type="radio" name="how" value="fichier" bind:group={how} />
         <span>
-          <strong>Un fichier</strong><br /><span class="muted">
-            CSV ou JSON : un export d'un autre service, un tableur
-          </span>
+          <strong>{m.file.name}</strong><br /><span class="muted">{m.file.help}</span>
         </span>
       </label>
       <label class="choice">
         <input type="radio" name="how" value="texte" bind:group={how} />
         <span>
-          <strong>Un texte copié</strong><br /><span class="muted">
-            une envie par ligne, un lien ou quelques mots
-          </span>
+          <strong>{m.text.name}</strong><br /><span class="muted">{m.text.help}</span>
         </span>
       </label>
     </fieldset>
 
     {#if !hydrated || how === "lien"}
-      <label for="adresse">L'adresse de la liste Wishlistr</label>
+      <label for="adresse">{m.address}</label>
       <input
         id="adresse"
         name="address"
@@ -137,18 +102,15 @@
         spellcheck="false"
         autocapitalize="off"
         autocomplete="off"
-        placeholder="https://www.wishlistr.com/votre-nom/"
+        placeholder={m.addressPlaceholder}
         value={read && "error" in read ? (read.address ?? "") : ""}
         aria-describedby="adresse-aide"
         required={hydrated}
       />
-      <p id="adresse-aide" class="muted help">
-        Sur Wishlistr, c'est l'adresse que vous donnez à vos proches (bouton « Share list »). La liste doit
-        être visible sans compte.
-      </p>
+      <p id="adresse-aide" class="muted help">{m.addressHelp}</p>
     {/if}
     {#if !hydrated || how === "fichier"}
-      <label for="fichier">Le fichier</label>
+      <label for="fichier">{m.fileLabel}</label>
       <input
         id="fichier"
         name="file"
@@ -157,20 +119,14 @@
         aria-describedby="fichier-aide"
         required={hydrated}
       />
-      <p id="fichier-aide" class="muted help">
-        Une ligne par envie, avec des colonnes comme « Titre », « Lien », « Prix », « Quantité », « Notes »
-        (en français ou en anglais). 1 Mo au plus.
-      </p>
+      <p id="fichier-aide" class="muted help">{m.fileHelp}</p>
     {/if}
     {#if !hydrated || how === "texte"}
-      <label for="texte">Vos envies, une par ligne</label>
+      <label for="texte">{m.textLabel}</label>
       <textarea id="texte" name="text" rows="8" aria-describedby="texte-aide" required={hydrated}
         >{read && "error" in read ? (read.text ?? "") : ""}</textarea
       >
-      <p id="texte-aide" class="muted help">
-        Par exemple « Livre de cuisine » ou « https://… ». Une liste copiée depuis Amazon, une note ou un
-        e-mail convient.
-      </p>
+      <p id="texte-aide" class="muted help">{m.textHelp}</p>
     {/if}
 
     {#if read && "error" in read}
@@ -178,7 +134,7 @@
     {/if}
 
     <button type="submit" class="accent wide" disabled={reading} aria-busy={reading}>
-      {reading ? "Lecture…" : "Voir ce qui sera importé"}
+      {reading ? m.reading : m.read}
     </button>
   </form>
 {:else}
@@ -195,11 +151,7 @@
     }}
   >
     <h2 id="apercu-titre">
-      {preview.items.length === 0
-        ? "Aucune envie trouvée"
-        : preview.items.length === 1
-          ? "1 envie trouvée"
-          : `${preview.items.length} envies trouvées`} dans {SOURCES[preview.source]}
+      {m.found(preview.items.length, m.sources[preview.source] ?? preview.source)}
     </h2>
     {#if preview.skipped.length > 0}
       <p class="muted">{skippedLine(preview)}.</p>
@@ -210,15 +162,15 @@
 
     {#if preview.items.length > 0}
       <fieldset>
-        <legend>Les envies à importer <span class="muted">({count} sur {preview.items.length})</span></legend>
+        <legend>{m.toImport} <span class="muted">{m.picked(count, preview.items.length)}</span></legend>
         <p class="bulk">
-          <button type="button" class="secondary" onclick={() => (unpicked = [])}> Tout cocher </button>
+          <button type="button" class="secondary" onclick={() => (unpicked = [])}>{m.all}</button>
           <button
             type="button"
             class="secondary"
             onclick={() => (unpicked = preview ? preview.items.map((_, index) => index) : [])}
           >
-            Tout décocher
+            {m.none}
           </button>
         </p>
         <ul class="items">
@@ -237,7 +189,7 @@
                   <span class="muted details">
                     {[
                       item.url ? new URL(item.url).hostname.replace(/^www\./, "") : null,
-                      item.priceCents !== null ? formatAmount(cents(item.priceCents)) : null,
+                      item.priceCents !== null ? i18n.fmt.money(item.priceCents) : null,
                       item.quantity ? `× ${item.quantity}` : null,
                     ]
                       .filter(Boolean)
@@ -251,22 +203,22 @@
         </ul>
       </fieldset>
 
-      <label for="cible">Dans la liste</label>
+      <label for="cible">{m.list}</label>
       <select id="cible" name="listId" bind:value={target}>
-        <option value="nouvelle">Une nouvelle liste</option>
+        <option value="nouvelle">{m.newList}</option>
         {#each data.lists as list (list.id)}
           <option value={list.id}>{list.name}</option>
         {/each}
       </select>
       {#if target === "nouvelle"}
-        <label for="nom">Son nom</label>
+        <label for="nom">{m.name}</label>
         <input
           id="nom"
           name="listName"
           maxlength="100"
           required={hydrated}
           value={preview.listName ??
-            (preview.source === "wishlistr" ? "Ma liste Wishlistr" : "Mes envies importées")}
+            (preview.source === "wishlistr" ? m.defaultWishlistr : m.defaultName)}
         />
       {/if}
 
@@ -275,10 +227,10 @@
       {/if}
 
       <button type="submit" class="accent wide" disabled={adding || count === 0} aria-busy={adding}>
-        {adding ? "Import…" : count === 1 ? "Importer 1 envie" : `Importer ${count} envies`}
+        {adding ? m.importing : m.submit(count)}
       </button>
     {/if}
-    <p class="again"><a href={resolve("/(app)/importer")}>Recommencer avec une autre source</a></p>
+    <p class="again"><a href={resolve("/(app)/importer")}>{m.again}</a></p>
   </form>
 {/if}
 

@@ -62,4 +62,14 @@ export const view = {
   almost: "Presque complet",
   /** The made-up givers of the owner's preview: plainly examples. */
   sampleNames: ["Camille (exemple)", "Hugo (exemple)"] as [string, string],
+  page: {
+    welcome: "Bienvenue !",
+    hello: (who: string) => `Bonjour ${who} !`,
+    wishesOf: (owner: string) => `Les envies de ${owner}.`,
+    wishesOfFor: (owner: string, day: string) => `Les envies de ${owner}, pour le ${day}.`,
+    gaugeList: "Où en est la liste",
+    gaugeEvent: "Où en est l'occasion",
+    empty: "La liste est vide pour l'instant. Revenez un peu plus tard !",
+    secret: (owner: string) => `Ce que vous offrez reste secret pour ${owner}, jusqu'après l'occasion.`,
+  },
 };
