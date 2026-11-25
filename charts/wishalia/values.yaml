@@ -182,6 +182,11 @@ images:
         issuer: ""
         clientId: ""
         name: SSO
+        # Required with OIDC: the groups whose members may sign in (any of them). Everyone else is
+        # refused, even when the provider lets them through.
+        allowedGroups: []
+        # The claim that lists a person's groups (Authentik, Keycloak with a groups mapper: groups)
+        groupsClaim: groups
       resources:
         requests: { cpu: 10m, memory: 32Mi }
         limits: { memory: 128Mi }
