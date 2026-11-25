@@ -2,7 +2,8 @@ import type { Found } from "@wishalia/domain";
 
 /**
  * What a product page says about itself (spec §5.3), in cascade: the JSON-LD `schema.org/Product`
- * first, then the Open Graph and Twitter tags, then the page's <title>. Pure: the HTML in, what was
+ * first, then the Open Graph and Twitter tags, then the price shown in the page itself (microdata,
+ * the shops that write neither, such as Amazon), then the page's <title>. Pure: the HTML in, what was
  * found out. No HTML is ever kept or shown: only a title and a price, as text and a number, and the
  * links of its images (fetched and checked apart).
  */
@@ -48,6 +49,23 @@ export function priceToCents(value: unknown): number | null {
   }
   const amount = Number(text);
   return Number.isFinite(amount) ? Math.round(amount * 100) : null;
+}
+
+/** The first amount of a text ("19,99 € - 29,99 €" → "19,99"), or the text when it has none. */
+function firstAmount(text: string): string {
+  return text.match(/\d[\d\s\u00a0\u202f.,]*\d|\d/)?.[0] ?? text;
+}
+
+/** The currency a price is written with: ISO 4217 as is, or its usual symbol. */
+export function currencyOf(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const code = text.match(/\b(EUR|USD|GBP|CHF|CAD|JPY)\b/i)?.[1];
+  if (code) return code.toUpperCase();
+  if (text.includes("€")) return "EUR";
+  if (text.includes("£")) return "GBP";
+  if (text.includes("¥") || text.includes("￥")) return "JPY";
+  if (text.includes("$")) return "USD";
+  return null;
 }
 
 const isProduct = (node: Record<string, unknown>) => {
@@ -116,6 +134,127 @@ function fromMeta(html: string): Found {
     priceCents: priceToCents(amount),
     currency,
   };
+}
+
+/** The text of an element, tags removed and entities decoded. */
+const textOf = (inner: string) =>
+  decodeEntities(inner.replace(/<[^>]*>/g, " "))
+    .replace(/\s+/g, " ")
+    .trim();
+
+/** The elements that hold the price Amazon shows to buy (desktop and mobile layouts). */
+const AMAZON_PRICE_BLOCKS = [
+  "corePrice_feature_div",
+  "corePriceDisplay_desktop_feature_div",
+  "corePrice_desktop",
+  "corePrice_mobile_feature_div",
+  "apex_desktop",
+  "apex_offerDisplay_desktop",
+  "price_inside_buybox",
+  "priceblock_dealprice",
+  "priceblock_ourprice",
+  "priceblock_saleprice",
+  "tp_price_block_total_price_ww",
+  "kindle-price",
+  "price",
+];
+
+/** The few kilobytes after an element's id: where its price is written. */
+function after(html: string, id: string): string | null {
+  const at = html.search(new RegExp(`\\bid\\s*=\\s*["']${id}["']`, "i"));
+  return at < 0 ? null : html.slice(at, at + 6000);
+}
+
+/**
+ * Amazon (every country) writes no JSON-LD and no price tag: the price is in the page, in a hidden
+ * text for screen readers (`a-offscreen`), split in whole and fraction, or in hidden fields.
+ */
+function fromAmazon(html: string): Found {
+  if (!/\bid\s*=\s*["'](productTitle|dp|ppd|centerCol|corePrice_feature_div)["']/i.test(html)) return {};
+  const title = html.match(/<span\b[^>]*\bid\s*=\s*["']productTitle["'][^>]*>([\s\S]*?)<\/span>/i)?.[1];
+  const found: Found = { title: title ? textOf(title) || null : null, priceCents: null, currency: null };
+  for (const id of AMAZON_PRICE_BLOCKS) {
+    const zone = after(html, id);
+    if (!zone) continue;
+    // Where the price to pay starts: a discount line may come before it
+    const pay = zone.search(/\b(apex)?priceToPay\b/i);
+    const block = pay >= 0 ? zone.slice(pay) : zone;
+    // The price's own data comes first: a later hidden text is the « Prix conseillé »
+    const offscreen = block.match(/class\s*=\s*["'][^"']*\ba(?:ok)?-offscreen\b[^"']*["'][^>]*>([^<]+)</i);
+    const whole = block.match(/class\s*=\s*["'][^"']*\ba-price-whole\b[^"']*["'][^>]*>([^<]*\d[^<]*)/i);
+    const shown = offscreen?.[1] ? textOf(offscreen[1]) : "";
+    const shownCents = priceToCents(firstAmount(shown));
+    if (shownCents !== null && (!whole || (offscreen?.index ?? 0) < (whole.index ?? 0))) {
+      return { ...found, priceCents: shownCents, currency: currencyOf(shown) };
+    }
+    if (whole?.[1]) {
+      const fraction =
+        block.match(/class\s*=\s*["'][^"']*\ba-price-fraction\b[^"']*["'][^>]*>(\d+)/i)?.[1] ?? "00";
+      const symbol = block.match(/class\s*=\s*["'][^"']*\ba-price-symbol\b[^"']*["'][^>]*>([^<]+)/i)?.[1];
+      const cents = priceToCents(`${decodeEntities(whole[1]).replace(/\D/g, "")}.${fraction}`);
+      if (cents !== null) return { ...found, priceCents: cents, currency: currencyOf(symbol) };
+    }
+  }
+  // The hidden fields of the "add to cart" form, then the data of the variants' selector
+  for (const match of html.matchAll(/<input\b[^>]*>/gi)) {
+    const tag = attributes(match[0]);
+    if (
+      ["attach-base-product-price", "twister-plus-price-data-price"].includes(tag.id ?? "") ||
+      /customerVisiblePrice\]\[amount\]$/.test(tag.name ?? "")
+    ) {
+      const cents = priceToCents(tag.value);
+      if (cents !== null) {
+        const unit = html.match(
+          /<input\b[^>]*(?:id\s*=\s*["'](?:attach-currency-of-preference|twister-plus-price-data-price-unit)["']|name\s*=\s*["'][^"']*customerVisiblePrice\]\[currencyCode\]["'])[^>]*>/i,
+        )?.[0];
+        return { ...found, priceCents: cents, currency: currencyOf(unit ? attributes(unit).value : null) };
+      }
+    }
+  }
+  const json = html.match(/"priceAmount"\s*:\s*"?(\d+(?:\.\d+)?)/)?.[1];
+  if (json) {
+    const code = html.match(/"currencyCode"\s*:\s*"([A-Z]{3})"/)?.[1] ?? null;
+    return { ...found, priceCents: priceToCents(Number(json)), currency: code };
+  }
+  return found;
+}
+
+/** Microdata (`itemprop="price"`) on any element: its `content`, or its text. */
+function fromMicrodata(html: string): Found {
+  for (const match of html.matchAll(/<([a-z]+)\b[^>]*\bitemprop\s*=\s*["']price["'][^>]*>/gi)) {
+    const tag = attributes(match[0]);
+    let value = tag.content;
+    if (value === undefined) {
+      const rest = html.slice((match.index ?? 0) + match[0].length);
+      const end = rest.search(new RegExp(`</${match[1]}\\s*>`, "i"));
+      value = textOf(rest.slice(0, end < 0 ? 200 : Math.min(end, 200)));
+    }
+    const cents = priceToCents(firstAmount(value));
+    if (cents === null) continue;
+    const unit = html.match(/<[a-z]+\b[^>]*\bitemprop\s*=\s*["']priceCurrency["'][^>]*>/i)?.[0];
+    return { priceCents: cents, currency: (unit && attributes(unit).content) || currencyOf(value) };
+  }
+  return {};
+}
+
+/** The price shown in the page itself, when it says nothing in its tags. */
+function fromPage(html: string): Found {
+  const amazon = fromAmazon(html);
+  if (amazon.priceCents !== null && amazon.priceCents !== undefined) return amazon;
+  return { title: amazon.title ?? null, ...fromMicrodata(html) };
+}
+
+/**
+ * Whether the page is a wall put up against robots (a CAPTCHA, « Continuer vos achats »), not the
+ * product: the worker then tries again later, and says the link could not be read.
+ */
+export function isBotWall(html: string): boolean {
+  if (/\bid\s*=\s*["']productTitle["']/i.test(html)) return false;
+  return (
+    /\/errors\/validateCaptcha|api-services-support@amazon\.com/i.test(html) ||
+    /<title\b[^>]*>\s*(Robot Check|Attention Required!|Just a moment\.\.\.)\s*<\/title>/i.test(html) ||
+    /\bcf-chl-|captcha-delivery\.com|px-captcha/i.test(html)
+  );
 }
 
 function fromTitle(html: string): string | null {
@@ -199,13 +338,17 @@ export function extractImages(html: string): string[] {
   return [...productImages(html), ...meta, ...bodyImages(html)].map((link) => link.trim()).filter(Boolean);
 }
 
+const hasPrice = (found: Found) => found.priceCents !== null && found.priceCents !== undefined;
+
 /** Title and price, each from the first source that has it. */
 export function extract(html: string): Found {
   const ld = fromJsonLd(html);
   const meta = fromMeta(html);
-  const price =
-    ld.priceCents !== null && ld.priceCents !== undefined
-      ? { priceCents: ld.priceCents, currency: ld.currency ?? null }
-      : { priceCents: meta.priceCents ?? null, currency: meta.currency ?? null };
-  return { title: ld.title || meta.title || fromTitle(html), ...price };
+  const page = fromPage(html);
+  const source = [ld, meta, page].find(hasPrice);
+  return {
+    title: ld.title || meta.title || page.title || fromTitle(html),
+    priceCents: source?.priceCents ?? null,
+    currency: source?.currency ?? null,
+  };
 }

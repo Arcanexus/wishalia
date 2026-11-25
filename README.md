@@ -41,7 +41,7 @@ server, not hidden in the page.
 > events, sharing, settings), and the family sees a shared list or event in the public view, where
 > they reserve, chip in and withdraw. The public host's home page welcomes visitors, signs them in,
 > and finds the lists their owners made public. The worker completes the items added with a link (title,
-> price, images), and the owner can choose, send and frame the image of each item (on a volume or in S3, through imgproxy).
+> price, images; Amazon included), and the owner can choose, send and frame the image of each item (on a volume or in S3, through imgproxy).
 > The app installs on a phone, and a wish comes in from the share menu of any app (a Shortcut on iPhone).
 
 <p align="center">

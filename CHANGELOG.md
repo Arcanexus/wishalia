@@ -24,6 +24,15 @@ All notable changes to this project are documented here. The format follows
   `images.cleanup.intervalHours` (`0`: off) and `images.cleanup.graceHours`; metrics
   `wishalia_image_cleanup_*`.
 
+### Fixed
+
+- The price of an Amazon page (amazon.fr and the other countries) is read: Amazon writes no JSON-LD
+  and no price tag, so the worker reads the price to pay shown in the page (never the struck-out
+  « Prix conseillé »), then the hidden fields of the cart and the variants' data. The microdata
+  `itemprop="price"` of other shops is read too. A wall against robots (Amazon's CAPTCHA, a Robot
+  Check, a Cloudflare or DataDome challenge) is tried again later, then « Lien illisible », instead
+  of being read as the product.
+
 ## [0.0.3] - 2026-11-25
 
 ### Fixed
