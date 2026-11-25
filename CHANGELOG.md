@@ -12,6 +12,7 @@ All notable changes to this project are documented here. The format follows
   asked `/health`, which reads the metadata database, and gave up after one second. Liveness now
   checks the S3 port; `/health` decides readiness only, with 10 seconds to answer. PostgreSQL's
   probes get 5 seconds too.
+- The Garage console ignored the chart's `affinity`: it now follows it, like every other pod.
 - The Garage console starts with OIDC on: the chart now gives it scopes, `openid`, `profile` and
   `email` by default (`images.garage.ui.oidc.scopes`); garage-ui stopped with « oidc scopes are
   required ». `GARAGE_UI_AUTH_OIDC_SCOPES` in `images.garage.ui.env` still wins.
