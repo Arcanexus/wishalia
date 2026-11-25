@@ -1,7 +1,7 @@
 import { error } from "@sveltejs/kit";
 
 import { ApiError, apiJson } from "#lib/server/api.ts";
-import { chooseImage, cropImage, removeImage, uploadImage } from "#lib/server/images.ts";
+import { chooseImage, cropImage, forgetUpload, removeImage, uploadImage } from "#lib/server/images.ts";
 import type { Item, ItemImages, List } from "#lib/types.ts";
 
 import type { Actions, PageServerLoad } from "./$types";
@@ -36,4 +36,5 @@ export const actions: Actions = {
   choose: (event) => chooseImage(event, event.params.itemId),
   crop: (event) => cropImage(event, event.params.itemId),
   remove: (event) => removeImage(event, event.params.itemId),
+  forget: (event) => forgetUpload(event, event.params.itemId),
 };

@@ -79,6 +79,21 @@ export async function cropImage(event: FormEvent, itemId: string) {
   }
 }
 
+/**
+ * Removes the image the owner sent, for good: the page's first image shows again, and Wishalia
+ * reads the link once more for fresh ones.
+ */
+export async function forgetUpload(event: FormEvent, itemId: string) {
+  try {
+    const item = await apiJson<Item>(event, `/manage/items/${encodeURIComponent(itemId)}/image/upload`, {
+      method: "DELETE",
+    });
+    return { image: { done: item.url ? "forgotten" : "forgotten_no_link" } };
+  } catch (failure) {
+    return refusal(failure);
+  }
+}
+
 /** Shows no image (the proposals stay, to choose again later). */
 export async function removeImage(event: FormEvent, itemId: string) {
   try {

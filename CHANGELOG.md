@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- An item waiting for its link to be read shows it at a glance: a turning icon with « Lecture du
+  lien… » and, with images on, an empty frame where its image will go (both still for those who ask
+  for less motion). The
+  list page keeps looking for 10 minutes instead of one; « Lien illisible » marks a link that could
+  not be read.
+- « Retirer votre image » on the « Image » page erases the image the owner sent: the item goes back to
+  the page's image, and Wishalia reads the link again for fresh ones
+  (`DELETE /manage/items/:id/image/upload`, also in the REST API v1).
+
 ## [0.0.3] - 2026-11-25
 
 ### Fixed

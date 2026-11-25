@@ -1,6 +1,6 @@
 import { schema } from "@wishalia/db";
 import { memoryStorage } from "@wishalia/storage";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { InjectOptions } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -185,6 +185,61 @@ describe("the images of an item", () => {
       type: "image_changed",
       payload: { changes: { imageId: { from: two?.id, to: null } } },
     });
+  });
+
+  it("removes the image the owner sent, shows the page's again and reads the link anew", async () => {
+    const created = await as(owner, "POST", "/manage/items", { input: "https://shop.example.com/lampe" });
+    const itemId = created.body.id as string;
+    const [page] = await t.db
+      .insert(schema.wishImages)
+      .values({
+        wishId: itemId,
+        source: "page",
+        key: `wishes/${itemId}/page-0`,
+        contentType: "image/jpeg",
+        bytes: 1000,
+        width: 600,
+        height: 600,
+        position: 0,
+      })
+      .returning();
+    // The worker had read the page; then the owner sent their own photo
+    await t.db
+      .update(schema.wishes)
+      .set({ enrichment: "done", enrichmentAttempts: 2 })
+      .where(eq(schema.wishes.id, itemId));
+    await upload(itemId, png(400, 400));
+    const [mine] = await t.db
+      .select()
+      .from(schema.wishImages)
+      .where(and(eq(schema.wishImages.source, "upload"), eq(schema.wishImages.wishId, itemId)));
+
+    const removed = await as(owner, "DELETE", `/manage/items/${itemId}/image/upload`);
+    expect(removed.status).toBe(200);
+    expect(removed.body.image.small).toBeTruthy();
+    expect(removed.body.enrichment).toBe("pending");
+    expect(storage.objects.has(mine?.key ?? "")).toBe(false);
+    const [row] = await t.db.select().from(schema.wishes).where(eq(schema.wishes.id, itemId));
+    expect(row).toMatchObject({ imageId: page?.id, enrichment: "pending", enrichmentAttempts: 0 });
+    const listed = await as(owner, "GET", `/manage/items/${itemId}/images`);
+    expect(listed.body.images.map((image: { source: string }) => image.source)).toEqual(["page"]);
+    const history = (await as(owner, "GET", `/manage/items/${itemId}/history`)).body;
+    expect(history.at(-1)).toMatchObject({
+      type: "image_changed",
+      payload: { source: "upload", removed: true, to: page?.id },
+    });
+
+    // Nothing left to remove, and never on someone else's item
+    expect((await as(owner, "DELETE", `/manage/items/${itemId}/image/upload`)).status).toBe(404);
+    expect((await as(other, "DELETE", `/manage/items/${itemId}/image/upload`)).status).toBe(404);
+  });
+
+  it("removes a sent image that was not shown, and without a link shows none", async () => {
+    const itemId = await newItem();
+    await upload(itemId, png(400, 400));
+    const removed = await as(owner, "DELETE", `/manage/items/${itemId}/image/upload`);
+    expect(removed.status).toBe(200);
+    expect(removed.body).toMatchObject({ image: null, enrichment: null });
   });
 
   it("refuses an image of another item, a frame without an image, and an empty change", async () => {
