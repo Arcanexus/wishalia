@@ -142,6 +142,10 @@ const textOf = (inner: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
+/** An Amazon product page (any country), from the ids of its layout. */
+const isAmazon = (html: string) =>
+  /\bid\s*=\s*["'](productTitle|dp|ppd|centerCol|corePrice_feature_div)["']/i.test(html);
+
 /** The elements that hold the price Amazon shows to buy (desktop and mobile layouts). */
 const AMAZON_PRICE_BLOCKS = [
   "corePrice_feature_div",
@@ -170,7 +174,7 @@ function after(html: string, id: string): string | null {
  * text for screen readers (`a-offscreen`), split in whole and fraction, or in hidden fields.
  */
 function fromAmazon(html: string): Found {
-  if (!/\bid\s*=\s*["'](productTitle|dp|ppd|centerCol|corePrice_feature_div)["']/i.test(html)) return {};
+  if (!isAmazon(html)) return {};
   const title = html.match(/<span\b[^>]*\bid\s*=\s*["']productTitle["'][^>]*>([\s\S]*?)<\/span>/i)?.[1];
   const found: Found = { title: title ? textOf(title) || null : null, priceCents: null, currency: null };
   for (const id of AMAZON_PRICE_BLOCKS) {
@@ -309,12 +313,69 @@ function bodyImages(html: string): string[] {
   return links;
 }
 
+/** Amazon's product photos live under /images/I/; its banners, logos and ads under /images/G/ and others. */
+const AMAZON_PHOTO = /^https?:\/\/[^/]*(media-amazon\.com|ssl-images-amazon\.com)\/images\/I\//i;
+
+/** An Amazon photo at 1500 pixels: a thumbnail's link (…._AC_US40_.jpg) without its small size. */
+export function amazonLarge(link: string): string {
+  return link.replace(/\._[^/]*?_\.(jpe?g|png|webp|gif)$/i, "._AC_SL1500_.$1");
+}
+
+/**
+ * The photos of an Amazon product, best first. Amazon writes no JSON-LD and no sharing image, and
+ * its page starts with banners and ads: the photo shown big (`#landingImage`, `#imgBlkFront` for a
+ * book), in its largest size (`data-old-hires`, the biggest of `data-a-dynamic-image`), then the
+ * gallery (`"hiRes"`, else `"large"`), or without one the product photos of the page; never a
+ * banner, a logo or an ad.
+ */
+function amazonImages(html: string): string[] {
+  const main: string[] = [];
+  for (const match of html.matchAll(/<img\b[^>]*>/gi)) {
+    const tag = attributes(match[0]);
+    if (!["landingImage", "imgBlkFront", "ebooksImgBlkFront", "main-image"].includes(tag.id ?? "")) continue;
+    if (tag["data-old-hires"]) main.push(tag["data-old-hires"]);
+    try {
+      const sizes = JSON.parse(tag["data-a-dynamic-image"] ?? "{}") as Record<string, unknown>;
+      const area = (size: unknown) => (Array.isArray(size) ? Number(size[0]) * Number(size[1]) || 0 : 0);
+      main.push(...Object.keys(sizes).sort((a, b) => area(sizes[b]) - area(sizes[a])));
+    } catch {
+      // A broken list of sizes: the other links still count
+    }
+    if (tag.src) main.push(tag.src);
+  }
+  // The gallery: one entry per photo, its largest size (each size of a photo has its own link)
+  const gallery: string[] = [];
+  for (const entry of html.matchAll(/\{\s*"hiRes"\s*:\s*(?:null|"([^"]+)")[^{}]*?"large"\s*:\s*"([^"]+)"/g)) {
+    const link = entry[1] ?? entry[2];
+    if (link) gallery.push(link.replace(/\\\//g, "/"));
+  }
+  // Without a gallery, the product photos of the page (the thumbnails, at a larger size)
+  const photos =
+    gallery.length > 0
+      ? []
+      : bodyImages(html)
+          .filter((link) => !/play/i.test(link))
+          .map(amazonLarge);
+  // One link per photo: the same photo comes in several sizes, the first (largest) one wins
+  const seen = new Set<string>();
+  return [...main, ...gallery, ...photos]
+    .map((link) => decodeEntities(link).trim())
+    .filter((link) => {
+      if (!AMAZON_PHOTO.test(link)) return false;
+      const photo = link.match(/\/images\/I\/([^./]+)/)?.[1] ?? link;
+      if (seen.has(photo)) return false;
+      seen.add(photo);
+      return true;
+    });
+}
+
 /**
  * The images the page proposes for its product, best first: the product's own (JSON-LD), the
  * sharing image (Open Graph, Twitter), then the photos of the page. Links only, unchecked: the
  * worker fetches each one through the same guard as the page, and keeps real images only.
  */
 export function extractImages(html: string): string[] {
+  if (isAmazon(html)) return amazonImages(html);
   const meta: string[] = [];
   for (const match of html.matchAll(/<(meta|link)\b[^>]*>/gi)) {
     const tag = attributes(match[0]);
