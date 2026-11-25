@@ -1,3 +1,6 @@
+import { formatters, type Locale } from "@wishalia/i18n";
+import { viewMessages } from "@wishalia/i18n/messages/view";
+
 import type { Funding, MyGift, PublicEvent, PublicItem } from "./types.ts";
 
 /**
@@ -16,81 +19,67 @@ export function sortForGuests(items: readonly PublicItem[]): PublicItem[] {
     .map(({ item }) => item);
 }
 
-const euros = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
-const wholeEuros = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
+/** The words and formats of one language. */
+const words = (locale: Locale) => ({ m: viewMessages(locale), f: formatters(locale) });
 
-/** « 49,90 € », or « 120 € » for a whole amount. */
-export const formatEuros = (cents: number) =>
-  cents % 100 === 0 ? wholeEuros.format(cents / 100) : euros.format(cents / 100);
+/** « 49,90 € », or « 120 € » for a whole amount (« €49.90 », « €120 » in English). */
+export const formatEuros = (cents: number, locale: Locale) => formatters(locale).money(cents);
 
-const day = new Intl.DateTimeFormat("fr-FR", { dateStyle: "full", timeZone: "UTC" });
 /** An event's day (YYYY-MM-DD): « jeudi 24 décembre 2026 ». */
-export const formatDay = (date: string) => day.format(new Date(`${date}T00:00:00Z`));
+export const formatDay = (date: string, locale: Locale) => formatters(locale).day(date);
 
 /** « Paul », « Paul et Jeanne », « Paul, Jeanne et Léa ». */
-export function joinNames(names: readonly string[]): string {
-  if (names.length <= 1) return names[0] ?? "";
-  return `${names.slice(0, -1).join(", ")} et ${names.at(-1)}`;
-}
+export const joinNames = (names: readonly string[], locale: Locale): string => formatters(locale).list(names);
 
 /** Who gave, in words: names first, then how many chose to stay anonymous. */
-export function givers(funding: Funding): string {
+export function givers(funding: Funding, locale: Locale): string {
   const named = [...new Set(funding.contributors.flatMap((c) => (c.name ? [c.name] : [])))];
   const anonymous = funding.contributors.filter((c) => !c.name).length;
   const parts = [...named];
-  if (anonymous > 0)
-    parts.push(anonymous === 1 ? "une personne discrète" : `${anonymous} personnes discrètes`);
-  return joinNames(parts);
+  if (anonymous > 0) parts.push(viewMessages(locale).discreet(anonymous));
+  return joinNames(parts, locale);
 }
 
 /** The line that says where an item stands, for a guest. Null when nothing is to say. */
-export function standing(item: PublicItem): string | null {
-  if (item.status === "received") return "Déjà reçu : merci !";
+export function standing(item: PublicItem, locale: Locale): string | null {
+  const { m, f } = words(locale);
+  if (item.status === "received") return m.receivedThanks;
   const funding = item.funding;
   if (!funding) return null;
-  const who = givers(funding);
+  const who = givers(funding, locale);
   switch (item.kind) {
     case "unique":
-      if (item.repeatable) {
-        return funding.timesGiven
-          ? `Déjà offert ${funding.timesGiven === 1 ? "une fois" : `${funding.timesGiven} fois`}, et peut l'être encore.`
-          : "Libre, et peut être offert à chaque occasion.";
-      }
-      return funding.state === "complete" ? (who ? `Réservé par ${who}.` : "Déjà réservé.") : "Libre.";
+      if (item.repeatable) return funding.timesGiven ? m.repeatGiven(funding.timesGiven) : m.repeatFree;
+      return funding.state === "complete" ? (who ? m.reservedBy(who) : m.reserved) : m.free;
     case "quantity": {
       const wanted = item.quantity ?? 1;
       const taken = funding.reservedUnits ?? 0;
-      if (taken >= wanted) return who ? `Tout est réservé, par ${who}.` : "Tout est réservé.";
-      if (taken === 0) return wanted === 1 ? "Libre." : `${wanted} à offrir, aucun réservé pour l'instant.`;
-      return `${taken} sur ${wanted} déjà réservé${taken > 1 ? "s" : ""}${who ? `, par ${who}` : ""}.`;
+      if (taken >= wanted) return who ? m.allReservedBy(who) : m.allReserved;
+      if (taken === 0) return wanted === 1 ? m.free : m.noneReserved(wanted);
+      return m.someReserved(taken, wanted, who);
     }
     case "pool": {
       const total = funding.totalCents ?? 0;
-      if (total === 0)
-        return item.targetCents
-          ? `Cagnotte de ${formatEuros(item.targetCents)}, à lancer.`
-          : "Cagnotte à lancer.";
-      const reached = item.targetCents
-        ? `${formatEuros(total)} réunis sur ${formatEuros(item.targetCents)}`
-        : `${formatEuros(total)} réunis`;
+      const target = item.targetCents ? f.money(item.targetCents) : null;
+      if (total === 0) return m.poolToStart(target);
+      const reached = m.poolReached(f.money(total), target);
       const tail =
         funding.overshootCents && funding.overshootCents > 0
-          ? ` : objectif atteint, ${formatEuros(funding.overshootCents)} en excédent`
+          ? m.poolOvershoot(f.money(funding.overshootCents))
           : funding.remainingCents
-            ? ` : il manque ${formatEuros(funding.remainingCents)}`
+            ? m.poolMissing(f.money(funding.remainingCents))
             : "";
-      return `${reached}${tail}${who ? `, avec ${who}` : ""}.`;
+      return `${reached}${tail}${who ? m.poolWith(who) : ""}.`;
     }
   }
 }
 
 /** The page's heading and what it is about. */
-export function heading(view: { list: { name: string } | null; event: PublicEvent | null }): string {
-  return view.event?.name ?? view.list?.name ?? "Liste de souhaits";
+export function heading(
+  view: { list: { name: string } | null; event: PublicEvent | null },
+  locale: Locale,
+): string {
+  return view.event?.name ?? view.list?.name ?? viewMessages(locale).defaultHeading;
 }
 
 /** How many copies of an item are still free (1 for a free gift, 0 when all are taken). */
@@ -110,44 +99,29 @@ export function canGive(item: PublicItem, view: { viewer: string; event: PublicE
 }
 
 /** The button that opens the form, and sends it. */
-export function giveLabel(item: PublicItem): string {
-  if (item.kind === "pool") return "Je participe";
-  return item.kind === "quantity" && unitsLeft(item) > 1 ? "J'en réserve" : "Je le réserve";
+export function giveLabel(item: PublicItem, locale: Locale): string {
+  const labels = viewMessages(locale).giveLabel;
+  if (item.kind === "pool") return labels.pool;
+  return item.kind === "quantity" && unitsLeft(item) > 1 ? labels.several : labels.one;
 }
 
-const giveErrors: Record<string, string> = {
-  already_reserved: "Quelqu'un vient de le réserver. Regardez les autres envies !",
-  not_enough_left: "Il n'en reste plus autant : choisissez un nombre plus petit.",
-  amount_required: "Indiquez un montant, par exemple 20 ou 12,50.",
-  units_required: "Indiquez combien vous en offrez.",
-  name_required: "Indiquez votre prénom, pour que vos proches sachent qui s'en occupe.",
-  too_long: "Le prénom fait 60 caractères au plus, et le mot 500.",
-  event_closed: "Cette occasion est passée : on ne peut plus y participer.",
-  item_closed: "Cette envie n'attend plus de cadeau.",
-  list_closed: "Cette envie n'attend plus de cadeau.",
-  invalid_request: "Vérifiez ce que vous avez écrit, puis réessayez.",
-};
-
 /** What went wrong, in plain words. */
-export const giveError = (code: string) =>
-  giveErrors[code] ?? "Ça n'a pas marché. Réessayez dans un instant.";
-
-const withdrawErrors: Record<string, string> = {
-  event_closed: "L'occasion est passée : ce cadeau ne peut plus être retiré.",
-  item_closed: "Cette envie est déjà reçue : ce cadeau ne peut plus être retiré.",
-  list_closed: "Le secret est levé : ce cadeau ne peut plus être retiré.",
+export const giveError = (code: string, locale: Locale) => {
+  const m = viewMessages(locale);
+  return m.giveErrors[code] ?? m.tryAgain;
 };
 
-export const withdrawError = (code: string) =>
-  withdrawErrors[code] ?? "Ça n'a pas marché. Réessayez dans un instant.";
+export const withdrawError = (code: string, locale: Locale) => {
+  const m = viewMessages(locale);
+  return m.withdrawErrors[code] ?? m.tryAgain;
+};
 
 /** One of the person's own gifts, in words: « Vous participez pour 20 € ». */
-export function myGiftLine(gift: MyGift, item: PublicItem): string {
-  if (gift.amountCents) return `Vous participez pour ${formatEuros(gift.amountCents)}.`;
-  if (item.kind === "quantity" && gift.units) {
-    return gift.units === 1 ? "Vous en réservez un." : `Vous en réservez ${gift.units}.`;
-  }
-  return "Vous l'avez réservé.";
+export function myGiftLine(gift: MyGift, item: PublicItem, locale: Locale): string {
+  const { m, f } = words(locale);
+  if (gift.amountCents) return m.myGiftAmount(f.money(gift.amountCents));
+  if (item.kind === "quantity" && gift.units) return m.myGiftUnits(gift.units);
+  return m.myGiftReserved;
 }
 
 /** A part of a pool's bar: what one event brought, as fractions of the bar's width. */
@@ -175,7 +149,8 @@ export const TONES = 4;
  * A pool's bar (spec §4): one segment per event, on a scale of max(target, total), with a mark at
  * the target and the overshoot past it. Null when there is nothing to draw.
  */
-export function poolBar(item: PublicItem, events: readonly PublicEvent[]): PoolBar | null {
+export function poolBar(item: PublicItem, events: readonly PublicEvent[], locale: Locale): PoolBar | null {
+  const m = viewMessages(locale);
   const funding = item.funding;
   if (item.kind !== "pool" || !funding) return null;
   const total = funding.totalCents ?? 0;
@@ -190,7 +165,7 @@ export function poolBar(item: PublicItem, events: readonly PublicEvent[]): PoolB
     .map((part, index) => {
       const segment = {
         key: part.eventId ?? "none",
-        label: part.eventId ? (names.get(part.eventId) ?? "Une autre occasion") : "Sans occasion",
+        label: part.eventId ? (names.get(part.eventId) ?? m.otherEvent) : m.noEvent,
         cents: part.amountCents,
         start: at / scale,
         width: part.amountCents / scale,
@@ -227,13 +202,13 @@ export function gauge(items: readonly PublicItem[]): Gauge | null {
   return result;
 }
 
-const count = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
-
-export const gaugeLine = ({ complete, inProgress, free }: Gauge) =>
-  `${count(complete, "complet", "complets")}, ${count(inProgress, "en cours", "en cours")}, ${count(free, "libre", "libres")}.`;
+export const gaugeLine = ({ complete, inProgress, free }: Gauge, locale: Locale) => {
+  const m = viewMessages(locale);
+  return `${m.gaugeComplete(complete)}, ${m.gaugeInProgress(inProgress)}, ${m.gaugeFree(free)}.`;
+};
 
 /** One or two letters for an avatar: « Paul » → « P », « Jean Dupont » → « JD ». */
-export function initials(name: string | null): string {
+export function initials(name: string | null, locale: Locale = "fr"): string {
   if (!name) return "?";
   const words = name
     .trim()
@@ -243,7 +218,7 @@ export function initials(name: string | null): string {
   return (
     words
       .slice(0, 2)
-      .map((word) => [...word][0]?.toLocaleUpperCase("fr-FR") ?? "")
+      .map((word) => formatters(locale).upper([...word][0] ?? ""))
       .join("") || "?"
   );
 }

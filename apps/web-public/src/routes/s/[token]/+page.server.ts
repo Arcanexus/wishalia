@@ -56,7 +56,7 @@ export const load: PageServerLoad = async (event) => {
   const items = sortForGuests(folded ? view.items.map((item) => ({ ...item, funding: null })) : view.items);
   return {
     // The same title and preview for every link: a preview in a chat gives nothing away
-    meta: genericMeta(process.env.APP_NAME ?? "Wishalia"),
+    meta: genericMeta(process.env.APP_NAME ?? "Wishalia", event.locals.locale),
     view: { ...view, items },
     folded,
     mine: folded ? [] : myGifts(view, kept),

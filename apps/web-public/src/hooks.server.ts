@@ -2,7 +2,9 @@ import type { Handle, ServerInit } from "@sveltejs/kit/hooks";
 import { resolveTheme } from "@wishalia/domain";
 import { metricsPort, processMetrics } from "@wishalia/metrics";
 
-import { readPreferences } from "#lib/server/preferences.ts";
+import { formatters } from "@wishalia/i18n";
+
+import { pageLocale, readPreferences } from "#lib/server/preferences.ts";
 import { applySecurityHeaders } from "#lib/security-headers.ts";
 
 const metrics = processMetrics("web-public", process.env.APP_VERSION ?? "dev");
@@ -16,9 +18,11 @@ export const init: ServerInit = async () => {
 
 export const handle: Handle = async ({ event, resolve }) => {
   const started = performance.now();
-  const { themeChoice, mode } = readPreferences(event.cookies);
+  const { themeChoice, mode, localeChoice } = readPreferences(event.cookies);
   event.locals.themeChoice = themeChoice;
   event.locals.mode = mode;
+  event.locals.localeChoice = localeChoice;
+  event.locals.locale = pageLocale(localeChoice, event.request.headers.get("accept-language"));
   event.locals.listTheme = null;
   event.locals.christmas = false;
 
@@ -27,6 +31,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     // render time, after the page's load has set the list's forced theme
     transformPageChunk: ({ html }) =>
       html
+        .replace("%wishalia.lang%", formatters(event.locals.locale).tag)
         .replace(
           "%wishalia.theme%",
           resolveTheme({
@@ -39,6 +44,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         .replace("%wishalia.mode%", event.locals.mode),
   });
   applySecurityHeaders(response.headers);
+  response.headers.set("content-language", formatters(event.locals.locale).tag);
   // A family's lists: never in a search engine, whatever links to them
   response.headers.set("x-robots-tag", "noindex, nofollow");
   // The route id (/s/[token]), never the URL: share link tokens never reach the metrics

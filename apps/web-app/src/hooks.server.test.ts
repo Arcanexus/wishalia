@@ -1,5 +1,5 @@
 import { processMetrics } from "@wishalia/metrics";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { handle, init } from "./hooks.server.ts";
 
@@ -10,10 +10,11 @@ function request(
   url: string,
   status = 200,
   cookies: Record<string, string> = {},
+  headers: Record<string, string> = {},
 ): HandleInput {
   return {
     event: {
-      request: new Request(`https://example.test${url}`),
+      request: new Request(`https://example.test${url}`, { headers }),
       route: { id: routeId },
       cookies: { get: (name: string) => cookies[name] },
       locals: {},
@@ -25,6 +26,7 @@ function request(
       new Response(
         options?.transformPageChunk?.({
           html: '<html data-theme="%wishalia.theme%" data-mode="%wishalia.mode%">%wishalia.theme-color%',
+          ...(url === "/lang" ? { html: '<html lang="%wishalia.lang%">' } : {}),
         }) ?? "ok",
         { status },
       ),
@@ -65,6 +67,21 @@ describe("hooks", () => {
     expect(html).toMatch(/data-theme="(neutral|christmas)" data-mode="device"/);
     // Following the device: one bar colour for each of its modes
     expect(html).toContain('media="(prefers-color-scheme: dark)"');
+  });
+
+  it("speaks the chosen language, else the browser's, else DEFAULT_LOCALE", async () => {
+    const chosen = await handle(
+      request("/", "/lang", 200, { "wishalia.locale": "en" }, { "accept-language": "fr" }),
+    );
+    expect(await chosen.text()).toBe('<html lang="en-GB">');
+    expect(chosen.headers.get("content-language")).toBe("en-GB");
+    const browser = await handle(request("/", "/lang", 200, {}, { "accept-language": "en-US,en;q=0.9" }));
+    expect(await browser.text()).toBe('<html lang="en-GB">');
+    vi.stubEnv("DEFAULT_LOCALE", "en");
+    const fallback = await handle(request("/", "/lang", 200, {}, { "accept-language": "de" }));
+    expect(await fallback.text()).toBe('<html lang="en-GB">');
+    vi.unstubAllEnvs();
+    expect(await (await handle(request("/", "/lang"))).text()).toBe('<html lang="fr-FR">');
   });
 
   it("starts no metrics server without METRICS_PORT", async () => {

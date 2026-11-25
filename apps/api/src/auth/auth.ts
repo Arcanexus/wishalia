@@ -3,11 +3,13 @@ import { randomBytes } from "node:crypto";
 import { passkey } from "@better-auth/passkey";
 import type { Database } from "@wishalia/db";
 import { schema } from "@wishalia/db";
+import { parseLocale, resolveLocale, type Locale } from "@wishalia/i18n";
 import { betterAuth, type BetterAuthPlugin } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
 import { genericOAuth } from "better-auth/plugins/generic-oauth";
 import { magicLink } from "better-auth/plugins/magic-link";
+import { eq } from "drizzle-orm";
 
 import type { Config } from "../config.js";
 import { magicLinkMail, type Mailer } from "./mailer.js";
@@ -35,6 +37,28 @@ export interface AuthDeps {
  */
 export function mayCreateAccount(config: Config, email: string | null | undefined): boolean {
   return !!email && config.OWNER_EMAILS.includes(email.trim().toLowerCase());
+}
+
+/**
+ * The language of a person's emails (docs/i18n.md): the one kept with their account, then the
+ * page's that asked for the email (the app sends it as Accept-Language), then DEFAULT_LOCALE.
+ */
+export async function mailLocale(
+  db: Database,
+  config: Config,
+  email: string,
+  acceptLanguage: string | null | undefined,
+): Promise<Locale> {
+  const [row] = await db
+    .select({ locale: schema.users.locale })
+    .from(schema.users)
+    .where(eq(schema.users.email, email.trim().toLowerCase()))
+    .limit(1);
+  return resolveLocale({
+    choice: parseLocale(row?.locale),
+    acceptLanguage,
+    fallback: config.DEFAULT_LOCALE,
+  });
 }
 
 /**
@@ -78,7 +102,11 @@ export function createAuth({ config, db, mailer, log = () => {}, secret = authSe
         allowedAttempts: 1,
         storeToken: "hashed",
         // Sign-up stays on: the user.create hook below lets the owners in, and nobody else
-        sendMagicLink: ({ email, url }) => sendMagicLink.send(magicLinkMail(config.APP_NAME, email, url)),
+        sendMagicLink: async ({ email, url }, ctx) => {
+          const headers = ctx?.headers ?? ctx?.request?.headers;
+          const locale = await mailLocale(db, config, email, headers?.get("accept-language"));
+          await sendMagicLink.send(magicLinkMail(config.APP_NAME, email, url, locale));
+        },
       }),
     );
   }

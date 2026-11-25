@@ -5,6 +5,10 @@
   import { invalidateAll } from "$app/navigation";
   import { page } from "$app/state";
 
+  import { LOCALE_NAMES, LOCALES } from "@wishalia/i18n";
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
+
   import InstallApp from "#lib/InstallApp.svelte";
   import { addPasskey, deviceName, passkeysSupported, type PasskeyOutcome } from "#lib/passkey.ts";
 
@@ -12,22 +16,9 @@
 
   let { data, form }: PageProps = $props();
 
-  const themes = [
-    {
-      value: "auto",
-      label: "Automatique",
-      help: "Noël en décembre et pour les listes de Noël, neutre le reste de l'année.",
-    },
-    { value: "neutral", label: "Neutre", help: "Ardoise, grenat et lin, toute l'année." },
-    { value: "christmas", label: "Noël", help: "Sapin, houx et or, toute l'année." },
-  ] as const;
-  const modes = [
-    { value: "device", label: "Comme mon appareil" },
-    { value: "light", label: "Clair" },
-    { value: "dark", label: "Sombre" },
-  ] as const;
-
-  const day = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale).settings);
+  const day = (iso: string) => i18n.fmt.date(iso);
   const activeTokens = $derived(data.tokens.filter((token) => token.active));
   let copied = $state(false);
 
@@ -44,45 +35,40 @@
     event.preventDefault();
     adding = true;
     addOutcome = null;
-    addOutcome = await addPasskey(passkeyName.trim() || deviceName(navigator.userAgent));
+    addOutcome = await addPasskey(passkeyName.trim() || deviceName(navigator.userAgent, i18n.locale));
     adding = false;
     if (addOutcome === "ok") {
       passkeyName = "";
       await invalidateAll();
     }
   }
-
-  const addMessages: Record<Exclude<PasskeyOutcome, "ok" | "not_fresh">, string> = {
-    cancelled: "L'ajout est annulé. Vous pouvez recommencer quand vous voulez.",
-    exists: "Cet appareil a déjà une clé d'accès pour votre compte : rien à ajouter.",
-    unsupported: "Ce navigateur ne sait pas utiliser les clés d'accès.",
-    unknown_key: "La clé d'accès n'a pas pu être ajoutée. Réessayez.",
-    failed: "La clé d'accès n'a pas pu être ajoutée. Réessayez dans un instant.",
-  };
-
-  const tokenErrors: Record<string, string> = {
-    invalid_name: "Donnez un nom au jeton, en 60 caractères au plus, par exemple « Home Assistant ».",
-    invalid_days: "La durée va de 1 à 365 jours.",
-  };
 </script>
 
 <svelte:head>
-  <title>Réglages · {data.appName}</title>
+  <title>{m.title} · {data.appName}</title>
 </svelte:head>
 
-<h1>Réglages</h1>
+<h1>{m.title}</h1>
 
 <section class="card" aria-labelledby="affichage">
-  <h2 id="affichage">Vous et l'affichage</h2>
-  <p class="muted">Ces réglages vous suivent sur tous vos appareils. Connecté avec {data.me.email}.</p>
+  <h2 id="affichage">{m.display}</h2>
+  <p class="muted">{m.follows(data.me.email)}</p>
   <form
     method="POST"
     action="?/display"
-    use:enhance={() =>
-      async ({ update }) =>
-        update({ reset: false })}
+    use:enhance={({ formData }) => {
+      const languageChanged = formData.get("locale") !== data.me.locale;
+      return async ({ result, update }) => {
+        // The language is on <html lang>, written by the server: a new one needs a fresh page
+        if (result.type === "success" && languageChanged) {
+          window.location.reload();
+          return;
+        }
+        await update({ reset: false });
+      };
+    }}
   >
-    <label for="nom">Votre prénom ou surnom</label>
+    <label for="nom">{m.name}</label>
     <input
       id="nom"
       name="displayName"
@@ -92,65 +78,76 @@
       value={data.me.displayName}
       aria-describedby="nom-aide"
     />
-    <p id="nom-aide" class="muted help">C'est ce que voient vos proches.</p>
+    <p id="nom-aide" class="muted help">{m.nameHelp}</p>
 
     <fieldset>
-      <legend>Thème</legend>
-      {#each themes as theme (theme.value)}
+      <legend>{m.theme}</legend>
+      {#each ["auto", "neutral", "christmas"] as const as theme (theme)}
         <label class="choice">
-          <input type="radio" name="theme" value={theme.value} checked={data.me.theme === theme.value} />
-          <span><strong>{theme.label}</strong><span class="muted">{theme.help}</span></span>
+          <input type="radio" name="theme" value={theme} checked={data.me.theme === theme} />
+          <span>
+            <strong>{m.themes[theme].name}</strong><span class="muted">{m.themes[theme].help}</span>
+          </span>
         </label>
       {/each}
     </fieldset>
 
     <fieldset>
-      <legend>Clair ou sombre</legend>
-      {#each modes as mode (mode.value)}
+      <legend>{m.mode}</legend>
+      {#each ["device", "light", "dark"] as const as mode (mode)}
         <label class="choice">
-          <input type="radio" name="mode" value={mode.value} checked={data.me.mode === mode.value} />
-          <span><strong>{mode.label}</strong></span>
+          <input type="radio" name="mode" value={mode} checked={data.me.mode === mode} />
+          <span><strong>{m.modes[mode]}</strong></span>
+        </label>
+      {/each}
+    </fieldset>
+
+    <fieldset>
+      <legend>{m.language}</legend>
+      <label class="choice">
+        <input type="radio" name="locale" value="auto" checked={data.me.locale === "auto"} />
+        <span><strong>{m.languageAuto.name}</strong><span class="muted">{m.languageAuto.help}</span></span>
+      </label>
+      {#each LOCALES as locale (locale)}
+        <label class="choice">
+          <input type="radio" name="locale" value={locale} checked={data.me.locale === locale} />
+          <span><strong lang={locale}>{LOCALE_NAMES[locale]}</strong></span>
         </label>
       {/each}
     </fieldset>
 
     {#if form?.display && "error" in form.display}
-      <p class="notice error" role="alert">Écrivez un prénom ou un surnom, en 80 caractères au plus.</p>
+      <p class="notice error" role="alert">{m.invalidName}</p>
     {/if}
     <div role="status">
-      {#if form?.display && "saved" in form.display}<p class="notice">C'est enregistré.</p>{/if}
+      {#if form?.display && "saved" in form.display}<p class="notice">{m.saved}</p>{/if}
     </div>
-    <button type="submit">Enregistrer</button>
+    <button type="submit">{m.save}</button>
   </form>
 </section>
 
 <InstallApp appName={data.appName} origin={page.url.origin} />
 
 <section class="card" aria-labelledby="cles">
-  <h2 id="cles">Clés d'accès</h2>
-  <p class="muted">
-    Une clé d'accès vous connecte avec l'empreinte, le visage ou le code de votre téléphone ou de votre
-    ordinateur : sans mot de passe, sans attendre d'e-mail. Le lien par e-mail reste toujours possible.
-  </p>
+  <h2 id="cles">{m.passkeys}</h2>
+  <p class="muted">{m.passkeysHelp}</p>
 
   {#if data.passkeys.length > 0}
     <ul class="tokens passkeys">
       {#each data.passkeys as passkey (passkey.id)}
-        {@const name = passkey.name ?? "Clé d'accès"}
+        {@const name = passkey.name ?? m.passkey}
         <li>
           <div>
             <strong>{name}</strong>
             <span class="muted">
-              {passkey.createdAt
-                ? `Ajoutée le ${day.format(new Date(passkey.createdAt))}`
-                : "Ajoutée"}{passkey.synced
-                ? " · synchronisée sur vos appareils"
-                : " · sur cet appareil seulement"}
+              {passkey.createdAt ? m.addedOn(day(passkey.createdAt)) : m.added}{passkey.synced
+                ? m.synced
+                : m.local}
             </span>
           </div>
           <div class="row-actions">
             <details>
-              <summary class="button secondary" aria-label="Renommer la clé « {name} »">Renommer</summary>
+              <summary class="button secondary" aria-label={m.renameLabel(name)}>{m.rename}</summary>
               <form
                 method="POST"
                 action="?/renamePasskey"
@@ -159,16 +156,16 @@
                     update({ reset: false })}
               >
                 <input type="hidden" name="id" value={passkey.id} />
-                <label for="cle-{passkey.id}">Nouveau nom</label>
+                <label for="cle-{passkey.id}">{m.newName}</label>
                 <input id="cle-{passkey.id}" name="name" required maxlength="60" value={passkey.name ?? ""} />
-                <button type="submit">Enregistrer le nom</button>
+                <button type="submit">{m.saveName}</button>
               </form>
             </details>
             <form method="POST" action="?/deletePasskey" use:enhance>
               <input type="hidden" name="id" value={passkey.id} />
               <input type="hidden" name="name" value={name} />
-              <button type="submit" class="secondary" aria-label="Supprimer la clé « {name} »">
-                Supprimer
+              <button type="submit" class="secondary" aria-label={m.deleteLabel(name)}>
+                {m.delete}
               </button>
             </form>
           </div>
@@ -176,62 +173,52 @@
       {/each}
     </ul>
   {:else}
-    <p>Aucune clé d'accès pour l'instant.</p>
+    <p>{m.noPasskey}</p>
   {/if}
 
   {#if form?.passkey && "error" in form.passkey}
     <p class="notice error" role="alert">
-      {form.passkey.error === "invalid_name"
-        ? "Donnez un nom à la clé, en 60 caractères au plus."
-        : "La clé d'accès n'a pas pu être modifiée. Réessayez."}
+      {form.passkey.error === "invalid_name" ? m.passkeyInvalidName : m.passkeyFailed}
     </p>
   {/if}
   <div role="status">
     {#if form?.passkey && "renamed" in form.passkey}
-      <p class="notice">La clé s'appelle maintenant « {form.passkey.renamed} ».</p>
+      <p class="notice">{m.renamed(form.passkey.renamed)}</p>
     {:else if form?.passkey && "deleted" in form.passkey}
-      <p class="notice">La clé « {form.passkey.deleted} » est supprimée : elle ne connecte plus personne.</p>
+      <p class="notice">{m.deleted(form.passkey.deleted)}</p>
     {:else if addOutcome === "ok"}
-      <p class="notice">C'est fait. La prochaine fois, connectez-vous avec votre clé d'accès.</p>
+      <p class="notice">{m.addedOk}</p>
     {:else if addOutcome === "cancelled"}
-      <p class="notice">{addMessages.cancelled}</p>
+      <p class="notice">{m.addErrors.cancelled}</p>
     {/if}
   </div>
 
   {#if supported === false}
-    <p class="notice">
-      Ce navigateur ne sait pas utiliser les clés d'accès. Essayez depuis votre téléphone, ou continuez avec
-      le lien par e-mail.
-    </p>
+    <p class="notice">{m.unsupported}</p>
   {:else if supported}
     <form class="new-token" onsubmit={onAddPasskey}>
-      <h3>Ajouter une clé sur cet appareil</h3>
+      <h3>{m.addHere}</h3>
       {#if addOutcome === "not_fresh"}
         <div class="notice error" role="alert">
-          <p>
-            Pour votre sécurité, ajouter une clé d'accès demande une connexion de moins d'un jour.
-            Reconnectez-vous, puis recommencez.
-          </p>
+          <p>{m.notFresh}</p>
         </div>
       {:else if addOutcome && addOutcome !== "ok" && addOutcome !== "cancelled"}
-        <p class="notice error" role="alert">{addMessages[addOutcome]}</p>
+        <p class="notice error" role="alert">{m.addErrors[addOutcome]}</p>
       {/if}
-      <label for="cle-nom">Nom de la clé (facultatif)</label>
+      <label for="cle-nom">{m.passkeyName}</label>
       <input
         id="cle-nom"
         bind:value={passkeyName}
         maxlength="60"
-        placeholder="Par exemple « Téléphone de Marie »"
+        placeholder={m.passkeyPlaceholder}
         aria-describedby="cle-aide"
       />
-      <p id="cle-aide" class="muted help">
-        Votre appareil vous demandera votre empreinte, votre visage ou votre code.
-      </p>
-      <button type="submit" disabled={adding}>{adding ? "Ajout…" : "Ajouter une clé d'accès"}</button>
+      <p id="cle-aide" class="muted help">{m.passkeyAsk}</p>
+      <button type="submit" disabled={adding}>{adding ? m.adding : m.add}</button>
     </form>
     {#if addOutcome === "not_fresh"}
       <form method="POST" action="/deconnexion?retour=/reglages">
-        <button type="submit" class="secondary">Me reconnecter</button>
+        <button type="submit" class="secondary">{m.signInAgain}</button>
       </form>
     {/if}
   {/if}
@@ -239,18 +226,15 @@
 
 {#if data.apiOrigin}
   <section class="card" aria-labelledby="jetons">
-    <h2 id="jetons">Jetons d'API</h2>
-    <p class="muted">
-      Pour un script ou la domotique (Home Assistant…) : un jeton donne accès à vos listes et événements,
-      jamais à ce qui vous est offert. L'adresse de l'API est <code>{data.apiOrigin}/v1</code>.
-    </p>
+    <h2 id="jetons">{m.tokens}</h2>
+    <p class="muted">{m.tokensHelp.before}<code>{data.apiOrigin}/v1</code>{m.tokensHelp.after}</p>
 
     {#if form?.token && "created" in form.token && form.token.created}
       {@const created = form.token.created}
       <div class="created">
-        <h3>Le jeton « {created.name} »</h3>
-        <p role="status">Copiez-le maintenant : il ne sera plus affiché.</p>
-        <label for="jeton" class="visually-hidden">Jeton</label>
+        <h3>{m.tokenNamed(created.name)}</h3>
+        <p role="status">{m.copyNow}</p>
+        <label for="jeton" class="visually-hidden">{m.token}</label>
         <input
           id="jeton"
           type="text"
@@ -266,7 +250,7 @@
             copied = true;
           }}
         >
-          {copied ? "Jeton copié" : "Copier le jeton"}
+          {copied ? m.copied : m.copy}
         </button>
       </div>
     {/if}
@@ -278,17 +262,15 @@
             <div>
               <strong>{token.name}</strong>
               <span class="muted">
-                <code>{token.prefix}…</code>{token.readOnly ? " · lecture seule" : ""} · jusqu'au {day.format(
-                  new Date(token.expiresAt),
-                )} · {token.lastUsedAt
-                  ? `utilisé le ${day.format(new Date(token.lastUsedAt))}`
-                  : "jamais utilisé"}
+                <code>{token.prefix}…</code>{token.readOnly ? m.readOnlyTag : ""} · {m.until(
+                  day(token.expiresAt),
+                )} · {token.lastUsedAt ? m.usedOn(day(token.lastUsedAt)) : m.neverUsed}
               </span>
             </div>
             <form method="POST" action="?/revokeToken" use:enhance>
               <input type="hidden" name="id" value={token.id} />
-              <button type="submit" class="secondary" aria-label="Révoquer le jeton « {token.name} »">
-                Révoquer
+              <button type="submit" class="secondary" aria-label={m.revokeLabel(token.name)}>
+                {m.revoke}
               </button>
             </form>
           </li>
@@ -296,7 +278,7 @@
       </ul>
     {/if}
     <div role="status" class="visually-hidden">
-      {#if form?.revoke && "name" in form.revoke}Le jeton « {form.revoke.name} » est révoqué.{/if}
+      {#if form?.revoke && "name" in form.revoke}{m.revoked(form.revoke.name)}{/if}
     </div>
 
     <form
@@ -308,25 +290,19 @@
         return async ({ update }) => update();
       }}
     >
-      <h3>Nouveau jeton</h3>
+      <h3>{m.newToken}</h3>
       {#if form?.token && "error" in form.token}
         <p class="notice error" role="alert">
-          {tokenErrors[form.token.error] ?? "Le jeton n'a pas pu être créé. Réessayez."}
+          {m.tokenErrors[form.token.error] ?? m.tokenFailed}
         </p>
       {/if}
       <div class="fields">
         <div>
-          <label for="jeton-nom">Nom</label>
-          <input
-            id="jeton-nom"
-            name="name"
-            required
-            maxlength="60"
-            placeholder="Par exemple « Home Assistant »"
-          />
+          <label for="jeton-nom">{m.tokenName}</label>
+          <input id="jeton-nom" name="name" required maxlength="60" placeholder={m.tokenPlaceholder} />
         </div>
         <div>
-          <label for="jeton-jours">Valable (jours)</label>
+          <label for="jeton-jours">{m.days}</label>
           <input
             id="jeton-jours"
             name="expiresInDays"
@@ -341,10 +317,10 @@
       <label class="choice">
         <input type="checkbox" name="readOnly" />
         <span>
-          <strong>Lecture seule</strong><span class="muted">Le script peut lire, jamais modifier.</span>
+          <strong>{m.readOnly.name}</strong><span class="muted">{m.readOnly.help}</span>
         </span>
       </label>
-      <button type="submit">Créer le jeton</button>
+      <button type="submit">{m.createToken}</button>
     </form>
   </section>
 {/if}

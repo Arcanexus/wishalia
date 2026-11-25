@@ -44,6 +44,24 @@ describe("the settings page", () => {
     ]);
   });
 
+  it("keeps the language with the account, or forgets it on the device for « automatic »", async () => {
+    const api = fakeApi({
+      "PATCH /manage/me": (body) => json({ id: "u", email: "a@x.test", ...(body as object) }),
+    });
+    const english = fakeEvent({ form: { ...display, locale: "en" } });
+    expect((await run(actions.display, english.event)).value).toEqual({ display: { saved: true } });
+    expect(api.calls[0]?.body).toMatchObject({ locale: "en" });
+    expect(english.setCookies.at(-1)).toMatchObject({ name: "wishalia.locale", value: "en" });
+
+    const auto = fakeEvent({ form: { ...display, locale: "auto" }, cookies: { "wishalia.locale": "en" } });
+    await run(actions.display, auto.event);
+    expect(auto.event.cookies.get("wishalia.locale")).toBeUndefined();
+
+    expect(
+      (await run(actions.display, fakeEvent({ form: { ...display, locale: "tlh" } }).event)).value,
+    ).toMatchObject({ status: 400, data: { display: { error: "invalid_request" } } });
+  });
+
   it("refuses an empty name or an unknown setting without calling the API", async () => {
     const api = fakeApi({});
     expect(

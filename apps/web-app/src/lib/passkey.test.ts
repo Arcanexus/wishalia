@@ -142,6 +142,10 @@ describe("deviceName", () => {
     ["Mozilla/5.0 (X11; Linux x86_64)", "Ordinateur Linux"],
     ["curl/8", "Cet appareil"],
   ])("names %s « %s »", (agent, name) => {
-    expect(deviceName(agent)).toBe(name);
+    expect(deviceName(agent, "fr")).toBe(name);
+  });
+
+  it("names it in English too", () => {
+    expect(deviceName("Mozilla/5.0 (Linux; Android 15; Pixel 9)", "en")).toBe("Android phone");
   });
 });

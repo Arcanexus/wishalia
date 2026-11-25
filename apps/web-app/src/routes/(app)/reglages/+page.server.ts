@@ -1,9 +1,10 @@
 import { fail } from "@sveltejs/kit";
 import { MODE_CHOICES, THEME_CHOICES, type ModeChoice, type ThemeChoice } from "@wishalia/domain";
+import { LOCALE_CHOICES, type LocaleChoice } from "@wishalia/i18n";
 
 import { ApiError, apiJson } from "#lib/server/api.ts";
 import { deletePasskey, listPasskeys, PASSKEY_NAME_MAX, renamePasskey } from "#lib/server/passkeys.ts";
-import { MODE_COOKIE, THEME_COOKIE, writePreference } from "#lib/server/preferences.ts";
+import { LOCALE_COOKIE, MODE_COOKIE, THEME_COOKIE, writePreference } from "#lib/server/preferences.ts";
 import type { ApiToken, Me } from "#lib/types.ts";
 
 import type { Actions, PageServerLoad } from "./$types";
@@ -23,23 +24,31 @@ export const load: PageServerLoad = async (event) => {
 };
 
 export const actions: Actions = {
-  /** Name, theme and mode: with the account, and on this device at once. */
+  /** Name, theme, mode and language: with the account, and on this device at once. */
   display: async (event) => {
     const form = await event.request.formData();
     const displayName = String(form.get("displayName") ?? "").trim();
     const theme = String(form.get("theme") ?? "") as ThemeChoice;
     const mode = String(form.get("mode") ?? "") as ModeChoice;
+    // A form without the field (an older page) keeps the language as it is
+    const locale = form.has("locale") ? (String(form.get("locale")) as LocaleChoice) : null;
     if (!displayName || displayName.length > 80) return fail(400, { display: { error: "invalid_name" } });
-    if (!THEME_CHOICES.includes(theme) || !MODE_CHOICES.includes(mode)) {
+    if (
+      !THEME_CHOICES.includes(theme) ||
+      !MODE_CHOICES.includes(mode) ||
+      (locale !== null && !LOCALE_CHOICES.includes(locale))
+    ) {
       return fail(400, { display: { error: "invalid_request" } });
     }
     const me = await apiJson<Me>(event, "/manage/me", {
       method: "PATCH",
-      body: { displayName, theme, mode },
+      body: { displayName, theme, mode, ...(locale ? { locale } : {}) },
     });
     const secure = event.url.protocol === "https:";
     writePreference(event.cookies, THEME_COOKIE, me.theme, secure);
     writePreference(event.cookies, MODE_COOKIE, me.mode, secure);
+    if (locale === "auto") event.cookies.delete(LOCALE_COOKIE, { path: "/" });
+    else if (locale) writePreference(event.cookies, LOCALE_COOKIE, locale, secure);
     return { display: { saved: true } };
   },
 

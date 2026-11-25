@@ -4,7 +4,7 @@ import type { List } from "#lib/types.ts";
 
 import { ApiError, apiJson } from "./api.ts";
 
-type FormEvent = Pick<RequestEvent, "request" | "getClientAddress" | "url" | "cookies">;
+type FormEvent = Pick<RequestEvent, "request" | "getClientAddress" | "url" | "cookies" | "locals">;
 
 const THEMES = ["none", "neutral", "christmas"] as const;
 const REVEAL_MODES = ["received", "manual"] as const;

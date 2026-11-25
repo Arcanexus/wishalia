@@ -1,4 +1,5 @@
 import { fail, redirect } from "@sveltejs/kit";
+import { appMessages } from "@wishalia/i18n/messages/app";
 
 import { ApiError, apiFetch, apiJson, forwardSetCookies } from "#lib/server/api.ts";
 import type { CreatedShareLink, List, ShareLink, WishEvent } from "#lib/types.ts";
@@ -18,13 +19,14 @@ export const load: PageServerLoad = async (event) => {
   const liste = event.url.searchParams.get("liste");
   const evenement = event.url.searchParams.get("evenement");
   const preset = evenement ? `event:${evenement}` : liste ? `list:${liste}` : null;
+  const m = appMessages(event.locals.locale).share;
   return {
     links,
     targets: [
-      ...lists.map((list) => ({ value: `list:${list.id}`, label: `Liste « ${list.name} »` })),
+      ...lists.map((list) => ({ value: `list:${list.id}`, label: m.targetList(list.name) })),
       ...events.map((wishEvent) => ({
         value: `event:${wishEvent.id}`,
-        label: `Événement « ${wishEvent.name} »`,
+        label: m.targetEvent(wishEvent.name),
       })),
     ],
     preset,

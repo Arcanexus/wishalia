@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { dropIndex, moveId, placeLine } from "./reorder.ts";
+import { dropIndex, moveId } from "./reorder.ts";
 
 describe("reorder", () => {
   it("moves an id, within the list's bounds", () => {
@@ -15,9 +15,5 @@ describe("reorder", () => {
     expect(dropIndex([100, 200, 300], 50)).toBe(0);
     expect(dropIndex([100, 200, 300], 250)).toBe(2);
     expect(dropIndex([100, 200, 300], 900)).toBe(3);
-  });
-
-  it("says where the item is now", () => {
-    expect(placeLine("Lampe", 3, 4)).toBe("« Lampe » est maintenant en position 3 sur 4.");
   });
 });

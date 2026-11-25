@@ -1,3 +1,5 @@
+import type { LocaleChoice } from "@wishalia/i18n";
+
 /** What the management app reads from /manage (docs/api.md). Never any contribution data. */
 
 export interface Me {
@@ -6,6 +8,8 @@ export interface Me {
   email: string;
   theme: "auto" | "neutral" | "christmas";
   mode: "device" | "light" | "dark";
+  /** The language chosen with the account; « auto » follows the browser (docs/i18n.md). */
+  locale: LocaleChoice;
   /** What this server offers: images need its S3 bucket and imgproxy. */
   features?: { images: boolean };
 }

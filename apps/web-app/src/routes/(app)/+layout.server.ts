@@ -1,7 +1,13 @@
 import { nextMode } from "@wishalia/domain";
 
 import { apiJson } from "#lib/server/api.ts";
-import { MODE_COOKIE, THEME_COOKIE, writePreference } from "#lib/server/preferences.ts";
+import {
+  LOCALE_COOKIE,
+  MODE_COOKIE,
+  pageLocale,
+  THEME_COOKIE,
+  writePreference,
+} from "#lib/server/preferences.ts";
 import type { Me } from "#lib/types.ts";
 
 import type { LayoutServerLoad } from "./$types";
@@ -16,7 +22,13 @@ export const load: LayoutServerLoad = async (event) => {
   const secure = event.url.protocol === "https:";
   if (event.locals.themeChoice !== me.theme) writePreference(event.cookies, THEME_COOKIE, me.theme, secure);
   if (event.locals.mode !== me.mode) writePreference(event.cookies, MODE_COOKIE, me.mode, secure);
+  if (event.locals.localeChoice !== me.locale) {
+    if (me.locale === "auto") event.cookies.delete(LOCALE_COOKIE, { path: "/" });
+    else writePreference(event.cookies, LOCALE_COOKIE, me.locale, secure);
+  }
   event.locals.themeChoice = me.theme;
   event.locals.mode = me.mode;
-  return { me, mode: me.mode, nextMode: nextMode(me.mode) };
+  event.locals.localeChoice = me.locale;
+  event.locals.locale = pageLocale(me.locale, event.request.headers.get("accept-language"));
+  return { me, locale: event.locals.locale, mode: me.mode, nextMode: nextMode(me.mode) };
 };

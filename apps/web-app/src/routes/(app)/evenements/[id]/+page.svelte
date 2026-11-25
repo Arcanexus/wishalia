@@ -2,10 +2,10 @@
   import Gifts from "#lib/Gifts.svelte";
   import { enhance } from "$app/forms";
   import { resolve } from "$app/paths";
-  import { cents, formatAmount } from "@wishalia/domain";
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
 
   import EventFields from "#lib/EventFields.svelte";
-  import { eventKindLabel, formatAvailable, formatDay } from "#lib/format.ts";
 
   import type { PageProps } from "./$types";
 
@@ -27,70 +27,62 @@
     form?.update && "kind" in form.update ? (form.update as unknown as Values) : (event as Values),
   );
 
-  const errors: Record<string, string> = {
-    too_early: "Il est encore trop tôt pour lever le secret.",
-    confirm: "Cochez la case pour confirmer.",
-    not_found: "Cette envie n'est plus disponible. Rechargez la page.",
-  };
+  const i18n = useI18n();
+  const all = $derived(appMessages(i18n.locale));
+  const m = $derived(all.event);
 </script>
 
 <svelte:head>
   <title>{event.name} · {data.appName}</title>
 </svelte:head>
 
-<p class="back"><a href={resolve("/(app)/evenements")}>← Événements</a></p>
+<p class="back"><a href={resolve("/(app)/evenements")}>{m.back}</a></p>
 <div class="heading">
   <div>
     <h1>{event.name}</h1>
-    <p class="muted when">{eventKindLabel(event.kind)} · {formatDay(event.date)}</p>
+    <p class="muted when">{all.eventKinds[event.kind]} · {i18n.fmt.day(event.date)}</p>
   </div>
   <a class="button secondary" href="{resolve('/(app)/partage')}?evenement={event.id}">
-    Partager cet événement
+    {m.share}
   </a>
 </div>
 
 <section class="card secret" aria-labelledby="secret-titre">
-  <h2 id="secret-titre">Le secret</h2>
+  <h2 id="secret-titre">{m.secret}</h2>
   {#if event.secretLifted}
-    <p>Le secret est levé : vous voyez ci-dessous qui vous a offert quoi.</p>
+    <p>{m.lifted}</p>
   {:else if event.canReveal}
-    <p>
-      Les cadeaux de cet événement restent secrets tant que vous ne levez pas le secret. Une fois levé, vous
-      voyez qui a offert quoi, et ce choix est définitif.
-    </p>
+    <p>{m.liftHelp}</p>
     <form method="POST" action="?/reveal" use:enhance>
       <label class="check">
         <input type="checkbox" name="confirm" value="oui" required />
-        <span>Je veux voir qui m'a offert quoi</span>
+        <span>{m.liftConfirm}</span>
       </label>
-      <button type="submit" class="accent">Lever le secret</button>
+      <button type="submit" class="accent">{m.lift}</button>
     </form>
   {:else}
-    <p>
-      Ce qu'on vous offre reste secret. Vous pourrez lever le secret à partir du
-      <strong>{formatAvailable(event.revealAvailableAt)}</strong>.
-    </p>
+    <p>{m.kept}<strong>{i18n.fmt.date(event.revealAvailableAt)}</strong>.</p>
   {/if}
   {#if form?.reveal && "error" in form.reveal}
-    <p class="notice error" role="alert">{errors[form.reveal.error] ?? errors.too_early}</p>
+    <p class="notice error" role="alert">{m.errors[form.reveal.error] ?? m.errors.too_early}</p>
   {/if}
 </section>
 
 <div role="status" class="visually-hidden">
-  {#if form?.items && "added" in form.items}« {titles.get(form.items.added) ?? "L'envie"} » est ajoutée à l'événement.{/if}
-  {#if form?.items && "removed" in form.items}« {titles.get(form.items.removed) ?? "L'envie"} » est retirée de l'événement.{/if}
-  {#if form?.update && "saved" in form.update}Réglages enregistrés.{/if}
+  {#if form?.items && "added" in form.items}{m.added(titles.get(form.items.added) ?? m.theWish)}{/if}
+  {#if form?.items && "removed" in form.items}{m.removed(titles.get(form.items.removed) ?? m.theWish)}{/if}
+  {#if form?.update && "saved" in form.update}{m.saved}{/if}
 </div>
 {#if form?.items && "error" in form.items}
   <p class="notice error" role="alert">
-    {errors[form.items.error] ?? "Le changement n'a pas abouti. Réessayez."}
+    {m.errors[form.items.error] ?? m.failed}
   </p>
 {/if}
 
 <section aria-labelledby="choisies-titre">
-  <h2 id="choisies-titre">Envies de l'événement ({data.selected.length})</h2>
+  <h2 id="choisies-titre">{m.wishes(data.selected.length)}</h2>
   {#if data.selected.length === 0}
-    <p class="muted">Aucune envie pour l'instant. Choisissez-en ci-dessous, dans vos listes.</p>
+    <p class="muted">{m.none}</p>
   {:else}
     <ul class="items">
       {#each data.selected as item (item.id)}
@@ -99,14 +91,14 @@
           <div class="text">
             <h3>{item.title}</h3>
             {#if item.priceCents !== null}<p class="muted meta">
-                {formatAmount(cents(item.priceCents))}
+                {i18n.fmt.money(item.priceCents)}
               </p>{/if}
-            {#if gifts}<Gifts {gifts} none="Personne ne l'a offert pour cet événement." />{/if}
+            {#if gifts}<Gifts {gifts} none={m.noGift} />{/if}
           </div>
           <form method="POST" action="?/removeItem" use:enhance>
             <input type="hidden" name="itemId" value={item.id} />
-            <button type="submit" class="secondary" aria-label="Retirer « {item.title} » de l'événement">
-              Retirer
+            <button type="submit" class="secondary" aria-label={m.removeLabel(item.title)}>
+              {m.remove}
             </button>
           </form>
         </li>
@@ -117,7 +109,7 @@
 
 {#if data.choices.length > 0}
   <section aria-labelledby="ajouter-titre" class="choices">
-    <h2 id="ajouter-titre">Ajouter des envies</h2>
+    <h2 id="ajouter-titre">{m.addWishes}</h2>
     {#each data.choices as group (group.list.id)}
       <h3 class="list-name">{group.list.name}</h3>
       <ul class="items">
@@ -126,7 +118,7 @@
             <span class="title">{item.title}</span>
             <form method="POST" action="?/addItem" use:enhance>
               <input type="hidden" name="itemId" value={item.id} />
-              <button type="submit" aria-label="Ajouter « {item.title} » à l'événement">Ajouter</button>
+              <button type="submit" aria-label={m.addLabel(item.title)}>{m.add}</button>
             </form>
           </li>
         {/each}
@@ -136,7 +128,7 @@
 {/if}
 
 <details class="card settings" open={Boolean(form?.update && "error" in form.update)}>
-  <summary>Réglages de l'événement</summary>
+  <summary>{m.settings}</summary>
   <form
     method="POST"
     action="?/update"
@@ -150,7 +142,7 @@
       error={form?.update && "error" in form.update ? form.update.error : null}
       frozen={event.secretLifted}
     />
-    <button type="submit">Enregistrer</button>
+    <button type="submit">{m.save}</button>
   </form>
 </details>
 

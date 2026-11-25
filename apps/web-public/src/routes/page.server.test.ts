@@ -16,6 +16,7 @@ function loadEvent(search = "", cookie?: string) {
     request: new Request("https://wishalia.test/", { headers: cookie ? { cookie } : {} }),
     getClientAddress: () => "203.0.113.9",
     setHeaders: (values: Record<string, string>) => Object.assign(headers, values),
+    locals: { locale: "fr" },
   };
   return { event: event as unknown as LoadEvent, headers };
 }

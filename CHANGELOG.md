@@ -23,6 +23,17 @@ All notable changes to this project are documented here. The format follows
   stays at the top right of the bar on every width: the links go under it when the bar is narrow,
   and on a phone it is a door with an arrow.
 
+- Wishalia speaks English as well as French: the management app, the public host's home page, the
+  guests' page, the e-mails and the name of a first list. Each page follows the browser's
+  language; « Réglages » › « Langue » sets one for the account, on every device (`auto` by
+  default), and the public pages and the sign-in page have a button for the other language, kept
+  on the device (`wishalia.locale`). Dates and amounts are written in the reader's format, in
+  euros as before. `DEFAULT_LOCALE` (chart: `config.defaultLocale`, `fr` by default) is the
+  language for a browser that asks for neither. API: `locale` in `GET`/`PATCH /manage/me`;
+  migration 0011 adds `locale` to the users. The words live in the new `@wishalia/i18n` package,
+  and a test of the CI checks that each language has every word ([Languages](docs/i18n.md), with
+  how to add one).
+
 ### Fixed
 
 - The image of an Amazon page is the product's photo: the worker took the first pictures of the

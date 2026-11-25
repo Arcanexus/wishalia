@@ -74,7 +74,14 @@ export function fakeEvent({
     params,
     cookies: jar.cookies,
     getClientAddress: () => "10.0.0.7",
-    locals: { themeChoice: "auto", mode: "device", listTheme: null, christmas: false } as App.Locals,
+    locals: {
+      themeChoice: "auto",
+      mode: "device",
+      localeChoice: "auto",
+      locale: "fr",
+      listTheme: null,
+      christmas: false,
+    } as App.Locals,
   };
   return { event, setCookies: jar.set };
 }

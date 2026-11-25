@@ -3,7 +3,10 @@
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
 
+  import { publicMessages } from "@wishalia/i18n/messages/public";
+  import LanguageButtons from "@wishalia/ui/LanguageButtons.svelte";
   import Logo from "@wishalia/ui/Logo.svelte";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
   import ModeButton from "@wishalia/ui/ModeButton.svelte";
 
   import type { PageProps } from "./$types";
@@ -11,8 +14,8 @@
   let { data, form }: PageProps = $props();
   const home = $derived(data.home);
   const searched = $derived(data.searched !== "");
-  const wishes = (count: number) =>
-    count === 0 ? "Aucune envie pour l'instant" : count === 1 ? "1 envie" : `${count} envies`;
+  const i18n = useI18n();
+  const m = $derived(publicMessages(i18n.locale).home);
 </script>
 
 <svelte:head>
@@ -27,11 +30,12 @@
   <div class="bar">
     <span class="brand"><Logo size={36} ring={false} /><span>{data.appName}</span></span>
     <div class="tools">
+      <LanguageButtons returnPath={page.url.pathname} />
       <ModeButton mode={data.mode} nextMode={data.nextMode} returnPath={page.url.pathname} />
       {#if home.me && data.appUrl}
-        <a class="button secondary" href={data.appUrl} rel="external">Mes listes</a>
+        <a class="button secondary" href={data.appUrl} rel="external">{m.myLists}</a>
       {:else if data.signInUrl}
-        <a class="button secondary" href={data.signInUrl} rel="external">Se connecter</a>
+        <a class="button secondary" href={data.signInUrl} rel="external">{m.signIn}</a>
       {/if}
     </div>
   </div>
@@ -40,22 +44,19 @@
 <main id="contenu" class="page">
   <section class="hero" aria-labelledby="titre">
     <Logo size={96} />
-    <h1 id="titre">Les envies de toute la famille, au même endroit</h1>
-    <p class="lead">
-      Chacun dit ce qui lui ferait plaisir. Les proches s'organisent pour offrir, à plusieurs s'il le faut. Et
-      la surprise reste entière : on ne voit jamais qui vous offre quoi avant l'occasion.
-    </p>
+    <h1 id="titre">{m.title}</h1>
+    <p class="lead">{m.lead}</p>
     {#if home.me}
-      <p class="hello">Bonjour {home.me.displayName} !</p>
+      <p class="hello">{m.hello(home.me.displayName)}</p>
     {/if}
   </section>
 
   <div class="ways">
     <section class="card way" aria-labelledby="lien-titre">
-      <h2 id="lien-titre">Vous avez reçu un lien ?</h2>
-      <p>Ouvrez-le tel quel, depuis votre message : pas de compte, rien à installer. Ou collez-le ici.</p>
+      <h2 id="lien-titre">{m.gotLink}</h2>
+      <p>{m.gotLinkHelp}</p>
       <form method="POST" action="?/open" use:enhance>
-        <label for="lien">Le lien reçu</label>
+        <label for="lien">{m.link}</label>
         <input
           id="lien"
           name="link"
@@ -71,36 +72,29 @@
           aria-describedby={form?.open?.error ? "lien-erreur" : undefined}
         />
         {#if form?.open?.error}
-          <p id="lien-erreur" class="notice error" role="alert">
-            Ce texte ne contient pas de lien de liste. Copiez tout le lien reçu, puis collez-le ici.
-          </p>
+          <p id="lien-erreur" class="notice error" role="alert">{m.noLink}</p>
         {/if}
-        <button type="submit">Ouvrir la liste</button>
+        <button type="submit">{m.open}</button>
       </form>
     </section>
 
     <section class="card way" aria-labelledby="compte-titre">
-      <h2 id="compte-titre">{home.me ? "Vos listes" : "Vous avez un compte ?"}</h2>
+      <h2 id="compte-titre">{home.me ? m.yourLists : m.account}</h2>
       {#if home.me}
-        <p>Ajoutez une envie, partagez une liste, préparez une occasion.</p>
-        {#if data.appUrl}<a class="button" href={data.appUrl} rel="external">Ouvrir mes listes</a>{/if}
+        <p>{m.yourListsHelp}</p>
+        {#if data.appUrl}<a class="button" href={data.appUrl} rel="external">{m.openLists}</a>{/if}
       {:else}
-        <p>
-          Connectez-vous pour gérer vos listes, ou pour retrouver ce que vous offrez sur tous vos appareils.
-        </p>
-        {#if data.signInUrl}<a class="button" href={data.signInUrl} rel="external">Se connecter</a>{/if}
+        <p>{m.accountHelp}</p>
+        {#if data.signInUrl}<a class="button" href={data.signInUrl} rel="external">{m.signIn}</a>{/if}
       {/if}
     </section>
   </div>
 
   <section class="find" aria-labelledby="trouver-titre">
-    <h2 id="trouver-titre">Trouver une liste publique</h2>
-    <p class="muted">
-      Certaines listes sont ouvertes à tous : tout le monde peut y participer. Les autres restent privées, et
-      ne se voient qu'avec le lien que l'on vous a envoyé.
-    </p>
+    <h2 id="trouver-titre">{m.find}</h2>
+    <p class="muted">{m.findHelp}</p>
     <form method="GET" action="/" role="search" class="search">
-      <label for="recherche">Le prénom de la personne, ou le nom de sa liste</label>
+      <label for="recherche">{m.search}</label>
       <div class="row">
         <input
           id="recherche"
@@ -110,48 +104,38 @@
           value={data.searched}
           autocomplete="off"
         />
-        <button type="submit">Chercher</button>
+        <button type="submit">{m.searchButton}</button>
       </div>
     </form>
 
     <div class="results" aria-live="polite">
       {#if home.lists.length === 0}
         <p class="card empty">
-          {#if searched}
-            Aucune liste publique ne correspond à « {data.searched} ». Vérifiez l'orthographe, ou demandez le lien
-            à la personne.
-          {:else}
-            Aucune liste n'est publique pour l'instant.
-          {/if}
+          {searched ? m.noMatch(data.searched) : m.noPublic}
         </p>
       {:else}
         <p class="muted count">
-          {#if searched}
-            {home.lists.length}{home.more ? " premières" : ""} liste{home.lists.length > 1 ? "s" : ""} pour « {data.searched}
-            »
-          {:else}
-            Les listes publiques les plus récentes
-          {/if}
+          {searched ? m.results(home.lists.length, home.more, data.searched) : m.latest}
         </p>
         <ul class="lists">
           {#each home.lists as list (list.path)}
             <li class="card list">
               <div>
                 <h3>{list.name}</h3>
-                <p class="muted">Les envies de {list.ownerName} · {wishes(list.itemCount)}</p>
+                <p class="muted">{m.wishesOf(list.ownerName)} · {m.wishes(list.itemCount)}</p>
               </div>
               <a
                 class="button"
                 href={resolve("/s/[token]", { token: list.path.slice("/s/".length) })}
-                aria-label="Voir « {list.name} », les envies de {list.ownerName}"
+                aria-label={m.seeLabel(list.name, list.ownerName)}
               >
-                Voir la liste
+                {m.see}
               </a>
             </li>
           {/each}
         </ul>
         {#if home.more}
-          <p class="muted">D'autres listes correspondent : précisez votre recherche.</p>
+          <p class="muted">{m.more}</p>
         {/if}
       {/if}
     </div>

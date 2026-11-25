@@ -12,7 +12,3 @@ export function moveId(ids: readonly string[], id: string, to: number): string[]
 export function dropIndex(middles: readonly number[], y: number): number {
   return middles.filter((middle) => middle < y).length;
 }
-
-/** What a screen reader hears once an item moved. */
-export const placeLine = (title: string, position: number, count: number) =>
-  `« ${title} » est maintenant en position ${position} sur ${count}.`;

@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { useI18n } from "../i18n.ts";
   import type { Funding } from "./types.ts";
   import { initials } from "./view.ts";
 
   let { contributors }: { contributors: Funding["contributors"] } = $props();
+  const i18n = useI18n();
   const MAX = 5;
   const shown = $derived(contributors.slice(0, MAX));
 </script>
@@ -10,7 +12,7 @@
 <!-- Stacked avatars (spec §4); the names are in the line next to them -->
 <span class="givers" aria-hidden="true">
   {#each shown as contributor, index (index)}
-    <span class="avatar" class:discreet={!contributor.name}>{initials(contributor.name)}</span>
+    <span class="avatar" class:discreet={!contributor.name}>{initials(contributor.name, i18n.locale)}</span>
   {/each}
   {#if contributors.length > MAX}<span class="avatar more">+{contributors.length - MAX}</span>{/if}
 </span>
