@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-11-25
+
 ### Fixed
 
 - The chart's Garage restarted every half hour or so on a slow volume (NFS): its liveness probe
