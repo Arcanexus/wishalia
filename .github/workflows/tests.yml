@@ -183,6 +183,17 @@ jobs:
           yq -e 'select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select(.name == "GARAGE_UI_AUTH_OIDC_CLIENT_SECRET") | .valueFrom.secretKeyRef.key == "GARAGE_UI_OIDC_CLIENT_SECRET"' ui.yaml > /dev/null
           # Your own settings pass through (images.garage.ui.env)
           yq -e 'select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select(.name == "GARAGE_UI_AUTH_OIDC_ADMIN_ROLES") | .value == "admins"' ui.yaml > /dev/null
+          # Scopes by default (garage-ui does not start without), or once only from env
+          yq -e 'select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select(.name == "GARAGE_UI_AUTH_OIDC_SCOPES") | .value == "openid,profile,email"' ui.yaml > /dev/null
+          n=$(helm template t charts/wishalia $oidc --set images.garage.ui.env.GARAGE_UI_AUTH_OIDC_SCOPES=openid --show-only templates/garage-ui.yaml | grep -c "name: GARAGE_UI_AUTH_OIDC_SCOPES")
+          if [ "$n" != 1 ]; then
+            echo "::error::GARAGE_UI_AUTH_OIDC_SCOPES rendered $n times when set in env"
+            exit 1
+          fi
+          if helm template t charts/wishalia $oidc --set 'images.garage.ui.oidc.scopes=null' > /dev/null 2>&1; then
+            echo "::error::the chart rendered the Garage console with OIDC and no scopes"
+            exit 1
+          fi
           if grep -q GARAGE_UI_AUTH_TOKEN_ENABLED ui.yaml; then
             echo "::error::token sign-in left on with OIDC"
             exit 1
