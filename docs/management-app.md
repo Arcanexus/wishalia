@@ -181,10 +181,13 @@ account (`PATCH /manage/me`):
 - the first name or nickname their family sees;
 - the **theme**: `Automatique` (Christmas in December and for Christmas lists, neutral otherwise),
   `Neutre` or `Noël`;
-- **light or dark**: as the device, light or dark. The header button changes the same setting.
+- **light or dark**: as the device, light or dark. The header button changes the same setting;
+- the **language** (« Langue », « Language »): `Automatique` (the browser's), `Français` or
+  `English` ([Languages](i18n.md)). A new language reloads the page.
 
-The device keeps a copy in its cookies (`wishalia.theme`, `wishalia.mode`), so that the sign-in page
-looks the same before the person signs in again.
+The device keeps a copy in its cookies (`wishalia.theme`, `wishalia.mode`, `wishalia.locale`), so
+that the sign-in page looks the same before the person signs in again. The sign-in page also has a
+button for the other language.
 
 The **passkeys** (« Clés d'accès ») are listed with their name, the day they were added and whether
 the phone or computer's password manager syncs them on all its devices. « Ajouter une clé d'accès »

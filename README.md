@@ -44,6 +44,7 @@ server, not hidden in the page.
 > price, images; Amazon included) and reads them again on demand, keeping what the owner typed, and the owner can choose, send and frame the image of each item (on a volume or in S3, through imgproxy).
 > The app installs on a phone, and a wish comes in from the share menu of any app (a Shortcut on iPhone).
 > Lists kept elsewhere come in by import: Wishlistr, a CSV or JSON file, or pasted text.
+> Everything speaks French and English, with dates and amounts in the reader's format.
 
 <p align="center">
   <img src="docs/images/app-lists.png" alt="The management app: a greeting, the quick add field and two lists" width="640">
@@ -58,6 +59,7 @@ server, not hidden in the page.
 | 👵 **For every age**     | Large touch targets, no password, an item added in under five seconds.   |
 | 📱 **On the phone**      | Installs like an app; « Partager » from any shop adds a wish.            |
 | 📥 **Bring your lists**  | Import from Wishlistr, a CSV or JSON export, or a pasted list.           |
+| 🌍 **Your language**     | French and English, chosen by the browser or in the settings.            |
 | ⚡ **Light**             | Little JavaScript, quick on a modest phone.                              |
 | 🏠 **Self-hosted**       | Four images, one Helm chart (PostgreSQL included, or yours), a REST API. |
 | 📈 **Observable**        | Prometheus metrics and a ServiceMonitor, with nothing that spoils.       |
@@ -73,7 +75,7 @@ pnpm dev
 See the [quick start](docs/quick-start.md), the [installation on Kubernetes](docs/installation.md),
 the [architecture](docs/architecture.md), the [data model](docs/data-model.md),
 [authentication](docs/authentication.md), the [management app](docs/management-app.md),
-[installing the app on a phone](docs/install-app.md), the
+[installing the app on a phone](docs/install-app.md), [languages](docs/i18n.md), the
 [management API](docs/api.md) and
 [monitoring](docs/monitoring.md).
 

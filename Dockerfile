@@ -19,6 +19,7 @@ COPY apps/web-public/package.json apps/web-public/
 COPY packages/config/package.json packages/config/
 COPY packages/db/package.json packages/db/
 COPY packages/domain/package.json packages/domain/
+COPY packages/i18n/package.json packages/i18n/
 COPY packages/metrics/package.json packages/metrics/
 COPY packages/storage/package.json packages/storage/
 COPY packages/ui/package.json packages/ui/

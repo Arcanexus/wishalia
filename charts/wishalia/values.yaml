@@ -15,6 +15,9 @@ imagePullSecrets: []
 config:
   # Display name of the product (the code only knows the code name "wishalia")
   appName: Wishalia
+  # Language for a reader whose browser asks for none we speak (fr or en, docs/i18n.md). Each
+  # person can still choose theirs in the settings.
+  defaultLocale: fr
   logLevel: info
 
 # Hosts of the two frontends. The public view and the management app are never served by the

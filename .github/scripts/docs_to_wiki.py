@@ -48,6 +48,7 @@ PAGES: list[tuple[str, list[tuple[str, str]]]] = [
         ("monitoring.md", "Monitoring"),
         ("security.md", "Security"),
         ("branding.md", "Branding"),
+        ("i18n.md", "Languages"),
     ]),
     ("Inside Wishalia", [
         ("architecture.md", "Architecture"),
