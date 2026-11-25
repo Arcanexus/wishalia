@@ -1,7 +1,12 @@
 <script lang="ts">
+  import { viewMessages } from "@wishalia/i18n/messages/view";
+
+  import { useI18n } from "../i18n.ts";
   import type { Gauge } from "./view.ts";
 
   let { gauge, label }: { gauge: Gauge; label: string } = $props();
+  const i18n = useI18n();
+  const m = $derived(viewMessages(i18n.locale));
   const total = $derived(gauge.complete + gauge.inProgress + gauge.free);
   const W = 1000;
   const parts = $derived.by(() => {
@@ -27,9 +32,9 @@
     {/each}
   </svg>
   <ul>
-    <li><span class="swatch complete"></span>{gauge.complete} complet{gauge.complete > 1 ? "s" : ""}</li>
-    <li><span class="swatch progress"></span>{gauge.inProgress} en cours</li>
-    <li><span class="swatch free"></span>{gauge.free} libre{gauge.free > 1 ? "s" : ""}</li>
+    <li><span class="swatch complete"></span>{m.gaugeComplete(gauge.complete)}</li>
+    <li><span class="swatch progress"></span>{m.gaugeInProgress(gauge.inProgress)}</li>
+    <li><span class="swatch free"></span>{m.gaugeFree(gauge.free)}</li>
   </ul>
 </section>
 

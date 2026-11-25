@@ -3,49 +3,42 @@
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
 
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
   import QuickAdd from "#lib/QuickAdd.svelte";
 
   import type { PageProps } from "./$types";
 
   let { data, form }: PageProps = $props();
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale).home);
 
   const firstName = $derived(data.me.displayName.split(" ")[0] || data.me.displayName);
 </script>
 
 <svelte:head>
-  <title>Mes listes · {data.appName}</title>
+  <title>{m.title} · {data.appName}</title>
 </svelte:head>
 
-<h1>Bonjour {firstName}</h1>
+<h1>{m.hello(firstName)}</h1>
 
 {#if page.url.searchParams.has("archivee")}
-  <p class="notice" role="status">
-    La liste est archivée : elle ne s'affiche plus, ni pour vous ni pour vos proches.
-  </p>
+  <p class="notice" role="status">{m.archived}</p>
 {/if}
 
 <QuickAdd listName={data.lists[0]?.name ?? null} result={form?.add ?? null} />
 
 <section aria-labelledby="listes-titre">
-  <h2 id="listes-titre">Mes listes</h2>
+  <h2 id="listes-titre">{m.title}</h2>
   {#if data.lists.length === 0}
-    <p class="muted">
-      Pas encore de liste : votre première envie en crée une, « Mes envies ». Vous pouvez aussi en créer une
-      ci-dessous.
-    </p>
+    <p class="muted">{m.none}</p>
   {:else}
     <ul class="lists">
       {#each data.lists as list (list.id)}
         <li>
           <a class="card list" href={resolve("/(app)/listes/[id]", { id: list.id })}>
             <span class="name">{list.name}</span>
-            <span class="muted">
-              {list.itemCount === 0
-                ? "Aucune envie"
-                : list.itemCount === 1
-                  ? "1 envie"
-                  : `${list.itemCount} envies`}
-            </span>
+            <span class="muted">{m.count(list.itemCount)}</span>
           </a>
         </li>
       {/each}
@@ -53,26 +46,26 @@
   {/if}
 
   <form method="POST" action="?/createList" use:enhance class="create">
-    <label for="nouvelle-liste">Nouvelle liste</label>
+    <label for="nouvelle-liste">{m.newList}</label>
     <div class="row">
       <input
         id="nouvelle-liste"
         name="name"
         required
         maxlength="100"
-        placeholder="Par exemple « Noël 2026 »"
+        placeholder={m.newListPlaceholder}
         value={form?.createList?.name ?? ""}
       />
-      <button type="submit">Créer la liste</button>
+      <button type="submit">{m.create}</button>
     </div>
     {#if form?.createList?.error}
-      <p class="notice error" role="alert">Donnez un nom à la liste, en 100 caractères au plus.</p>
+      <p class="notice error" role="alert">{m.invalidName}</p>
     {/if}
   </form>
 
   <p class="import">
-    Vos envies sont sur un autre site (Wishlistr, un tableur…) ?
-    <a href={resolve("/(app)/importer")}>Importer une liste</a>
+    {m.importQuestion}
+    <a href={resolve("/(app)/importer")}>{m.importLink}</a>
   </p>
 </section>
 

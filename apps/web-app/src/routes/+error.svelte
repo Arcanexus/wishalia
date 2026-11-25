@@ -2,22 +2,29 @@
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
 
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { commonMessages } from "@wishalia/i18n/messages/common";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
   import Logo from "@wishalia/ui/Logo.svelte";
+
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale).error);
+  const common = $derived(commonMessages(i18n.locale).error);
 </script>
 
 <svelte:head>
-  <title>{page.status === 404 ? "Introuvable" : "Erreur"}</title>
+  <title>{page.status === 404 ? common.title.notFound : common.title.other}</title>
 </svelte:head>
 
 <main id="contenu" class="error-page">
   <Logo size={64} />
-  <h1>{page.status === 404 ? "Page introuvable" : "Quelque chose s'est mal passé"}</h1>
+  <h1>{page.status === 404 ? m.notFound : common.somethingWrong}</h1>
   <p>
     {page.status === 404
-      ? (page.error?.message ?? "Cette page n'existe pas.")
-      : "Réessayez dans un instant. Si cela continue, prévenez la personne qui gère l'application."}
+      ? (page.error?.message ?? m.missing)
+      : m.retry}
   </p>
-  <a class="button" href={resolve("/(app)")}>Revenir à mes listes</a>
+  <a class="button" href={resolve("/(app)")}>{m.back}</a>
 </main>
 
 <style>

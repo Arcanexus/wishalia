@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
-  import { cents, formatAmount } from "@wishalia/domain";
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
 
   import type { EditValues, Item, List } from "./types.ts";
 
@@ -16,18 +17,10 @@
     failed?: { error: string; values: EditValues } | null;
   } = $props();
 
-  const messages: Record<string, string> = {
-    invalid_title: "Donnez un nom à l'envie.",
-    invalid_url: "Le lien doit être une adresse web, qui commence par https://.",
-    invalid_notes: "Les notes font 4 000 caractères au plus.",
-    invalid_price: "Le prix est un montant en euros, par exemple 24 ou 12,50.",
-    invalid_quantity: "Indiquez combien d'exemplaires vous souhaitez, de 1 à 1 000.",
-    invalid_target: "L'objectif est un montant en euros, par exemple 320.",
-    not_found: "Cette envie n'existe plus.",
-  };
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale).editor);
   /** An amount as typed back into a field: « 320 », « 12,50 ». */
-  const euros = (value: number | null) =>
-    value === null ? "" : formatAmount(cents(value)).replace(/\s*€$/u, "").replace(/,00$/u, "");
+  const euros = (value: number | null) => (value === null ? "" : i18n.fmt.amount(value));
   const id = $derived(`edit-${item.id}`);
   const values = $derived<EditValues>(
     failed?.values ?? {
@@ -47,7 +40,7 @@
 </script>
 
 <details class="edit" open={failed !== null}>
-  <summary class="button secondary" aria-label="Modifier « {item.title} »">Modifier</summary>
+  <summary class="button secondary" aria-label={m.editLabel(item.title)}>{m.edit}</summary>
   <form
     method="POST"
     action="?/edit"
@@ -62,11 +55,11 @@
     <input type="hidden" name="itemId" value={item.id} />
     {#if failed}
       <p class="notice error" role="alert">
-        {messages[failed.error] ?? "L'enregistrement n'a pas abouti. Réessayez dans un instant."}
+        {m.errors[failed.error] ?? m.failed}
       </p>
     {/if}
 
-    <label for="{id}-titre">Nom</label>
+    <label for="{id}-titre">{m.name}</label>
     <input
       id="{id}-titre"
       name="title"
@@ -77,28 +70,28 @@
     />
 
     <fieldset class="kinds">
-      <legend>Quel genre de cadeau ?</legend>
+      <legend>{m.kindLegend}</legend>
       <label class="choice">
         <input type="radio" name="kind" value="unique" checked={values.kind === "unique"} />
-        <span><strong>Un cadeau</strong><span class="muted">Une personne le réserve.</span></span>
+        <span><strong>{m.unique.name}</strong><span class="muted">{m.unique.help}</span></span>
       </label>
       <label class="choice">
         <input type="radio" name="kind" value="quantity" checked={values.kind === "quantity"} />
         <span>
-          <strong>Plusieurs exemplaires</strong><span class="muted">Chacun en réserve un ou plusieurs.</span>
+          <strong>{m.quantity.name}</strong><span class="muted">{m.quantity.help}</span>
         </span>
       </label>
       <label class="choice">
         <input type="radio" name="kind" value="pool" checked={values.kind === "pool"} />
         <span>
-          <strong>Une cagnotte</strong><span class="muted">Chacun participe du montant qu'il veut.</span>
+          <strong>{m.pool.name}</strong><span class="muted">{m.pool.help}</span>
         </span>
       </label>
     </fieldset>
 
     <!-- Shown by CSS for the kind chosen, so that it works without JavaScript too -->
     <div class="for-quantity">
-      <label for="{id}-nombre">Combien d'exemplaires ?</label>
+      <label for="{id}-nombre">{m.howMany}</label>
       <input
         id="{id}-nombre"
         name="quantity"
@@ -109,14 +102,14 @@
       />
     </div>
     <div class="for-pool">
-      <label for="{id}-objectif">Objectif de la cagnotte, en euros (facultatif)</label>
+      <label for="{id}-objectif">{m.target}</label>
       <input
         id="{id}-objectif"
         name="target"
         inputmode="decimal"
         autocomplete="off"
         value={values.target}
-        placeholder="Par exemple 320"
+        placeholder={m.targetPlaceholder}
         aria-invalid={invalid("invalid_target")}
       />
     </div>
@@ -124,15 +117,15 @@
       <label class="choice">
         <input type="checkbox" name="repeatable" checked={values.repeatable} />
         <span>
-          <strong>À chaque occasion</strong>
-          <span class="muted">On peut l'offrir encore et encore, comme un bon chocolat chaud.</span>
+          <strong>{m.repeatable.name}</strong>
+          <span class="muted">{m.repeatable.help}</span>
         </span>
       </label>
     </div>
 
     <div class="row">
       <div>
-        <label for="{id}-prix">Prix, en euros (facultatif)</label>
+        <label for="{id}-prix">{m.price}</label>
         <input
           id="{id}-prix"
           name="price"
@@ -144,7 +137,7 @@
       </div>
       {#if lists.length > 1}
         <div>
-          <label for="{id}-liste">Liste</label>
+          <label for="{id}-liste">{m.list}</label>
           <select id="{id}-liste" name="listId">
             {#each lists as list (list.id)}
               <option value={list.id} selected={values.listId === list.id}>{list.name}</option>
@@ -154,7 +147,7 @@
       {/if}
     </div>
 
-    <label for="{id}-lien">Lien (facultatif)</label>
+    <label for="{id}-lien">{m.link}</label>
     <input
       id="{id}-lien"
       name="url"
@@ -166,12 +159,12 @@
       aria-invalid={invalid("invalid_url")}
     />
 
-    <label for="{id}-notes">Notes pour vos proches (facultatif)</label>
+    <label for="{id}-notes">{m.notes}</label>
     <textarea id="{id}-notes" name="notes" maxlength="4000" rows="3" aria-invalid={invalid("invalid_notes")}
       >{values.notes}</textarea
     >
 
-    <button type="submit" disabled={saving}>{saving ? "Enregistrement…" : "Enregistrer"}</button>
+    <button type="submit" disabled={saving}>{saving ? m.saving : m.save}</button>
   </form>
 </details>
 

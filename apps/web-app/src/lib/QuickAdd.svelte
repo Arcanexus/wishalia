@@ -2,6 +2,8 @@
   import { enhance } from "$app/forms";
   import { resolve } from "$app/paths";
 
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
   import type { AddResult } from "#lib/types.ts";
 
   let {
@@ -20,14 +22,12 @@
   let next = 0;
   const shown = $derived(answer ?? result);
 
-  const errors: Record<string, string> = {
-    empty: "Écrivez un lien ou quelques mots, par exemple « Livre de cuisine ».",
-    not_found: "Cette liste n'existe plus. Rechargez la page.",
-  };
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale).quickAdd);
 </script>
 
 <section class="quick-add card" aria-labelledby="ajout-titre">
-  <h2 id="ajout-titre">Ajouter une envie</h2>
+  <h2 id="ajout-titre">{m.title}</h2>
   <form
     method="POST"
     action="?/add"
@@ -46,7 +46,7 @@
       };
     }}
   >
-    <label for="ajout">Un lien, ou quelques mots</label>
+    <label for="ajout">{m.label}</label>
     <div class="row">
       <input
         id="ajout"
@@ -55,22 +55,22 @@
         enterkeyhint="send"
         autocomplete="off"
         maxlength="4000"
-        placeholder="https://… ou « Livre de cuisine »"
+        placeholder={m.placeholder}
         aria-describedby="ajout-aide"
         value={shown && "error" in shown ? shown.input : ""}
       />
-      <button type="submit" class="accent">Ajouter</button>
+      <button type="submit" class="accent">{m.submit}</button>
     </div>
     <p id="ajout-aide" class="muted help">
-      {#if listName}Elle va dans « {listName} ».{:else}Elle va dans votre première liste.{/if}
-      Le titre et le prix se complètent tout seuls depuis le lien.
+      {listName ? m.goesTo(listName) : m.goesToFirst}
+      {m.autofill}
     </p>
   </form>
 
   {#if pending.length > 0}
     <ul class="pending" aria-busy="true">
       {#each pending as entry (entry.key)}
-        <li>{entry.text} <span class="muted">· ajout…</span></li>
+        <li>{entry.text} <span class="muted">· {m.adding}</span></li>
       {/each}
     </ul>
   {/if}
@@ -78,22 +78,22 @@
   <div role="status" class="feedback">
     {#if shown && "item" in shown}
       <p class="notice">
-        Ajouté : « {shown.item.title} »{#if !listName}
-          · <a href={resolve("/(app)/listes/[id]", { id: shown.item.listId })}>voir la liste</a>{/if}.
+        {m.added(shown.item.title)}{#if !listName}
+          · <a href={resolve("/(app)/listes/[id]", { id: shown.item.listId })}>{m.seeList}</a>{/if}.
       </p>
     {/if}
   </div>
   {#if shown && "item" in shown && shown.duplicate}
     <form method="POST" action="?/status" use:enhance class="notice duplicate">
-      <p>Ce lien est déjà dans une de vos envies.</p>
+      <p>{m.duplicate}</p>
       <input type="hidden" name="itemId" value={shown.item.id} />
       <input type="hidden" name="status" value="archived" />
-      <button type="submit" class="secondary" onclick={() => (answer = null)}>Annuler cet ajout</button>
+      <button type="submit" class="secondary" onclick={() => (answer = null)}>{m.undo}</button>
     </form>
   {/if}
   {#if shown && "error" in shown}
     <p class="notice error" role="alert">
-      {errors[shown.error] ?? "L'ajout n'a pas abouti. Réessayez dans un instant."}
+      {m.errors[shown.error] ?? m.failed}
     </p>
   {/if}
 </section>

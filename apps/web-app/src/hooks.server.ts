@@ -3,7 +3,9 @@ import { resolveTheme } from "@wishalia/domain";
 import { metricsPort, processMetrics } from "@wishalia/metrics";
 
 import { themeColorTags } from "#lib/install.ts";
-import { readPreferences } from "#lib/server/preferences.ts";
+import { formatters } from "@wishalia/i18n";
+
+import { pageLocale, readPreferences } from "#lib/server/preferences.ts";
 import { applySecurityHeaders } from "#lib/security-headers.ts";
 
 const metrics = processMetrics("web-app", process.env.APP_VERSION ?? "dev");
@@ -17,9 +19,11 @@ export const init: ServerInit = async () => {
 
 export const handle: Handle = async ({ event, resolve }) => {
   const started = performance.now();
-  const { themeChoice, mode } = readPreferences(event.cookies);
+  const { themeChoice, mode, localeChoice } = readPreferences(event.cookies);
   event.locals.themeChoice = themeChoice;
   event.locals.mode = mode;
+  event.locals.localeChoice = localeChoice;
+  event.locals.locale = pageLocale(localeChoice, event.request.headers.get("accept-language"));
   event.locals.listTheme = null;
   event.locals.christmas = false;
 
@@ -34,12 +38,14 @@ export const handle: Handle = async ({ event, resolve }) => {
         today: new Date(),
       });
       return html
+        .replace("%wishalia.lang%", formatters(event.locals.locale).tag)
         .replace("%wishalia.theme%", theme)
         .replace("%wishalia.mode%", event.locals.mode)
         .replace("%wishalia.theme-color%", themeColorTags(theme, event.locals.mode));
     },
   });
   applySecurityHeaders(response.headers);
+  response.headers.set("content-language", formatters(event.locals.locale).tag);
   // The route id (/[token]), never the URL: share link tokens never reach the metrics
   metrics.http.observe({
     method: event.request.method,

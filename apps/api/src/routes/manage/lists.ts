@@ -29,9 +29,6 @@ const idParams = z.object({ listId: z.uuid() });
 /** The list's open items, every one of them, in their new order. */
 export const orderInput = z.object({ itemIds: z.array(z.uuid()).min(1).max(1000) }).strict();
 
-/** The default list of a new owner, created by the first quick add. */
-export const DEFAULT_LIST_NAME = "Mes envies";
-
 /** Who an open link is for, as the guests' page greets them. */
 export const OPEN_LINK_AUDIENCE = "tout le monde";
 

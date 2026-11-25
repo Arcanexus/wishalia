@@ -1,9 +1,13 @@
 <script lang="ts">
+  import { viewMessages } from "@wishalia/i18n/messages/view";
+
+  import { useI18n } from "../i18n.ts";
   import type { PoolBar } from "./view.ts";
-  import { formatEuros } from "./view.ts";
 
   let { bar, id }: { bar: PoolBar; id: string } = $props();
   // SVG attributes, not inline styles: the page's CSP allows no style attribute
+  const i18n = useI18n();
+  const m = $derived(viewMessages(i18n.locale));
   const W = 1000;
   const x = (fraction: number) => Math.round(fraction * W * 10) / 10;
 </script>
@@ -51,7 +55,7 @@
     {#each bar.segments as segment (segment.key)}
       <li>
         <span class="swatch tone-{segment.tone}" aria-hidden="true"></span>
-        {segment.label} : {formatEuros(segment.cents)}
+        {m.segment(segment.label, i18n.fmt.money(segment.cents))}
       </li>
     {/each}
   </ul>

@@ -58,6 +58,9 @@ export const users = pgTable("users", {
   // Display settings, kept with the account so that they follow the person on every device
   theme: themeChoice("theme").notNull().default("auto"),
   mode: modeChoice("mode").notNull().default("device"),
+  // The language chosen with the account (docs/i18n.md): a code of LOCALES in @wishalia/i18n, or
+  // null to follow the browser. Text, not an enum: adding a language needs no migration
+  locale: text("locale"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
   // GDPR: a deleted account is anonymised (email and name cleared), never removed from the history

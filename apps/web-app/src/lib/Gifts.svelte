@@ -1,17 +1,20 @@
 <script lang="ts">
-  import { cents, formatAmount } from "@wishalia/domain";
+  import { appMessages } from "@wishalia/i18n/messages/app";
+  import { useI18n } from "@wishalia/ui/i18n.ts";
 
   import type { Gift } from "./types.ts";
 
   /** Who gave what, and the words they left: only ever given once the secret is lifted. */
   let { gifts, none }: { gifts: Gift[]; none: string } = $props();
 
+  const i18n = useI18n();
+  const m = $derived(appMessages(i18n.locale).gifts);
   const what = (gift: Gift) =>
     gift.amountCents !== null
-      ? formatAmount(cents(gift.amountCents))
+      ? i18n.fmt.money(gift.amountCents)
       : gift.units !== null && gift.units > 1
-        ? `${gift.units} exemplaires`
-        : "l'a offert";
+        ? m.copies(gift.units)
+        : m.gave;
 </script>
 
 {#if gifts.length === 0}
@@ -20,8 +23,8 @@
   <ul class="gifts">
     {#each gifts as gift, index (index)}
       <li>
-        <span><strong>{gift.name ?? "Quelqu'un (anonyme)"}</strong> : {what(gift)}</span>
-        {#if gift.message}<blockquote>« {gift.message} »</blockquote>{/if}
+        <span><strong>{gift.name ?? m.anonymous}</strong>{m.what(what(gift))}</span>
+        {#if gift.message}<blockquote>{m.quote(gift.message)}</blockquote>{/if}
       </li>
     {/each}
   </ul>

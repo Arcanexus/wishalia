@@ -6,7 +6,7 @@ import { error, redirect, type Cookies, type RequestEvent } from "@sveltejs/kit"
  * for the rate limits.
  */
 
-type ApiEvent = Pick<RequestEvent, "request" | "getClientAddress" | "url" | "cookies">;
+type ApiEvent = Pick<RequestEvent, "request" | "getClientAddress" | "url" | "cookies" | "locals">;
 
 export function apiUrl(): string {
   const url =
@@ -28,6 +28,9 @@ export async function apiFetch(event: ApiEvent, path: string, call: ApiCall = {}
   const headers = new Headers({ accept: "application/json", "x-forwarded-for": event.getClientAddress() });
   const cookie = event.request.headers.get("cookie");
   if (cookie) headers.set("cookie", cookie);
+  // The page's language: the API writes the emails it sends in it (docs/i18n.md)
+  const language = event.locals.locale ?? event.request.headers.get("accept-language");
+  if (language) headers.set("accept-language", language);
   // Better Auth checks the origin of every state-changing call: the app's own
   headers.set("origin", event.url.origin);
   if (body !== undefined) headers.set("content-type", "application/json");

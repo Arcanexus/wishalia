@@ -9,7 +9,7 @@ import type { Actions, PageServerLoad } from "./$types";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NOT_FOUND = "Cet événement n'existe pas, ou plus.";
 
-type ApiEvent = Pick<RequestEvent, "request" | "getClientAddress" | "url" | "cookies">;
+type ApiEvent = Pick<RequestEvent, "request" | "getClientAddress" | "url" | "cookies" | "locals">;
 
 /** The API's refusals become a message on the page; anything else is a real error. */
 async function attempt<T>(key: string, run: () => Promise<T>) {

@@ -1,3 +1,6 @@
+import type { Locale } from "@wishalia/i18n";
+import { viewMessages } from "@wishalia/i18n/messages/view";
+
 import type { Funding, PublicItem } from "./types.ts";
 
 /**
@@ -6,19 +9,20 @@ import type { Funding, PublicItem } from "./types.ts";
  * nothing (CLAUDE.md, rule 1). The names are plainly examples.
  */
 
-export const SAMPLE_NAMES = ["Camille (exemple)", "Hugo (exemple)"] as const;
+/** The made-up givers, in the reader's language: « Camille (exemple) ». */
+export const sampleNames = (locale: Locale): readonly [string, string] => viewMessages(locale).sampleNames;
 
 /** An item as the management app knows it. */
 export type SampleSource = Omit<PublicItem, "funding" | "eventIds" | "status"> & {
   status: "open" | "received" | "archived";
 };
 
-const [first, second] = SAMPLE_NAMES;
 const named = (name: string) => ({ name, mine: false });
 const anonymous = { name: null, mine: false };
 
 /** Made-up funding for the item at this place in the list: a few given, a few free, never all. */
-export function sampleFunding(item: SampleSource, index: number): Funding {
+export function sampleFunding(item: SampleSource, index: number, locale: Locale): Funding {
+  const [first, second] = sampleNames(locale);
   const given = index % 3 !== 2;
   switch (item.kind) {
     case "unique":
@@ -70,13 +74,13 @@ export function sampleFunding(item: SampleSource, index: number): Funding {
 }
 
 /** The items the relatives see, in the owner's order, each with made-up funding. */
-export function samplePreview(items: readonly SampleSource[]): PublicItem[] {
+export function samplePreview(items: readonly SampleSource[], locale: Locale): PublicItem[] {
   return items
     .filter((item) => item.status !== "archived")
     .map((item, index): PublicItem => ({
       ...item,
       status: item.status === "received" ? "received" : "open",
       eventIds: [],
-      funding: item.status === "received" ? null : sampleFunding(item, index),
+      funding: item.status === "received" ? null : sampleFunding(item, index, locale),
     }));
 }

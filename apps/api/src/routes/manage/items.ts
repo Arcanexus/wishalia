@@ -8,6 +8,8 @@ import {
   parseQuickAdd,
   type SecretState,
 } from "@wishalia/domain";
+import type { Locale } from "@wishalia/i18n";
+import { apiMessages } from "@wishalia/i18n/messages/api";
 import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
@@ -15,7 +17,6 @@ import { z } from "zod";
 import { type HistoryEntry, recordHistory, type Tx } from "../../history.js";
 import { first, HttpError, notFound, parse, userId } from "../../http.js";
 import type { ManageDeps } from "./index.js";
-import { DEFAULT_LIST_NAME } from "./lists.js";
 import { imageOf } from "../../images.js";
 import { itemSecret } from "../../secrets.js";
 import { itemImageRoutes } from "./item-images.js";
@@ -60,7 +61,12 @@ export async function ownedItem(tx: Tx, ownerId: string, itemId: string) {
 }
 
 /** A list of the owner (404 otherwise), or their first one, created on the very first add. */
-async function targetList(tx: Tx, ownerId: string, listId: string | undefined): Promise<string> {
+async function targetList(
+  tx: Tx,
+  ownerId: string,
+  listId: string | undefined,
+  locale: Locale,
+): Promise<string> {
   if (listId) {
     const [list] = await tx
       .select({ id: schema.wishLists.id })
@@ -77,7 +83,7 @@ async function targetList(tx: Tx, ownerId: string, listId: string | undefined): 
     .limit(1);
   if (existing) return existing.id;
   const created = first(
-    await tx.insert(schema.wishLists).values({ ownerId, name: DEFAULT_LIST_NAME }).returning(),
+    await tx.insert(schema.wishLists).values({ ownerId, name: apiMessages(locale).defaultListName }).returning(),
   );
   return created.id;
 }
@@ -98,7 +104,7 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now,
     const ownerId = userId(request);
 
     const { item, duplicates } = await db.transaction(async (tx) => {
-      const listId = await targetList(tx, ownerId, body.listId);
+      const listId = await targetList(tx, ownerId, body.listId, request.locale);
       const item = first(
         await tx
           .insert(schema.wishes)
@@ -207,7 +213,7 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now,
         });
       }
       if (listId !== undefined && listId !== before.listId) {
-        await targetList(tx, ownerId, listId);
+        await targetList(tx, ownerId, listId, request.locale);
         entries.push({
           wishId: itemId,
           type: "moved",

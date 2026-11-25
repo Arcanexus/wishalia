@@ -1,11 +1,13 @@
 <script lang="ts">
+  import { viewMessages } from "@wishalia/i18n/messages/view";
   import type { Snippet } from "svelte";
 
+  import { useI18n } from "../i18n.ts";
   import Copies from "./Copies.svelte";
   import Givers from "./Givers.svelte";
   import PoolBar from "./PoolBar.svelte";
   import type { PublicEvent, PublicItem } from "./types.ts";
-  import { formatEuros, poolBar, standing } from "./view.ts";
+  import { poolBar, standing } from "./view.ts";
 
   /**
    * An item as the guests see it: its words, its drawing, where it stands. What a guest can do with
@@ -18,11 +20,13 @@
     children,
   }: { item: PublicItem; events: PublicEvent[]; scope: "list" | "event"; children?: Snippet } = $props();
 
+  const i18n = useI18n();
+  const m = $derived(viewMessages(i18n.locale));
   const eventsById = $derived(new Map(events.map((event) => [event.id, event])));
-  const line = $derived(standing(item));
+  const line = $derived(standing(item, i18n.locale));
   const complete = $derived(item.status === "received" || item.funding?.state === "complete");
-  const bar = $derived(item.funding && item.status !== "received" ? poolBar(item, events) : null);
-  const kindLabels = { unique: null, quantity: "Plusieurs exemplaires", pool: "Cagnotte" } as const;
+  const bar = $derived(item.funding && item.status !== "received" ? poolBar(item, events, i18n.locale) : null);
+  const kindLabels = $derived({ unique: null, quantity: m.kind.quantity, pool: m.kind.pool });
 
   /** Only web links become links: never a javascript: or data: address. */
   const webLink = (url: string | null) => (url && /^https?:\/\//i.test(url) ? url : null);
@@ -46,18 +50,18 @@
     <div class="head">
       <h2>{item.title}</h2>
       {#if item.kind === "pool" && item.targetCents}
-        <span class="price">{formatEuros(item.targetCents)}</span>
+        <span class="price">{i18n.fmt.money(item.targetCents)}</span>
       {:else if item.priceCents}
-        <span class="price">{formatEuros(item.priceCents)}</span>
+        <span class="price">{i18n.fmt.money(item.priceCents)}</span>
       {/if}
     </div>
     {#if kindLabels[item.kind] || item.repeatable || (item.kind === "quantity" && item.quantity)}
       <p class="tags">
         {#if kindLabels[item.kind]}<span class="tag">{kindLabels[item.kind]}</span>{/if}
         {#if item.kind === "quantity" && item.quantity}<span class="tag">
-            {item.quantity} souhaités
+            {m.wanted(item.quantity)}
           </span>{/if}
-        {#if item.repeatable}<span class="tag">À chaque occasion</span>{/if}
+        {#if item.repeatable}<span class="tag">{m.everyOccasion}</span>{/if}
       </p>
     {/if}
     {#if item.notes}<p class="notes">{item.notes}</p>{/if}
@@ -65,16 +69,15 @@
       {@const link = webLink(item.url) ?? ""}
       <p>
         <a href={link} rel="noopener noreferrer nofollow external" target="_blank">
-          Voir sur {site(link)}<span class="visually-hidden"> (nouvel onglet)</span>
+          {m.seeOn(site(link))}<span class="visually-hidden">{m.newTab}</span>
         </a>
       </p>
     {/if}
     {#if scope === "list" && item.eventIds.length > 0}
       <p class="muted small">
-        Pour {item.eventIds
-          .map((id) => eventsById.get(id)?.name)
-          .filter(Boolean)
-          .join(", ")}
+        {m.forEvents(
+          i18n.fmt.list(item.eventIds.flatMap((id) => eventsById.get(id)?.name ?? [])),
+        )}
       </p>
     {/if}
     {#if item.funding && item.status !== "received"}
@@ -84,7 +87,7 @@
         <Copies wanted={item.quantity} taken={item.funding.reservedUnits ?? 0} />
       {/if}
       {#if item.funding.state === "almost"}<p class="tags">
-          <span class="tag almost">Presque complet</span>
+          <span class="tag almost">{m.almost}</span>
         </p>{/if}
     {/if}
     {#if line}

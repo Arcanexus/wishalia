@@ -78,7 +78,23 @@ describe("magic link", () => {
     const mail = t.mails.at(-1);
     expect(mail?.to).toBe(OWNER_EMAIL);
     expect(mail?.subject).toContain("Wishalia");
-    expect(mail?.html).toContain('lang="fr"');
+    expect(mail?.html).toContain('lang="fr-FR"');
+  });
+
+  it("writes the email in the account's language, then the page's", async () => {
+    const ask = (email: string, headers: Record<string, string> = {}) =>
+      t.app.inject({
+        method: "POST",
+        url: "/auth/sign-in/magic-link",
+        headers: { ...ORIGIN, ...headers },
+        payload: { email },
+      });
+    await ask(OWNER_EMAIL, { "accept-language": "en-US,en;q=0.9" });
+    expect(t.mails.at(-1)?.subject).toBe("Your sign-in link for Wishalia");
+
+    await t.db.insert(schema.users).values({ email: "nonna@example.test", displayName: "Nonna", locale: "fr" });
+    await ask("nonna@example.test", { "accept-language": "en" });
+    expect(t.mails.at(-1)?.subject).toBe("Votre lien de connexion à Wishalia");
   });
 
   it("refuses to redirect to another site after sign-in", async () => {
