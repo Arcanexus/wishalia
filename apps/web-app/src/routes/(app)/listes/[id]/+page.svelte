@@ -268,8 +268,19 @@
               {#if item.notes}<p class="notes">{item.notes}</p>{/if}
               {#if item.enrichment === "pending"}
                 <p class="completing">
-                  <span class="badge reading">
-                    <span class="dot" aria-hidden="true"></span>Lecture du lien
+                  <span class="reading">
+                    <!-- A circle that turns while the worker reads the page (still with reduced motion) -->
+                    <svg class="spinner" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                      <circle class="track" cx="12" cy="12" r="9" fill="none" stroke-width="3" />
+                      <path
+                        class="arc"
+                        d="M12 3a9 9 0 0 1 9 9"
+                        fill="none"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                      />
+                    </svg>
+                    Lecture du lien…
                   </span>
                   <span class="muted">
                     Le titre, le prix{images ? " et les images" : ""} arrivent depuis la page.
@@ -499,7 +510,29 @@
     margin: 0.5rem 0 0;
     font-size: 0.95rem;
   }
-  /* « Lecture du lien »: seen at a glance, by its shape and its words, not by its colour alone */
+  /* « Lecture du lien »: seen at a glance, by a turning icon and its words, not by colour alone */
+  .reading {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .spinner {
+    flex: none;
+    animation: turn 0.9s linear infinite;
+  }
+  .track {
+    stroke: var(--border);
+  }
+  .arc {
+    stroke: var(--progress);
+  }
+  @keyframes turn {
+    to {
+      transform: rotate(360deg);
+    }
+  }
   .badge {
     display: inline-flex;
     align-items: center;
@@ -510,21 +543,9 @@
     font-weight: 600;
     white-space: nowrap;
   }
-  /* The words in the text colour (AA on every theme), the colour of progress on the edge only */
-  .reading {
-    color: var(--text);
-    border-color: var(--progress);
-  }
   .failed {
     color: var(--text-2);
     border-style: dashed;
-  }
-  .dot {
-    width: 0.55rem;
-    height: 0.55rem;
-    border-radius: 50%;
-    background: var(--progress);
-    animation: breathe 1.4s ease-in-out infinite;
   }
   .waiting {
     display: block;
@@ -538,7 +559,7 @@
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .dot,
+    .spinner,
     .waiting {
       animation: none;
     }
