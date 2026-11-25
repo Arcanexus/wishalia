@@ -115,6 +115,38 @@ maintained, with no new images or security fixes.
   (which reads), on the S3 port. Its administration API has no token, so it only answers the
   probes (`/health`).
 
+#### Its console: Garage UI
+
+`images.garage.ui.enabled: true` adds [Garage UI](https://github.com/Noooste/garage-ui), a web
+console for this Garage: browse and preview the images in the bucket, see its key and the node's
+state. It is off by default.
+
+- It needs Garage's administration token: `GARAGE_ADMIN_TOKEN` in `existingSecret`
+  (`openssl rand -hex 32`). Garage then accepts administration with that token, from the console
+  only (NetworkPolicy).
+- **Sign-in**: with your OIDC provider (`images.garage.ui.oidc`, its client secret in
+  `existingSecret` as `GARAGE_UI_OIDC_CLIENT_SECRET`, redirect URI
+  `https://<images.garage.ui.host>/auth/oidc/callback`), or else the page asks for the admin token.
+  With OIDC, garage-ui needs to know who may sign in, or it does not start: give it in
+  `images.garage.ui.env`, the claim listing a person's groups and the groups allowed in. Everyone
+  else is refused, even when the provider lets them through; those who get in may do everything.
+
+  ```yaml
+  images:
+    garage:
+      ui:
+        env:
+          GARAGE_UI_AUTH_OIDC_ROLE_ATTRIBUTE_PATH: groups
+          GARAGE_UI_AUTH_OIDC_ADMIN_ROLES: garage-admins # comma-separated
+  ```
+
+- **Reaching it**: `images.garage.ui.host` gives it its own host on the ingress (the chart's
+  `ingress.className` and `ingress.annotations`, TLS secret `images.garage.ui.tlsSecretName`).
+  Without a host, it stays inside the cluster:
+  `kubectl -n wishalia port-forward svc/<release>-wishalia-garage-ui 8080`.
+- The console sees only the images, never any contribution. Deleting a file there removes it
+  from the item that shows it.
+
 Changing from one to the other does not move the files: the page images come back with the next
 enrichment of each item, the photos the owner sent have to be copied over (same keys, `wishes/...`).
 

@@ -6,8 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-11-25
+
 ### Added
 
+- An optional web console for the chart's Garage, [Garage UI](https://github.com/Noooste/garage-ui)
+  (`images.garage.ui.enabled`, off by default): browse the images in the bucket, its key and the
+  node. Sign-in with your OIDC provider (who may sign in is set in
+  `images.garage.ui.env`), or with Garage's admin token; its own host on the ingress,
+  or none (port-forward). Garage then takes an administration token (`GARAGE_ADMIN_TOKEN`), which
+  only the console may use (NetworkPolicy). See [Images](docs/images.md#its-console-garage-ui).
 - A home page on the public host (`hosts.public`): a welcome, « Vous avez reçu un lien ? » to open
   or paste a link, « Se connecter » (or « Mes listes » once signed in) to the management app, and
   « Trouver une liste publique », a search by first name or list name, without case or accents.
