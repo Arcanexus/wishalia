@@ -60,3 +60,63 @@ export async function loadView(event: ApiEvent, token: string): Promise<PublicVi
   if (!response.ok) throw error(503, "unavailable");
   return (await response.json()) as PublicView;
 }
+
+/** A public list, as the home page's search gives it: never anything about a gift. */
+export interface PublicListEntry {
+  name: string;
+  ownerName: string;
+  itemCount: number;
+  /** The open link: /s/<token>. */
+  path: string;
+}
+
+export interface HomeData {
+  me: { displayName: string } | null;
+  /** The search as the API understood it; empty when it lists everything. */
+  query: string;
+  lists: PublicListEntry[];
+  more: boolean;
+}
+
+/**
+ * The home page's data: who is signed in, and the public lists (only those, whatever the search).
+ * The session cookie goes along; no share token is involved.
+ */
+export async function loadHome(event: ApiEvent, query: string): Promise<HomeData> {
+  const url = new URL("/public/home", apiUrl());
+  if (query) url.searchParams.set("q", query.slice(0, 200));
+  const headers = new Headers({ accept: "application/json", "x-forwarded-for": event.getClientAddress() });
+  const cookie = event.request.headers.get("cookie");
+  if (cookie) headers.set("cookie", cookie);
+  const response = await fetch(url, { headers, redirect: "manual" });
+  if (!response.ok) throw error(503, "unavailable");
+  const data = (await response.json()) as HomeData;
+  // Only addresses of this host: a result never sends anyone elsewhere
+  return { ...data, lists: data.lists.filter((list) => /^\/s\/[A-Za-z0-9_-]{43}$/.test(list.path)) };
+}
+
+/**
+ * The token of a share link the person pasted: the whole address (any host, since it may come
+ * from a message) or the token alone. Null when it holds none.
+ */
+export function tokenFromPasted(pasted: string): string | null {
+  const text = pasted.trim();
+  if (isWellFormedToken(text)) return text;
+  const match = /\/s\/([A-Za-z0-9_-]{43})(?:[/?#]|$)/.exec(text);
+  return match?.[1] ?? null;
+}
+
+/**
+ * The management app's address, for « Se connecter » and « Mes listes ». adapter-node runs on
+ * Node.js: the configuration is read from the environment at request time.
+ */
+export function appOrigin(): string | null {
+  const value =
+    process.env.APP_ORIGIN ?? (process.env.NODE_ENV === "production" ? "" : "http://localhost:3003");
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.origin : null;
+  } catch {
+    return null;
+  }
+}

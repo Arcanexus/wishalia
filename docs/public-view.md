@@ -6,6 +6,37 @@ no sign-in, just the link the owner sent them. It speaks French and says « vous
 
 ![A shared list, as Mamie sees it](images/public-list.png)
 
+## The home page
+
+The public host's own address (`https://<hosts.public>/`) welcomes visitors:
+
+- what the app is for, in two sentences;
+- « Vous avez reçu un lien ? »: open it as it is, or paste it in the field and press « Ouvrir la
+  liste ». The whole address or the token alone works, from any host (a message may hold the
+  address of another install); anything else says « Ce texte ne contient pas de lien de liste. »;
+- « Se connecter », to the management app ([Signing in](management-app.md#signing-in)), to manage
+  one's lists or find one's gifts on every device; once signed in (the session is shared by the two
+  hosts), the page says « Bonjour Mamie ! » and offers « Mes listes » instead;
+- « Trouver une liste publique »: a search by the person's first name or the list's name, without
+  case or accents (« lea » finds « Léa »). Only the lists their owner made **public**
+  ([A list's settings](management-app.md#a-lists-settings)) are ever there; a private list stays
+  seen only through a link. Each result says whose wishes they are and how many, with « Voir la
+  liste ». With no search, the newest public lists show.
+
+![The home page, on a computer](images/public-home.png)
+
+The search works without JavaScript (a plain `GET ?q=` form) and announces its results to screen
+readers.
+
+![Searching the public lists, on a phone in dark mode](images/public-home-search-dark.png)
+
+## A public list
+
+A public list opens at its own address, `/s/<token>`, like a share link, and works the same way
+(giving, withdrawing, folding for a visitor nobody knows, the owner's own view), with two
+differences: it greets « Bienvenue ! » rather than a name, and it never shows who else gives, only
+« ? » for each gift other than the person's own, since anyone may be looking.
+
 ## A share link
 
 A link looks like `https://<hosts.public>/s/<token>`. The owner makes one per guest or group in the
@@ -127,7 +158,8 @@ envoyé. » A token that cannot be one is answered the same way without asking t
 
 - Every page has the same title and link preview (« Wishalia · une liste de souhaits »): a preview
   in a chat never tells the owner, or anyone, what is on the list.
-- Nothing is indexed: `noindex, nofollow` in the page and in an `X-Robots-Tag` header.
+- Nothing is indexed, the home page included: `noindex, nofollow` in the page and in an
+  `X-Robots-Tag` header.
 - The page of a link is never cached (`Cache-Control: private, no-store`).
 - `Referrer-Policy: same-origin`: following an item's link never gives the share link to that site.
 

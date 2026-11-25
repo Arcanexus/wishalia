@@ -83,3 +83,12 @@ export {
   type Crop,
   type ImageType,
 } from "./images.js";
+export {
+  giverNameShown,
+  matchesSearch,
+  MAX_SEARCH_LENGTH,
+  MAX_SEARCH_RESULTS,
+  MIN_SEARCH_LENGTH,
+  normalizeSearch,
+  searchWords,
+} from "./directory.js";

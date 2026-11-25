@@ -6,7 +6,7 @@ A TypeScript monorepo (pnpm + Turborepo) with four deployable components and sha
 apps/
   api/          Fastify: /manage/* (owner) and /public/* (share links), separate scopes
   web-app/      SvelteKit: the management app, for the owner
-  web-public/   SvelteKit: the public view of the share links
+  web-public/   SvelteKit: the home page and the public view of the share links
   worker/       background jobs: completing the items from their link (price tracking to come)
 packages/
   domain/       pure business rules (amounts, funding, the anti-spoil rule)

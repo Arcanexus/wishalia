@@ -37,7 +37,8 @@ export function ownerItem(row: WishRow, image: ImageSources | null = null) {
   };
 }
 
-export function ownerList(row: ListRow, itemCount: number) {
+/** A list as its owner sees it; openUrl is the address of a public list's open link. */
+export function ownerList(row: ListRow, itemCount: number, openUrl: string | null) {
   return {
     id: row.id,
     name: row.name,
@@ -45,6 +46,8 @@ export function ownerList(row: ListRow, itemCount: number) {
     theme: row.theme,
     revealMode: row.revealMode,
     secretLifted: row.revealMode === "manual" && row.revealedAt !== null,
+    visibility: row.visibility,
+    openUrl: row.visibility === "public" ? openUrl : null,
     itemCount,
     createdAt: row.createdAt.toISOString(),
     archivedAt: row.archivedAt?.toISOString() ?? null,

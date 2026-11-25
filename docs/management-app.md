@@ -71,6 +71,11 @@ left out; the page says they have one under each item.
 « Réglages de la liste », folded under the list's title, holds:
 
 - its **name**;
+- **who can see it**: « Privée » (the default), seen only by the people you send a share link to,
+  or « Publique », found from the [home page](public-view.md#the-home-page) by your name or the
+  list's, where anyone may take part. A public list gets its own address, shown under the choice to
+  copy; turning it private again cuts that address at once, and leaves the share links as they are.
+  On a public list, guests never see who else gives;
 - its **theme**: « Celui de chacun » (everyone sees their own), « Neutre » or « Noël », forced on
   everyone who opens the list, in the app and through its share links; the light or dark mode
   stays each person's own. A new theme reloads the page, since the server draws it;

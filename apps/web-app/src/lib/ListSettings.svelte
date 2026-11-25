@@ -60,6 +60,35 @@
     />
 
     <fieldset>
+      <legend>Qui peut voir la liste ?</legend>
+      <label class="choice">
+        <input type="radio" name="visibility" value="private" checked={list.visibility === "private"} />
+        <span>
+          <strong>Privée</strong>
+          <span class="muted">Seules les personnes à qui vous envoyez un lien de partage la voient.</span>
+        </span>
+      </label>
+      <label class="choice">
+        <input type="radio" name="visibility" value="public" checked={list.visibility === "public"} />
+        <span>
+          <strong>Publique</strong>
+          <span class="muted">
+            On la trouve depuis la page d'accueil, par votre nom ou celui de la liste, et tout le monde peut y
+            participer. Les noms de ceux qui offrent n'y sont pas montrés.
+          </span>
+        </span>
+      </label>
+      {#if list.visibility === "public" && list.openUrl}
+        <label for="liste-adresse" class="address-label">Adresse de la liste publique</label>
+        <input id="liste-adresse" class="address" readonly value={list.openUrl} />
+        <p class="muted help">
+          Repasser la liste en privée coupe cette adresse aussitôt ; vos liens de partage continuent de
+          marcher.
+        </p>
+      {/if}
+    </fieldset>
+
+    <fieldset>
       <legend>Thème</legend>
       <p class="muted help">
         Le thème imposé s'applique à tous ceux qui ouvrent la liste ; le mode clair ou sombre reste celui de
@@ -190,6 +219,13 @@
   .choice > span {
     display: flex;
     flex-direction: column;
+  }
+  .address-label {
+    margin-top: 0.5rem;
+  }
+  .address {
+    font-family: ui-monospace, monospace;
+    font-size: 0.9rem;
   }
   .part {
     border-top: 1px solid var(--border);

@@ -15,11 +15,9 @@ import {
   writeDeviceMarker,
 } from "../../tokens.js";
 import type { ShareDeps } from "./index.js";
+import { SHARE_PATH } from "./lists.js";
 
 type ShareLinkRow = typeof schema.shareLinks.$inferSelect;
-
-/** Where a guest opens a share link: the public host, then the token. */
-export const SHARE_PATH = "/s/";
 
 const shareLinkInput = z.discriminatedUnion("scope", [
   z.object({
@@ -73,7 +71,8 @@ export const shareLinkRoutes: FastifyPluginAsync<ShareDeps> = async (app, { conf
     const rows = await db
       .select()
       .from(schema.shareLinks)
-      .where(eq(schema.shareLinks.ownerId, userId(request)))
+      // The open links of the public lists are the lists' own: their setting turns them on and off
+      .where(and(eq(schema.shareLinks.ownerId, userId(request)), isNull(schema.shareLinks.openToken)))
       .orderBy(desc(schema.shareLinks.createdAt));
     const at = now();
     return rows.map((row) => ownerShareLink(row, at));
@@ -131,7 +130,11 @@ export const shareLinkRoutes: FastifyPluginAsync<ShareDeps> = async (app, { conf
     const { shareLinkId } = parse(shareLinkParams, request.params);
     const ownerId = userId(request);
     const at = now();
-    const mine = and(eq(schema.shareLinks.id, shareLinkId), eq(schema.shareLinks.ownerId, ownerId));
+    const mine = and(
+      eq(schema.shareLinks.id, shareLinkId),
+      eq(schema.shareLinks.ownerId, ownerId),
+      isNull(schema.shareLinks.openToken),
+    );
     await db
       .update(schema.shareLinks)
       .set({ revokedAt: at })

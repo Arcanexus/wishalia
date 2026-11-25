@@ -19,6 +19,22 @@ describe("saveListSettings", () => {
     expect(api.calls[1]?.body).toEqual({ name: "x", theme: null });
   });
 
+  it("saves who finds the list, private or public, and ignores anything else", async () => {
+    const api = fakeApi({ [`PATCH /manage/lists/${LIST}`]: () => json({ id: LIST }) });
+    await saveListSettings(
+      fakeEvent({ form: { name: "x", theme: "none", visibility: "public" } }).event,
+      LIST,
+    );
+    expect(api.calls[0]?.body).toEqual({ name: "x", theme: null, visibility: "public" });
+    await saveListSettings(
+      fakeEvent({ form: { name: "x", theme: "none", visibility: "private" } }).event,
+      LIST,
+    );
+    expect(api.calls[1]?.body).toEqual({ name: "x", theme: null, visibility: "private" });
+    await saveListSettings(fakeEvent({ form: { name: "x", theme: "none", visibility: "all" } }).event, LIST);
+    expect(api.calls[2]?.body).toEqual({ name: "x", theme: null });
+  });
+
   it("refuses a missing name or an unknown theme without calling the API", async () => {
     const api = fakeApi({});
     for (const [form, error] of [

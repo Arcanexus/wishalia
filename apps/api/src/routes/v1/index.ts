@@ -82,7 +82,7 @@ export const v1Routes: FastifyPluginAsync<V1Deps> = async (app, { config, db, no
     });
 
     secured.get("/me", async (request) => request.user);
-    await secured.register(listRoutes, { db, now, images });
+    await secured.register(listRoutes, { db, now, images, publicOrigin: config.PUBLIC_ORIGIN });
     await secured.register(itemRoutes, { db, now, images });
     await secured.register(eventRoutes, { db, now, images });
   });

@@ -39,7 +39,8 @@ server, not hidden in the page.
 > API v1 (personal access tokens, OpenAPI) are in place and tested. The management app has its
 > screens (signing in, passkeys, lists, quick add, editing and reordering items, a list's preview,
 > events, sharing, settings), and the family sees a shared list or event in the public view, where
-> they reserve, chip in and withdraw. The worker completes the items added with a link (title,
+> they reserve, chip in and withdraw. The public host's home page welcomes visitors, signs them in,
+> and finds the lists their owners made public. The worker completes the items added with a link (title,
 > price, images), and the owner can choose, send and frame the image of each item (on a volume or in S3, through imgproxy).
 > The app installs on a phone, and a wish comes in from the share menu of any app (a Shortcut on iPhone).
 
@@ -47,16 +48,17 @@ server, not hidden in the page.
   <img src="docs/images/app-lists.png" alt="The management app: a greeting, the quick add field and two lists" width="640">
 </p>
 
-|                         |                                                                          |
-| ----------------------- | ------------------------------------------------------------------------ |
-| 🤫 **Nothing spoiled**  | No amount, name or progress shown to the owner, link previews included.  |
-| 🎁 **Gifts together**   | Several contributions per item, across events, overshoot allowed.        |
-| 📅 **Lists and events** | Durable lists, recurring events, series of books, recurring wishes.      |
-| 👵 **For every age**    | Large touch targets, no password, an item added in under five seconds.   |
-| 📱 **On the phone**     | Installs like an app; « Partager » from any shop adds a wish.            |
-| ⚡ **Light**            | Little JavaScript, quick on a modest phone.                              |
-| 🏠 **Self-hosted**      | Four images, one Helm chart (PostgreSQL included, or yours), a REST API. |
-| 📈 **Observable**       | Prometheus metrics and a ServiceMonitor, with nothing that spoils.       |
+|                          |                                                                          |
+| ------------------------ | ------------------------------------------------------------------------ |
+| 🤫 **Nothing spoiled**   | No amount, name or progress shown to the owner, link previews included.  |
+| 🎁 **Gifts together**    | Several contributions per item, across events, overshoot allowed.        |
+| 🔎 **Private or public** | Private lists by link only; public ones found from the home page.        |
+| 📅 **Lists and events**  | Durable lists, recurring events, series of books, recurring wishes.      |
+| 👵 **For every age**     | Large touch targets, no password, an item added in under five seconds.   |
+| 📱 **On the phone**      | Installs like an app; « Partager » from any shop adds a wish.            |
+| ⚡ **Light**             | Little JavaScript, quick on a modest phone.                              |
+| 🏠 **Self-hosted**       | Four images, one Helm chart (PostgreSQL included, or yours), a REST API. |
+| 📈 **Observable**        | Prometheus metrics and a ServiceMonitor, with nothing that spoils.       |
 
 ## Quick start
 
