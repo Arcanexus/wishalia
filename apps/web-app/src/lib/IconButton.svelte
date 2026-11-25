@@ -31,7 +31,8 @@
 
 <span class="wrap" class:hidden>
   {#if href}
-    <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller resolves it -->
+    <!-- The caller resolves the address -->
+    <!-- eslint-disable svelte/no-navigation-without-resolve -->
     <a
       class="button secondary icon"
       {href}
@@ -44,6 +45,7 @@
         {#each ICONS[icon] as d (d)}<path {d} />{/each}
       </svg>
     </a>
+    <!-- eslint-enable svelte/no-navigation-without-resolve -->
   {:else}
     <button
       type="submit"
