@@ -59,9 +59,14 @@ The API is internal: only the two frontends reach it, server side, and a Network
   cannot be probed. Stored links are cleaned and limited to `http(s)`. Errors never carry details.
 - Personal access tokens: only their SHA-256 hash is stored, they always expire (a year at most),
   can be read-only, revoked, and are rate limited per token.
-- Share links: only the SHA-256 hash of a token is stored, so a database leak opens no list. The
-  token travels in a header (`X-Share-Token`) between the public view and the API, never in an API
-  URL. The withdraw key of a contribution is stored the same way.
+- Share links: only the SHA-256 hash of a token is stored, so a database leak opens no private list.
+  The token travels in a header (`X-Share-Token`) between the public view and the API, never in an
+  API URL. The withdraw key of a contribution is stored the same way.
+- Public lists: a list is private unless its owner makes it public, and the home page's search only
+  ever reads the public ones. A public list's open link is the only token kept in clear, since its
+  address is public by design; it opens nothing once the list is private or archived. Through it,
+  nobody else's name is shown, and gifts are limited to 5 a minute per address. The search gives
+  names and counts only, never anything about a gift, and pages stay `noindex`.
 - Images: the worker fetches a page's images through the same SSRF guard as the page, and every
   image (the page's or the owner's) is read from its bytes: JPEG, PNG, WebP, GIF, AVIF or HEIC only,
   never SVG, 10 MB and 50 megapixels at most. Browsers only get signed imgproxy paths, served on

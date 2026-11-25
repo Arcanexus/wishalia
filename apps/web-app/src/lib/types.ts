@@ -17,6 +17,10 @@ export interface List {
   theme: "neutral" | "christmas" | null;
   revealMode: "received" | "manual";
   secretLifted: boolean;
+  /** Private: share links only. Public: the home page's search finds it, anyone may take part. */
+  visibility: "private" | "public";
+  /** The open link of a public list, null while private. */
+  openUrl: string | null;
   itemCount: number;
   createdAt: string;
   archivedAt: string | null;

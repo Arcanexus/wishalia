@@ -1,11 +1,13 @@
 import { schema } from "@wishalia/db";
-import { and, asc, count, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
 import { first, HttpError, notFound, parse, userId } from "../../http.js";
+import type { Tx } from "../../history.js";
 import { imagesOf } from "../../images.js";
-import type { ManageDeps } from "./index.js";
+import { hashToken, newToken } from "../../tokens.js";
+import type { ListDeps } from "./index.js";
 import { ownerItem, ownerList } from "./serialize.js";
 
 export const listInput = z.object({ name: z.string().trim().min(1).max(100) });
@@ -18,6 +20,8 @@ export const listPatch = z
     theme: z.enum(["neutral", "christmas"]).nullable(),
     /** How the secret of the contributions without an event lifts (frozen once lifted). */
     revealMode: z.enum(["received", "manual"]),
+    /** Private: share links only. Public: the home page's search finds it, anyone may take part. */
+    visibility: z.enum(["private", "public"]),
   })
   .partial()
   .strict();
@@ -28,7 +32,72 @@ export const orderInput = z.object({ itemIds: z.array(z.uuid()).min(1).max(1000)
 /** The default list of a new owner, created by the first quick add. */
 export const DEFAULT_LIST_NAME = "Mes envies";
 
-export const listRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now, images }) => {
+/** Who an open link is for, as the guests' page greets them. */
+export const OPEN_LINK_AUDIENCE = "tout le monde";
+
+/** Where a guest opens a share link: the public host, then the token. */
+export const SHARE_PATH = "/s/";
+
+const openLinkOf = (listId: string) =>
+  and(
+    eq(schema.shareLinks.listId, listId),
+    isNotNull(schema.shareLinks.openToken),
+    isNull(schema.shareLinks.revokedAt),
+  );
+
+/**
+ * Turns a list public or private. Public: it gets an open link, the address the home page's
+ * search gives (kept if it has one). Private: its open link is revoked, so that the address stops
+ * working at once; the links per guest or group are left as they are.
+ */
+async function setVisibility(
+  tx: Tx,
+  list: { id: string; ownerId: string },
+  visibility: "private" | "public",
+  at: Date,
+) {
+  if (visibility === "private") {
+    await tx.update(schema.shareLinks).set({ revokedAt: at }).where(openLinkOf(list.id));
+    return;
+  }
+  const [open] = await tx
+    .select({ id: schema.shareLinks.id })
+    .from(schema.shareLinks)
+    .where(openLinkOf(list.id));
+  if (open) return;
+  const token = newToken();
+  await tx.insert(schema.shareLinks).values({
+    ownerId: list.ownerId,
+    tokenHash: hashToken(token),
+    openToken: token,
+    scope: "list",
+    listId: list.id,
+    audience: OPEN_LINK_AUDIENCE,
+  });
+}
+
+export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, images, publicOrigin }) => {
+  /** List id → the address of its open link, for the public lists among them. */
+  const openUrls = async (listIds: string[]) => {
+    const urls = new Map<string, string>();
+    if (listIds.length === 0) return urls;
+    const rows = await db
+      .select({ listId: schema.shareLinks.listId, token: schema.shareLinks.openToken })
+      .from(schema.shareLinks)
+      .where(
+        and(
+          inArray(schema.shareLinks.listId, listIds),
+          isNotNull(schema.shareLinks.openToken),
+          isNull(schema.shareLinks.revokedAt),
+        ),
+      );
+    for (const row of rows) {
+      if (row.listId && row.token)
+        urls.set(row.listId, new URL(`${SHARE_PATH}${row.token}`, publicOrigin).toString());
+    }
+    return urls;
+  };
+
   /** The owner's lists, in their order, with the number of open items. */
   app.get("/lists", async (request) => {
     const ownerId = userId(request);
@@ -42,7 +111,10 @@ export const listRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now,
       .where(and(eq(schema.wishLists.ownerId, ownerId), isNull(schema.wishLists.archivedAt)))
       .groupBy(schema.wishLists.id)
       .orderBy(asc(schema.wishLists.position), asc(schema.wishLists.createdAt));
-    return rows.map((row) => ownerList(row.list, row.items));
+    const urls = await openUrls(
+      rows.filter((row) => row.list.visibility === "public").map((row) => row.list.id),
+    );
+    return rows.map((row) => ownerList(row.list, row.items, urls.get(row.list.id) ?? null));
   });
 
   app.post("/lists", async (request, reply) => {
@@ -58,7 +130,7 @@ export const listRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now,
         })
         .returning(),
     );
-    return reply.status(201).send(ownerList(list, 0));
+    return reply.status(201).send(ownerList(list, 0, null));
   });
 
   app.patch("/lists/:listId", async (request) => {
@@ -72,19 +144,25 @@ export const listRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now,
         throw new HttpError(409, "secret_already_lifted");
       }
     }
-    const [list] = await db
-      .update(schema.wishLists)
-      .set({
-        ...(patch.name !== undefined ? { name: patch.name } : {}),
-        ...(patch.position !== undefined ? { position: patch.position } : {}),
-        ...(patch.archived !== undefined ? { archivedAt: patch.archived ? new Date() : null } : {}),
-        ...(patch.theme !== undefined ? { theme: patch.theme } : {}),
-        ...(patch.revealMode !== undefined ? { revealMode: patch.revealMode } : {}),
-      })
-      .where(mine)
-      .returning();
+    const list = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(schema.wishLists)
+        .set({
+          ...(patch.name !== undefined ? { name: patch.name } : {}),
+          ...(patch.position !== undefined ? { position: patch.position } : {}),
+          ...(patch.archived !== undefined ? { archivedAt: patch.archived ? new Date() : null } : {}),
+          ...(patch.theme !== undefined ? { theme: patch.theme } : {}),
+          ...(patch.revealMode !== undefined ? { revealMode: patch.revealMode } : {}),
+          ...(patch.visibility !== undefined ? { visibility: patch.visibility } : {}),
+        })
+        .where(mine)
+        .returning();
+      if (row && patch.visibility !== undefined) await setVisibility(tx, row, patch.visibility, now());
+      return row;
+    });
     if (!list) throw notFound();
-    return ownerList(list, 0);
+    const urls = list.visibility === "public" ? await openUrls([list.id]) : new Map<string, string>();
+    return ownerList(list, 0, urls.get(list.id) ?? null);
   });
 
   /**
@@ -127,9 +205,10 @@ export const listRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now,
     const [list] = await db.select().from(schema.wishLists).where(mine);
     if (!list) throw notFound();
     if (list.revealMode !== "manual") throw new HttpError(409, "reveal_on_received");
-    if (list.revealedAt) return ownerList(list, 0);
+    const urls = list.visibility === "public" ? await openUrls([list.id]) : new Map<string, string>();
+    if (list.revealedAt) return ownerList(list, 0, urls.get(list.id) ?? null);
     const row = first(await db.update(schema.wishLists).set({ revealedAt: now() }).where(mine).returning());
-    return ownerList(row, 0);
+    return ownerList(row, 0, urls.get(row.id) ?? null);
   });
 
   /** The items of a list, open ones first in their order, then received and archived ones. */

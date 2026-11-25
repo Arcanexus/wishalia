@@ -11,8 +11,32 @@ app, for a list or for an event (see [Management API](api.md#share-links)). The 
 `https://<public host>/s/<token>`; the public view then sends the token to the API in the
 `X-Share-Token` header, never in the URL, so that it stays out of the access logs.
 
-Every route but `GET /public/ping` needs a valid link. An unknown, revoked or expired link answers
+Every route but `GET /public/ping` and `GET /public/home` needs a valid link. An unknown, revoked or expired link answers
 `404 link_not_found`, the same in every case. The database only keeps the SHA-256 of the token.
+
+### The open link of a public list
+
+A list its owner made public (`visibility: public`, see [Management API](api.md#lists)) has one
+**open link**, for anyone: a share link like the others, whose token is also kept in clear
+(`share_links.open_token`), since its address is public by design and the home page gives it. It
+opens the list only while the list is public and not archived; turning the list private revokes it.
+Through it, `GET /public/view` answers `open: true` and `audience: "tout le monde"`, and names
+nobody else's gift (`giverNameShown`, `@wishalia/domain`): a stranger never learns who in the
+family gives. Gifts through an open link are limited to 5 a minute per address and per link
+(`429 rate_limited`, with `Retry-After`), so that nobody reserves a whole list in one go. The open
+link never shows in `GET /manage/share-links` and cannot be revoked there: the list's setting turns
+it on and off.
+
+## The home page
+
+`GET /public/home?q=` gives the public host's home page what it shows: who is signed in
+(`me.displayName`, from the shared session, or null) and the public lists, newest first, 24 at most
+(`more` when there are others). Each gives the list's name, its owner's name, how many wishes are
+open, and its open link's `path` (`/s/<token>`): never anything about a gift. `q` (200 characters
+at most, cut to 80) matches the start of the words of the owner's and the list's names, without
+case or accents (`searchWords`, `matchesSearch`); under two letters, every public list is given. A
+private list is never in the answer, whatever is searched. The answer is never cached
+(`Cache-Control: private, no-store`).
 
 ## Who is looking
 
@@ -50,6 +74,7 @@ amount nor its message: those stay with their author (`mine`).
 
 | Route                                      | Body                                                                                          | Answer                                                                   |
 | ------------------------------------------ | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `GET /public/home?q=`                      | No share link                                                                                 | Who is signed in, and the public lists (see above).                      |
 | `GET /public/view`                         |                                                                                               | The list or the event, its events and its items, with `funding` or null. |
 | `POST /public/items/:itemId/contributions` | `eventId`?, `amountCents` (pool), `units`? (quantity), `guestName`?, `message`?, `anonymous`? | `201`, the contribution and its `withdrawKey`, given once.               |
 | `DELETE /public/contributions/:id`         | header `X-Withdraw-Key`, or the session of its author                                         | `204`. Withdrawing twice changes nothing; anyone else gets `404`.        |

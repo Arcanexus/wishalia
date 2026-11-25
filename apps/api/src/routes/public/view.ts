@@ -3,6 +3,7 @@ import {
   canSeeContributions,
   cents,
   fundingByEvent,
+  giverNameShown,
   isSecretLifted,
   itemState,
   overshoot,
@@ -197,9 +198,9 @@ function publicFunding(
   list: ListRow | undefined,
   events: EventRow[],
   contributions: ContributionRow[],
-  context: { viewer: ViewerRole; sessionUserId: string | null; now: Date; eventId?: string },
+  context: { viewer: ViewerRole; sessionUserId: string | null; now: Date; open: boolean; eventId?: string },
 ) {
-  const { viewer, sessionUserId, now, eventId } = context;
+  const { viewer, sessionUserId, now, open, eventId } = context;
   // Every secret that covers this item: its events, the events of its contributions, and the item
   // itself for the contributions without an event, or when it is in no event at all
   const relevant = new Map<string, SecretState>();
@@ -243,11 +244,20 @@ function publicFunding(
         }
       : { reservedUnits: reservedUnits(funding) }),
     ...(wish.repeatable ? { timesGiven: timesGiven(funding) } : {}),
-    // Names only, and none for an anonymous contribution: amounts and messages stay with their author
-    contributors: contributions.map((contribution) => ({
-      name: contribution.anonymous ? null : (contribution.contributorName ?? contribution.guestName),
-      mine: sessionUserId !== null && contribution.contributorId === sessionUserId,
-    })),
+    // Names only, none for an anonymous contribution, and only one's own on an open link: amounts
+    // and messages stay with their author
+    contributors: contributions.map((contribution) => {
+      const mine = sessionUserId !== null && contribution.contributorId === sessionUserId;
+      return {
+        name: giverNameShown({
+          openLink: open,
+          anonymous: contribution.anonymous,
+          mine,
+          name: contribution.contributorName ?? contribution.guestName,
+        }),
+        mine,
+      };
+    }),
     mine: contributions
       .filter((contribution) => sessionUserId !== null && contribution.contributorId === sessionUserId)
       .map((contribution) => ({
@@ -280,7 +290,7 @@ export const viewRoutes: FastifyPluginAsync<{
   images: Images | null;
 }> = async (app, { db, now, images }) => {
   app.get("/view", async (request) => {
-    const { link, viewer, sessionUser } = shareOf(request);
+    const { link, open, viewer, sessionUser } = shareOf(request);
     const at = now();
     const data = await loadView(db, link);
     const pictures = await imagesOf(db, images, data.items);
@@ -291,6 +301,8 @@ export const viewRoutes: FastifyPluginAsync<{
 
     return {
       audience: link.audience,
+      // The open link of a public list: the page greets everyone, and names nobody else
+      open,
       scope: link.scope,
       viewer,
       owner: { displayName: data.ownerName },
@@ -326,6 +338,7 @@ export const viewRoutes: FastifyPluginAsync<{
               viewer,
               sessionUserId: sessionUser?.id ?? null,
               now: at,
+              open,
               ...(eventId ? { eventId } : {}),
             },
           ),

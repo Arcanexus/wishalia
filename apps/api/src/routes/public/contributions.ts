@@ -5,6 +5,7 @@ import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
 import { recordHistory } from "../../history.js";
+import type { RateLimiter } from "../../rate-limit.js";
 import { first, HttpError, notFound, parse } from "../../http.js";
 import { hashToken, isWellFormedToken, newToken } from "../../tokens.js";
 import { itemSecret, revealState } from "../../secrets.js";
@@ -31,12 +32,21 @@ const contributionParams = z.object({ contributionId: z.uuid() });
  * with or without an account. Every one writes a sealed history entry in its own transaction. The
  * owner never contributes to their own items, and is never told of a contribution.
  */
-export const contributionRoutes: FastifyPluginAsync<{ db: Database; now: () => Date }> = async (
-  app,
-  { db, now },
-) => {
+export const contributionRoutes: FastifyPluginAsync<{
+  db: Database;
+  now: () => Date;
+  /** Counts the gifts made through open links, per link and address. */
+  openLinkLimiter: RateLimiter;
+}> = async (app, { db, now, openLinkLimiter }) => {
   app.post("/items/:itemId/contributions", async (request, reply) => {
-    const { link, viewer, sessionUser } = shareOf(request);
+    const { link, open, viewer, sessionUser } = shareOf(request);
+    if (open) {
+      const limit = openLinkLimiter.hit(`${link.id}:${request.ip}`, now());
+      if (!limit.allowed) {
+        reply.header("retry-after", limit.resetSeconds);
+        throw new HttpError(429, "rate_limited");
+      }
+    }
     const { itemId } = parse(itemParams, request.params);
     const input = parse(contributionInput, request.body);
     if (viewer === "owner") throw new HttpError(403, "owner_cannot_contribute");
