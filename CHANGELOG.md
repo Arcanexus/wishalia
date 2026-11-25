@@ -18,7 +18,6 @@ All notable changes to this project are documented here. The format follows
   links already in the list are not added twice, and the worker completes the rest from the links.
   API: `POST /manage/imports/preview` and `POST /manage/imports`. Chart: the management app's form
   limit is `3M` when images are off (it was the 512 KB default).
-
 - An item waiting for its link to be read shows it at a glance: a turning icon with « Lecture du
   lien… » and, with images on, an empty frame where its image will go (both still for those who ask
   for less motion). The
