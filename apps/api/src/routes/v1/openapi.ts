@@ -280,6 +280,18 @@ export function openApiDocument(config: Config) {
           responses: { 200: json(ref("Item")) },
         },
       },
+      "/items/{itemId}/image/upload": {
+        parameters: [uuidParam("itemId")],
+        delete: {
+          summary:
+            "Remove the image the owner sent: the page's first image is shown instead, and the link is read again",
+          responses: {
+            200: json(ref("Item")),
+            404: json(ref("Error"), "No image sent for this item"),
+            503: json(ref("Error"), "Images are off on this server"),
+          },
+        },
+      },
       "/events": {
         get: { summary: "The events, by date", responses: { 200: json(list("Event")) } },
         post: {

@@ -26,6 +26,9 @@ Each item of a list has an **Image** button. Its page has, in this order:
   JPEG, PNG, WebP, GIF, AVIF or HEIC, 10 MB at most. A photo over 1.5 MB is made lighter on the
   device before it leaves (2 048 px on its longest side, JPEG): quicker on a weak connection, and the
   browser drops its EXIF data on the way. Sending a new image replaces the previous one sent.
+  « Retirer votre image » erases it for good (the file too): the item goes back to the page's first
+  image at once, and Wishalia reads the link again for fresh ones (without a link, the item has no
+  image). « Ne plus afficher d'image » only hides it, to choose it again later.
 
 Every change writes an `image_changed` entry to the item's history (owner only).
 

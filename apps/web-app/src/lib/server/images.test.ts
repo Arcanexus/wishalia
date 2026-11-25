@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { fakeApi, fakeEvent, json } from "../../test/event.ts";
-import { chooseImage, cropImage, removeImage, uploadImage } from "./images.ts";
+import { chooseImage, cropImage, forgetUpload, removeImage, uploadImage } from "./images.ts";
 
 const ITEM = "0b6f8a4e-6a52-4a6c-9a39-6f4f3c0b9a11";
 const IMAGE = "4f1f3f2e-1c2d-4e5f-8a9b-0c1d2e3f4a5b";
@@ -94,6 +94,25 @@ describe("chooseImage, cropImage, removeImage", () => {
     expect(await cropImage(fakeEvent({ form: { whole: "1" } }).event, ITEM)).toMatchObject({ status: 503 });
     expect(await chooseImage(fakeEvent({ form: { imageId: IMAGE } }).event, ITEM)).toMatchObject({
       status: 503,
+    });
+  });
+});
+
+describe("forgetUpload", () => {
+  it("removes the owner's image, and says whether the link brings the page's back", async () => {
+    let url: string | null = "https://shop.example.com/lampe";
+    const api = fakeApi({ [`DELETE ${path}/upload`]: () => json({ id: ITEM, url }) });
+    expect(await forgetUpload(fakeEvent({}).event, ITEM)).toEqual({ image: { done: "forgotten" } });
+    expect(api.calls[0]?.method).toBe("DELETE");
+    url = null;
+    expect(await forgetUpload(fakeEvent({}).event, ITEM)).toEqual({ image: { done: "forgotten_no_link" } });
+  });
+
+  it("words the API's refusal", async () => {
+    fakeApi({ [`DELETE ${path}/upload`]: () => json({ error: "no_upload" }, 404) });
+    expect(await forgetUpload(fakeEvent({}).event, ITEM)).toMatchObject({
+      status: 404,
+      data: { image: { error: "no_upload" } },
     });
   });
 });
