@@ -38,6 +38,8 @@ ConfigMap and loads the sensitive ones from `existingSecret`. Nothing is hard-co
 | `SMTP_URL`                       | the API                                | `smtp://user:password@host:587` (STARTTLS) or `smtps://...:465`. Unset: no magic links, passkeys and OIDC only.                                                   |
 | `S3_ACCESS_KEY`, `S3_SECRET_KEY` | the API, the worker, imgproxy          | The keys of the images' bucket, with `images.storage: s3`.                                                                                                        |
 | `IMGPROXY_KEY`, `IMGPROXY_SALT`  | the API, imgproxy                      | Hex, 32 characters or more each (`openssl rand -hex 32`): the API signs the thumbnail paths, imgproxy checks them.                                                |
+| `GARAGE_ADMIN_TOKEN`             | Garage, its console                    | With `images.garage.ui.enabled`: hex, 64 characters (`openssl rand -hex 32`), Garage's administration token.                                                      |
+| `GARAGE_UI_OIDC_CLIENT_SECRET`   | the Garage console                     | With `images.garage.ui.oidc.enabled`: the client secret of the console at your OIDC provider.                                                                     |
 | `GARAGE_RPC_SECRET`              | Garage                                 | With `images.garage.enabled`: hex, 64 characters (`openssl rand -hex 32`). `S3_ACCESS_KEY` is then `GK` and 32 hex characters, `S3_SECRET_KEY` 64 hex characters. |
 
 The API refuses to start when a variable is invalid, and lists every problem at once.

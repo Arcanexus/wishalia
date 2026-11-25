@@ -156,6 +156,45 @@ jobs:
             echo "::error::the chart deployed PostgreSQL next to an existing database"
             exit 1
           fi
+      - name: The Garage console, optional
+        run: |
+          g="--set images.enabled=true --set existingSecret=s --set images.storage=s3 --set images.garage.enabled=true"
+          if helm template t charts/wishalia $g | grep -q garage-ui; then
+            echo "::error::the Garage console rendered while images.garage.ui.enabled is off"
+            exit 1
+          fi
+          ui="$g --set images.garage.ui.enabled=true"
+          # Garage gets its admin token, its Service the admin port, its NetworkPolicy the console
+          helm template t charts/wishalia $ui --show-only templates/garage.yaml > garage.yaml
+          yq -e 'select(.kind == "StatefulSet") | .spec.template.spec.containers[0].env[] | select(.name == "GARAGE_ADMIN_TOKEN") | .valueFrom.secretKeyRef.key == "GARAGE_ADMIN_TOKEN"' garage.yaml > /dev/null
+          yq -e 'select(.kind == "Service") | .spec.ports[] | select(.name == "admin") | .port == 3903' garage.yaml > /dev/null
+          yq -e 'select(.kind == "NetworkPolicy") | .spec.ingress[1].from[0].podSelector.matchLabels."app.kubernetes.io/component" == "garage-ui"' garage.yaml > /dev/null
+          # Without OIDC: token sign-in, no ingress without a host
+          helm template t charts/wishalia $ui --show-only templates/garage-ui.yaml > ui.yaml
+          yq -e 'select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select(.name == "GARAGE_UI_AUTH_TOKEN_ENABLED") | .value == "true"' ui.yaml > /dev/null
+          if yq -e 'select(.kind == "Ingress")' ui.yaml > /dev/null 2>&1; then
+            echo "::error::the Garage console got an ingress without a host"
+            exit 1
+          fi
+          # With OIDC and a host: its own Ingress, the secret from existingSecret, no token sign-in
+          oidc="$ui --set images.garage.ui.host=garage.example.com --set images.garage.ui.oidc.enabled=true --set images.garage.ui.oidc.issuer=https://idp.example.com/ --set images.garage.ui.oidc.clientId=g"
+          helm template t charts/wishalia $oidc --show-only templates/garage-ui.yaml > ui.yaml
+          yq -e 'select(.kind == "Ingress") | .spec.rules[0].host == "garage.example.com"' ui.yaml > /dev/null
+          yq -e 'select(.kind == "Deployment") | .spec.template.spec.containers[0].env[] | select(.name == "GARAGE_UI_AUTH_OIDC_CLIENT_SECRET") | .valueFrom.secretKeyRef.key == "GARAGE_UI_OIDC_CLIENT_SECRET"' ui.yaml > /dev/null
+          if grep -q GARAGE_UI_AUTH_TOKEN_ENABLED ui.yaml; then
+            echo "::error::token sign-in left on with OIDC"
+            exit 1
+          fi
+          # Refused: without Garage, OIDC without a host, a host of Wishalia
+          for bad in "--set images.garage.enabled=false --set images.storage=volume" \
+                     "--set images.garage.ui.oidc.enabled=true --set images.garage.ui.oidc.issuer=https://idp/ --set images.garage.ui.oidc.clientId=g" \
+                     "--set images.garage.ui.host=wishalia.example.com"; do
+            if helm template t charts/wishalia $ui $bad > /dev/null 2>&1; then
+              echo "::error::the chart rendered the Garage console with $bad"
+              exit 1
+            fi
+          done
+
       - name: Volume permissions for drivers without fsGroup (NFS)
         run: |
           vp="--set volumePermissions.enabled=true --set images.enabled=true --set existingSecret=s"

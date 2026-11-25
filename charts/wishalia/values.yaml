@@ -160,6 +160,31 @@ images:
     resources:
       requests: { cpu: 25m, memory: 64Mi }
       limits: { memory: 256Mi }
+    # Garage UI (https://github.com/Noooste/garage-ui): a web console for this Garage (browse the
+    # images, the keys, the node). existingSecret then also holds GARAGE_ADMIN_TOKEN (openssl rand
+    # -hex 32), Garage's administration token, which the console uses.
+    ui:
+      enabled: false
+      image:
+        repository: noooste/garage-ui
+        tag: v0.14.0
+        pullPolicy: IfNotPresent
+      # Its own host, through the chart's ingress settings (ingress.className and annotations), e.g.
+      # garage.wishalia.example.com. Empty: no ingress (kubectl port-forward on its Service, 8080).
+      host: ""
+      # TLS secret of that host
+      tlsSecretName: ""
+      # Sign-in with your OIDC provider (needs host). Off: the sign-in page asks for the admin
+      # token. The client secret goes in existingSecret: GARAGE_UI_OIDC_CLIENT_SECRET. Redirect
+      # URI: https://<host>/auth/oidc/callback
+      oidc:
+        enabled: false
+        issuer: ""
+        clientId: ""
+        name: SSO
+      resources:
+        requests: { cpu: 10m, memory: 32Mi }
+        limits: { memory: 128Mi }
   # Largest request of the management app (adapter-node BODY_SIZE_LIMIT): an image is 10 MB at most
   uploadLimit: 12M
   imgproxy:

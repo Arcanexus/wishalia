@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-11-25
+
+### Added
+
+- An optional web console for the chart's Garage, [Garage UI](https://github.com/Noooste/garage-ui)
+  (`images.garage.ui.enabled`, off by default): browse the images in the bucket, its key and the
+  node. Sign-in with your OIDC provider, or with Garage's admin token; its own host on the ingress,
+  or none (port-forward). Garage then takes an administration token (`GARAGE_ADMIN_TOKEN`), which
+  only the console may use (NetworkPolicy). See [Images](docs/images.md#its-console-garage-ui).
+
 ## [0.0.1] - 2026-11-24
 
 The first release: images `ghcr.io/arcanexus/wishalia-{api,worker,web-app,web-public}:0.0.1` and

@@ -1,6 +1,6 @@
 {
   "name": "@wishalia/domain",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "type": "module",
   "description": "Pure business rules: amounts, funding, anti-spoil.",
