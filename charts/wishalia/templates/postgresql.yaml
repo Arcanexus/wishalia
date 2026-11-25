@@ -96,14 +96,20 @@ spec:
           {{- $ready := printf "pg_isready -h 127.0.0.1 -U %s -d %s" $pg.auth.username $pg.auth.database }}
           startupProbe:
             exec: { command: ["sh", "-c", {{ $ready | quote }}] }
+            # On a slow volume (NFS) the default second is not always enough
+            timeoutSeconds: 5
             periodSeconds: 5
             failureThreshold: 60
           livenessProbe:
             exec: { command: ["sh", "-c", {{ $ready | quote }}] }
+            # On a slow volume (NFS) the default second is not always enough
+            timeoutSeconds: 5
             periodSeconds: 20
             failureThreshold: 6
           readinessProbe:
             exec: { command: ["sh", "-c", {{ $ready | quote }}] }
+            # On a slow volume (NFS) the default second is not always enough
+            timeoutSeconds: 5
             periodSeconds: 10
             failureThreshold: 3
           resources:
