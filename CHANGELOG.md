@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The Garage console starts with OIDC on: the chart now gives it scopes, `openid`, `profile` and
+  `email` by default (`images.garage.ui.oidc.scopes`); garage-ui stopped with « oidc scopes are
+  required ». `GARAGE_UI_AUTH_OIDC_SCOPES` in `images.garage.ui.env` still wins.
+
 ## [0.0.2] - 2026-11-25
 
 ### Added

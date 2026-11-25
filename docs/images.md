@@ -130,6 +130,8 @@ state. It is off by default.
   With OIDC, garage-ui needs to know who may sign in, or it does not start: give it in
   `images.garage.ui.env`, the claim listing a person's groups and the groups allowed in. Everyone
   else is refused, even when the provider lets them through; those who get in may do everything.
+  The chart asks for the scopes `openid`, `profile` and `email` (`images.garage.ui.oidc.scopes`):
+  the groups claim must come with one of them, which `profile` does with Authentik.
 
   ```yaml
   images:

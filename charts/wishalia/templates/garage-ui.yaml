@@ -89,6 +89,13 @@ spec:
               value: {{ $ui.oidc.issuer | quote }}
             - name: GARAGE_UI_AUTH_OIDC_CLIENT_ID
               value: {{ $ui.oidc.clientId | quote }}
+            {{- if not (hasKey ($ui.env | default dict) "GARAGE_UI_AUTH_OIDC_SCOPES") }}
+            {{- if not $ui.oidc.scopes }}
+            {{- fail "images.garage.ui.oidc.scopes must list at least one scope: garage-ui does not start without" }}
+            {{- end }}
+            - name: GARAGE_UI_AUTH_OIDC_SCOPES
+              value: {{ join "," $ui.oidc.scopes | quote }}
+            {{- end }}
             - name: GARAGE_UI_AUTH_OIDC_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:

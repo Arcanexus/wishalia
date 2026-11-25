@@ -182,6 +182,9 @@ images:
         issuer: ""
         clientId: ""
         name: SSO
+        # Scopes asked of the provider; the groups claim must come with one of them (authentik:
+        # "profile"). GARAGE_UI_AUTH_OIDC_SCOPES in env takes precedence.
+        scopes: [openid, profile, email]
       # Extra settings of garage-ui, as GARAGE_UI_* variables. With OIDC, garage-ui needs to know
       # who may sign in, or it does not start: the claim listing a person's groups and the groups
       # allowed in (any of them, comma-separated), e.g.
