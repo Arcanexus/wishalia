@@ -25,7 +25,8 @@ export const app: AppMessages = {
     nothing: "Nothing arrived? Look in your spam folder, or start again.",
     again: "Start again",
     signedOut: "You are signed out. See you soon!",
-    linkFailed: "This sign-in link no longer works. It may have been used already or expired: ask for a new one.",
+    linkFailed:
+      "This sign-in link no longer works. It may have been used already or expired: ask for a new one.",
     errors: {
       invalid_email: "This email address does not look complete. Check it, for example mary@example.com.",
       too_many: "Too many requests at once. Wait a minute, then try again.",
@@ -114,7 +115,8 @@ export const app: AppMessages = {
     everyOccasion: "At every occasion",
     newTab: " (new tab)",
     reading: "Reading the link…",
-    readingWhat: (images) => `The title, the price${images ? " and the images" : ""} are on their way from the page.`,
+    readingWhat: (images) =>
+      `The title, the price${images ? " and the images" : ""} are on their way from the page.`,
     unreadable: "Unreadable link",
     unreadableHelp:
       "The page couldn't be read: try again with the “Reload” button (the arrows), or complete the wish with “Edit”.",
@@ -160,7 +162,10 @@ export const app: AppMessages = {
     howMany: "How many copies?",
     target: "Goal of the kitty, in euros (optional)",
     targetPlaceholder: "For example 320",
-    repeatable: { name: "At every occasion", help: "It can be given again and again, like a good hot chocolate." },
+    repeatable: {
+      name: "At every occasion",
+      help: "It can be given again and again, like a good hot chocolate.",
+    },
     price: "Price, in euros (optional)",
     list: "List",
     link: "Link (optional)",
@@ -187,7 +192,8 @@ export const app: AppMessages = {
     address: "Address of the public list",
     addressHelp: "Making the list private again cuts this address at once; your share links keep working.",
     theme: "Theme",
-    themeHelp: "The forced theme applies to everyone who opens the list; light or dark mode stays each person's own.",
+    themeHelp:
+      "The forced theme applies to everyone who opens the list; light or dark mode stays each person's own.",
     themes: {
       none: { name: "Each person's own", help: "Everyone sees the list in their own theme." },
       neutral: { name: "Neutral", help: "Slate, garnet and linen, in every season." },
@@ -196,8 +202,14 @@ export const app: AppMessages = {
     reveal: "Gifts given with no occasion",
     revealHelp:
       "A relative can give a wish from this list outside any event. When do you find out who gave it?",
-    revealReceived: { name: "When I mark the wish received", help: "Each wish's secret lifts when it is received." },
-    revealManual: { name: "When I decide", help: "You lift the secret of the whole list at once, whenever you like." },
+    revealReceived: {
+      name: "When I mark the wish received",
+      help: "Each wish's secret lifts when it is received.",
+    },
+    revealManual: {
+      name: "When I decide",
+      help: "You lift the secret of the whole list at once, whenever you like.",
+    },
     save: "Save",
     secret: "The secret",
     lifted: "This list's secret is lifted.",
@@ -268,7 +280,8 @@ export const app: AppMessages = {
     sending: "Sending…",
     sendFile: (name) => `Send “${name}”`,
     send: "Send the image",
-    forgetWithLink: "Your image is deleted, and the wish takes back the image of the link's page: the app reads the page again.",
+    forgetWithLink:
+      "Your image is deleted, and the wish takes back the image of the link's page: the app reads the page again.",
     forgetNoLink: "Your image is deleted. Without a link, the wish will have no image.",
     forget: "Remove your image",
   },
@@ -394,7 +407,10 @@ export const app: AppMessages = {
     nameHelp: "This is what your family sees.",
     theme: "Theme",
     themes: {
-      auto: { name: "Automatic", help: "Christmas in December and for Christmas lists, neutral the rest of the year." },
+      auto: {
+        name: "Automatic",
+        help: "Christmas in December and for Christmas lists, neutral the rest of the year.",
+      },
       neutral: { name: "Neutral", help: "Slate, garnet and linen, all year round." },
       christmas: { name: "Christmas", help: "Fir, holly and gold, all year round." },
     },
@@ -544,7 +560,8 @@ export const app: AppMessages = {
     },
     errors: {
       empty_address: "Paste the address of the Wishlistr list, for example “wishlistr.com/alex”.",
-      invalid_address: "This is not the address of a Wishlistr list. It looks like “https://www.wishlistr.com/alex/”.",
+      invalid_address:
+        "This is not the address of a Wishlistr list. It looks like “https://www.wishlistr.com/alex/”.",
       remote_not_found: "Wishlistr can't find this list. Check the address, and that the list is public.",
       remote_unreachable: "Wishlistr isn't answering right now. Try again in a few minutes.",
       not_a_wishlistr_list: "This Wishlistr page is not a wishlist.",
@@ -562,7 +579,9 @@ export const app: AppMessages = {
     },
     failed: "The import didn't go through. Try again in a moment.",
     skippedEmpty: (n) =>
-      n === 1 ? "1 line with no title nor link is left out" : `${n} lines with no title nor link are left out`,
+      n === 1
+        ? "1 line with no title nor link is left out"
+        : `${n} lines with no title nor link are left out`,
     skippedOver: (n) => `${n} more go over the limit of 500 wishes per import`,
     skippedJoin: "; ",
     from: "Where do your wishes come from?",
@@ -580,7 +599,8 @@ export const app: AppMessages = {
     textHelp: "For example “Cookbook” or “https://…”. A list copied from Amazon, a note or an email will do.",
     reading: "Reading…",
     read: "See what will be imported",
-    found: (n, source) => `${n === 0 ? "No wishes found" : n === 1 ? "1 wish found" : `${n} wishes found`} in ${source}`,
+    found: (n, source) =>
+      `${n === 0 ? "No wishes found" : n === 1 ? "1 wish found" : `${n} wishes found`} in ${source}`,
     toImport: "The wishes to import",
     picked: (count, total) => `(${count} of ${total})`,
     all: "Tick all",

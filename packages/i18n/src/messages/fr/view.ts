@@ -18,7 +18,8 @@ export const view = {
   noneReserved: (wanted: number) => `${wanted} à offrir, aucun réservé pour l'instant.`,
   someReserved: (taken: number, wanted: number, who: string) =>
     `${taken} sur ${wanted} déjà réservé${taken > 1 ? "s" : ""}${who ? `, par ${who}` : ""}.`,
-  poolToStart: (target: string | null) => (target ? `Cagnotte de ${target}, à lancer.` : "Cagnotte à lancer."),
+  poolToStart: (target: string | null) =>
+    target ? `Cagnotte de ${target}, à lancer.` : "Cagnotte à lancer.",
   poolReached: (total: string, target: string | null) =>
     target ? `${total} réunis sur ${target}` : `${total} réunis`,
   poolOvershoot: (amount: string) => ` : objectif atteint, ${amount} en excédent`,

@@ -27,6 +27,18 @@ function shape(value: unknown, path: string, problems: string[]): Shape {
   return typeof value;
 }
 
+/** Every function of a catalog, with where it is. */
+function functions(value: unknown, path: string): [string, (...args: unknown[]) => unknown][] {
+  if (typeof value === "function") return [[path, value as (...args: unknown[]) => unknown]];
+  if (value && typeof value === "object") {
+    return Object.entries(value).flatMap(([key, child]) => functions(child, `${path}.${key}`));
+  }
+  return [];
+}
+
+/** Sample arguments: counts for the plurals, then words, then nothing at all. */
+const SAMPLES: unknown[] = [0, 1, 2, 12, "Léa", true, false, null];
+
 describe.each(Object.entries(CATALOGS))("the %s catalog", (_area, byLocale) => {
   const problems: string[] = [];
   const source = shape(byLocale("fr"), "fr", problems);
@@ -39,5 +51,16 @@ describe.each(Object.entries(CATALOGS))("the %s catalog", (_area, byLocale) => {
 
   it("leaves no French word empty", () => {
     expect(problems).toEqual([]);
+  });
+
+  it.each(LOCALES)("writes a sentence in %s for any count or name", (locale: Locale) => {
+    const empty: string[] = [];
+    for (const [path, write] of functions(byLocale(locale), locale)) {
+      for (const sample of SAMPLES) {
+        const text = write(...Array.from({ length: Math.max(1, write.length) }, () => sample));
+        if (typeof text !== "string" || !text.trim()) empty.push(`${path}(${String(sample)})`);
+      }
+    }
+    expect(empty).toEqual([]);
   });
 });

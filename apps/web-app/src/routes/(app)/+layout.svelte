@@ -33,7 +33,9 @@
       <a href={resolve("/(app)/evenements")} aria-current={section === "events" ? "page" : undefined}>
         {m.nav.events}
       </a>
-      <a href={resolve("/(app)/partage")} aria-current={section === "share" ? "page" : undefined}>{m.nav.share}</a>
+      <a href={resolve("/(app)/partage")} aria-current={section === "share" ? "page" : undefined}>
+        {m.nav.share}
+      </a>
       <a href={resolve("/(app)/reglages")} aria-current={section === "settings" ? "page" : undefined}>
         {m.nav.settings}
       </a>

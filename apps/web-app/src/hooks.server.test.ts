@@ -70,7 +70,9 @@ describe("hooks", () => {
   });
 
   it("speaks the chosen language, else the browser's, else DEFAULT_LOCALE", async () => {
-    const chosen = await handle(request("/", "/lang", 200, { "wishalia.locale": "en" }, { "accept-language": "fr" }));
+    const chosen = await handle(
+      request("/", "/lang", 200, { "wishalia.locale": "en" }, { "accept-language": "fr" }),
+    );
     expect(await chosen.text()).toBe('<html lang="en-GB">');
     expect(chosen.headers.get("content-language")).toBe("en-GB");
     const browser = await handle(request("/", "/lang", 200, {}, { "accept-language": "en-US,en;q=0.9" }));

@@ -30,7 +30,8 @@ export const app = {
     linkFailed:
       "Ce lien de connexion ne fonctionne plus. Il a peut-être déjà servi ou expiré : demandez-en un nouveau.",
     errors: {
-      invalid_email: "Cette adresse e-mail ne semble pas complète. Vérifiez-la, par exemple marie@exemple.fr.",
+      invalid_email:
+        "Cette adresse e-mail ne semble pas complète. Vérifiez-la, par exemple marie@exemple.fr.",
       too_many: "Trop de demandes d'un coup. Patientez une minute, puis réessayez.",
       unavailable: "La connexion est indisponible pour le moment. Réessayez dans quelques minutes.",
     } as Record<string, string>,
@@ -101,7 +102,8 @@ export const app = {
     settingsSaved: "Réglages de la liste enregistrés.",
     secretLifted: "Le secret de la liste est levé.",
     refreshAsked: (title: string) => `Rechargement de « ${title} » demandé.`,
-    saved: (title: string, moved: boolean) => `« ${title} » est enregistré${moved ? " et a changé de liste" : ""}.`,
+    saved: (title: string, moved: boolean) =>
+      `« ${title} » est enregistré${moved ? " et a changé de liste" : ""}.`,
     statusChanged: (title: string, status: string) =>
       `« ${title} » : ${status === "received" ? "reçu" : status === "archived" ? "archivé" : "remis dans la liste"}.`,
     wishes: (n: number) => `Envies (${n})`,
@@ -119,7 +121,8 @@ export const app = {
     everyOccasion: "À chaque occasion",
     newTab: " (nouvel onglet)",
     reading: "Lecture du lien…",
-    readingWhat: (images: boolean) => `Le titre, le prix${images ? " et les images" : ""} arrivent depuis la page.`,
+    readingWhat: (images: boolean) =>
+      `Le titre, le prix${images ? " et les images" : ""} arrivent depuis la page.`,
     unreadable: "Lien illisible",
     unreadableHelp:
       "La page n'a pas pu être lue : réessayez avec le bouton « Recharger » (les flèches), ou complétez l'envie avec « Modifier ».",
@@ -166,7 +169,10 @@ export const app = {
     howMany: "Combien d'exemplaires ?",
     target: "Objectif de la cagnotte, en euros (facultatif)",
     targetPlaceholder: "Par exemple 320",
-    repeatable: { name: "À chaque occasion", help: "On peut l'offrir encore et encore, comme un bon chocolat chaud." },
+    repeatable: {
+      name: "À chaque occasion",
+      help: "On peut l'offrir encore et encore, comme un bon chocolat chaud.",
+    },
     price: "Prix, en euros (facultatif)",
     list: "Liste",
     link: "Lien (facultatif)",
@@ -185,13 +191,17 @@ export const app = {
     failed: "Le changement n'a pas abouti. Réessayez dans un instant.",
     name: "Nom",
     visibility: "Qui peut voir la liste ?",
-    private: { name: "Privée", help: "Seules les personnes à qui vous envoyez un lien de partage la voient." },
+    private: {
+      name: "Privée",
+      help: "Seules les personnes à qui vous envoyez un lien de partage la voient.",
+    },
     public: {
       name: "Publique",
       help: "On la trouve depuis la page d'accueil, par votre nom ou celui de la liste, et tout le monde peut y participer. Les noms de ceux qui offrent n'y sont pas montrés.",
     },
     address: "Adresse de la liste publique",
-    addressHelp: "Repasser la liste en privée coupe cette adresse aussitôt ; vos liens de partage continuent de marcher.",
+    addressHelp:
+      "Repasser la liste en privée coupe cette adresse aussitôt ; vos liens de partage continuent de marcher.",
     theme: "Thème",
     themeHelp:
       "Le thème imposé s'applique à tous ceux qui ouvrent la liste ; le mode clair ou sombre reste celui de chacun.",
@@ -203,12 +213,19 @@ export const app = {
     reveal: "Les cadeaux faits sans occasion",
     revealHelp:
       "Un proche peut offrir une envie de cette liste en dehors de tout événement. Quand découvrez-vous qui l'a offerte ?",
-    revealReceived: { name: "Quand je marque l'envie reçue", help: "Le secret de chaque envie se lève à sa réception." },
-    revealManual: { name: "Quand je le décide", help: "Vous levez le secret de toute la liste d'un coup, quand vous voulez." },
+    revealReceived: {
+      name: "Quand je marque l'envie reçue",
+      help: "Le secret de chaque envie se lève à sa réception.",
+    },
+    revealManual: {
+      name: "Quand je le décide",
+      help: "Vous levez le secret de toute la liste d'un coup, quand vous voulez.",
+    },
     save: "Enregistrer",
     secret: "Le secret",
     lifted: "Le secret de cette liste est levé.",
-    liftHelp: "Une fois levé, vous voyez qui vous a offert quoi en dehors des événements. Ce choix est définitif.",
+    liftHelp:
+      "Une fois levé, vous voyez qui vous a offert quoi en dehors des événements. Ce choix est définitif.",
     liftConfirm: "Je veux voir qui m'a offert quoi",
     lift: "Lever le secret de la liste",
     archive: "Archiver la liste",
@@ -243,12 +260,14 @@ export const app = {
       whole: "L'image s'affiche entière.",
       removed: "L'envie n'a plus d'image.",
       forgotten: "Votre image est retirée : l'application relit la page du lien pour reprendre son image.",
-      forgotten_no_link: "Votre image est retirée. Ajoutez un lien à l'envie pour reprendre l'image de sa page.",
+      forgotten_no_link:
+        "Votre image est retirée. Ajoutez un lien à l'envie pour reprendre l'image de sa page.",
     } as Record<string, string>,
     errors: {
       no_file: "Choisissez d'abord une image sur votre appareil.",
       too_heavy: "Cette image pèse plus de 10 Mo. Choisissez-en une plus légère.",
-      not_an_image: "Ce fichier n'est pas une image que l'application sait lire (JPEG, PNG, WebP, GIF, AVIF ou HEIC).",
+      not_an_image:
+        "Ce fichier n'est pas une image que l'application sait lire (JPEG, PNG, WebP, GIF, AVIF ou HEIC).",
       image_too_large: "Cette image est trop grande. Choisissez-en une plus petite.",
       images_off: "Les images ne sont pas activées sur ce serveur.",
       no_image: "Choisissez d'abord une image.",
@@ -271,11 +290,13 @@ export const app = {
     show: "Afficher l'image choisie",
     upload: "Envoyer votre image",
     file: "Une photo ou une image de votre appareil",
-    fileHelp: "JPEG, PNG, WebP, GIF, AVIF ou HEIC, 10 Mo au plus. Sur un téléphone, vous pouvez aussi prendre une photo.",
+    fileHelp:
+      "JPEG, PNG, WebP, GIF, AVIF ou HEIC, 10 Mo au plus. Sur un téléphone, vous pouvez aussi prendre une photo.",
     sending: "Envoi…",
     sendFile: (name: string) => `Envoyer « ${name} »`,
     send: "Envoyer l'image",
-    forgetWithLink: "Votre image est effacée, et l'envie reprend l'image de la page du lien : l'application relit la page.",
+    forgetWithLink:
+      "Votre image est effacée, et l'envie reprend l'image de la page du lien : l'application relit la page.",
     forgetNoLink: "Votre image est effacée. Sans lien, l'envie n'aura plus d'image.",
     forget: "Retirer votre image",
   },
@@ -401,14 +422,20 @@ export const app = {
     nameHelp: "C'est ce que voient vos proches.",
     theme: "Thème",
     themes: {
-      auto: { name: "Automatique", help: "Noël en décembre et pour les listes de Noël, neutre le reste de l'année." },
+      auto: {
+        name: "Automatique",
+        help: "Noël en décembre et pour les listes de Noël, neutre le reste de l'année.",
+      },
       neutral: { name: "Neutre", help: "Ardoise, grenat et lin, toute l'année." },
       christmas: { name: "Noël", help: "Sapin, houx et or, toute l'année." },
     },
     mode: "Clair ou sombre",
     modes: { device: "Comme mon appareil", light: "Clair", dark: "Sombre" },
     language: "Langue",
-    languageAuto: { name: "Automatique", help: "La langue de votre navigateur, quand l'application la parle." },
+    languageAuto: {
+      name: "Automatique",
+      help: "La langue de votre navigateur, quand l'application la parle.",
+    },
     invalidName: "Écrivez un prénom ou un surnom, en 80 caractères au plus.",
     saved: "C'est enregistré.",
     save: "Enregistrer",
@@ -504,7 +531,11 @@ export const app = {
       after: " : l'envie arrive remplie, il reste à toucher « Ajouter à ma liste ».",
     },
     ios: "iPhone et iPad",
-    iosHome: { before: "Dans Safari, touchez ", share: "Partager", after: " puis « Sur l'écran d'accueil »." },
+    iosHome: {
+      before: "Dans Safari, touchez ",
+      share: "Partager",
+      after: " puis « Sur l'écran d'accueil ».",
+    },
     iosShortcut: (app: string) =>
       `Apple ne laisse pas les sites entrer dans le menu Partager : un raccourci le fait. Dans l'application Raccourcis, créez un raccourci « ${app} » :`,
     iosSteps: [
@@ -552,8 +583,10 @@ export const app = {
     } as Record<string, string>,
     errors: {
       empty_address: "Collez l'adresse de la liste Wishlistr, par exemple « wishlistr.com/alex ».",
-      invalid_address: "Ce n'est pas l'adresse d'une liste Wishlistr. Elle ressemble à « https://www.wishlistr.com/alex/ ».",
-      remote_not_found: "Wishlistr ne trouve pas cette liste. Vérifiez l'adresse, et que la liste est bien publique.",
+      invalid_address:
+        "Ce n'est pas l'adresse d'une liste Wishlistr. Elle ressemble à « https://www.wishlistr.com/alex/ ».",
+      remote_not_found:
+        "Wishlistr ne trouve pas cette liste. Vérifiez l'adresse, et que la liste est bien publique.",
       remote_unreachable: "Wishlistr ne répond pas pour l'instant. Réessayez dans quelques minutes.",
       not_a_wishlistr_list: "Cette page de Wishlistr n'est pas une liste d'envies.",
       rate_limited: "Beaucoup d'essais en peu de temps : attendez une minute avant de réessayer.",
@@ -570,7 +603,9 @@ export const app = {
     } as Record<string, string>,
     failed: "L'import n'a pas abouti. Réessayez dans un instant.",
     skippedEmpty: (n: number) =>
-      n === 1 ? "1 ligne sans titre ni lien est laissée de côté" : `${n} lignes sans titre ni lien sont laissées de côté`,
+      n === 1
+        ? "1 ligne sans titre ni lien est laissée de côté"
+        : `${n} lignes sans titre ni lien sont laissées de côté`,
     skippedOver: (n: number) => `${n} de plus dépassent la limite de 500 envies par import`,
     skippedJoin: " ; ",
     from: "D'où viennent vos envies ?",

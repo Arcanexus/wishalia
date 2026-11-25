@@ -217,8 +217,7 @@
           name="listName"
           maxlength="100"
           required={hydrated}
-          value={preview.listName ??
-            (preview.source === "wishlistr" ? m.defaultWishlistr : m.defaultName)}
+          value={preview.listName ?? (preview.source === "wishlistr" ? m.defaultWishlistr : m.defaultName)}
         />
       {/if}
 

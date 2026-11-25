@@ -42,7 +42,14 @@ const json = (payload: unknown, status = 200) =>
 
 function event(token = TOKEN, cookie?: string, jar: Record<string, string> = {}) {
   const headers: Record<string, string> = {};
-  const locals = { themeChoice: "auto", mode: "device", listTheme: null, christmas: false } as App.Locals;
+  const locals = {
+    themeChoice: "auto",
+    mode: "device",
+    listTheme: null,
+    christmas: false,
+    localeChoice: "auto",
+    locale: "fr",
+  } as App.Locals;
   const setHeaders = vi.fn();
   return {
     event: {
@@ -102,6 +109,14 @@ describe("the page of a share link", () => {
     expect(JSON.stringify(value?.meta)).not.toContain("Secret");
   });
 
+  it("titles it in the reader's language", async () => {
+    api(() => json(view()));
+    const english = event();
+    english.locals.locale = "en";
+    const { value } = await run(english.event);
+    expect(value?.meta.title).toBe("Wishalia · a wishlist");
+  });
+
   it("puts what is still to give first", async () => {
     const item = (id: string, state: "free" | "complete") => ({
       ...view().items[0],
@@ -144,11 +159,11 @@ describe("the page of a share link", () => {
 });
 
 describe("/preferences", () => {
-  const post = (retour: string, mode: App.Locals["mode"] = "device") => {
+  const post = (retour: string, mode: App.Locals["mode"] = "device", fields: Record<string, string> = {}) => {
     const set = vi.fn();
     const request = new Request("https://wishalia.test/preferences", {
       method: "POST",
-      body: new URLSearchParams({ retour }),
+      body: new URLSearchParams({ retour, ...fields }),
     });
     return {
       set,
@@ -175,5 +190,12 @@ describe("/preferences", () => {
         expect.objectContaining({ httpOnly: true, secure: true }),
       );
     }
+  });
+
+  it("keeps another language on the device, and leaves the mode alone", async () => {
+    const { set, input } = post(`/s/${TOKEN}`, "light", { langue: "en" });
+    await expect(preferences(input)).rejects.toMatchObject({ status: 303, location: `/s/${TOKEN}` });
+    expect(set).toHaveBeenCalledTimes(1);
+    expect(set).toHaveBeenCalledWith("wishalia.locale", "en", expect.objectContaining({ httpOnly: true }));
   });
 });

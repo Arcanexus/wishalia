@@ -1,13 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { formatters } from "./format.js";
-import {
-  defaultLocale,
-  negotiateLocale,
-  parseLocale,
-  parseLocaleChoice,
-  resolveLocale,
-} from "./locales.js";
+import { defaultLocale, negotiateLocale, parseLocale, parseLocaleChoice, resolveLocale } from "./locales.js";
 
 describe("locales", () => {
   it("reads a language code, whatever its region or case", () => {

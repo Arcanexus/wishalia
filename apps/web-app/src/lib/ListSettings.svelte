@@ -86,7 +86,9 @@
       {#each ["none", "neutral", "christmas"] as const as value (value)}
         <label class="choice">
           <input type="radio" name="theme" {value} checked={theme === value} />
-          <span><strong>{m.themes[value].name}</strong><span class="muted">{m.themes[value].help}</span></span>
+          <span>
+            <strong>{m.themes[value].name}</strong><span class="muted">{m.themes[value].help}</span>
+          </span>
         </label>
       {/each}
     </fieldset>

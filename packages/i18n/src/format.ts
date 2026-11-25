@@ -40,7 +40,12 @@ export function formatters(locale: Locale): Formatters {
   });
   const decimal = new Intl.NumberFormat(tag, { minimumFractionDigits: 2, useGrouping: false });
   const day = new Intl.DateTimeFormat(tag, { dateStyle: "full", timeZone: "UTC" });
-  const date = new Intl.DateTimeFormat(tag, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+  const date = new Intl.DateTimeFormat(tag, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
   const dateTime = new Intl.DateTimeFormat(tag, { dateStyle: "long", timeStyle: "short" });
   const list = new Intl.ListFormat(tag, { style: "long", type: "conjunction" });
   const number = new Intl.NumberFormat(tag, { maximumFractionDigits: 0 });

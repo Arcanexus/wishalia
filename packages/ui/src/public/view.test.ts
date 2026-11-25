@@ -278,11 +278,15 @@ describe("in English", () => {
 
   it("says where an item stands", () => {
     const paul = [{ name: "Paul", mine: false }];
-    expect(view.standing(item({ status: "received", funding: null }), en)).toBe("Already received: thank you!");
+    expect(view.standing(item({ status: "received", funding: null }), en)).toBe(
+      "Already received: thank you!",
+    );
     expect(view.standing(item({ funding: funding({ state: "complete", contributors: paul }) }), en)).toBe(
       "Reserved by Paul.",
     );
-    expect(view.standing(item({ repeatable: true, funding: funding({ timesGiven: 2 }) }), en)).toContain("twice");
+    expect(view.standing(item({ repeatable: true, funding: funding({ timesGiven: 2 }) }), en)).toContain(
+      "twice",
+    );
     expect(
       view.standing(
         item({
@@ -310,9 +314,15 @@ describe("in English", () => {
     expect(view.giveError("weird", en)).toContain("Try again");
     expect(view.withdrawError("list_closed", en)).toContain("lifted");
     expect(view.heading({ list: null, event: null }, en)).toBe("Wishlist");
-    expect(view.gaugeLine({ complete: 2, inProgress: 1, free: 1 }, en)).toBe("2 complete, 1 in progress, 1 free.");
-    expect(view.myGiftLine({ id: "g", itemId: "i", eventId: null, amountCents: null, units: 2 }, item({ kind: "quantity" }), en)).toBe(
-      "You are reserving 2.",
+    expect(view.gaugeLine({ complete: 2, inProgress: 1, free: 1 }, en)).toBe(
+      "2 complete, 1 in progress, 1 free.",
     );
+    expect(
+      view.myGiftLine(
+        { id: "g", itemId: "i", eventId: null, amountCents: null, units: 2 },
+        item({ kind: "quantity" }),
+        en,
+      ),
+    ).toBe("You are reserving 2.");
   });
 });

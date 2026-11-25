@@ -24,9 +24,7 @@
   const m = $derived(appMessages(i18n.locale).image);
   const message = $derived(form?.image && "done" in form.image ? m.done[form.image.done] : null);
   const problem = $derived(
-    form?.image && "error" in form.image
-      ? (m.errors[form.image.error] ?? m.failed)
-      : null,
+    form?.image && "error" in form.image ? (m.errors[form.image.error] ?? m.failed) : null,
   );
 
   // While Wishalia reads the link, the page looks again every 3 seconds, for a minute at most

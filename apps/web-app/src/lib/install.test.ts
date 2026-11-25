@@ -29,7 +29,10 @@ describe("manifest", () => {
     expect(sizes).toEqual(expect.arrayContaining(["192x192 any", "512x512 any", "512x512 maskable"]));
     expect(manifest("Nos envies", "fr").name).toBe("Nos envies");
     expect(app.lang).toBe("fr-FR");
-    expect(manifest("Wishalia", "en")).toMatchObject({ lang: "en-GB", description: expect.stringContaining("family") });
+    expect(manifest("Wishalia", "en")).toMatchObject({
+      lang: "en-GB",
+      description: expect.stringContaining("family"),
+    });
   });
 
   it("puts the app in the share menu, on a page that asks before adding", () => {

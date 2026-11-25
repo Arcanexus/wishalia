@@ -14,7 +14,8 @@ export const view: ViewMessages = {
   allReserved: "All reserved.",
   noneReserved: (wanted) => `${wanted} to give, none reserved yet.`,
   someReserved: (taken, wanted, who) => `${taken} of ${wanted} already reserved${who ? `, by ${who}` : ""}.`,
-  poolToStart: (target) => (target ? `A ${target} kitty, waiting for its first gift.` : "A kitty, waiting for its first gift."),
+  poolToStart: (target) =>
+    target ? `A ${target} kitty, waiting for its first gift.` : "A kitty, waiting for its first gift.",
   poolReached: (total, target) => (target ? `${total} raised of ${target}` : `${total} raised`),
   poolOvershoot: (amount) => `: goal reached, ${amount} over`,
   poolMissing: (amount) => `: ${amount} to go`,

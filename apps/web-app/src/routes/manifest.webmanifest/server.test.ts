@@ -19,6 +19,8 @@ describe("GET /manifest.webmanifest", () => {
 
   it("is called Wishalia by default", async () => {
     vi.stubEnv("APP_NAME", undefined);
-    expect(await (await GET({ locals: { locale: "fr" } } as Parameters<typeof GET>[0])).json()).toMatchObject({ name: "Wishalia" });
+    expect(await (await GET({ locals: { locale: "fr" } } as Parameters<typeof GET>[0])).json()).toMatchObject(
+      { name: "Wishalia" },
+    );
   });
 });

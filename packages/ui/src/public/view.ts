@@ -29,8 +29,7 @@ export const formatEuros = (cents: number, locale: Locale) => formatters(locale)
 export const formatDay = (date: string, locale: Locale) => formatters(locale).day(date);
 
 /** « Paul », « Paul et Jeanne », « Paul, Jeanne et Léa ». */
-export const joinNames = (names: readonly string[], locale: Locale): string =>
-  formatters(locale).list(names);
+export const joinNames = (names: readonly string[], locale: Locale): string => formatters(locale).list(names);
 
 /** Who gave, in words: names first, then how many chose to stay anonymous. */
 export function givers(funding: Funding, locale: Locale): string {

@@ -72,14 +72,14 @@
     <h3>{m.android}</h3>
     <ol>
       <li>
-        {m.androidMenu.before}<span aria-hidden="true">⋮</span><span class="visually-hidden"
-          >{m.androidMenu.dots}</span
-        >{m.androidMenu.after}
+        {m.androidMenu.before}<span aria-hidden="true">⋮</span><span class="visually-hidden">
+          {m.androidMenu.dots}
+        </span>{m.androidMenu.after}
       </li>
       <li>
-        {m.androidShare.before}<strong>{m.androidShare.share}</strong>{m.androidShare.then}<strong
-          >{appName}</strong
-        >{m.androidShare.after}
+        {m.androidShare.before}<strong>{m.androidShare.share}</strong>{m.androidShare.then}<strong>
+          {appName}
+        </strong>{m.androidShare.after}
       </li>
     </ol>
   {/if}
@@ -112,9 +112,12 @@
       {/if}
     </div>
     <p class="muted help">
-      {m.docs.before}<a href="https://github.com/Arcanexus/wishalia/wiki/Install-the-app" rel="external noopener"
-        >{m.docs.link}</a
-      >{m.docs.after}
+      {m.docs.before}<a
+        href="https://github.com/Arcanexus/wishalia/wiki/Install-the-app"
+        rel="external noopener"
+      >
+        {m.docs.link}
+      </a>{m.docs.after}
     </p>
   {/if}
 

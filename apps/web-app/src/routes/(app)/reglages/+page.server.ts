@@ -33,7 +33,11 @@ export const actions: Actions = {
     // A form without the field (an older page) keeps the language as it is
     const locale = form.has("locale") ? (String(form.get("locale")) as LocaleChoice) : null;
     if (!displayName || displayName.length > 80) return fail(400, { display: { error: "invalid_name" } });
-    if (!THEME_CHOICES.includes(theme) || !MODE_CHOICES.includes(mode) || (locale !== null && !LOCALE_CHOICES.includes(locale))) {
+    if (
+      !THEME_CHOICES.includes(theme) ||
+      !MODE_CHOICES.includes(mode) ||
+      (locale !== null && !LOCALE_CHOICES.includes(locale))
+    ) {
       return fail(400, { display: { error: "invalid_request" } });
     }
     const me = await apiJson<Me>(event, "/manage/me", {

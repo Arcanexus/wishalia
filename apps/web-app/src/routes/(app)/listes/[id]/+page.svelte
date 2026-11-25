@@ -360,12 +360,7 @@
               {/if}
               <form method="POST" action="?/status" use:enhance>
                 <input type="hidden" name="itemId" value={item.id} />
-                <button
-                  type="submit"
-                  name="status"
-                  value="received"
-                  aria-label={m.receivedLabel(item.title)}
-                >
+                <button type="submit" name="status" value="received" aria-label={m.receivedLabel(item.title)}>
                   <svg class="check" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M5 12.5l4.5 4.5L19 7.5" />
                   </svg>
@@ -403,10 +398,7 @@
             <h3>{item.title}</h3>
             <p class="muted meta">{item.status === "received" ? m.receivedState : m.archivedState}</p>
             {#if data.gifts[item.id]}
-              <Gifts
-                gifts={data.gifts[item.id] ?? []}
-                none={m.noGiftOutside}
-              />
+              <Gifts gifts={data.gifts[item.id] ?? []} none={m.noGiftOutside} />
             {/if}
           </div>
           <form method="POST" action="?/status" use:enhance class="actions">

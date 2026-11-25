@@ -221,7 +221,14 @@ describe("the app pages", () => {
   it("speak the account's language, on this device too", async () => {
     fakeApi({
       "GET /manage/me": () =>
-        json({ id: "u", displayName: "Mary", email: "m@x.test", theme: "auto", mode: "device", locale: "en" }),
+        json({
+          id: "u",
+          displayName: "Mary",
+          email: "m@x.test",
+          theme: "auto",
+          mode: "device",
+          locale: "en",
+        }),
     });
     const { event, setCookies } = fakeEvent();
     expect((await run(appLayout, event)).value).toMatchObject({ locale: "en" });
@@ -230,7 +237,14 @@ describe("the app pages", () => {
 
     fakeApi({
       "GET /manage/me": () =>
-        json({ id: "u", displayName: "Mary", email: "m@x.test", theme: "auto", mode: "device", locale: "auto" }),
+        json({
+          id: "u",
+          displayName: "Mary",
+          email: "m@x.test",
+          theme: "auto",
+          mode: "device",
+          locale: "auto",
+        }),
     });
     const back = fakeEvent({ cookies: { "wishalia.locale": "en" } });
     back.event.locals.localeChoice = "en";

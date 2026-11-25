@@ -21,11 +21,7 @@
 
 <form method="POST" action="/preferences">
   <input type="hidden" name="retour" value={returnPath} />
-  <button
-    type="submit"
-    class="secondary"
-    aria-label={m.switch(m.names[mode], m.names[nextMode])}
-  >
+  <button type="submit" class="secondary" aria-label={m.switch(m.names[mode], m.names[nextMode])}>
     <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
       {#if mode === "dark"}
         <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="currentColor" />

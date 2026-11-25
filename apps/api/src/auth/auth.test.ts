@@ -92,7 +92,9 @@ describe("magic link", () => {
     await ask(OWNER_EMAIL, { "accept-language": "en-US,en;q=0.9" });
     expect(t.mails.at(-1)?.subject).toBe("Your sign-in link for Wishalia");
 
-    await t.db.insert(schema.users).values({ email: "nonna@example.test", displayName: "Nonna", locale: "fr" });
+    await t.db
+      .insert(schema.users)
+      .values({ email: "nonna@example.test", displayName: "Nonna", locale: "fr" });
     await ask("nonna@example.test", { "accept-language": "en" });
     expect(t.mails.at(-1)?.subject).toBe("Votre lien de connexion à Wishalia");
   });

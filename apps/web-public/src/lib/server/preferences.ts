@@ -1,6 +1,12 @@
 import type { Cookies } from "@sveltejs/kit";
 import { parseModeChoice, parseThemeChoice, type ModeChoice, type ThemeChoice } from "@wishalia/domain";
-import { defaultLocale, parseLocaleChoice, resolveLocale, type Locale, type LocaleChoice } from "@wishalia/i18n";
+import {
+  defaultLocale,
+  parseLocaleChoice,
+  resolveLocale,
+  type Locale,
+  type LocaleChoice,
+} from "@wishalia/i18n";
 
 /**
  * The person's theme and mode, kept on the device (docs/branding.md, "Theme settings"). They are

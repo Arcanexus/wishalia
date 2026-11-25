@@ -42,7 +42,6 @@
       await invalidateAll();
     }
   }
-
 </script>
 
 <svelte:head>
@@ -86,7 +85,9 @@
       {#each ["auto", "neutral", "christmas"] as const as theme (theme)}
         <label class="choice">
           <input type="radio" name="theme" value={theme} checked={data.me.theme === theme} />
-          <span><strong>{m.themes[theme].name}</strong><span class="muted">{m.themes[theme].help}</span></span>
+          <span>
+            <strong>{m.themes[theme].name}</strong><span class="muted">{m.themes[theme].help}</span>
+          </span>
         </label>
       {/each}
     </fieldset>
@@ -298,13 +299,7 @@
       <div class="fields">
         <div>
           <label for="jeton-nom">{m.tokenName}</label>
-          <input
-            id="jeton-nom"
-            name="name"
-            required
-            maxlength="60"
-            placeholder={m.tokenPlaceholder}
-          />
+          <input id="jeton-nom" name="name" required maxlength="60" placeholder={m.tokenPlaceholder} />
         </div>
         <div>
           <label for="jeton-jours">{m.days}</label>

@@ -36,7 +36,6 @@ export function escapeHtml(text: string): string {
  */
 export function magicLinkMail(appName: string, to: string, url: string, locale: Locale): Mail {
   const m = mailMessages(locale).magicLink;
-  const name = escapeHtml(appName);
   const href = escapeHtml(url);
   return {
     to,

@@ -17,7 +17,7 @@ export const load: PageServerLoad = async (event) => {
   event.setHeaders({ "cache-control": "private, no-store" });
   const app = appOrigin();
   return {
-    meta: genericMeta(process.env.APP_NAME ?? "Wishalia"),
+    meta: genericMeta(process.env.APP_NAME ?? "Wishalia", event.locals.locale),
     home,
     searched: query.trim(),
     signInUrl: app ? `${app}/connexion` : null,

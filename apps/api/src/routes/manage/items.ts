@@ -83,7 +83,10 @@ async function targetList(
     .limit(1);
   if (existing) return existing.id;
   const created = first(
-    await tx.insert(schema.wishLists).values({ ownerId, name: apiMessages(locale).defaultListName }).returning(),
+    await tx
+      .insert(schema.wishLists)
+      .values({ ownerId, name: apiMessages(locale).defaultListName })
+      .returning(),
   );
   return created.id;
 }

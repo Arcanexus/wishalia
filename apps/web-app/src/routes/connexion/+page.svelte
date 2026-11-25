@@ -49,7 +49,6 @@
     signingIn = outcome === "ok";
     settle(outcome);
   }
-
 </script>
 
 <svelte:head>

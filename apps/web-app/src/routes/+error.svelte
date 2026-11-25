@@ -20,9 +20,7 @@
   <Logo size={64} />
   <h1>{page.status === 404 ? m.notFound : common.somethingWrong}</h1>
   <p>
-    {page.status === 404
-      ? (page.error?.message ?? m.missing)
-      : m.retry}
+    {page.status === 404 ? (page.error?.message ?? m.missing) : m.retry}
   </p>
   <a class="button" href={resolve("/(app)")}>{m.back}</a>
 </main>

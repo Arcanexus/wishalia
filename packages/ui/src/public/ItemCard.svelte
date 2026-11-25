@@ -25,7 +25,9 @@
   const eventsById = $derived(new Map(events.map((event) => [event.id, event])));
   const line = $derived(standing(item, i18n.locale));
   const complete = $derived(item.status === "received" || item.funding?.state === "complete");
-  const bar = $derived(item.funding && item.status !== "received" ? poolBar(item, events, i18n.locale) : null);
+  const bar = $derived(
+    item.funding && item.status !== "received" ? poolBar(item, events, i18n.locale) : null,
+  );
   const kindLabels = $derived({ unique: null, quantity: m.kind.quantity, pool: m.kind.pool });
 
   /** Only web links become links: never a javascript: or data: address. */
@@ -75,9 +77,7 @@
     {/if}
     {#if scope === "list" && item.eventIds.length > 0}
       <p class="muted small">
-        {m.forEvents(
-          i18n.fmt.list(item.eventIds.flatMap((id) => eventsById.get(id)?.name ?? [])),
-        )}
+        {m.forEvents(i18n.fmt.list(item.eventIds.flatMap((id) => eventsById.get(id)?.name ?? [])))}
       </p>
     {/if}
     {#if item.funding && item.status !== "received"}
