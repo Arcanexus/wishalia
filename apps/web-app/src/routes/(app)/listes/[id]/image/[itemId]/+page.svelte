@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { enhance } from "$app/forms";
+  import { invalidateAll } from "$app/navigation";
   import { resolve } from "$app/paths";
 
   import Cropper from "#lib/Cropper.svelte";
@@ -22,6 +23,9 @@
     cropped: "Le cadrage est enregistré.",
     whole: "L'image s'affiche entière.",
     removed: "L'envie n'a plus d'image.",
+    forgotten: "Votre image est retirée : Wishalia relit la page du lien pour reprendre son image.",
+    forgotten_no_link:
+      "Votre image est retirée. Ajoutez un lien à l'envie pour reprendre l'image de sa page.",
   };
   const errors: Record<string, string> = {
     no_file: "Choisissez d'abord une image sur votre appareil.",
@@ -31,6 +35,7 @@
     image_too_large: "Cette image est trop grande. Choisissez-en une plus petite.",
     images_off: "Les images ne sont pas activées sur ce serveur.",
     no_image: "Choisissez d'abord une image.",
+    no_upload: "Vous n'avez pas envoyé d'image pour cette envie.",
   };
   const message = $derived(form?.image && "done" in form.image ? done[form.image.done] : null);
   const problem = $derived(
@@ -38,6 +43,19 @@
       ? (errors[form.image.error] ?? "L'enregistrement n'a pas abouti. Réessayez dans un instant.")
       : null,
   );
+
+  // While Wishalia reads the link, the page looks again every 3 seconds, for a minute at most
+  let polls = 0;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  $effect(() => {
+    if (item.enrichment !== "pending" || polls >= 20) return;
+    timer = setTimeout(() => {
+      polls += 1;
+      void invalidateAll();
+    }, 3000);
+    return () => clearTimeout(timer);
+  });
+  onDestroy(() => clearTimeout(timer));
 
   let mounted = $state(false);
   onMount(() => (mounted = true));
@@ -170,6 +188,16 @@
         {sending ? "Envoi…" : chosenFile ? `Envoyer « ${chosenFile} »` : "Envoyer l'image"}
       </button>
     </form>
+    {#if mine}
+      <form method="POST" action="?/forget" use:enhance class="forget">
+        <p class="muted hint" id="retirer-aide">
+          {item.url
+            ? "Votre image est effacée, et l'envie reprend l'image de la page du lien : Wishalia relit la page."
+            : "Votre image est effacée. Sans lien, l'envie n'aura plus d'image."}
+        </p>
+        <button type="submit" class="secondary" aria-describedby="retirer-aide">Retirer votre image</button>
+      </form>
+    {/if}
   </section>
 {/if}
 
@@ -250,5 +278,10 @@
     margin-bottom: 1rem;
     min-height: 48px;
     font: inherit;
+  }
+  .forget {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
   }
 </style>

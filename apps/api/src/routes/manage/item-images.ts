@@ -161,6 +161,72 @@ export const itemImageRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db,
     return ownerItem(updated, await imageOf(db, images, updated));
   });
 
+  /**
+   * Removes the image the owner sent, file included, to go back to the page's. The first image of
+   * the page is shown at once when there is one, and the page is read again (a fresh enrichment) so
+   * that its images are up to date; without a link, the item shows none.
+   */
+  app.delete("/items/:itemId/image/upload", async (request) => {
+    const { itemId } = parse(itemParams, request.params);
+    const settings = enabled(images);
+    const ownerId = userId(request);
+    const removed: string[] = [];
+    const updated = await db.transaction(async (tx) => {
+      const before = await ownedItem(tx, ownerId, itemId);
+      const mine = await tx
+        .select({ id: schema.wishImages.id, key: schema.wishImages.key })
+        .from(schema.wishImages)
+        .where(and(eq(schema.wishImages.wishId, itemId), eq(schema.wishImages.source, "upload")));
+      if (mine.length === 0) throw new HttpError(404, "no_upload");
+      const [page] = await tx
+        .select({ id: schema.wishImages.id })
+        .from(schema.wishImages)
+        .where(and(eq(schema.wishImages.wishId, itemId), eq(schema.wishImages.source, "page")))
+        .orderBy(asc(schema.wishImages.position), asc(schema.wishImages.createdAt))
+        .limit(1);
+      const showedMine = mine.some((image) => image.id === before.imageId);
+      const imageId = showedMine ? (page?.id ?? null) : before.imageId;
+      // The item's id goes first: deleting the row it points at must not leave it dangling
+      const row = first(
+        await tx
+          .update(schema.wishes)
+          .set({
+            imageId,
+            ...(showedMine ? { imageCrop: null } : {}),
+            ...(before.url
+              ? { enrichment: "pending" as const, enrichmentAttempts: 0, enrichmentAt: null }
+              : {}),
+            updatedAt: now(),
+          })
+          .where(eq(schema.wishes.id, itemId))
+          .returning(),
+      );
+      await tx.delete(schema.wishImages).where(
+        inArray(
+          schema.wishImages.id,
+          mine.map((image) => image.id),
+        ),
+      );
+      removed.push(...mine.map((image) => image.key));
+      await recordHistory(tx, [
+        {
+          wishId: itemId,
+          type: "image_changed",
+          actorId: ownerId,
+          payload: {
+            source: "upload",
+            removed: true,
+            ...(imageId !== before.imageId ? { to: imageId } : {}),
+          },
+          visibility: "owner",
+        },
+      ]);
+      return row;
+    });
+    await Promise.allSettled(removed.map((key) => settings.storage.delete(key)));
+    return ownerItem(updated, await imageOf(db, images, updated));
+  });
+
   /** Chooses the image shown (or none), and its frame. */
   app.patch("/items/:itemId/image", async (request) => {
     const { itemId } = parse(itemParams, request.params);

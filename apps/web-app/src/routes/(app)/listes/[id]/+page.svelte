@@ -20,17 +20,21 @@
   const images = $derived(data.me.features?.images ?? false);
   const byId = $derived(new Map(open.map((item) => [item.id, item])));
 
-  // While the worker completes items from their links, the page looks again every few seconds,
-  // for a minute at most (it never polls without a reason)
+  // While the worker completes items from their links, the page looks again: every 3 seconds for
+  // the first minute, then every 15 seconds up to 10 minutes (a link tried again waits in the
+  // queue). It never polls without a reason.
   const completing = $derived(open.some((item) => item.enrichment === "pending"));
   let polls = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
   $effect(() => {
-    if (!completing || polls >= 20 || order || dragging) return;
-    timer = setTimeout(() => {
-      polls += 1;
-      void invalidateAll();
-    }, 3000);
+    if (!completing || polls >= 56 || order || dragging) return;
+    timer = setTimeout(
+      () => {
+        polls += 1;
+        void invalidateAll();
+      },
+      polls < 20 ? 3000 : 15000,
+    );
     return () => clearTimeout(timer);
   });
   onDestroy(() => clearTimeout(timer));
@@ -234,7 +238,10 @@
               </button>
             </form>
           {/if}
-          {#if item.image}
+          {#if !item.image && images && item.enrichment === "pending"}
+            <!-- Its image may come with the link: a place kept for it, that breathes while it waits -->
+            <span class="thumb waiting" aria-hidden="true"></span>
+          {:else if item.image}
             <!-- The name next to it says what it is: decorative for a screen reader -->
             <img
               class="thumb"
@@ -260,12 +267,20 @@
               </p>
               {#if item.notes}<p class="notes">{item.notes}</p>{/if}
               {#if item.enrichment === "pending"}
-                <p class="muted completing">
-                  Le titre, le prix{images ? " et les images" : ""} se complètent depuis le lien…
+                <p class="completing">
+                  <span class="badge reading">
+                    <span class="dot" aria-hidden="true"></span>Lecture du lien
+                  </span>
+                  <span class="muted">
+                    Le titre, le prix{images ? " et les images" : ""} arrivent depuis la page.
+                  </span>
                 </p>
               {:else if item.enrichment === "failed"}
-                <p class="muted completing">
-                  La page du lien n'a pas pu être lue : complétez l'envie avec « Modifier » si besoin.
+                <p class="completing">
+                  <span class="badge failed">Lien illisible</span>
+                  <span class="muted">
+                    La page n'a pas pu être lue : complétez l'envie avec « Modifier » si besoin.
+                  </span>
                 </p>
               {/if}
               {#if data.gifts[item.id]?.length}<Gifts gifts={data.gifts[item.id] ?? []} none="" />{/if}
@@ -477,8 +492,56 @@
     font-weight: 600;
   }
   .completing {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.5rem;
     margin: 0.5rem 0 0;
     font-size: 0.95rem;
+  }
+  /* « Lecture du lien »: seen at a glance, by its shape and its words, not by its colour alone */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    padding: 0.1rem 0.6rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  /* The words in the text colour (AA on every theme), the colour of progress on the edge only */
+  .reading {
+    color: var(--text);
+    border-color: var(--progress);
+  }
+  .failed {
+    color: var(--text-2);
+    border-style: dashed;
+  }
+  .dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--progress);
+    animation: breathe 1.4s ease-in-out infinite;
+  }
+  .waiting {
+    display: block;
+    border: 2px dashed var(--progress);
+    background: transparent;
+    animation: breathe 1.4s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    50% {
+      opacity: 0.35;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dot,
+    .waiting {
+      animation: none;
+    }
   }
   .notes {
     margin: 0.5rem 0 0;

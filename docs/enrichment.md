@@ -2,8 +2,10 @@
 
 When an item is added with a link, it shows at once with the site's name as its title (« fnac.com »).
 The worker then reads the page behind the link and completes the item: its **title**, its
-**price** and its **images** ([Images](images.md)). The list page says « Le titre et le prix se complètent depuis le lien… » meanwhile, and
-looks again every few seconds, for a minute at most.
+**price** and its **images** ([Images](images.md)). Meanwhile the item carries a « Lecture du lien »
+badge (and, with images on, an empty frame where its image will go, that breathes unless the device
+asks for less motion), and the list page looks again: every 3 seconds for the first minute, then
+every 15 seconds, for 10 minutes at most. A link that could not be read says « Lien illisible ».
 
 ![An item being completed from its link](images/app-enrichment.png)
 
