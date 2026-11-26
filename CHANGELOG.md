@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.8] - 2026-11-26
+
 ### Changed
 
 - Every outside image is on its latest stable release. Node.js 26 (LTS) builds and runs the four
@@ -22,7 +24,6 @@ All notable changes to this project are documented here. The format follows
 - `docker compose up` starts Garage (v2.6.0) instead of MinIO, whose community image is no longer
   published, with local keys in Garage's format (`.env.example`). A local database made with
   PostgreSQL 18 stays beside the new one: `docker compose down -v` starts afresh.
-
 - In the guests' view, every item has the same « Acheter / Participer » button (« Buy / Chip in »),
   whatever its kind, and every form is sent with « Valider ». A gift given once works the same with
   or without a price: the same short form, « Je l'achète en entier » or « Je participe avec un

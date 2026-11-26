@@ -1,6 +1,6 @@
 {
   "name": "@wishalia/ui",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "private": true,
   "type": "module",
   "description": "What the two frontends share: the design tokens and base styles, the fonts, the logo (docs/branding.md), and the drawings and words of the public view.",
