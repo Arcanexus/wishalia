@@ -1,14 +1,17 @@
 <script lang="ts">
-  import { onDestroy, onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { enhance } from "$app/forms";
-  import { invalidateAll } from "$app/navigation";
+  import { invalidate } from "$app/navigation";
   import { resolve } from "$app/paths";
 
   import { appMessages } from "@wishalia/i18n/messages/app";
+  import { isLive } from "@wishalia/domain";
   import { useI18n } from "@wishalia/ui/i18n.ts";
+  import { followLive, holding } from "@wishalia/ui/live.ts";
 
   import Cropper from "#lib/Cropper.svelte";
   import { shrinkPhoto } from "#lib/photo.ts";
+  import { itemStage } from "#lib/stage.ts";
 
   import type { PageProps } from "./$types";
 
@@ -27,18 +30,20 @@
     form?.image && "error" in form.image ? (m.errors[form.image.error] ?? m.failed) : null,
   );
 
-  // While Wishalia reads the link, the page looks again every 3 seconds, for a minute at most
-  let polls = 0;
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  // While Wishalia reads the link, the page follows it live (docs/live-updates.md): the images
+  // of the page show up as soon as the worker has them
+  const completing = $derived(isLive(itemStage(item)));
   $effect(() => {
-    if (item.enrichment !== "pending" || polls >= 20) return;
-    timer = setTimeout(() => {
-      polls += 1;
-      void invalidateAll();
-    }, 3000);
-    return () => clearTimeout(timer);
+    if (!completing) return;
+    const follower = untrack(() =>
+      followLive({
+        url: resolve("/(app)/listes/[id]/suivi", { id: item.listId }),
+        reload: () => invalidate("wishalia:item"),
+        canReload: () => !sending && !holding(),
+      }),
+    );
+    return () => follower.stop();
   });
-  onDestroy(() => clearTimeout(timer));
 
   let mounted = $state(false);
   onMount(() => (mounted = true));

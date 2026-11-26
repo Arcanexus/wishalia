@@ -1,5 +1,5 @@
 import type { schema } from "@wishalia/db";
-import { canRevealSecret, isSecretLifted, revealAvailableAt } from "@wishalia/domain";
+import { canRevealSecret, isSecretLifted, revealAvailableAt, stageOf } from "@wishalia/domain";
 
 import type { ItemImage } from "../../images.js";
 
@@ -36,6 +36,8 @@ export function ownerItem(row: WishRow, image: ItemImage | null = null) {
     position: row.position,
     /** The completion from the link: "pending" while the worker has it to do (or is on it). */
     enrichment: row.enrichment === "running" ? "pending" : row.enrichment,
+    /** While pending: "images" once the title and price are written and the images are on their way. */
+    enrichmentStep: stageOf(row.enrichment, row.enrichmentStep) === "images" ? "images" : null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

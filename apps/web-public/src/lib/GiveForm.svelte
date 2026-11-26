@@ -55,7 +55,7 @@
   const submitLabel = $derived(shares && !started ? m.confirm : giveLabel(item, i18n.locale));
 </script>
 
-<details class="give" open={failed !== null}>
+<details class="give" open={failed !== null} data-live-hold>
   <summary class="button secondary">
     <span class="closed">{giveLabel(item, i18n.locale)}</span><span class="opened">{m.close}</span>
   </summary>

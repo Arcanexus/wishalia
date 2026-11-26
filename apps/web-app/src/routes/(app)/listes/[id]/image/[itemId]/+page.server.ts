@@ -9,6 +9,8 @@ import type { Actions, PageServerLoad } from "./$types";
 
 /** « Image »: the picture of an item, chosen among the page's, sent by the owner, framed. */
 export const load: PageServerLoad = async (event) => {
+  // What the page reloads while the worker reads the link (docs/live-updates.md)
+  event.depends("wishalia:item");
   const { id, itemId } = event.params;
   let item: Item;
   let images: ItemImages;

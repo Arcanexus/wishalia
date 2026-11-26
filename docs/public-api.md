@@ -76,8 +76,15 @@ amount nor its message: those stay with their author (`mine`).
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
 | `GET /public/home?q=`                      | No share link                                                                                                                        | Who is signed in, and the public lists (see above).                      |
 | `GET /public/view`                         |                                                                                                                                      | The list or the event, its events and its items, with `funding` or null. |
+| `GET /public/live`                         |                                                                                                                                      | `{ version, live }`, never cached: see below.                            |
 | `POST /public/items/:itemId/contributions` | `eventId`?, `amountCents` (pool, or a share of a gift that has a price), `units`? (quantity), `guestName`?, `message`?, `anonymous`? | `201`, the contribution and its `withdrawKey`, given once.               |
 | `DELETE /public/contributions/:id`         | header `X-Withdraw-Key`, or the session of its author                                                                                | `204`. Withdrawing twice changes nothing; anyone else gets `404`.        |
+
+Each item of the view carries `stage`: `reading` or `images` while it is completed from its link,
+`null` otherwise (why a link failed is the owner's business). `GET /public/live` gives a fingerprint
+of the link's items as shown and how many are on their way: the page asks it to follow them live
+([Live updates](live-updates.md)). It is built from the items' own columns, never from
+contributions.
 
 A contribution:
 

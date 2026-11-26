@@ -19,6 +19,8 @@ import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (event) => {
   const { id } = event.params;
+  // What the live page reloads when the worker moves on (docs/live-updates.md)
+  event.depends("wishalia:list");
   let lists: List[];
   let items: Item[];
   try {

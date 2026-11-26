@@ -61,6 +61,8 @@ export interface PublicItem {
   notes: string | null;
   /** The image the owner shows, framed; null without one. */
   image?: ImageSources | null;
+  /** Being completed from its link (docs/live-updates.md): the page follows it live. */
+  stage?: "reading" | "images" | null;
   priceCents: number | null;
   targetCents: number | null;
   quantity: number | null;

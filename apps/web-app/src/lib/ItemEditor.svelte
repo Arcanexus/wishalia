@@ -39,7 +39,7 @@
   let saving = $state(false);
 </script>
 
-<details class="edit" open={failed !== null}>
+<details class="edit" open={failed !== null} data-live-hold>
   <summary class="button secondary" aria-label={m.editLabel(item.title)}>{m.edit}</summary>
   <form
     method="POST"

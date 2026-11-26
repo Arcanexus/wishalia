@@ -293,6 +293,9 @@ importers:
       '@fontsource-variable/nunito':
         specifier: ^5.3.0
         version: 5.3.0
+      '@wishalia/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@wishalia/i18n':
         specifier: workspace:*
         version: link:../i18n

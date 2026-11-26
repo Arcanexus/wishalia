@@ -42,6 +42,8 @@ export const listRevealMode = pgEnum("list_reveal_mode", ["received", "manual"])
 export const listVisibility = pgEnum("list_visibility", ["private", "public"]);
 /** Where the completion of an item from its link stands (the worker's queue, docs/enrichment.md). */
 export const enrichmentState = pgEnum("enrichment_state", ["pending", "running", "done", "failed"]);
+/** The step a running completion is at: the page's words are written, its images are on their way. */
+export const enrichmentStep = pgEnum("enrichment_step", ["images"]);
 /** A person's theme (docs/branding.md): automatic (Christmas in December), neutral or Christmas. */
 export const themeChoice = pgEnum("theme_choice", ["auto", "neutral", "christmas"]);
 /** A person's mode: as their device, light or dark. */
@@ -238,6 +240,8 @@ export const wishes = pgTable(
     /** Null without a link to complete from; the worker takes the pending ones. */
     enrichment: enrichmentState("enrichment"),
     enrichmentAttempts: integer("enrichment_attempts").notNull().default(0),
+    /** While running: "images" once the title and price are written, null before. */
+    enrichmentStep: enrichmentStep("enrichment_step"),
     /** When the worker last took it: a run older than its timeout is taken again. */
     enrichmentAt: timestamp("enrichment_at", { withTimezone: true }),
     createdAt: createdAt(),

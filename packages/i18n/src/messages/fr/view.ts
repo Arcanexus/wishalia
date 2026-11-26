@@ -7,6 +7,9 @@ export const view = {
   /** « une personne discrète », « 3 personnes discrètes »: givers who stay anonymous. */
   discreet: (n: number) => (n === 1 ? "une personne discrète" : `${n} personnes discrètes`),
   receivedThanks: "Déjà reçu : merci !",
+  /** While the app completes the item from its link: its title, price or image are on their way. */
+  updating: "Mise à jour depuis le lien…",
+  updated: (title: string) => `« ${title} » est à jour.`,
   /**
    * Where an item stands, told by the badge's icon and colour; these words are its accessible name
    * only (spoken, or shown on hover), never written on the card.

@@ -4,6 +4,7 @@
 
   import Gallery from "../Gallery.svelte";
   import { useI18n } from "../i18n.ts";
+  import StageIcon from "../StageIcon.svelte";
   import Copies from "./Copies.svelte";
   import Givers from "./Givers.svelte";
   import PoolBar from "./PoolBar.svelte";
@@ -98,6 +99,9 @@
       </p>
     {/if}
     {#if item.notes}<p class="notes">{item.notes}</p>{/if}
+    {#if item.stage}
+      <p class="muted small updating"><StageIcon stage={item.stage} />{m.updating}</p>
+    {/if}
     {#if webLink(item.url)}
       {@const link = webLink(item.url) ?? ""}
       <p>
@@ -132,6 +136,11 @@
 </li>
 
 <style>
+  .updating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
   .pictured {
     display: grid;
     grid-template-columns: 5.5rem minmax(0, 1fr);

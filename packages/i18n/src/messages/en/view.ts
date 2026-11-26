@@ -4,6 +4,8 @@ export const view: ViewMessages = {
   defaultHeading: "Wishlist",
   discreet: (n) => (n === 1 ? "someone discreet" : `${n} discreet people`),
   receivedThanks: "Already received: thank you!",
+  updating: "Updating from the link…",
+  updated: (title) => `“${title}” is up to date.`,
   status: {
     free: "Nobody is taking care of it yet",
     progress: "Partly given",

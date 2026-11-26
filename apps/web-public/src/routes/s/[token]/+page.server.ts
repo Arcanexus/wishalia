@@ -31,6 +31,8 @@ function myGifts(view: PublicView, kept: MyGift[]): MyGift[] {
 }
 
 export const load: PageServerLoad = async (event) => {
+  // What the live page reloads while items are completed from their links (docs/live-updates.md)
+  event.depends("wishalia:view");
   const view = await loadView(event, event.params.token);
   // The same page for an unknown, revoked or expired link: nothing tells them apart
   if (!view) error(404, "link_not_found");

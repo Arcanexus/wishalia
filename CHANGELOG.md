@@ -24,6 +24,19 @@ All notable changes to this project are documented here. The format follows
   real modal dialog, named for a screen reader; nothing big is loaded before it opens. Every item's
   `image` (management API, REST API v1 and the public view) now carries `gallery`, the signed paths
   of its other images, whole (seven at most).
+- The pages follow the reading of links live, with no reload: the list page, the image page of an
+  item and the guests' page. Each step has its own icon, its words next to it and the longer help
+  on hover: a chain link in a turning ring for « Lecture du lien… », a picture for « Recherche des
+  images… » (the title and price are already shown), a warning sign for « Lien illisible ». A
+  screen reader hears each change once, politely (« « Lampe » : titre et prix trouvés. »), and the
+  guests' page says « Mise à jour depuis le lien… » then that the item is up to date. The page asks
+  its own server a few-byte question (`{ version, live }`) every 2 seconds, then 10, only while an
+  item is on its way and the tab is shown, and reloads only when something moved, never under a
+  wish being edited or a gift being written. API: `GET /manage/lists/:id/live`, `GET /public/live`,
+  `enrichmentStep` on the items, `stage` on the guests' items. The fingerprint never moves with a
+  contribution (anti-spoil). See [Live updates](docs/live-updates.md).
+- The worker writes the title and the price as soon as the page is read, then fetches the images:
+  migration 0012 adds `enrichment_step` to the items.
 
 ### Changed
 
@@ -31,6 +44,11 @@ All notable changes to this project are documented here. The format follows
   its icon says it. The gauge counts « à offrir » (« to give »).
 - The givers' initials go above the words on a narrow card, and the price stays on the title's
   first line.
+
+### Fixed
+
+- The list page stopped looking again after its first check while items were being completed:
+  their title, price and image only showed after a manual reload.
 
 ## [0.0.5] - 2026-11-25
 

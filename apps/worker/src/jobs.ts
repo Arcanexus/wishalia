@@ -103,7 +103,7 @@ export async function claim(db: Database, now: Date): Promise<Claimed | null> {
   const stale = new Date(now.getTime() - RUN_TIMEOUT_MS).toISOString();
   const result = await db.execute<{ id: string; url: string | null; enrichment_attempts: number }>(sql`
     UPDATE ${schema.wishes}
-    SET enrichment = 'running', enrichment_at = ${at}::timestamptz, enrichment_attempts = enrichment_attempts + 1
+    SET enrichment = 'running', enrichment_step = NULL, enrichment_at = ${at}::timestamptz, enrichment_attempts = enrichment_attempts + 1
     WHERE id = (
       SELECT id FROM ${schema.wishes}
       WHERE (
@@ -156,37 +156,63 @@ export async function enrichNext({
         ["blocked_address", "blocked_port", "invalid_url"].includes(error.code));
     await db
       .update(schema.wishes)
-      .set({ enrichment: final ? "failed" : "pending", enrichmentAt: now() })
+      .set({ enrichment: final ? "failed" : "pending", enrichmentStep: null, enrichmentAt: now() })
       .where(eq(schema.wishes.id, job.id));
     return final ? "failed" : "retry";
   }
 
-  const images = storage && fetchImage ? await storePageImages(job.id, page, storage, fetchImage) : [];
+  // Two steps, each written as soon as it is known, so that the pages show it live
+  // (docs/live-updates.md): first the page's words, then its images, which take longer
+  const fetchesImages = !!storage && !!fetchImage && extractImages(page.html).length > 0;
+  const words = await db.transaction(async (tx) => {
+    // The item as it is now: the owner may have changed it while the page loaded
+    const current = await runningItem(tx, job);
+    // Gone, or a new link meanwhile (the edit queued it again): this result is for nothing
+    if (!current) return null;
+    const patch = completion(current, found);
+    const changed = Object.keys(patch).length > 0;
+    await tx
+      .update(schema.wishes)
+      .set({
+        ...patch,
+        // What the page gave, so that a later read may follow it while the owner keeps it
+        ...(patch.title !== undefined ? { foundTitle: patch.title } : {}),
+        ...(patch.priceCents !== undefined ? { foundPriceCents: patch.priceCents } : {}),
+        ...(fetchesImages ? { enrichmentStep: "images" as const } : { enrichment: "done" as const }),
+        ...(changed ? { updatedAt: now() } : {}),
+      })
+      .where(eq(schema.wishes.id, job.id));
+    if (changed) {
+      await tx.insert(schema.itemEvents).values({
+        wishId: job.id,
+        type: "enriched",
+        actorId: null,
+        payload: { ...patch },
+        visibility: "owner",
+      });
+    }
+    return { changed };
+  });
+  if (!words) return "skipped";
+  if (!fetchesImages || !storage || !fetchImage) return words.changed ? "done" : "unchanged";
+
+  const images = await storePageImages(job.id, page, storage, fetchImage);
   const stale: string[] = [];
-
-  let outcome: Outcome;
+  let imageChanged: boolean;
   try {
-    outcome = await db.transaction(async (tx) => {
-      // The item as it is now: the owner may have changed it while the page loaded
-      const [current] = await tx
-        .select()
-        .from(schema.wishes)
-        .where(eq(schema.wishes.id, job.id))
-        .for("update");
-      // Gone, or a new link meanwhile (the edit queued it again): this result is for nothing
-      if (!current || current.url !== job.url || current.enrichment !== "running") {
+    imageChanged = await db.transaction(async (tx) => {
+      const current = await runningItem(tx, job);
+      if (!current) {
         stale.push(...images.map((image) => image.key));
-        return "skipped";
+        return false;
       }
-      const patch = completion(current, found);
-      const changed = Object.keys(patch).length > 0;
-
       // The new proposals replace those of the page found before (an older link, an older run);
       // the owner's own images stay. The item shows the first one, unless the owner chose theirs.
       let imageId = current.imageId;
+      let imageCrop = current.imageCrop;
       if (images.length > 0) {
         const previous = await tx
-          .select({ id: schema.wishImages.id, key: schema.wishImages.key, source: schema.wishImages.source })
+          .select({ id: schema.wishImages.id, key: schema.wishImages.key })
           .from(schema.wishImages)
           .where(and(eq(schema.wishImages.wishId, job.id), eq(schema.wishImages.source, "page")));
         const inserted = await tx
@@ -201,11 +227,12 @@ export async function enrichNext({
           )
           .returning({ id: schema.wishImages.id });
         const showsPageImage = imageId === null || previous.some((image) => image.id === imageId);
-        if (showsPageImage) imageId = inserted[0]?.id ?? null;
-        await tx
-          .update(schema.wishes)
-          .set({ imageId, ...(showsPageImage ? { imageCrop: null } : {}) })
-          .where(eq(schema.wishes.id, job.id));
+        if (showsPageImage) {
+          imageId = inserted[0]?.id ?? null;
+          imageCrop = null;
+        }
+        // Shown no more (the item points to the new one first): the older proposals can go
+        await tx.update(schema.wishes).set({ imageId, imageCrop }).where(eq(schema.wishes.id, job.id));
         if (previous.length > 0) {
           await tx.delete(schema.wishImages).where(
             inArray(
@@ -216,29 +243,12 @@ export async function enrichNext({
           stale.push(...previous.map((image) => image.key));
         }
       }
-      const imageChanged = imageId !== current.imageId;
-
+      const changed = imageId !== current.imageId;
       await tx
         .update(schema.wishes)
-        .set({
-          ...patch,
-          // What the page gave, so that a later read may follow it while the owner keeps it
-          ...(patch.title !== undefined ? { foundTitle: patch.title } : {}),
-          ...(patch.priceCents !== undefined ? { foundPriceCents: patch.priceCents } : {}),
-          enrichment: "done",
-          ...(changed || imageChanged ? { updatedAt: now() } : {}),
-        })
+        .set({ enrichment: "done", enrichmentStep: null, ...(changed ? { updatedAt: now() } : {}) })
         .where(eq(schema.wishes.id, job.id));
       if (changed) {
-        await tx.insert(schema.itemEvents).values({
-          wishId: job.id,
-          type: "enriched",
-          actorId: null,
-          payload: { ...patch },
-          visibility: "owner",
-        });
-      }
-      if (imageChanged) {
         await tx.insert(schema.itemEvents).values({
           wishId: job.id,
           type: "image_changed",
@@ -247,7 +257,7 @@ export async function enrichNext({
           visibility: "owner",
         });
       }
-      return changed || images.length > 0 ? "done" : "unchanged";
+      return changed;
     });
   } catch (error) {
     // The database refused: the files just put in the bucket are for nothing
@@ -258,5 +268,11 @@ export async function enrichNext({
     throw error;
   }
   await removeFiles(storage, stale);
-  return outcome;
+  return words.changed || images.length > 0 || imageChanged ? "done" : "unchanged";
+}
+
+/** The item of the job, locked, if it is still this run's: same link, still running. */
+async function runningItem(tx: Parameters<Parameters<Database["transaction"]>[0]>[0], job: Claimed) {
+  const [current] = await tx.select().from(schema.wishes).where(eq(schema.wishes.id, job.id)).for("update");
+  return current && current.url === job.url && current.enrichment === "running" ? current : null;
 }
