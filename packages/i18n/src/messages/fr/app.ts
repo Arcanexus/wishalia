@@ -168,6 +168,24 @@ export const app = {
     quote: (message: string) => `« ${message} »`,
   },
   /** Settings saved as they change (docs/management-app.md, « Saved as you go »). */
+  sync: {
+    saving: (count: number) =>
+      count > 1 ? `Enregistrement de ${count} modifications…` : "Enregistrement d'une modification…",
+    savingTip: "Vous pouvez continuer : vos modifications partent en arrière-plan.",
+    waiting: (count: number) =>
+      count > 1
+        ? `${count} modifications en attente : pas de réseau ou serveur injoignable.`
+        : "Une modification en attente : pas de réseau ou serveur injoignable.",
+    waitingTip:
+      "Elles sont gardées sur cet appareil et partiront d'elles-mêmes. Toucher pour réessayer tout de suite.",
+    signedOut: "Session terminée : vos modifications partiront après la reconnexion.",
+    signIn: "Se reconnecter",
+    refused: (titles: string[]) =>
+      titles.length === 1 && titles[0]
+        ? `« ${titles[0]} » : la modification n'a pas pu être enregistrée. La liste montre ce qui est enregistré.`
+        : "Des modifications n'ont pas pu être enregistrées. La liste montre ce qui est enregistré.",
+    dismiss: "Fermer ce message",
+  },
   autosave: {
     saving: "Enregistrement…",
     saved: "Enregistré",

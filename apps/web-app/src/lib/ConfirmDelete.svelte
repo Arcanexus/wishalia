@@ -18,8 +18,7 @@
     help,
     action,
     fields,
-    onremove,
-    onfailed,
+    onconfirm,
   }: {
     /** The bin's accessible name, with what it deletes. */
     label: string;
@@ -31,11 +30,10 @@
     /** The hidden fields sent with the confirmation. */
     fields: Record<string, string>;
     /**
-     * Given, the page takes what goes off the screen as soon as it is confirmed (optimistic), and
-     * puts it back with an error should the server refuse.
+     * Given, the page takes the deletion over once it is confirmed: it shows it at once and saves
+     * it in the background (#lib/changes.svelte.ts). Without JavaScript, the form posts as usual.
      */
-    onremove?: () => void;
-    onfailed?: () => void;
+    onconfirm?: () => void;
   } = $props();
 
   const i18n = useI18n();
@@ -55,17 +53,18 @@
   <form
     method="POST"
     {action}
-    use:enhance={() => {
-      busy = true;
-      // Gone at once: the dialog closes and the page no longer waits for the server
-      if (onremove) {
+    use:enhance={({ cancel }) => {
+      if (onconfirm) {
+        // Gone at once: the dialog closes and the page saves it behind
+        cancel();
         dialog?.close();
-        onremove();
+        onconfirm();
+        return;
       }
-      return async ({ result, update }) => {
+      busy = true;
+      return async ({ update }) => {
         dialog?.close();
         busy = false;
-        if (result.type !== "success" && result.type !== "redirect") onfailed?.();
         await update();
       };
     }}

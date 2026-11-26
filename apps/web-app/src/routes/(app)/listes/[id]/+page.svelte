@@ -1,7 +1,6 @@
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { SvelteSet } from "svelte/reactivity";
-  import { deserialize, enhance } from "$app/forms";
+  import { enhance, type SubmitFunction } from "$app/forms";
   import { invalidate } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
@@ -28,7 +27,8 @@
   import SeriesEditor from "#lib/SeriesEditor.svelte";
   import StageIcon from "@wishalia/ui/StageIcon.svelte";
   import IconButton from "#lib/IconButton.svelte";
-  import { createOrderQueue, dropIndex, moveId, shownOrder, type OrderAnswer } from "#lib/reorder.ts";
+  import { changes } from "#lib/changes.svelte.ts";
+  import { dropIndex, moveId, shownOrder } from "#lib/reorder.ts";
   import { itemStage } from "#lib/stage.ts";
   import type { Item } from "#lib/types.ts";
 
@@ -41,17 +41,88 @@
   const s = $derived(appMessages(i18n.locale).series);
 
   // The list's own wishes; the volumes of a series show inside its card (docs/series.md)
-  // Deleted on this screen: gone at once, before the server has answered (optimistic)
-  const removing = new SvelteSet<string>();
+  // The changes made here and saved in the background (#lib/outbox.ts): the page shows their
+  // result at once, before the server has them (docs/management-app.md, « Saved in the background »)
+  const path = $derived(resolve("/(app)/listes/[id]", { id: data.list.id }));
+  const mine = $derived(changes.state.changes.filter((change) => change.listId === data.list.id));
+  const deleting = $derived(
+    new Set(mine.flatMap((change) => (change.kind === "delete" && change.itemId ? [change.itemId] : []))),
+  );
+  /** Item id → the status it is getting (the latest change wins). */
+  const statusOf = $derived(
+    new Map(
+      mine.flatMap((change) =>
+        change.kind === "status" && change.itemId && change.status ? [[change.itemId, change.status]] : [],
+      ),
+    ),
+  );
+  const saved = $derived(mine.findLast((change) => change.kind === "order")?.order ?? null);
   const items = $derived(
-    data.items.filter((item) => !removing.has(item.id) && !removing.has(item.parentId ?? "")),
+    data.items
+      .filter((item) => !deleting.has(item.id) && !deleting.has(item.parentId ?? ""))
+      .map((item) => {
+        const status = statusOf.get(item.id);
+        return status ? { ...item, status: status as Item["status"] } : item;
+      }),
   );
   /** Off the screen at once; the keyboard goes to the list's heading, the bin it was on is gone. */
-  const remove = async (id: string) => {
-    removing.add(id);
+  const remove = async (item: Item) => {
+    changes.add({
+      kind: "delete",
+      path,
+      action: "deleteItem",
+      fields: [
+        ["itemId", item.id],
+        ["title", item.title],
+        ["confirm", "oui"],
+      ],
+      listId: data.list.id,
+      itemId: item.id,
+      title: item.title,
+    });
+    moved = m.deleted(item.title);
     await tick();
     document.getElementById("envies-titre")?.focus();
   };
+  /** Received, archived or open again: at once on screen, saved behind (the form without JavaScript). */
+  const setStatus =
+    (item: Item, status: Item["status"]): SubmitFunction =>
+    ({ cancel }) => {
+      cancel();
+      changes.add({
+        kind: "status",
+        key: `status:${item.id}`,
+        path,
+        action: "status",
+        fields: [
+          ["itemId", item.id],
+          ["status", status],
+        ],
+        listId: data.list.id,
+        itemId: item.id,
+        title: item.title,
+        status,
+      });
+      moved = m.statusChanged(item.title, status);
+    };
+  /** A volume one place up or down: in turn with the other changes, so two taps never race. */
+  const moveVolume =
+    (volume: Item): SubmitFunction =>
+    ({ cancel, formData }) => {
+      cancel();
+      changes.add({
+        kind: "moveVolume",
+        path,
+        action: "moveVolume",
+        fields: [
+          ["itemId", volume.id],
+          ["direction", String(formData.get("direction"))],
+        ],
+        listId: data.list.id,
+        itemId: volume.id,
+        title: volume.title,
+      });
+    };
   const own = $derived(items.filter((item) => !item.parentId));
   const open = $derived(own.filter((item) => item.status === "open"));
   /** Series id → its volumes, in their order. */
@@ -89,7 +160,7 @@
         url: resolve("/(app)/listes/[id]/suivi", { id: data.list.id }),
         reload: () => invalidate("wishalia:list"),
         // Never under a dragged item or a wish being edited
-        canReload: () => !order && !dragging && !saving.busy && !holding(),
+        canReload: () => !order && !dragging && changes.state.changes.length === 0 && !holding(),
       }),
     );
     return () => follower.stop();
@@ -105,60 +176,40 @@
     if (changes.length > 0) heard = changes.map((change) => m.live[change.kind](change.title)).join(" ");
   });
 
-  // The order on screen while items move, until the server has it (optimistic): moves follow
-  // one another without waiting, and only the latest order is sent (docs/management-app.md)
+  // The order on screen while an item is dragged, then the one waiting to be saved (optimistic):
+  // moves follow one another without waiting, and only the latest order is sent
   let order = $state<string[] | null>(null);
   let dragging = $state<string | null>(null);
   let moved = $state("");
-  let orderFailed = $state(false);
   let list = $state<HTMLUListElement>();
-  const shown = $derived(
-    order
+  const shown = $derived.by(() => {
+    const planned = order ?? saved;
+    return planned
       ? shownOrder(
-          order,
+          planned,
           open.map((item) => item.id),
         ).flatMap((id) => byId.get(id) ?? [])
-      : open,
-  );
+      : open;
+  });
 
   const place = (id: string, ids: string[]) => {
     const item = byId.get(id);
     moved = item ? m.place(item.title, ids.indexOf(id) + 1, ids.length) : "";
   };
 
-  /** Sends an order to the page's own action, without the form's reload: the queue reloads once. */
-  const sendOrder = async (ids: readonly string[]): Promise<OrderAnswer> => {
-    const body = new FormData();
-    for (const id of ids) body.append("itemIds", id);
-    const response = await fetch("?/order", {
-      method: "POST",
-      body,
-      headers: { accept: "application/json", "x-sveltekit-action": "true" },
-      cache: "no-store",
-    });
-    const result = deserialize(await response.text());
-    if (result.type === "success") return "saved";
-    if (result.type === "failure" && result.status === 409) return "changed";
-    return "failed";
-  };
-  const saving = createOrderQueue({
-    current: () => (order ? shown.map((item) => item.id) : null),
-    send: sendOrder,
-    reload: () => invalidate("wishalia:list"),
-    // The list is loaded again: its order is the truth, also when it refused
-    done: (answer) => {
-      if (dragging) return;
-      orderFailed = answer !== "saved";
-      order = null;
-    },
-  });
-
   /** Moves an item to a place on screen at once, and saves the new order behind it. */
   const reorder = (id: string, next: string[]) => {
-    orderFailed = false;
-    order = next;
     place(id, next);
-    void saving.request();
+    changes.add({
+      kind: "order",
+      key: `order:${data.list.id}`,
+      path,
+      action: "order",
+      fields: next.map((itemId) => ["itemIds", itemId]),
+      listId: data.list.id,
+      order: next,
+    });
+    order = null;
   };
 
   /** One place up or down with the arrows: the keyboard stays on the item, on an arrow that still goes. */
@@ -209,7 +260,7 @@
       dragging = null;
       if (end.type === "pointercancel" || !order || order.join() === before.join()) {
         // Nothing moved: back to the order on its way, if any, or to the server's
-        order = saving.busy ? before : null;
+        order = null;
         return;
       }
       reorder(id, order);
@@ -393,7 +444,7 @@
   {#if open.length === 0}
     <p class="muted">{m.empty}</p>
   {:else}
-    {#if orderFailed || (form?.move && "error" in form.move)}
+    {#if form?.move && "error" in form.move}
       <p class="notice error" role="alert">{m.orderChanged}</p>
     {/if}
     <ul class="items" bind:this={list}>
@@ -495,7 +546,7 @@
                   <IconButton icon="reload" label={m.refresh.label(item.title)} tip={m.refresh.tip} />
                 </form>
               {/if}
-              <form method="POST" action="?/status" use:enhance>
+              <form method="POST" action="?/status" use:enhance={setStatus(item, "received")}>
                 <input type="hidden" name="itemId" value={item.id} />
                 <input type="hidden" name="status" value="received" />
                 <IconButton icon="heart" label={m.receivedLabel(item.title)} tip={m.received} />
@@ -509,7 +560,7 @@
                 controls="edit-{item.id}"
                 onclick={() => toggleEdit(item.id)}
               />
-              <form method="POST" action="?/status" use:enhance>
+              <form method="POST" action="?/status" use:enhance={setStatus(item, "archived")}>
                 <input type="hidden" name="itemId" value={item.id} />
                 <input type="hidden" name="status" value="archived" />
                 <IconButton icon="archive" label={m.archiveLabel(item.title)} tip={m.archiveTip} />
@@ -521,8 +572,7 @@
                 help={[removal.itemHelp, removal.guests, removal.archiveInstead]}
                 action="?/deleteItem"
                 fields={{ itemId: item.id, title: item.title }}
-                onremove={() => remove(item.id)}
-                onfailed={() => removing.delete(item.id)}
+                onconfirm={() => remove(item)}
               />
             </div>
             {#if editing === item.id}
@@ -559,7 +609,7 @@
             {/if}
           </div>
           <div class="tools">
-            <form method="POST" action="?/status" use:enhance>
+            <form method="POST" action="?/status" use:enhance={setStatus(item, "open")}>
               <input type="hidden" name="itemId" value={item.id} />
               <input type="hidden" name="status" value="open" />
               <IconButton icon="restore" label={m.reopenLabel(item.title)} tip={m.reopen} />
@@ -571,8 +621,7 @@
               help={[item.kind === "series" ? removal.seriesHelp : removal.itemHelp, removal.guests]}
               action="?/deleteItem"
               fields={{ itemId: item.id, title: item.title }}
-              onremove={() => remove(item.id)}
-              onfailed={() => removing.delete(item.id)}
+              onconfirm={() => remove(item)}
             />
           </div>
         </li>
@@ -625,7 +674,7 @@
       controls="ranger-{series.id}"
       onclick={() => (gathering = gathering === series.id ? null : series.id)}
     />
-    <form method="POST" action="?/status" use:enhance>
+    <form method="POST" action="?/status" use:enhance={setStatus(series, "archived")}>
       <input type="hidden" name="itemId" value={series.id} />
       <input type="hidden" name="status" value="archived" />
       <IconButton icon="archive" label={m.archiveLabel(series.title)} tip={m.archiveTip} />
@@ -642,8 +691,7 @@
       help={[removal.seriesHelp, removal.guests, removal.ungroupInstead]}
       action="?/deleteItem"
       fields={{ itemId: series.id, title: series.title }}
-      onremove={() => remove(series.id)}
-      onfailed={() => removing.delete(series.id)}
+      onconfirm={() => remove(series)}
     />
   </div>
   {#if editing === series.id}
@@ -718,7 +766,7 @@
   {@const label = volumeLabel(volume.title, series.title)}
   <li class="volume" class:sortable={isOpen && wanted.length > 1} class:done={!isOpen} data-id={volume.id}>
     {#if isOpen && wanted.length > 1}
-      <form method="POST" action="?/moveVolume" class="mover" use:enhance>
+      <form method="POST" action="?/moveVolume" class="mover" use:enhance={moveVolume(volume)}>
         <input type="hidden" name="itemId" value={volume.id} />
         <button
           type="submit"
@@ -782,7 +830,7 @@
             <IconButton icon="reload" label={m.refresh.label(volume.title)} tip={m.refresh.tip} />
           </form>
         {/if}
-        <form method="POST" action="?/status" use:enhance>
+        <form method="POST" action="?/status" use:enhance={setStatus(volume, "received")}>
           <input type="hidden" name="itemId" value={volume.id} />
           <input type="hidden" name="status" value="received" />
           <IconButton icon="heart" label={m.receivedLabel(volume.title)} tip={m.received} />
@@ -797,7 +845,7 @@
           onclick={() => toggleEdit(volume.id)}
         />
       {:else}
-        <form method="POST" action="?/status" use:enhance>
+        <form method="POST" action="?/status" use:enhance={setStatus(volume, "open")}>
           <input type="hidden" name="itemId" value={volume.id} />
           <input type="hidden" name="status" value="open" />
           <IconButton icon="restore" label={m.reopenLabel(volume.title)} tip={m.reopen} />
@@ -814,8 +862,7 @@
         help={[removal.itemHelp, removal.guests]}
         action="?/deleteItem"
         fields={{ itemId: volume.id, title: volume.title }}
-        onremove={() => remove(volume.id)}
-        onfailed={() => removing.delete(volume.id)}
+        onconfirm={() => remove(volume)}
       />
     </div>
     {#if editing === volume.id}

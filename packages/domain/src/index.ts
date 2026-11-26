@@ -175,3 +175,4 @@ export {
   type Groupable,
   type GroupRefusal,
 } from "./series.js";
+export { mergedOrder } from "./order.js";
