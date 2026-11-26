@@ -41,11 +41,14 @@ export function givers(funding: Funding, locale: Locale): string {
 }
 
 /**
- * Whether guests may share this gift by amounts, each giving part of its price (the API's rule:
- * `takesShares` in @wishalia/domain).
+ * Whether guests may share this gift by amounts, each giving part of it, with or without a price
+ * (the API's rule: `takesShares` in @wishalia/domain).
  */
-export const takesShares = (item: PublicItem): boolean =>
-  item.kind === "unique" && !item.repeatable && (item.priceCents ?? 0) > 0;
+export const takesShares = (item: PublicItem): boolean => item.kind === "unique" && !item.repeatable;
+
+/** A gift's price, when it has one: shares then go up to it. */
+export const priceOf = (item: PublicItem): number | null =>
+  item.priceCents && item.priceCents > 0 ? item.priceCents : null;
 
 /** What guests already gave by amounts on a shared gift. */
 const sharedCents = (item: PublicItem) => (takesShares(item) ? (item.funding?.totalCents ?? 0) : 0);
@@ -66,7 +69,8 @@ export function standing(item: PublicItem, locale: Locale): string | null {
       if (item.repeatable) return funding.timesGiven ? m.repeatGiven(funding.timesGiven) : null;
       if (sharing(item)) {
         if (funding.state === "complete") return who ? m.sharedBy(who) : m.shared;
-        const reached = m.poolReached(f.money(sharedCents(item)), f.money(item.priceCents ?? 0));
+        const price = priceOf(item);
+        const reached = m.poolReached(f.money(sharedCents(item)), price === null ? null : f.money(price));
         const missing = funding.remainingCents ? m.poolMissing(f.money(funding.remainingCents)) : "";
         return `${reached}${missing}${who ? m.poolWith(who) : ""}.`;
       }

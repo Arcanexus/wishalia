@@ -73,14 +73,14 @@ amount nor its message: those stay with their author (`mine`).
 
 ## Routes
 
-| Route                                      | Body                                                                                                                                 | Answer                                                                                                                                                   |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /public/home?q=`                      | No share link                                                                                                                        | Who is signed in, and the public lists (see above).                                                                                                      |
-| `GET /public/view`                         |                                                                                                                                      | The list (with its picture: `icon`, `image`) or the event, its events and its items, with `funding` or null.                                             |
-| `GET /public/live`                         |                                                                                                                                      | `{ version, live }`, never cached: see below.                                                                                                            |
-| `POST /public/items/:itemId/contributions` | `eventId`?, `amountCents` (pool, or a share of a gift that has a price), `units`? (quantity), `guestName`?, `message`?, `anonymous`? | `201`, the contribution and its `withdrawKey`, given once.                                                                                               |
-| `DELETE /public/contributions/:id`         | header `X-Withdraw-Key`, or the session of its author                                                                                | `204`. Withdrawing twice changes nothing; anyone else gets `404`.                                                                                        |
-| `POST /public/gifts/gone`                  | `{ gifts: [{ id, key }] }` (the device's withdraw keys, 30 at most), and the session                                                 | The person's own gifts whose item left the owner's lists: `id`, `itemId`, `title`, `state` (`archived` or `deleted`), `eventId`, `amountCents`, `units`. |
+| Route                                      | Body                                                                                                                        | Answer                                                                                                                                                   |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /public/home?q=`                      | No share link                                                                                                               | Who is signed in, and the public lists (see above).                                                                                                      |
+| `GET /public/view`                         |                                                                                                                             | The list (with its picture: `icon`, `image`) or the event, its events and its items, with `funding` or null.                                             |
+| `GET /public/live`                         |                                                                                                                             | `{ version, live }`, never cached: see below.                                                                                                            |
+| `POST /public/items/:itemId/contributions` | `eventId`?, `amountCents` (pool, or a share of a unique gift) , `units`? (quantity), `guestName`?, `message`?, `anonymous`? | `201`, the contribution and its `withdrawKey`, given once.                                                                                               |
+| `DELETE /public/contributions/:id`         | header `X-Withdraw-Key`, or the session of its author                                                                       | `204`. Withdrawing twice changes nothing; anyone else gets `404`.                                                                                        |
+| `POST /public/gifts/gone`                  | `{ gifts: [{ id, key }] }` (the device's withdraw keys, 30 at most), and the session                                        | The person's own gifts whose item left the owner's lists: `id`, `itemId`, `title`, `state` (`archived` or `deleted`), `eventId`, `amountCents`, `units`. |
 
 Each item of the view carries `stage`: `reading` or `images` while it is completed from its link,
 `null` otherwise (why a link failed is the owner's business). `GET /public/live` gives a fingerprint
@@ -92,11 +92,13 @@ A contribution:
 
 - a pool takes any positive amount, beyond the target too (overshoot is allowed);
 - a unique item takes one reservation, a repeatable one one per event;
-- a unique item that has a price, given once, may instead take shares: `amountCents` up to what is
-  left of its price (`amount_too_high` beyond). It takes no share once reserved whole
-  (`already_reserved`), and no whole reservation once shared (`already_shared`); an amount on any
-  other unique item is refused (`shares_not_taken`). Its `funding` then also carries `totalCents`,
-  `remainingCents` and `byEvent`, as a pool's, measured against the price;
+- a unique item given once, with or without a price, may instead take shares: `amountCents` up to
+  what is left of its price (`amount_too_high` beyond), or any positive amount without a price. It
+  takes no share once reserved whole (`already_reserved`), and no whole reservation once shared
+  (`already_shared`); an amount on a repeatable unique item is refused (`shares_not_taken`). Its
+  `funding` then also carries `totalCents`, `remainingCents` and `byEvent`, as a pool's, measured
+  against the price (`remainingCents` is null without a price, and such a gift stays `in_progress`
+  once shared, never `complete`);
 - a quantity item takes `units` copies, up to what is left (per event when it is repeatable);
 - a guest without an account gives a name (`guestName`); with an account, their name is used;
 - on a list link, `eventId` is optional: one of the item's events, or none; on an event link, it is

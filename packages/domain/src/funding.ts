@@ -15,7 +15,7 @@ export interface WishFunding {
   targetCents?: Cents | null;
   /** Quantity: the number of copies wanted. */
   quantity?: number | null;
-  /** Unique: its price. With one, the gift can also be shared by amounts (see `takesShares`). */
+  /** Unique: its price, when known. Shares by amounts then go up to it (see `takesShares`). */
   priceCents?: Cents | null;
 }
 
@@ -54,17 +54,28 @@ export function overshoot(target: Cents, total: Cents): Cents {
 }
 
 /**
- * Whether guests may share a unique gift by amounts, each giving part of its price: any unique gift
- * that has a price and is given once (a repeatable gift is reserved whole at every occasion).
+ * Whether guests may share a unique gift by amounts, each giving part of it: any unique gift that is
+ * given once, with or without a price (a repeatable gift is reserved whole at every occasion). With
+ * a price, the shares go up to it; without one, they take any amount, like a pool without a target.
  */
 export function takesShares(wish: WishFunding): boolean {
-  return wish.kind === "unique" && !wish.repeatable && (wish.priceCents ?? 0) > 0;
+  return wish.kind === "unique" && !wish.repeatable;
 }
+
+/** A unique gift's price, when it has one (zero or none: no price). */
+const priceOf = (wish: WishFunding): Cents | null =>
+  wish.priceCents !== null && wish.priceCents !== undefined && wish.priceCents > 0 ? wish.priceCents : null;
+
+/**
+ * How far a gift shared without a price counts as covered: partly, for good. Nobody knows what it
+ * costs, so the shares never complete it; the owner marking it received does.
+ */
+export const UNPRICED_SHARED_PROGRESS = 0.5;
 
 /** The amount a gift's funding is measured against: a pool's target, or a shared gift's price. */
 export function amountTarget(wish: WishFunding): Cents | null {
   if (wish.kind === "pool") return wish.targetCents ?? null;
-  return takesShares(wish) ? (wish.priceCents ?? null) : null;
+  return takesShares(wish) ? priceOf(wish) : null;
 }
 
 /** Copies reserved on a quantity or unique item. */
@@ -108,9 +119,12 @@ export function progress(wish: WishFunding, contributions: readonly Contribution
     }
     case "unique": {
       if (reservedUnits(contributions) > 0) return 1;
-      // Shared by amounts: covered once the shares reach the price
-      const price = takesShares(wish) ? (wish.priceCents ?? 0) : 0;
-      return price > 0 ? Math.min(1, totalFunded(contributions) / price) : 0;
+      // Shared by amounts: covered once the shares reach the price; without a price, only partly
+      if (!takesShares(wish)) return 0;
+      const total = totalFunded(contributions);
+      const price = priceOf(wish);
+      if (price === null) return total > 0 ? UNPRICED_SHARED_PROGRESS : 0;
+      return Math.min(1, total / price);
     }
   }
 }

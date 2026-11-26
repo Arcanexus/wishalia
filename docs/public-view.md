@@ -56,7 +56,8 @@ The page greets the person the link was made for (« Bonjour Mamie ! »), then s
 - on a list link, the open events coming up (« Prochaine occasion : Noël en famille »), and under
   each item the events it is picked for;
 - every item with its image, when the owner has one, which opens big with the item's other images
-  ([Images](images.md#opening-the-images-big)), its price (or the pool's target), its notes, a link to the site it comes from
+  ([Images](images.md#opening-the-images-big)), or an empty frame in its place, so that the titles
+  and the buttons of every card line up; its price (or the pool's target), its notes, a link to the site it comes from
   (opened in a new tab, only an `http(s)` address), and where it stands. An icon next to the price
   says it at a glance, with its words on hover and for a screen reader, and its own shape so that
   colour is never alone: a gift (nobody takes care of it yet), a half disc (partly given), a check
@@ -64,7 +65,8 @@ The page greets the person the link was made for (« Bonjour Mamie ! »), then s
   - a gift: « Réservé par Paul. »;
   - a gift that has a price, shared by several: the same bar as a pool, up to its price, and « 20 €
     réunis sur 49,90 € : il manque 29,90 €, avec Paul. », then « Offert ensemble, par Paul et
-    Jeanne. » once the price is reached;
+    Jeanne. » once the price is reached; a gift without a price, shared: « 45 € réunis, avec
+    Paul. », and it stays partly given (half disc) until the owner marks it received;
   - several copies: one box per copy, filled when reserved, and « 1 sur 4 déjà réservé, par
     Jeanne. »;
   - a pool: a bar split by event (one colour per event, named under the bar when there are
@@ -107,15 +109,19 @@ it, the page stays in place and the focus goes back to the title.
 
 ## Giving
 
-Under every item still open, one button says what it does: « Je le réserve » for a gift without a
-price, « Je l'offre ou je participe » for a gift that has one, « J'en réserve » when several copies
-are left, « Je participe » for a pool or a gift others already started to share. It opens a short
-form, in the page, that asks only what the gift needs:
+Under every item still open, one button says what it does, at the same place on every card (the
+left of the text column): « Acheter / Participer » (« Buy / Chip in ») for any gift given once, with
+or without a price, « J'en réserve » when several copies are left, « Je le réserve » for a gift for
+every occasion, « Je participe » for a pool or a gift others already started to share. It opens a
+short form, in the page, that asks only what the gift needs:
 
-- for a gift that has a price: « Je l'offre en entier (35 €) » or « Je participe avec un montant »,
-  then the amount, up to what is left of the price. Once someone gave part of it, it can only be
-  completed by amounts (« Il manque 29,90 € pour l'offrir en entier. »); once someone reserved it
-  whole, it takes no share. Any gift with a price can be shared: the owner has nothing to switch on.
+- for a gift given once, with or without a price, the same two choices: « Je l'achète en entier
+  (35 €) » (without a price: « Je l'achète en entier ») or « Je participe avec un montant », then
+  the amount, up to what is left of the price, or any amount when it has none. Once someone gave
+  part of it, it can only be completed by amounts (« Il manque 29,90 € pour l'offrir en entier. »);
+  once someone bought it whole, it takes no share. Any such gift can be shared: the owner has
+  nothing to switch on. A gift without a price is never complete by its shares (nobody knows what it
+  costs): it stays partly given, and others may still add to it, until the owner marks it received.
   A gift for every occasion is reserved whole each time;
 - for a pool, the amount in euros (« 20 » or « 12,50 »), with what is still missing; giving more
   than the target is allowed;
@@ -137,6 +143,8 @@ chip in again.
 ![Sharing a gift that has a price, on a phone](images/public-share.png)
 
 ![The same, in English and in dark mode](images/public-share-dark.png)
+
+![A gift without a price: the same choices, any amount](images/public-share-free.png)
 
 When the gift cannot be taken, the form stays open with what was typed and says why, in words: the
 item was reserved in the meantime (« Quelqu'un vient de le réserver. Regardez les autres envies ! »),

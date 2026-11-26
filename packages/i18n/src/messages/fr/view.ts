@@ -41,7 +41,8 @@ export const view = {
     pool: "Je participe",
     several: "J'en réserve",
     one: "Je le réserve",
-    share: "Je l'offre ou je participe",
+    /** Any gift given once, with or without a price: bought whole, or shared by amounts. */
+    share: "Acheter / Participer",
   },
   giveErrors: {
     already_reserved: "Quelqu'un vient de le réserver. Regardez les autres envies !",

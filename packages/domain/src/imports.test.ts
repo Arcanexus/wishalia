@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { decodeEntities } from "./entities.js";
 import {
   cleanText,
   columnKey,
   csvDelimiter,
-  decodeEntities,
   fieldOfColumn,
   FILE_IMPORTERS,
   htmlText,
@@ -269,7 +269,8 @@ describe("Wishlistr", () => {
   });
 
   it("decodes entities and keeps only the text", () => {
-    expect(decodeEntities("&lt;b&gt; &#x3a; &#58; &eacute; &#0;")).toBe("<b> : : &eacute; &#0;");
+    expect(decodeEntities("&lt;b&gt; &#x3a; &#58; &eacute; &#0;")).toBe("<b> : : é &#0;");
+    expect(htmlText("<p>11/01/2026 : liste &agrave; jour</p>")).toBe("11/01/2026 : liste à jour");
     expect(htmlText("<strong>Vélo</strong><br />rouge &amp; noir<span")).toBe("Vélo\nrouge & noir");
   });
 

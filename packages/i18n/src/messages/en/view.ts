@@ -31,7 +31,7 @@ export const view: ViewMessages = {
     pool: "I'll chip in",
     several: "I'll reserve some",
     one: "I'll reserve it",
-    share: "I'll give it or chip in",
+    share: "Buy / Chip in",
   },
   giveErrors: {
     already_reserved: "Someone has just reserved it. Have a look at the other wishes!",

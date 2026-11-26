@@ -11,6 +11,7 @@ import {
   takesShares,
   timesGiven,
   totalFunded,
+  UNPRICED_SHARED_PROGRESS,
   type ContributionFunding,
   type WishFunding,
 } from "./funding.js";
@@ -148,10 +149,10 @@ describe("timesGiven", () => {
 describe("a gift shared by amounts", () => {
   const priced: WishFunding = { kind: "unique", repeatable: false, priceCents: cents(20000) };
 
-  it("is any unique gift with a price, given once", () => {
+  it("is any unique gift given once, with or without a price", () => {
     expect(takesShares(priced)).toBe(true);
-    expect(takesShares(unique)).toBe(false);
-    expect(takesShares({ ...priced, priceCents: cents(0) })).toBe(false);
+    expect(takesShares(unique)).toBe(true);
+    expect(takesShares({ ...priced, priceCents: cents(0) })).toBe(true);
     expect(takesShares({ ...priced, repeatable: true })).toBe(false);
     expect(takesShares({ ...pool, priceCents: cents(20000) })).toBe(false);
   });
@@ -159,6 +160,7 @@ describe("a gift shared by amounts", () => {
     expect(amountTarget(priced)).toBe(20000);
     expect(amountTarget(pool)).toBe(10000);
     expect(amountTarget(unique)).toBeNull();
+    expect(amountTarget({ ...priced, priceCents: cents(0) })).toBeNull();
     expect(amountTarget(quantity)).toBeNull();
   });
   it("fills up with the shares until they reach the price", () => {
@@ -171,7 +173,10 @@ describe("a gift shared by amounts", () => {
   it("is complete when someone reserves it whole", () => {
     expect(itemState(priced, [reserve("e1")])).toBe("complete");
   });
-  it("ignores amounts on a gift without a price", () => {
-    expect(progress(unique, [pledge("e1", 5000)])).toBe(0);
+  it("counts a gift without a price as partly given once shared, and never complete by its shares", () => {
+    expect(progress(unique, [])).toBe(0);
+    expect(progress(unique, [pledge("e1", 5000)])).toBe(UNPRICED_SHARED_PROGRESS);
+    expect(itemState(unique, [pledge("e1", 5000), pledge("e2", 900000)])).toBe("in_progress");
+    expect(progress({ ...unique, repeatable: true }, [pledge("e1", 5000)])).toBe(0);
   });
 });

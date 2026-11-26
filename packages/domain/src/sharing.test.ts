@@ -117,8 +117,17 @@ describe("refuseContribution on a gift shared by amounts", () => {
     expect(refuseContribution(priced, [share(100)], { eventId: "e1" })).toBe("already_shared");
     expect(refuseContribution(priced, [], { eventId: "e1" })).toBeNull();
   });
-  it("takes no amount on a gift without a price, or given at every occasion", () => {
-    expect(refuseContribution(wish(), [], { eventId: "e1", amountCents: 100 })).toBe("shares_not_taken");
+  it("takes any amount on a gift without a price, until someone reserves it whole", () => {
+    expect(refuseContribution(wish(), [], { eventId: "e1", amountCents: 100 })).toBeNull();
+    expect(refuseContribution(wish(), [share(900000)], { eventId: "e1", amountCents: 900000 })).toBeNull();
+    expect(refuseContribution(wish(), [share(100)], { eventId: "e1", units: 1 })).toBe("already_shared");
+    expect(refuseContribution(wish(), [reservation("e1")], { eventId: "e1", amountCents: 100 })).toBe(
+      "already_reserved",
+    );
+    expect(refuseContribution(wish(), [], { eventId: "e1", amountCents: 0 })).toBe("amount_required");
+  });
+
+  it("takes no amount on a gift given at every occasion", () => {
     expect(
       refuseContribution(wish({ priceCents: cents(100), repeatable: true }), [], {
         eventId: "e1",
