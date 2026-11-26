@@ -15,13 +15,15 @@ export interface WishFunding {
   targetCents?: Cents | null;
   /** Quantity: the number of copies wanted. */
   quantity?: number | null;
+  /** Unique: its price. With one, the gift can also be shared by amounts (see `takesShares`). */
+  priceCents?: Cents | null;
 }
 
 export interface ContributionFunding {
   /** Null for a contribution made without an event. */
   eventId: string | null;
   status: "active" | "withdrawn";
-  /** Pool: the amount pledged. */
+  /** Pool, or a share of a unique gift: the amount pledged. */
   amountCents?: Cents | null;
   /** Unique and quantity: the copies reserved (1 for a unique item). */
   units?: number | null;
@@ -49,6 +51,20 @@ export function remainingToFund(target: Cents, total: Cents): Cents {
 /** What goes beyond the target: overshoot is allowed (spec, section 2.1). */
 export function overshoot(target: Cents, total: Cents): Cents {
   return cents(Math.max(0, total - target));
+}
+
+/**
+ * Whether guests may share a unique gift by amounts, each giving part of its price: any unique gift
+ * that has a price and is given once (a repeatable gift is reserved whole at every occasion).
+ */
+export function takesShares(wish: WishFunding): boolean {
+  return wish.kind === "unique" && !wish.repeatable && (wish.priceCents ?? 0) > 0;
+}
+
+/** The amount a gift's funding is measured against: a pool's target, or a shared gift's price. */
+export function amountTarget(wish: WishFunding): Cents | null {
+  if (wish.kind === "pool") return wish.targetCents ?? null;
+  return takesShares(wish) ? (wish.priceCents ?? null) : null;
 }
 
 /** Copies reserved on a quantity or unique item. */
@@ -90,8 +106,12 @@ export function progress(wish: WishFunding, contributions: readonly Contribution
       const wanted = Math.max(1, wish.quantity ?? 1);
       return Math.min(1, reservedUnits(contributions) / wanted);
     }
-    case "unique":
-      return reservedUnits(contributions) > 0 ? 1 : 0;
+    case "unique": {
+      if (reservedUnits(contributions) > 0) return 1;
+      // Shared by amounts: covered once the shares reach the price
+      const price = takesShares(wish) ? (wish.priceCents ?? 0) : 0;
+      return price > 0 ? Math.min(1, totalFunded(contributions) / price) : 0;
+    }
   }
 }
 

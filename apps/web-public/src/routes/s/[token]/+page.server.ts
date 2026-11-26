@@ -88,12 +88,15 @@ export const actions: Actions = {
     const form = await event.request.formData();
     const itemId = String(form.get("itemId") ?? "");
     const eventId = String(form.get("eventId") ?? "");
-    const amount = String(form.get("amount") ?? "").trim();
+    // A gift with a price: given whole, or shared by amounts (« part »)
+    const way = String(form.get("way") ?? "");
+    const typed = String(form.get("amount") ?? "").trim();
+    const amount = way === "whole" ? "" : typed;
     const unitsText = String(form.get("units") ?? "").trim();
     const guestName = String(form.get("guestName") ?? "").trim();
     const message = String(form.get("message") ?? "").trim();
     const anonymous = form.get("anonymous") === "on";
-    const values = { itemId, amount, units: unitsText, guestName, message, anonymous };
+    const values = { itemId, way, amount: typed, units: unitsText, guestName, message, anonymous };
 
     if (!UUID.test(itemId) || (eventId && !UUID.test(eventId))) {
       return fail(400, { give: { ...values, error: "invalid_request" } });
@@ -101,6 +104,7 @@ export const actions: Actions = {
     if (guestName.length > 60 || message.length > 500) {
       return fail(400, { give: { ...values, error: "too_long" } });
     }
+    if (way === "part" && !amount) return fail(400, { give: { ...values, error: "amount_required" } });
     let amountCents: number | undefined;
     if (amount) {
       const parsed = parseAmount(amount);

@@ -41,7 +41,7 @@ describe("samplePreview", () => {
       `Cagnotte de ${formatEuros(30000)}, à lancer.`,
       `${formatEuros(5000)} réunis, avec ${SAMPLE_NAMES[0]}, ${SAMPLE_NAMES[1]} et une personne discrète.`,
       "Déjà offert une fois, et peut l'être encore.",
-      "Libre.",
+      null,
       `1 sur 3 déjà réservé, par ${SAMPLE_NAMES[0]}.`,
       `${formatEuros(4300)} réunis sur ${formatEuros(5000)} : il manque ${formatEuros(700)}, avec ${SAMPLE_NAMES[0]}, ${SAMPLE_NAMES[1]} et une personne discrète.`,
     ]);

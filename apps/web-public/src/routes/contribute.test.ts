@@ -147,6 +147,21 @@ describe("giving", () => {
     expect(calls[0]?.body).toEqual({ units: 2, anonymous: false });
   });
 
+  it("gives a gift with a price whole, or a share of it, as the guest chose", async () => {
+    const calls = api({ [`POST /public/items/${ITEM}/contributions`]: () => created() });
+    // « Whole » ignores an amount typed before changing one's mind
+    await run(actions.give, event({ itemId: ITEM, way: "whole", amount: "20" }).input);
+    await run(actions.give, event({ itemId: ITEM, way: "part", amount: "20" }).input);
+    expect(calls.map((call) => call.body)).toEqual([
+      { anonymous: false },
+      { amountCents: 2000, anonymous: false },
+    ]);
+    expect(
+      (await run(actions.give, event({ itemId: ITEM, way: "part", amount: " " }).input)).value,
+    ).toMatchObject({ status: 400, data: { give: { error: "amount_required", way: "part" } } });
+    expect(calls).toHaveLength(2);
+  });
+
   it("refuses a bad amount, count, text or id without calling the API", async () => {
     const calls = api({});
     for (const [form, error] of [

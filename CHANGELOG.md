@@ -8,6 +8,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Any gift that has a price can be shared: on the guests' page, « Je l'offre ou je participe »
+  offers to give it whole or to give part of it with an amount, up to what is left of the price.
+  Its bar fills up to the price, « 20 € réunis sur 49,90 € : il manque 29,90 €, avec Paul. », and
+  once shared it is completed by amounts only. The owner has nothing to switch on; the item editor
+  says it. A gift for every occasion is still reserved whole. API: `amountCents` on a unique item,
+  new refusals `already_shared`, `amount_too_high`, `shares_not_taken`.
+- An icon next to each item's price says where it stands at a glance: a gift (nobody takes care of
+  it yet), a half disc (partly given), a check (already given), a heart (received), with its words
+  on hover and for a screen reader.
 - The pages follow the reading of links live, with no reload: the list page, the image page of an
   item and the guests' page. Each step has its own icon, its words next to it and the longer help
   on hover: a chain link in a turning ring for « Lecture du lien… », a picture for « Recherche des
@@ -21,6 +30,13 @@ All notable changes to this project are documented here. The format follows
   contribution (anti-spoil). See [Live updates](docs/live-updates.md).
 - The worker writes the title and the price as soon as the page is read, then fetches the images:
   migration 0012 adds `enrichment_step` to the items.
+
+### Changed
+
+- A free item no longer says « Libre. » (« Free. » in English, read as « gratuit » next to a price):
+  its icon says it. The gauge counts « à offrir » (« to give »).
+- The givers' initials go above the words on a narrow card, and the price stays on the title's
+  first line.
 
 ### Fixed
 

@@ -18,12 +18,14 @@ export {
 } from "./anti-spoil.js";
 export {
   ALMOST_THRESHOLD,
+  amountTarget,
   fundingByEvent,
   itemState,
   overshoot,
   progress,
   remainingToFund,
   reservedUnits,
+  takesShares,
   timesGiven,
   totalFunded,
   type ContributionFunding,

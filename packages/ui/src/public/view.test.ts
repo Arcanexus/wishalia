@@ -101,6 +101,17 @@ describe("words", () => {
   });
 });
 
+describe("availability", () => {
+  it("tells the badge where an item stands, and nothing when the funding is hidden", () => {
+    expect(view.availability(item())).toBe("free");
+    expect(view.availability(item({ funding: funding({ state: "in_progress" }) }))).toBe("progress");
+    expect(view.availability(item({ funding: funding({ state: "almost" }) }))).toBe("progress");
+    expect(view.availability(item({ funding: funding({ state: "complete" }) }))).toBe("done");
+    expect(view.availability(item({ status: "received", funding: null }))).toBe("received");
+    expect(view.availability(item({ funding: null }))).toBeNull();
+  });
+});
+
 describe("standing", () => {
   const paul = [{ name: "Paul", mine: false }];
 
@@ -109,8 +120,8 @@ describe("standing", () => {
     expect(standing(item({ status: "received", funding: null }))).toBe("Déjà reçu : merci !");
   });
 
-  it("tells a unique item free or reserved", () => {
-    expect(standing(item())).toBe("Libre.");
+  it("says nothing of a free item, which its badge shows, and tells who reserved it", () => {
+    expect(standing(item())).toBeNull();
     expect(standing(item({ funding: funding({ state: "complete", contributors: paul }) }))).toBe(
       "Réservé par Paul.",
     );
@@ -118,7 +129,7 @@ describe("standing", () => {
   });
 
   it("counts the times a repeatable item was given", () => {
-    expect(standing(item({ repeatable: true }))).toBe("Libre, et peut être offert à chaque occasion.");
+    expect(standing(item({ repeatable: true }))).toBeNull();
     expect(standing(item({ repeatable: true, funding: funding({ timesGiven: 1 }) }))).toContain("une fois");
     expect(standing(item({ repeatable: true, funding: funding({ timesGiven: 3 }) }))).toContain("3 fois");
   });
@@ -126,8 +137,8 @@ describe("standing", () => {
   it("counts the copies of a quantity item", () => {
     const copies = (reservedUnits: number, quantity = 5, contributors = paul) =>
       standing(item({ kind: "quantity", quantity, funding: funding({ reservedUnits, contributors }) }));
-    expect(copies(0, 5, [])).toBe("5 à offrir, aucun réservé pour l'instant.");
-    expect(copies(0, 1, [])).toBe("Libre.");
+    expect(copies(0, 5, [])).toBeNull();
+    expect(copies(0, 1, [])).toBeNull();
     expect(copies(1)).toBe("1 sur 5 déjà réservé, par Paul.");
     expect(copies(2, 5, [])).toBe("2 sur 5 déjà réservés.");
     expect(copies(5)).toBe("Tout est réservé, par Paul.");
@@ -196,6 +207,61 @@ describe("giving helpers", () => {
   });
 });
 
+describe("a gift shared by amounts", () => {
+  const priced = (patch: Partial<Funding> = {}) =>
+    item({ priceCents: 20000, funding: funding({ totalCents: 0, remainingCents: 20000, ...patch }) });
+  const paul = [{ name: "Paul", mine: false }];
+
+  it("is any unique gift with a price, given once", () => {
+    expect(view.takesShares(priced())).toBe(true);
+    expect(view.takesShares(item())).toBe(false);
+    expect(view.takesShares(item({ priceCents: 20000, repeatable: true }))).toBe(false);
+    expect(view.takesShares(item({ kind: "pool", priceCents: 20000 }))).toBe(false);
+    expect(view.sharing(priced())).toBe(false);
+    expect(view.sharing(priced({ totalCents: 5000 }))).toBe(true);
+  });
+
+  it("offers to give it whole or to chip in, then only to chip in", () => {
+    expect(standing(priced())).toBeNull();
+    expect(giveLabel(priced())).toBe("Je l'offre ou je participe");
+    const started = priced({
+      state: "in_progress",
+      totalCents: 5000,
+      remainingCents: 15000,
+      contributors: paul,
+    });
+    expect(plain(standing(started))).toBe("50 € réunis sur 200 € : il manque 150 €, avec Paul.");
+    expect(giveLabel(started)).toBe("Je participe");
+    expect(canGive(started, { viewer: "guest", event: null })).toBe(true);
+  });
+
+  it("is given together once the shares reach the price", () => {
+    const done = priced({ state: "complete", totalCents: 20000, remainingCents: 0, contributors: paul });
+    expect(standing(done)).toBe("Offert ensemble, par Paul.");
+    const anonymous = priced({ state: "complete", totalCents: 20000, remainingCents: 0 });
+    expect(standing(anonymous)).toBe("Offert ensemble.");
+    expect(canGive(done, { viewer: "guest", event: null })).toBe(false);
+    const reserved = priced({ state: "complete", reservedUnits: 1, contributors: paul });
+    expect(standing(reserved)).toBe("Réservé par Paul.");
+    expect(canGive(reserved, { viewer: "guest", event: null })).toBe(false);
+  });
+
+  it("draws a bar up to the price once shared, and none before", () => {
+    expect(poolBar(priced(), [])).toBeNull();
+    const bar = poolBar(priced({ totalCents: 5000, byEvent: [{ eventId: null, amountCents: 5000 }] }), []);
+    expect(bar?.segments).toEqual([
+      { key: "none", label: "Sans occasion", cents: 5000, start: 0, width: 0.25, tone: 0 },
+    ]);
+    expect(bar?.target).toBe(1);
+    expect(bar?.overshoot).toBeNull();
+  });
+
+  it("says so in English", () => {
+    expect(view.giveLabel(priced(), "en")).toBe("I'll give it or chip in");
+    expect(view.giveError("amount_too_high", "en")).toContain("more than what is missing");
+  });
+});
+
 describe("the drawings", () => {
   const noel = { id: "noel", name: "Noël", kind: "christmas" as const, date: "2026-12-24", open: true };
   const pool = (patch: Partial<Funding>, targetCents: number | null = 10000) =>
@@ -251,7 +317,7 @@ describe("the drawings", () => {
     const result = gauge(items);
     expect(result).toEqual({ complete: 2, inProgress: 2, free: 1 });
     expect(gaugeLine(result ?? { complete: 0, inProgress: 0, free: 0 })).toBe(
-      "2 complets, 2 en cours, 1 libre.",
+      "2 complets, 2 en cours, 1 à offrir.",
     );
     expect(gauge([item({ funding: null })])).toBeNull();
   });
@@ -315,7 +381,7 @@ describe("in English", () => {
     expect(view.withdrawError("list_closed", en)).toContain("lifted");
     expect(view.heading({ list: null, event: null }, en)).toBe("Wishlist");
     expect(view.gaugeLine({ complete: 2, inProgress: 1, free: 1 }, en)).toBe(
-      "2 complete, 1 in progress, 1 free.",
+      "2 complete, 1 in progress, 1 to give.",
     );
     expect(
       view.myGiftLine(

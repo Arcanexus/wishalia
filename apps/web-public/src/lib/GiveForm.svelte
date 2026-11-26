@@ -4,9 +4,17 @@
   import { useI18n } from "@wishalia/ui/i18n.ts";
 
   import type { PublicEvent, PublicItem } from "@wishalia/ui/public/types.ts";
-  import { formatEuros, giveLabel, giveError, unitsLeft } from "@wishalia/ui/public/view.ts";
+  import {
+    formatEuros,
+    giveLabel,
+    giveError,
+    sharing,
+    takesShares,
+    unitsLeft,
+  } from "@wishalia/ui/public/view.ts";
 
   interface Values {
+    way?: string;
     amount?: string;
     units?: string;
     guestName?: string;
@@ -39,6 +47,12 @@
   let sending = $state(false);
   const id = $derived(`don-${item.id}`);
   const left = $derived(unitsLeft(item));
+  /** A gift with a price: given whole or shared, and only shared once others started. */
+  const shares = $derived(takesShares(item));
+  const started = $derived(sharing(item));
+  const partChosen = $derived(failed?.way === "part");
+  const missing = $derived(item.funding?.remainingCents ?? item.priceCents ?? 0);
+  const submitLabel = $derived(shares && !started ? m.confirm : giveLabel(item, i18n.locale));
 </script>
 
 <details class="give" open={failed !== null} data-live-hold>
@@ -93,6 +107,63 @@
           ? m.amountLeft(formatEuros(item.funding.remainingCents, i18n.locale))
           : m.amountFree}
       </p>
+    {:else if shares && started}
+      <input type="hidden" name="way" value="part" />
+      <label for="{id}-montant">{m.amount}</label>
+      <input
+        id="{id}-montant"
+        name="amount"
+        inputmode="decimal"
+        autocomplete="off"
+        required
+        value={failed?.amount ?? ""}
+        placeholder={m.amountPlaceholder}
+        aria-describedby="{id}-montant-aide"
+        aria-invalid={failed?.error === "amount_required" || failed?.error === "amount_too_high"
+          ? "true"
+          : undefined}
+      />
+      <p id="{id}-montant-aide" class="muted help">
+        {m.shareStarted}
+        {m.shareLeft(formatEuros(missing, i18n.locale))}
+      </p>
+    {:else if shares}
+      <fieldset>
+        <legend>{m.way}</legend>
+        <label class="choice">
+          <input type="radio" name="way" value="whole" checked={!partChosen} />
+          <span>
+            <strong>{m.whole(formatEuros(item.priceCents ?? 0, i18n.locale))}</strong>
+            <span class="muted">{m.wholeHelp}</span>
+          </span>
+        </label>
+        <label class="choice">
+          <input type="radio" name="way" value="part" checked={partChosen} />
+          <span>
+            <strong>{m.part}</strong>
+            <span class="muted">{m.partHelp}</span>
+          </span>
+        </label>
+      </fieldset>
+      <!-- Shown by CSS once « part » is chosen, so that it works without JavaScript too -->
+      <div class="for-part">
+        <label for="{id}-montant">{m.amount}</label>
+        <input
+          id="{id}-montant"
+          name="amount"
+          inputmode="decimal"
+          autocomplete="off"
+          value={failed?.amount ?? ""}
+          placeholder={m.amountPlaceholder}
+          aria-describedby="{id}-montant-aide"
+          aria-invalid={failed?.error === "amount_required" || failed?.error === "amount_too_high"
+            ? "true"
+            : undefined}
+        />
+        <p id="{id}-montant-aide" class="muted help">
+          {m.upTo(formatEuros(missing, i18n.locale))}
+        </p>
+      </div>
     {:else if item.kind === "quantity" && left > 1}
       <label for="{id}-nombre">{m.units}</label>
       <select id="{id}-nombre" name="units">
@@ -131,7 +202,7 @@
       </span>
     </label>
 
-    <button type="submit" disabled={sending}>{sending ? m.sending : giveLabel(item, i18n.locale)}</button>
+    <button type="submit" disabled={sending}>{sending ? m.sending : submitLabel}</button>
   </form>
 </details>
 
@@ -159,6 +230,12 @@
     margin-top: 0.75rem;
     padding-top: 0.75rem;
   }
+  .for-part {
+    display: none;
+  }
+  form:has(input[name="way"][value="part"]:checked) .for-part {
+    display: block;
+  }
   .help {
     font-size: 0.95rem;
     margin: 0.35rem 0 1rem;
@@ -169,6 +246,7 @@
     margin: 0 0 1rem;
   }
   legend {
+    padding: 0;
     font-weight: 600;
     margin-bottom: 0.35rem;
   }
