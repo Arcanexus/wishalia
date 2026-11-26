@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.7] - 2026-11-26
+
 ### Added
 
 - Each list shows a picture next to its name: one of sixteen icons drawn in the theme's colours
