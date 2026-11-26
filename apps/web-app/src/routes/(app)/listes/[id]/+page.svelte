@@ -13,6 +13,7 @@
   import ConfirmDelete from "#lib/ConfirmDelete.svelte";
   import Gifts from "#lib/Gifts.svelte";
   import ItemEditor from "#lib/ItemEditor.svelte";
+  import ListPictureLink from "#lib/ListPictureLink.svelte";
   import ListSettings from "#lib/ListSettings.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
   import StageIcon from "@wishalia/ui/StageIcon.svelte";
@@ -184,7 +185,15 @@
 
 <p class="back"><a href={resolve("/(app)")}>{m.back}</a></p>
 <div class="heading">
-  <h1>{data.list.name}</h1>
+  <div class="title">
+    <ListPictureLink
+      picture={data.list}
+      href={resolve("/(app)/listes/[id]/icone", { id: data.list.id })}
+      label={appMessages(i18n.locale).listPicture.change.label(data.list.name)}
+      tip={appMessages(i18n.locale).listPicture.change.tip}
+    />
+    <h1>{data.list.name}</h1>
+  </div>
   <div class="actions">
     {#if linked}
       <form method="POST" action="?/refreshAll" use:enhance={reread}>
@@ -457,8 +466,15 @@
     gap: 0.5rem 1rem;
     margin-bottom: 1rem;
   }
+  .title {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 0;
+  }
   .heading h1 {
     margin: 0;
+    overflow-wrap: anywhere;
   }
   .actions {
     display: flex;

@@ -188,12 +188,14 @@ state. It is off by default.
   from the item that shows it.
 
 Changing from one to the other does not move the files: the page images come back with the next
-enrichment of each item, the photos the owner sent have to be copied over (same keys, `wishes/...`).
+enrichment of each item, the photos the owner sent and the lists' own pictures have to be copied
+over (same keys, `wishes/...` and `lists/...`).
 
 ## Unused files
 
 Now and then (every 6 hours by default) the worker looks over the volume or the bucket and removes
-the files that no image names any more: a write cut halfway (the worker or the API stopped between
+the files that no image names any more (and, under `lists/`, the lists' own pictures no list
+names any more, see [Pictures of the lists](list-pictures.md)): a write cut halfway (the worker or the API stopped between
 the file and its row), a removal that failed (the bucket was away when the owner changed their
 photo), a file left half written on the volume. The images an item shows, the photos the owner sent
 and the page's images they can still choose all have their row: they are never touched. A file

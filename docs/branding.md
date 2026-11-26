@@ -34,6 +34,13 @@ recommended size): logo, wordmark and tagline on the light neutral background. T
 and Inter. The website points to it in its Open Graph tags. For the repository, it is uploaded by
 hand in **Settings › General › Social preview** (GitHub has no API for it).
 
+## List icons
+
+The sixteen icons a list can show ([Pictures of the lists](list-pictures.md)) are line drawings on a
+24 px grid, coloured as the logo is: lines in `--logo-heads`, a detail in `--logo-gift` and, here
+and there, `--logo-ribbon`. They sit in a rounded square on the page's background, so they follow
+each theme and mode without a variant. Drawings: `packages/ui/src/list-icons.ts`.
+
 ## Themes
 
 Two themes, each in light and dark. **Neutral** is the default, all year round and for every event

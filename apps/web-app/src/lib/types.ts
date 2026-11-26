@@ -18,6 +18,10 @@ export interface List {
   id: string;
   name: string;
   position: number;
+  /** The icon shown next to its name (docs/list-pictures.md); null shows the default one. */
+  icon: string | null;
+  /** The image the owner sent, shown instead of the icon (signed squares under /img). */
+  image: ImageSources | null;
   theme: "neutral" | "christmas" | null;
   revealMode: "received" | "manual";
   secretLifted: boolean;

@@ -31,8 +31,9 @@ it on and off.
 
 `GET /public/home?q=` gives the public host's home page what it shows: who is signed in
 (`me.displayName`, from the shared session, or null) and the public lists, newest first, 24 at most
-(`more` when there are others). Each gives the list's name, its owner's name, how many wishes are
-open, and its open link's `path` (`/s/<token>`): never anything about a gift. `q` (200 characters
+(`more` when there are others). Each gives the list's name and picture (`icon`, `image`: see
+[Pictures of the lists](list-pictures.md)), its owner's name, how many wishes are open, and its open
+link's `path` (`/s/<token>`): never anything about a gift. `q` (200 characters
 at most, cut to 80) matches the start of the words of the owner's and the list's names, without
 case or accents (`searchWords`, `matchesSearch`); under two letters, every public list is given. A
 private list is never in the answer, whatever is searched. The answer is never cached
@@ -75,7 +76,7 @@ amount nor its message: those stay with their author (`mine`).
 | Route                                      | Body                                                                                                                                 | Answer                                                                                                                                                   |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GET /public/home?q=`                      | No share link                                                                                                                        | Who is signed in, and the public lists (see above).                                                                                                      |
-| `GET /public/view`                         |                                                                                                                                      | The list or the event, its events and its items, with `funding` or null.                                                                                 |
+| `GET /public/view`                         |                                                                                                                                      | The list (with its picture: `icon`, `image`) or the event, its events and its items, with `funding` or null.                                             |
 | `GET /public/live`                         |                                                                                                                                      | `{ version, live }`, never cached: see below.                                                                                                            |
 | `POST /public/items/:itemId/contributions` | `eventId`?, `amountCents` (pool, or a share of a gift that has a price), `units`? (quantity), `guestName`?, `message`?, `anonymous`? | `201`, the contribution and its `withdrawKey`, given once.                                                                                               |
 | `DELETE /public/contributions/:id`         | header `X-Withdraw-Key`, or the session of its author                                                                                | `204`. Withdrawing twice changes nothing; anyone else gets `404`.                                                                                        |

@@ -67,7 +67,7 @@ export const publicRoutes: FastifyPluginAsync<PublicDeps> = async (app, deps) =>
   });
   app.get("/ping", async (request) => ({ scope: request.scope }));
   // The home page (« Trouver une liste »): the public lists only, no share link needed
-  await app.register(homeRoutes, { auth, db });
+  await app.register(homeRoutes, { auth, db, images });
 
   await app.register(async (shared) => {
     shared.addHook("onRequest", async (request, reply) => {

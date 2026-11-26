@@ -6,6 +6,9 @@ no sign-in, just the link the owner sent them. It speaks French and says « vous
 
 ![A shared list, as Mamie sees it](images/public-list.png)
 
+A shared list shows its picture next to its title, as its owner chose it: an icon in the page's
+theme, or their own image ([Pictures of the lists](list-pictures.md)).
+
 ## The home page
 
 The public host's own address (`https://<hosts.public>/`) welcomes visitors:
@@ -21,7 +24,8 @@ The public host's own address (`https://<hosts.public>/`) welcomes visitors:
   case or accents (« lea » finds « Léa »). Only the lists their owner made **public**
   ([A list's settings](management-app.md#a-lists-settings)) are ever there; a private list stays
   seen only through a link. Each result says whose wishes they are and how many, with « Voir la
-  liste ». With no search, the newest public lists show.
+  liste », next to the list's picture ([Pictures of the lists](list-pictures.md)). With no search,
+  the newest public lists show.
 
 ![The home page, on a computer](images/public-home.png)
 

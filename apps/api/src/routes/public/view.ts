@@ -24,7 +24,7 @@ import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 
 import type { Tx } from "../../history.js";
 import { HttpError } from "../../http.js";
-import { imagesOf, type Images } from "../../images.js";
+import { imagesOf, listPictureOf, type Images } from "../../images.js";
 import { eventLive, listLive } from "../../live.js";
 import { itemSecret, revealState } from "../../secrets.js";
 import type { ShareContext } from "./index.js";
@@ -103,7 +103,14 @@ interface ContributionRow {
 
 interface ViewData {
   title:
-    | { kind: "list"; id: string; name: string; theme: "neutral" | "christmas" | null }
+    | {
+        kind: "list";
+        id: string;
+        name: string;
+        theme: "neutral" | "christmas" | null;
+        icon: string | null;
+        imageKey: string | null;
+      }
     | {
         kind: "event";
         event: EventRow;
@@ -135,7 +142,14 @@ async function loadView(db: Database, link: LinkRow): Promise<ViewData> {
       .from(schema.wishLists)
       .where(and(eq(schema.wishLists.id, link.listId), isNull(schema.wishLists.archivedAt)));
     if (!list) throw new HttpError(404, "link_not_found");
-    title = { kind: "list", id: list.id, name: list.name, theme: list.theme };
+    title = {
+      kind: "list",
+      id: list.id,
+      name: list.name,
+      theme: list.theme,
+      icon: list.icon,
+      imageKey: list.imageKey,
+    };
     items = await db
       .select()
       .from(schema.wishes)
@@ -357,7 +371,13 @@ export const viewRoutes: FastifyPluginAsync<{
       me: sessionUser ? { displayName: sessionUser.displayName } : null,
       list:
         data.title.kind === "list"
-          ? { id: data.title.id, name: data.title.name, theme: data.title.theme }
+          ? {
+              id: data.title.id,
+              name: data.title.name,
+              theme: data.title.theme,
+              // Its icon or the owner's image (docs/list-pictures.md), signed thumbnails only
+              ...listPictureOf(images, data.title),
+            }
           : null,
       event: data.title.kind === "event" ? publicEvent(data.title.event, at) : null,
       events: [...events.values()].map((event) => publicEvent(event, at)),

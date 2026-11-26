@@ -1,7 +1,7 @@
 import type { schema } from "@wishalia/db";
 import { canRevealSecret, isSecretLifted, revealAvailableAt, stageOf } from "@wishalia/domain";
 
-import type { ItemImage } from "../../images.js";
+import type { ItemImage, ListPictureFields } from "../../images.js";
 
 type WishRow = typeof schema.wishes.$inferSelect;
 type ListRow = typeof schema.wishLists.$inferSelect;
@@ -43,12 +43,22 @@ export function ownerItem(row: WishRow, image: ItemImage | null = null) {
   };
 }
 
-/** A list as its owner sees it; openUrl is the address of a public list's open link. */
-export function ownerList(row: ListRow, itemCount: number, openUrl: string | null) {
+/**
+ * A list as its owner sees it; openUrl is the address of a public list's open link, picture its
+ * icon and image (listPictureOf).
+ */
+export function ownerList(
+  row: ListRow,
+  itemCount: number,
+  openUrl: string | null,
+  picture: ListPictureFields,
+) {
   return {
     id: row.id,
     name: row.name,
     position: row.position,
+    icon: picture.icon,
+    image: picture.image,
     theme: row.theme,
     revealMode: row.revealMode,
     secretLifted: row.revealMode === "manual" && row.revealedAt !== null,

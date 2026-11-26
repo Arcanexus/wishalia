@@ -5,6 +5,7 @@
 
   import { appMessages } from "@wishalia/i18n/messages/app";
   import { useI18n } from "@wishalia/ui/i18n.ts";
+  import ListBadge from "@wishalia/ui/ListBadge.svelte";
   import ConfirmDelete from "#lib/ConfirmDelete.svelte";
   import IconButton from "#lib/IconButton.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
@@ -49,8 +50,11 @@
       {#each data.lists as list (list.id)}
         <li>
           <a class="card list" href={resolve("/(app)/listes/[id]", { id: list.id })}>
-            <span class="name">{list.name}</span>
-            <span class="muted">{m.count(list.itemCount)}</span>
+            <ListBadge picture={list} size="medium" />
+            <span class="text">
+              <span class="name">{list.name}</span>
+              <span class="muted">{m.count(list.itemCount)}</span>
+            </span>
           </a>
         </li>
       {/each}
@@ -88,9 +92,12 @@
     <ul class="rows">
       {#each data.archived as list (list.id)}
         <li class="card row-item">
-          <div class="text">
-            <span class="name">{list.name}</span>
-            <span class="muted">{m.count(list.itemCount)}</span>
+          <div class="who">
+            <ListBadge picture={list} size="small" />
+            <div class="text">
+              <span class="name">{list.name}</span>
+              <span class="muted">{m.count(list.itemCount)}</span>
+            </div>
           </div>
           <div class="buttons">
             <form method="POST" action="?/restoreList" use:enhance>
@@ -123,16 +130,24 @@
   }
   .list {
     display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+    align-items: center;
+    gap: 0.9rem;
+    height: 100%;
     min-height: 5rem;
     color: var(--text);
     text-decoration: none;
+  }
+  .who {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
   }
   .list:hover {
     border-color: var(--action);
   }
   .name {
+    overflow-wrap: anywhere;
     font-family: "Nunito Variable", system-ui, sans-serif;
     font-weight: 800;
     font-size: 1.2rem;

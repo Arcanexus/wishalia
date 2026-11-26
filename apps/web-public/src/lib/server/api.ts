@@ -86,6 +86,9 @@ export interface PublicListEntry {
   name: string;
   ownerName: string;
   itemCount: number;
+  /** Its picture (docs/list-pictures.md): the icon chosen (null: the default) or the owner's image. */
+  icon?: string | null;
+  image?: { small: string; medium: string } | null;
   /** The open link: /s/<token>. */
   path: string;
 }

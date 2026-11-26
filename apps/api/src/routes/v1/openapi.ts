@@ -1,3 +1,4 @@
+import { LIST_ICONS } from "@wishalia/domain";
 import { z } from "zod";
 
 import type { Config } from "../../config.js";
@@ -60,6 +61,14 @@ const schemas: Record<string, Schema> = {
       id: { type: "string", format: "uuid" },
       name: { type: "string" },
       position: { type: "integer" },
+      icon: {
+        enum: [...LIST_ICONS, null],
+        description: "The icon shown next to its name; null shows the default one (gift).",
+      },
+      image: {
+        oneOf: [ref("ImageSources"), { type: "null" }],
+        description: "The image the owner sent, shown instead of the icon; null without one.",
+      },
       theme: { enum: ["neutral", "christmas", null] },
       revealMode: { enum: ["received", "manual"] },
       secretLifted: { type: "boolean" },
@@ -255,6 +264,31 @@ export function openApiDocument(config: Config) {
           summary:
             "Delete a list for good, with its items: they leave every screen, event and link, and cannot be restored",
           responses: { 204: noContent, 404: json(ref("Error"), "Unknown or already deleted") },
+        },
+      },
+      "/lists/{listId}/image": {
+        parameters: [uuidParam("listId")],
+        put: {
+          summary:
+            "Send the list's own image (JPEG, PNG, WebP, GIF, AVIF or HEIC; 10 MB at most), shown instead of its icon",
+          requestBody: {
+            required: true,
+            content: { "image/*": { schema: { type: "string", format: "binary" } } },
+          },
+          responses: {
+            200: json(ref("List")),
+            413: json(ref("Error"), "Over 10 MB"),
+            415: json(ref("Error"), "Not an accepted image"),
+            503: json(ref("Error"), "Images are off on this server"),
+          },
+        },
+        delete: {
+          summary: "Remove the list's own image: its icon shows again",
+          responses: {
+            200: json(ref("List")),
+            404: json(ref("Error"), "No image sent for this list"),
+            503: json(ref("Error"), "Images are off on this server"),
+          },
         },
       },
       "/lists/{listId}/items": {

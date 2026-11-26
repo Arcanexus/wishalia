@@ -7,6 +7,7 @@ import { z } from "zod";
 import type { Auth } from "../../auth/auth.js";
 import { toHeaders } from "../../auth/fastify.js";
 import { parse } from "../../http.js";
+import { listPictureOf, type Images } from "../../images.js";
 import { SHARE_PATH } from "../manage/lists.js";
 
 /** The most public lists searched at once: a family's instance has far fewer. */
@@ -17,10 +18,13 @@ const homeQuery = z.object({ q: z.string().max(200).optional() });
 /**
  * The home page of the public host: who is signed in, and the public lists (« Trouver une
  * liste »). A private list is never here, whatever is searched: only the lists their owner made
- * public, not archived, with their open link. Each result gives the owner's name, the list's name,
- * how many wishes are open, and the address of its open link: never anything about a gift.
+ * public, not archived, with their open link. Each result gives the owner's name, the list's name
+ * and picture, how many wishes are open, and the address of its open link: never anything about a gift.
  */
-export const homeRoutes: FastifyPluginAsync<{ auth: Auth; db: Database }> = async (app, { auth, db }) => {
+export const homeRoutes: FastifyPluginAsync<{ auth: Auth; db: Database; images: Images | null }> = async (
+  app,
+  { auth, db, images },
+) => {
   app.get("/home", async (request, reply) => {
     const { q = "" } = parse(homeQuery, request.query);
     const words = searchWords(q);
@@ -29,6 +33,8 @@ export const homeRoutes: FastifyPluginAsync<{ auth: Auth; db: Database }> = asyn
     const rows = await db
       .select({
         name: schema.wishLists.name,
+        icon: schema.wishLists.icon,
+        imageKey: schema.wishLists.imageKey,
         ownerName: schema.users.displayName,
         token: schema.shareLinks.openToken,
         createdAt: schema.wishLists.createdAt,
@@ -63,6 +69,8 @@ export const homeRoutes: FastifyPluginAsync<{ auth: Auth; db: Database }> = asyn
         name: row.name,
         ownerName: row.ownerName,
         itemCount: row.items,
+        // Its icon or the owner's image (signed thumbnails only)
+        ...listPictureOf(images, row),
         path: `${SHARE_PATH}${row.token}`,
       })),
       more: found.length > MAX_SEARCH_RESULTS,
