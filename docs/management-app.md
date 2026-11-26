@@ -50,8 +50,10 @@ unticks what they leave out, then picks a list (a new one, named after the sourc
 theirs) and confirms. The list page then says how many came in. See [Importing a list](import.md).
 
 A list page shows its items, newest first, with what kind of gift they are, their price and the site
-of their link. Each item can be marked **received** (« Je l'ai reçu », with a tick) or **archived**; received and archived items wait under « Reçues et
-archivées », where they can be put back in the list. Every change lands in the item's history.
+of their link. Each item can be marked **received** (« Je l'ai reçu », with a tick), **archived**
+(the box) or **deleted** (the bin, after a dialog); received and archived items wait under « Reçues
+et archivées », where the arrow coming back puts them back in the list. Every change lands in the
+item's history. See [Archiving and deleting](archive-delete.md).
 The reload button (two turning arrows, « Recharger » in its tip) reads an item's link again (a new price, a better photo), and « Recharger les liens », next
 to the eye button, does it for the whole list; what the person typed or sent stays
 ([Reading a link again](enrichment.md#reading-a-link-again)).
@@ -94,7 +96,10 @@ left out; the page says they have one under each item.
   list at once). The choice is frozen once the secret is lifted;
 - in « Quand je le décide » mode, « Lever le secret de la liste », behind a box to tick: final;
 - « Archiver la liste », behind a box to tick: the list leaves the lists, and its share links show
-  nothing any more. The app goes back to the lists and says so.
+  nothing any more. The app goes back to the lists and says so; the list waits under « Listes
+  archivées » on the home page, to restore or delete it;
+- « Supprimer la liste », behind a box to tick: the list and its items go for good
+  ([Archiving and deleting](archive-delete.md)).
 
 ![A list's settings, on a phone](images/app-list-settings.png)
 

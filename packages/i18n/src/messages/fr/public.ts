@@ -69,6 +69,17 @@ export const publicSite = {
     thanks: (owner: string) => `Merci, c'est noté ! ${owner} n'en saura rien avant l'occasion.`,
     given: "Merci, c'est noté !",
     withdrawn: "C'est retiré.",
+    gone: {
+      title: "Des envies ont quitté la liste",
+      archived: (title: string) =>
+        `« ${title} » n'est plus sur la liste pour le moment : inutile de l'acheter. Votre participation est gardée au cas où elle revienne ; vous pouvez aussi la reprendre.`,
+      deleted: (title: string) =>
+        `« ${title} » a été retirée de la liste : votre participation est annulée, inutile de l'acheter.`,
+      withdraw: "Reprendre ma participation",
+      withdrawLabel: (title: string) => `Reprendre ma participation à « ${title} »`,
+      dismiss: "Compris",
+      dismissLabel: (title: string) => `Compris pour « ${title} »`,
+    },
     unfolded: "Les cadeaux sont affichés.",
   },
   give: {

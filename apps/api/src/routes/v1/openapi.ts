@@ -206,7 +206,18 @@ export function openApiDocument(config: Config) {
     paths: {
       "/me": { get: { summary: "The owner of the token", responses: { 200: json(ref("Me")) } } },
       "/lists": {
-        get: { summary: "The lists, in their order", responses: { 200: json(list("List")) } },
+        get: {
+          summary: "The lists, in their order; with archived=true, the archived ones (to restore or delete)",
+          parameters: [
+            {
+              name: "archived",
+              in: "query",
+              required: false,
+              schema: { enum: ["true", "false"] },
+            },
+          ],
+          responses: { 200: json(list("List")) },
+        },
         post: {
           summary: "Create a list",
           requestBody: body(listInput),
@@ -216,9 +227,14 @@ export function openApiDocument(config: Config) {
       "/lists/{listId}": {
         parameters: [uuidParam("listId")],
         patch: {
-          summary: "Edit a list",
+          summary: "Edit a list; archived: true hides it from the guests, archived: false restores it",
           requestBody: body(listPatch),
           responses: { 200: json(ref("List")) },
+        },
+        delete: {
+          summary:
+            "Delete a list for good, with its items: they leave every screen, event and link, and cannot be restored",
+          responses: { 204: noContent, 404: json(ref("Error"), "Unknown or already deleted") },
         },
       },
       "/lists/{listId}/items": {
@@ -258,9 +274,14 @@ export function openApiDocument(config: Config) {
         parameters: [uuidParam("itemId")],
         get: { summary: "An item", responses: { 200: json(ref("Item")) } },
         patch: {
-          summary: "Edit an item",
+          summary: "Edit an item; status archived hides it from the guests, open restores it",
           requestBody: body(itemPatch),
           responses: { 200: json(ref("Item")) },
+        },
+        delete: {
+          summary:
+            "Delete an item for good: it leaves its list, its events and every link, its images go, and it cannot be restored",
+          responses: { 204: noContent, 404: json(ref("Error"), "Unknown or already deleted") },
         },
       },
       "/items/{itemId}/refresh": {

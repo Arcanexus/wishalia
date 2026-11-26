@@ -93,7 +93,13 @@ export const shareLinkRoutes: FastifyPluginAsync<ShareDeps> = async (app, { conf
       const [list] = await db
         .select({ id: schema.wishLists.id })
         .from(schema.wishLists)
-        .where(and(eq(schema.wishLists.id, input.listId), eq(schema.wishLists.ownerId, ownerId)));
+        .where(
+          and(
+            eq(schema.wishLists.id, input.listId),
+            eq(schema.wishLists.ownerId, ownerId),
+            isNull(schema.wishLists.deletedAt),
+          ),
+        );
       if (!list) throw notFound();
     } else {
       const [event] = await db

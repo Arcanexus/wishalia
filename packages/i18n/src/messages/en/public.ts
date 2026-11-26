@@ -65,6 +65,16 @@ export const publicSite: PublicMessages = {
     thanks: (owner) => `Thank you, it's noted! ${owner} won't know before the occasion.`,
     given: "Thank you, it's noted!",
     withdrawn: "Withdrawn.",
+    gone: {
+      title: "Some wishes left the list",
+      archived: (title) =>
+        `“${title}” is off the list for now: no need to buy it. Your gift is kept in case it comes back; you can also take it back.`,
+      deleted: (title) => `“${title}” was taken off the list: your gift is cancelled, no need to buy it.`,
+      withdraw: "Take my gift back",
+      withdrawLabel: (title) => `Take my gift to “${title}” back`,
+      dismiss: "Got it",
+      dismissLabel: (title) => `Got it for “${title}”`,
+    },
     unfolded: "The gifts are shown.",
   },
   give: {

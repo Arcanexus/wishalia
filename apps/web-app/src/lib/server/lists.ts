@@ -73,3 +73,37 @@ export async function archiveList(event: FormEvent, listId: string) {
   if (refused) return fail(refused.status, { archive: { error: refused.code } });
   redirect(303, "/?archivee=1");
 }
+
+/** Brings an archived list back, as it was: to the owner's lists and to its share links. */
+export async function restoreList(event: FormEvent) {
+  const form = await event.request.formData();
+  const listId = String(form.get("listId") ?? "");
+  if (!UUID.test(listId)) return fail(400, { restore: { error: "invalid_request" } });
+  try {
+    const list = await apiJson<List>(event, `/manage/lists/${listId}`, {
+      method: "PATCH",
+      body: { archived: false },
+    });
+    return { restore: { listId: list.id, name: list.name } };
+  } catch (failure) {
+    if (failure instanceof ApiError) return fail(failure.status, { restore: { error: failure.code } });
+    throw failure;
+  }
+}
+
+/**
+ * Deletes a list for good, with its items, after a confirmation (the dialog's, or the ticked box
+ * of the list's settings), then goes back to the lists. The list comes from the page, or from the
+ * form on the home page.
+ */
+export async function deleteList(event: FormEvent, pageListId?: string) {
+  const form = await event.request.formData();
+  const listId = pageListId ?? String(form.get("listId") ?? "");
+  if (!UUID.test(listId)) return fail(400, { remove: { error: "invalid_request" } });
+  if (form.get("confirm") !== "oui") return fail(400, { remove: { error: "confirm" } });
+  const refused = await refusal(() =>
+    apiJson<undefined>(event, `/manage/lists/${listId}`, { method: "DELETE" }),
+  );
+  if (refused) return fail(refused.status, { remove: { error: refused.code } });
+  redirect(303, "/?supprimee=1");
+}

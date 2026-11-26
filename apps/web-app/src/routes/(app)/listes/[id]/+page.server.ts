@@ -10,8 +10,9 @@ import {
   refreshItem,
   refreshList,
   setItemStatus,
+  deleteItem,
 } from "#lib/server/items.ts";
-import { archiveList, revealList, saveListSettings } from "#lib/server/lists.ts";
+import { archiveList, deleteList, revealList, saveListSettings } from "#lib/server/lists.ts";
 import { giftsFor } from "#lib/server/events.ts";
 import type { Gift, HistoryEntry, Item, List } from "#lib/types.ts";
 
@@ -64,4 +65,6 @@ export const actions: Actions = {
   settings: (event) => saveListSettings(event, event.params.id),
   reveal: (event) => revealList(event, event.params.id),
   archive: (event) => archiveList(event, event.params.id),
+  deleteList: (event) => deleteList(event, event.params.id),
+  deleteItem: (event) => deleteItem(event),
 };

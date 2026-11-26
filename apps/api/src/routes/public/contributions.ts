@@ -1,6 +1,6 @@
 import { type Database, schema } from "@wishalia/db";
-import { cents, isLifted, isSecretLifted, refuseContribution } from "@wishalia/domain";
-import { and, eq } from "drizzle-orm";
+import { cents, goneGift, isLifted, isSecretLifted, refuseContribution } from "@wishalia/domain";
+import { and, eq, inArray, or } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
@@ -26,6 +26,15 @@ const contributionInput = z
   .strict();
 const itemParams = z.object({ itemId: z.uuid() });
 const contributionParams = z.object({ contributionId: z.uuid() });
+/** The gifts kept on a guest's device (at most 30), each with its withdraw key as the proof. */
+const goneInput = z
+  .object({
+    gifts: z
+      .array(z.object({ id: z.uuid(), key: z.string().max(100) }).strict())
+      .max(30)
+      .default([]),
+  })
+  .strict();
 
 /**
  * Contributions of the guests (spec §2.2): pledges and reservations, made through a share link,
@@ -202,12 +211,13 @@ export const contributionRoutes: FastifyPluginAsync<{
         contribution.withdrawKeyHash === hashToken(key);
       const bySession = sessionUser !== null && contribution.contributorId === sessionUser.id;
       if (!byKey && !bySession) throw notFound();
-      const wish = await itemInView(tx, link, contribution.wishId);
+      // An archived item too: the guest may take back what they had pledged to it
+      const wish = await itemInView(tx, link, contribution.wishId, { archived: true });
       if (!wish) throw notFound();
       if (contribution.status === "withdrawn") return;
       if (contribution.eventId === null) {
         // Without an event, the item and its list keep the secret: once lifted, nothing changes
-        if (wish.status !== "open") throw new HttpError(409, "item_closed");
+        if (wish.status === "received") throw new HttpError(409, "item_closed");
         const list = first(
           await tx.select().from(schema.wishLists).where(eq(schema.wishLists.id, wish.listId)),
         );
@@ -235,5 +245,58 @@ export const contributionRoutes: FastifyPluginAsync<{
       ]);
     });
     return reply.status(204).send();
+  });
+
+  /**
+   * The person's own gifts whose item left the owner's lists (docs/archive-delete.md): archived
+   * (the gift is kept and may be taken back) or deleted (the gift was cancelled), so that the page
+   * tells them not to buy it. Their gifts only: the ones of their account, and the ones their
+   * device proves by the withdraw key. Nothing about anyone else's gifts.
+   */
+  app.post("/gifts/gone", async (request) => {
+    const { link, sessionUser } = shareOf(request);
+    const { gifts } = parse(goneInput, request.body);
+    const keys = new Map(
+      gifts.filter((gift) => isWellFormedToken(gift.key)).map((gift) => [gift.id, hashToken(gift.key)]),
+    );
+    const mine = or(
+      keys.size > 0 ? inArray(schema.contributions.id, [...keys.keys()]) : undefined,
+      sessionUser ? eq(schema.contributions.contributorId, sessionUser.id) : undefined,
+    );
+    if (!mine) return [];
+    const rows = await db
+      .select({ contribution: schema.contributions, wish: schema.wishes, list: schema.wishLists })
+      .from(schema.contributions)
+      .innerJoin(schema.wishes, eq(schema.wishes.id, schema.contributions.wishId))
+      .innerJoin(schema.wishLists, eq(schema.wishLists.id, schema.wishes.listId))
+      .where(and(mine, eq(schema.wishLists.ownerId, link.ownerId)));
+    const at = now();
+    return rows.flatMap(({ contribution, wish, list }) => {
+      const proven =
+        (sessionUser !== null && contribution.contributorId === sessionUser.id) ||
+        (contribution.withdrawKeyHash !== null && keys.get(contribution.id) === contribution.withdrawKeyHash);
+      if (!proven) return [];
+      const state = goneGift(
+        {
+          // An item of an archived list is out of the guests' view too
+          status: list.archivedAt && !wish.deletedAt ? "archived" : wish.status,
+          deletedAt: wish.deletedAt,
+          contribution,
+        },
+        at,
+      );
+      if (!state) return [];
+      return [
+        {
+          id: contribution.id,
+          itemId: wish.id,
+          title: wish.title,
+          state,
+          eventId: contribution.eventId,
+          amountCents: contribution.amountCents === null ? null : cents(contribution.amountCents),
+          units: contribution.units,
+        },
+      ];
+    });
   });
 };

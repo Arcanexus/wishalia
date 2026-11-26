@@ -130,3 +130,10 @@ export {
   type ImportSource,
   type RawWish,
 } from "./imports.js";
+export {
+  DELETED_NOTICE_DAYS,
+  deletedItemFields,
+  goneGift,
+  type GoneSignals,
+  type GoneState,
+} from "./removal.js";

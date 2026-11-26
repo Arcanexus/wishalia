@@ -303,6 +303,50 @@ describe("the gifts on the page", () => {
     expect(value.guestName).toBe("Mamie");
   });
 
+  it("tells about the person's gifts whose item left the list, by this device's keys only", async () => {
+    const left = {
+      id: GIFT,
+      itemId: ITEM,
+      title: "Vélo",
+      state: "deleted",
+      eventId: EVENT,
+      amountCents: 2000,
+      units: null,
+    };
+    const calls = api({
+      "GET /public/view": () => json(view()),
+      "POST /public/gifts/gone": () => json([left, { ...left, id: "9c1f3f2e-1c2d-4e5f-8a9b-0c1d2e3f4a5b" }]),
+    });
+    const { input } = event(undefined, { [GIFTS_COOKIE]: keep([stored]) });
+    const { value } = (await run(load, input)) as { value: { gone: unknown[] } };
+    expect(calls.find((call) => call.path === "/public/gifts/gone")?.body).toEqual({
+      gifts: [{ id: GIFT, key: KEY }],
+    });
+    // A gift of the account (not on this device) cannot be forgotten by this device
+    expect(value.gone).toEqual([
+      { ...left, onDevice: true },
+      { ...left, id: "9c1f3f2e-1c2d-4e5f-8a9b-0c1d2e3f4a5b", onDevice: false },
+    ]);
+    // The keys stay on the server
+    expect(JSON.stringify(value)).not.toContain(KEY);
+  });
+
+  it("asks nothing without a gift on this device or an account, nor for the owner, and survives a failure", async () => {
+    type Gone = { value: { gone: unknown[] } };
+    const calls = api({ "GET /public/view": () => json(view()) });
+    expect(((await run(load, event().input)) as Gone).value.gone).toEqual([]);
+    const cookies = { [GIFTS_COOKIE]: keep([stored]) };
+    const owner = api({ "GET /public/view": () => json({ ...view(), viewer: "owner", items: [] }) });
+    expect(((await run(load, event(undefined, cookies).input)) as Gone).value.gone).toEqual([]);
+    expect([...calls, ...owner].some((call) => call.path === "/public/gifts/gone")).toBe(false);
+    // The API fails: the notice is left out, the page still opens
+    api({
+      "GET /public/view": () => json(view()),
+      "POST /public/gifts/gone": () => json({ error: "unavailable" }, 503),
+    });
+    expect(((await run(load, event(undefined, cookies).input)) as Gone).value.gone).toEqual([]);
+  });
+
   type Loaded = { view: PublicView; folded: boolean; mine: unknown[] };
   const load_ = async (patch: Partial<PublicView> = {}, cookies: Record<string, string> = {}) => {
     api({ "GET /public/view": () => json({ ...view(), ...patch }) });

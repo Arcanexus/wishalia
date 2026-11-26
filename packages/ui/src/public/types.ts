@@ -35,6 +35,20 @@ export interface Funding {
 }
 
 /** A contribution of the person looking, from their account or kept on their device. */
+/**
+ * One of the person's gifts whose item left the list (docs/archive-delete.md): archived, the gift
+ * is kept and may be taken back; deleted, it was cancelled.
+ */
+export interface GoneGift {
+  id: string;
+  itemId: string;
+  title: string;
+  state: "archived" | "deleted";
+  eventId: string | null;
+  amountCents: number | null;
+  units: number | null;
+}
+
 export interface MyGift {
   id: string;
   itemId: string;

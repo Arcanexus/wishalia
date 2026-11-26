@@ -56,6 +56,25 @@ export async function setItemStatus(event: FormEvent) {
   }
 }
 
+/**
+ * Deletes an item for good, after the dialog's confirmation. The API cancels what guests had
+ * pledged to it and tells them, never the owner (anti-spoil).
+ */
+export async function deleteItem(event: FormEvent) {
+  const form = await event.request.formData();
+  const itemId = String(form.get("itemId") ?? "");
+  const title = String(form.get("title") ?? "").slice(0, MAX_TITLE_LENGTH);
+  if (!UUID.test(itemId)) return fail(400, { remove: { error: "invalid_request" } });
+  if (form.get("confirm") !== "oui") return fail(400, { remove: { error: "confirm" } });
+  try {
+    await apiJson<undefined>(event, `/manage/items/${itemId}`, { method: "DELETE" });
+    return { remove: { itemId, title } };
+  } catch (failure) {
+    if (failure instanceof ApiError) return fail(failure.status, { remove: { error: failure.code } });
+    throw failure;
+  }
+}
+
 const KINDS = ["unique", "quantity", "pool"] as const;
 /** The highest amount the API takes: a typo, not a price. */
 const MAX_CENTS = 100_000_000;

@@ -16,13 +16,18 @@
       settings?: { error?: string; saved?: boolean; name?: string };
       reveal?: { error?: string; lifted?: boolean };
       archive?: { error?: string };
+      remove?: { error?: string; itemId?: string; title?: string };
     } | null;
   } = $props();
 
   const i18n = useI18n();
   const m = $derived(appMessages(i18n.locale).listSettings);
   const message = (code: string | undefined) => (code ? (m.errors[code] ?? m.failed) : null);
-  const failed = $derived(Boolean(form?.settings?.error || form?.reveal?.error || form?.archive?.error));
+  // An item's deletion that failed says so next to the items, not here
+  const listRemovalFailed = $derived(form?.remove?.error === "confirm");
+  const failed = $derived(
+    Boolean(form?.settings?.error || form?.reveal?.error || form?.archive?.error || listRemovalFailed),
+  );
   const theme = $derived(list.theme ?? "none");
 </script>
 
@@ -150,9 +155,28 @@
       <button type="submit" class="secondary">{m.archive}</button>
     </form>
   </section>
+
+  <section class="part" aria-labelledby="liste-supprimer">
+    <h2 id="liste-supprimer">{m.delete}</h2>
+    <p>{m.deleteHelp}</p>
+    <form method="POST" action="?/deleteList" use:enhance>
+      {#if listRemovalFailed}
+        <p class="notice error" role="alert">{message("confirm")}</p>
+      {/if}
+      <label class="choice">
+        <input type="checkbox" name="confirm" value="oui" required />
+        <span>{m.deleteConfirm(list.name)}</span>
+      </label>
+      <button type="submit" class="danger">{m.delete}</button>
+    </form>
+  </section>
 </details>
 
 <style>
+  .danger {
+    background: var(--danger);
+    color: var(--surface);
+  }
   .settings {
     margin: 0 0 1.5rem;
   }

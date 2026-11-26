@@ -7,6 +7,7 @@
   import { appMessages } from "@wishalia/i18n/messages/app";
   import { useI18n } from "@wishalia/ui/i18n.ts";
 
+  import ConfirmDelete from "#lib/ConfirmDelete.svelte";
   import Gifts from "#lib/Gifts.svelte";
   import ItemEditor from "#lib/ItemEditor.svelte";
   import ListSettings from "#lib/ListSettings.svelte";
@@ -20,6 +21,7 @@
   let { data, form }: PageProps = $props();
   const i18n = useI18n();
   const m = $derived(appMessages(i18n.locale).list);
+  const removal = $derived(appMessages(i18n.locale).removal);
 
   const open = $derived(data.items.filter((item) => item.status === "open"));
   const images = $derived(data.me.features?.images ?? false);
@@ -219,8 +221,14 @@
     {m.saved(form.edit.title, form.edit.listId !== data.list.id)}
   {:else if form?.status && "status" in form.status}
     {m.statusChanged(form.status.title, form.status.status)}
+  {:else if form?.remove && "title" in form.remove}
+    {m.deleted(form.remove.title)}
   {/if}
 </div>
+
+{#if form?.remove && "error" in form.remove}
+  <p class="notice error" role="alert">{removal.failed}</p>
+{/if}
 
 <section aria-labelledby="envies-titre">
   <h2 id="envies-titre">{m.wishes(open.length)}</h2>
@@ -369,16 +377,17 @@
               </form>
               <form method="POST" action="?/status" use:enhance>
                 <input type="hidden" name="itemId" value={item.id} />
-                <button
-                  type="submit"
-                  name="status"
-                  value="archived"
-                  class="secondary"
-                  aria-label={m.archiveLabel(item.title)}
-                >
-                  {m.archive}
-                </button>
+                <input type="hidden" name="status" value="archived" />
+                <IconButton icon="archive" label={m.archiveLabel(item.title)} tip={m.archiveTip} />
               </form>
+              <ConfirmDelete
+                label={m.deleteLabel(item.title)}
+                tip={m.deleteTip}
+                title={removal.itemTitle(item.title)}
+                help={[removal.itemHelp, removal.guests, removal.archiveInstead]}
+                action="?/deleteItem"
+                fields={{ itemId: item.id, title: item.title }}
+              />
             </div>
             <ItemEditor {item} lists={data.lists} failed={failedEdit(item)} />
           </div>
@@ -401,18 +410,21 @@
               <Gifts gifts={data.gifts[item.id] ?? []} none={m.noGiftOutside} />
             {/if}
           </div>
-          <form method="POST" action="?/status" use:enhance class="actions">
-            <input type="hidden" name="itemId" value={item.id} />
-            <button
-              type="submit"
-              name="status"
-              value="open"
-              class="secondary"
-              aria-label={m.reopenLabel(item.title)}
-            >
-              {m.reopen}
-            </button>
-          </form>
+          <div class="actions">
+            <form method="POST" action="?/status" use:enhance>
+              <input type="hidden" name="itemId" value={item.id} />
+              <input type="hidden" name="status" value="open" />
+              <IconButton icon="restore" label={m.reopenLabel(item.title)} tip={m.reopen} />
+            </form>
+            <ConfirmDelete
+              label={m.deleteLabel(item.title)}
+              tip={m.deleteTip}
+              title={removal.itemTitle(item.title)}
+              help={[removal.itemHelp, removal.guests]}
+              action="?/deleteItem"
+              fields={{ itemId: item.id, title: item.title }}
+            />
+          </div>
         </li>
       {/each}
     </ul>

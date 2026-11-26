@@ -1,6 +1,6 @@
 import { schema } from "@wishalia/db";
 import { canRevealSecret, DEFAULT_REVEAL_DELAY_DAYS } from "@wishalia/domain";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
@@ -98,7 +98,13 @@ export const eventRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now
         .select({ id: schema.wishes.id })
         .from(schema.wishes)
         .innerJoin(schema.wishLists, eq(schema.wishLists.id, schema.wishes.listId))
-        .where(and(eq(schema.wishes.id, itemId), eq(schema.wishLists.ownerId, ownerId)));
+        .where(
+          and(
+            eq(schema.wishes.id, itemId),
+            eq(schema.wishLists.ownerId, ownerId),
+            isNull(schema.wishes.deletedAt),
+          ),
+        );
       if (!item) throw notFound();
       const added = await tx
         .insert(schema.eventWishes)

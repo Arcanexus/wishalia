@@ -18,12 +18,29 @@ All notable changes to this project are documented here. The format follows
   it yet), a half disc (partly given), a check (already given), a heart (received), with its words
   on hover and for a screen reader.
 
+- Every list and every wish can be archived and restored, or deleted for good. A wish has a box
+  (« Archiver ») and a bin (« Supprimer », after a dialog that says it cannot be undone); archived
+  and received wishes come back with the arrow. Archived lists wait on the home page under « Listes
+  archivées », to restore or delete; « Supprimer la liste » is in the list's settings. A deletion
+  removes the wish from its list, events and links, with its images, and cancels the gifts pledged
+  to it. The relatives who meant to give an archived or deleted wish are told on their link, « Des
+  envies ont quitté la liste », so that they do not buy it; an archived wish's gift can be taken
+  back. The owner is never told whether anything was given (anti-spoil). API: `DELETE
+  /manage/lists/:id`, `DELETE /manage/items/:id`, `GET /manage/lists?archived=true`, `POST
+  /public/gifts/gone`, and the same routes in the REST API v1. Migration 0012 adds `deleted_at`.
+
 ### Changed
 
 - A free item no longer says « Libre. » (« Free. » in English, read as « gratuit » next to a price):
   its icon says it. The gauge counts « à offrir » (« to give »).
 - The givers' initials go above the words on a narrow card, and the price stays on the title's
   first line.
+- A wish's « Archiver » and « Remettre dans la liste » buttons become icons, with their words on
+  hover and for a screen reader.
+
+### Fixed
+
+- An event's link no longer shows the wishes of an archived list.
 
 ## [0.0.5] - 2026-11-25
 

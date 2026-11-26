@@ -37,8 +37,8 @@ server, not hidden in the page.
 > chart. The data model, the business rules (funding, anti-spoil), the sign-in (OIDC, passkeys,
 > magic links), the management API, the public view API (share links, contributions) and the REST
 > API v1 (personal access tokens, OpenAPI) are in place and tested. The management app has its
-> screens (signing in, passkeys, lists, quick add, editing and reordering items, a list's preview,
-> events, sharing, settings), and the family sees a shared list or event in the public view, where
+> screens (signing in, passkeys, lists, quick add, editing, reordering, archiving and deleting lists
+> and items, a list's preview, events, sharing, settings), and the family sees a shared list or event in the public view, where
 > they reserve a gift, share any gift that has a price by giving part of it, chip in to a pool, and withdraw. The public host's home page welcomes visitors, signs them in,
 > and finds the lists their owners made public. The worker completes the items added with a link (title,
 > price, images; Amazon included) and reads them again on demand, keeping what the owner typed, and the owner can choose, send and frame the image of each item (on a volume or in S3, through imgproxy).
@@ -56,6 +56,7 @@ server, not hidden in the page.
 | 🎁 **Gifts together**    | Several contributions per item, across events, overshoot allowed.        |
 | 🔎 **Private or public** | Private lists by link only; public ones found from the home page.        |
 | 📅 **Lists and events**  | Durable lists, recurring events, series of books, recurring wishes.      |
+| 🗃️ **Tidy up**           | Archive a list or a wish and restore it, or delete it for good.          |
 | 👵 **For every age**     | Large touch targets, no password, an item added in under five seconds.   |
 | 📱 **On the phone**      | Installs like an app; « Partager » from any shop adds a wish.            |
 | 📥 **Bring your lists**  | Import from Wishlistr, a CSV or JSON export, or a pasted list.           |

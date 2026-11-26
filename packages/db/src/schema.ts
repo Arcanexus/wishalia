@@ -178,7 +178,13 @@ export const wishLists = pgTable(
      */
     visibility: listVisibility("visibility").notNull().default("private"),
     createdAt: createdAt(),
+    /** Archived: hidden from the guests and from the owner's lists, restorable. */
     archivedAt: timestamp("archived_at", { withTimezone: true }),
+    /**
+     * Deleted for good (docs/archive-delete.md): archived too, out of every screen and API, never
+     * restored. The row stays because the history of its items is append-only.
+     */
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => [
     index("wish_lists_owner_idx").on(table.ownerId, table.position),
@@ -242,6 +248,12 @@ export const wishes = pgTable(
     enrichmentAt: timestamp("enrichment_at", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    /**
+     * Deleted for good (docs/archive-delete.md): its status is "archived" too, it is out of every
+     * screen and API, its link, notes, images and events are gone. The row stays because its
+     * history is append-only; its title stays so that a guest who meant to give it is told.
+     */
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => [
     index("wishes_list_idx").on(table.listId, table.position),
@@ -465,6 +477,7 @@ export const ITEM_EVENT_TYPES = [
   "reserved",
   "received",
   "archived",
+  "deleted",
   "enriched",
   "image_changed",
   "refresh_requested",

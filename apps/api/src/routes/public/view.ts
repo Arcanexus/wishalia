@@ -37,10 +37,19 @@ export function shareOf(request: FastifyRequest): ShareContext {
 
 /**
  * An item the link opens, or undefined: an item of its list, or of its event. Archived items and
- * archived lists are out of every view.
+ * archived lists are out of every view; `archived` lets an archived item (never a deleted one) be
+ * found, so that a guest can still take back what they had pledged to it.
  */
-export async function itemInView(tx: Tx, link: LinkRow, itemId: string): Promise<WishRow | undefined> {
-  const visible = and(eq(schema.wishes.id, itemId), ne(schema.wishes.status, "archived"));
+export async function itemInView(
+  tx: Tx,
+  link: LinkRow,
+  itemId: string,
+  { archived = false }: { archived?: boolean } = {},
+): Promise<WishRow | undefined> {
+  const visible = and(
+    eq(schema.wishes.id, itemId),
+    archived ? isNull(schema.wishes.deletedAt) : ne(schema.wishes.status, "archived"),
+  );
   if (link.scope === "list" && link.listId) {
     const [row] = await tx
       .select({ wish: schema.wishes })
@@ -57,7 +66,8 @@ export async function itemInView(tx: Tx, link: LinkRow, itemId: string): Promise
         schema.eventWishes,
         and(eq(schema.eventWishes.wishId, schema.wishes.id), eq(schema.eventWishes.eventId, link.eventId)),
       )
-      .where(visible);
+      .innerJoin(schema.wishLists, eq(schema.wishLists.id, schema.wishes.listId))
+      .where(and(visible, archived ? undefined : isNull(schema.wishLists.archivedAt)));
     return row?.wish;
   }
   return undefined;
@@ -136,7 +146,15 @@ async function loadView(db: Database, link: LinkRow): Promise<ViewData> {
       .select({ wish: schema.wishes })
       .from(schema.eventWishes)
       .innerJoin(schema.wishes, eq(schema.wishes.id, schema.eventWishes.wishId))
-      .where(and(eq(schema.eventWishes.eventId, event.id), ne(schema.wishes.status, "archived")))
+      // The items of an archived list are out of the event's view too
+      .innerJoin(schema.wishLists, eq(schema.wishLists.id, schema.wishes.listId))
+      .where(
+        and(
+          eq(schema.eventWishes.eventId, event.id),
+          ne(schema.wishes.status, "archived"),
+          isNull(schema.wishLists.archivedAt),
+        ),
+      )
       .orderBy(asc(schema.eventWishes.position), asc(schema.eventWishes.addedAt));
     items = rows.map((row) => row.wish);
   } else {

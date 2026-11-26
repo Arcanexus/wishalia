@@ -147,6 +147,9 @@ key the API gave once, kept on their device:
 - for 400 days, and the 30 latest gifts of that link (a cookie holds about 4 KB);
 - the first name goes in `wishalia.guest_name`, also `HttpOnly`.
 
+When the owner archives or deletes an item someone gave to, their link tells them at the top, so
+that they do not buy it; see [Archiving and deleting](archive-delete.md#on-the-guests-side).
+
 On another device, or after clearing the cookies, the gift stays given, but that device does not
 know it is theirs and cannot withdraw it. With an account, their gifts follow them on every device.
 

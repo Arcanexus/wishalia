@@ -72,12 +72,13 @@ amount nor its message: those stay with their author (`mine`).
 
 ## Routes
 
-| Route                                      | Body                                                                                                                                 | Answer                                                                   |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| `GET /public/home?q=`                      | No share link                                                                                                                        | Who is signed in, and the public lists (see above).                      |
-| `GET /public/view`                         |                                                                                                                                      | The list or the event, its events and its items, with `funding` or null. |
-| `POST /public/items/:itemId/contributions` | `eventId`?, `amountCents` (pool, or a share of a gift that has a price), `units`? (quantity), `guestName`?, `message`?, `anonymous`? | `201`, the contribution and its `withdrawKey`, given once.               |
-| `DELETE /public/contributions/:id`         | header `X-Withdraw-Key`, or the session of its author                                                                                | `204`. Withdrawing twice changes nothing; anyone else gets `404`.        |
+| Route                                      | Body                                                                                                                                 | Answer                                                                                                                                                   |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /public/home?q=`                      | No share link                                                                                                                        | Who is signed in, and the public lists (see above).                                                                                                      |
+| `GET /public/view`                         |                                                                                                                                      | The list or the event, its events and its items, with `funding` or null.                                                                                 |
+| `POST /public/items/:itemId/contributions` | `eventId`?, `amountCents` (pool, or a share of a gift that has a price), `units`? (quantity), `guestName`?, `message`?, `anonymous`? | `201`, the contribution and its `withdrawKey`, given once.                                                                                               |
+| `DELETE /public/contributions/:id`         | header `X-Withdraw-Key`, or the session of its author                                                                                | `204`. Withdrawing twice changes nothing; anyone else gets `404`. Works on an archived item too.                                                         |
+| `POST /public/gifts/gone`                  | `{ gifts: [{ id, key }] }` (the device's withdraw keys, 30 at most), and the session                                                 | The person's own gifts whose item left the owner's lists: `id`, `itemId`, `title`, `state` (`archived` or `deleted`), `eventId`, `amountCents`, `units`. |
 
 A contribution:
 
@@ -95,7 +96,13 @@ A contribution:
 - a contribution with an event is taken and withdrawn until the secret of its event is lifted
   (`event_closed`); one without an event while the item is open (`item_closed`) and the secret of
   the list is kept (`list_closed`);
-- the item row is locked during the check, so the last copy is never reserved twice.
+- the item row is locked during the check, so the last copy is never reserved twice;
+- an archived item takes nothing (it is out of the view), but a gift pledged to it can be withdrawn.
+
+`POST /public/gifts/gone` answers only for gifts the person proves: by the session of their account,
+or by each gift's withdraw key. A gift of a deleted item is given for 30 days after the deletion,
+when the deletion cancelled it (the rule `goneGift` of `@wishalia/domain`). See
+[Archiving and deleting](archive-delete.md).
 
 Every contribution and every withdrawal writes a `sealed` history entry (`contribution_added`,
 `reserved`, `contribution_withdrawn`) in its own transaction. The owner never receives any

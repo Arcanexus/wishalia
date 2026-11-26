@@ -50,7 +50,15 @@ export const app: AppMessages = {
   home: {
     title: "My lists",
     hello: (name) => `Hello ${name}`,
-    archived: "The list is archived: it no longer shows, neither for you nor for your family.",
+    archived:
+      "The list is archived: your family no longer sees it. You'll find it under “Archived lists”, to restore it.",
+    deleted: "The list is deleted, with its wishes.",
+    archivedLists: (n) => `Archived lists (${n})`,
+    archivedHelp:
+      "Your family no longer sees them. A restored list comes back as it was, with its share links.",
+    restore: { label: (name) => `Restore “${name}”`, tip: "Restore" },
+    restored: (name) => `“${name}” is back in your lists.`,
+    restoreFailed: "The list couldn't be restored. Try again in a moment.",
     none: "No list yet: your first wish creates one, “My wishes”. You can also create one below.",
     count: (n) => (n === 0 ? "No wishes" : n === 1 ? "1 wish" : `${n} wishes`),
     newList: "New list",
@@ -127,6 +135,10 @@ export const app: AppMessages = {
     receivedLabel: (title) => `I got it: “${title}”`,
     archive: "Archive",
     archiveLabel: (title) => `Archive “${title}”`,
+    archiveTip: "Archive (you can restore it)",
+    deleteLabel: (title) => `Delete “${title}” for good`,
+    deleteTip: "Delete",
+    deleted: (title) => `“${title}” is deleted.`,
     closed: (n) => `Received and archived (${n})`,
     receivedState: "Received",
     archivedState: "Archived",
@@ -223,6 +235,23 @@ export const app: AppMessages = {
     archive: "Archive the list",
     archiveHelp: "The list disappears from your lists, and its share links no longer show anything.",
     archiveConfirm: (name) => `I want to archive “${name}”`,
+    delete: "Delete the list",
+    deleteHelp:
+      "The list and all its wishes go, with their images, and its share links no longer open. This is for good. If someone in your family meant to give something, their share link tells them.",
+    deleteConfirm: (name) => `I want to delete “${name}” and its wishes, for good`,
+  },
+  removal: {
+    itemTitle: (title) => `Delete “${title}”?`,
+    itemHelp:
+      "The wish leaves the list, the events and the share links, with its images. This is for good: it can't be restored.",
+    listTitle: (name) => `Delete the list “${name}”?`,
+    listHelp:
+      "The list and all its wishes go, with their images, and its share links no longer open. This is for good: it can't be restored.",
+    guests: "If someone in your family meant to give it, their share link tells them.",
+    archiveInstead: "To only hide it from your family, archive it: you can restore it.",
+    cancel: "Cancel",
+    confirm: "Delete for good",
+    failed: "The deletion didn't go through. Try again in a moment.",
   },
   preview: {
     title: (name) => `Preview of ${name}`,
