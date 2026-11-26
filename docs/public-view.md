@@ -65,8 +65,9 @@ The page greets the person the link was made for (« Bonjour Mamie ! »), then s
   - a gift: « Réservé par Paul. »;
   - a gift that has a price, shared by several: the same bar as a pool, up to its price, and « 20 €
     réunis sur 49,90 € : il manque 29,90 €, avec Paul. », then « Offert ensemble, par Paul et
-    Jeanne. » once the price is reached; a gift without a price, shared: « 45 € réunis, avec
-    Paul. », and it stays partly given (half disc) until the owner marks it received;
+    Jeanne. » once the price is reached; a gift without a price, shared: no bar (there is
+    nothing to measure against), « 45 € réunis, avec Paul. », and it stays partly given (half disc)
+    until the owner marks it received;
   - several copies: one box per copy, filled when reserved, and « 1 sur 4 déjà réservé, par
     Jeanne. »;
   - a pool: a bar split by event (one colour per event, named under the bar when there are

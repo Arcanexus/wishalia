@@ -248,7 +248,8 @@ describe("a gift shared by amounts", () => {
     expect(plain(standing(started))).toBe("45 € réunis, avec Paul.");
     expect(giveLabel(started)).toBe("Acheter / Participer");
     expect(canGive(started, { viewer: "guest", event: null })).toBe(true);
-    expect(poolBar(started, [])?.target).toBeNull();
+    // No bar: with nothing to measure against, a full one would read « given »
+    expect(poolBar(started, [])).toBeNull();
   });
 
   it("is given together once the shares reach the price", () => {

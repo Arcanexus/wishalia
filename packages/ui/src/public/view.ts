@@ -188,6 +188,8 @@ export function poolBar(item: PublicItem, events: readonly PublicEvent[], locale
   const m = viewMessages(locale);
   const funding = item.funding;
   if (!funding || !(item.kind === "pool" || sharing(item))) return null;
+  // A gift shared without a price has nothing to measure against: a full bar would read « given »
+  if (item.kind !== "pool" && priceOf(item) === null) return null;
   const total = funding.totalCents ?? 0;
   const target = (item.kind === "pool" ? item.targetCents : item.priceCents) ?? 0;
   const scale = Math.max(target, total);
