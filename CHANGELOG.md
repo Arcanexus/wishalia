@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The built-in Garage stays in its Service through a short stall: on a slow volume (NFS) a burst
+  of uploads or deletions could hold `/health` past its ten seconds and take Garage out for a
+  while, so images failed to load. Readiness now waits twelve failures (two minutes) instead of
+  three.
+
 ## [0.0.9] - 2026-11-26
 
 ### Added
