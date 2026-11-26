@@ -8,6 +8,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Every outside image is on its latest stable release. Node.js 26 (LTS) builds and runs the four
+  images (`.nvmrc` and `@types/node` too); it no longer ships Corepack, so the Dockerfile and the CI
+  install it from npm (0.36.0) before enabling pnpm. The chart's PostgreSQL moves to 19
+  (`postgres:19-alpine`), Garage to v2.6.0 and BusyBox (`volumePermissions`) to 1.38.0; imgproxy
+  v4.0.25, the Garage console v0.14.0 and the GitHub Actions were already the latest.
+- The chart moves the data of the built-in PostgreSQL to the new major version by itself
+  (`postgresql.upgrade`, on by default): two init containers dump it with the previous image
+  (`postgresql.upgrade.fromImage`, `postgres:18-alpine`) and restore it into the new one, once,
+  before the server starts. The folder of PostgreSQL 18 is kept, to go back. See
+  [Upgrading PostgreSQL](docs/installation.md#upgrading-postgresql). A CI job runs the upgrade for
+  real, from data written by PostgreSQL 18.
+- `docker compose up` starts Garage (v2.6.0) instead of MinIO, whose community image is no longer
+  published, with local keys in Garage's format (`.env.example`). A local database made with
+  PostgreSQL 18 stays beside the new one: `docker compose down -v` starts afresh.
+
 - In the guests' view, every item has the same « Acheter / Participer » button (« Buy / Chip in »),
   whatever its kind, and every form is sent with « Valider ». A gift given once works the same with
   or without a price: the same short form, « Je l'achète en entier » or « Je participe avec un

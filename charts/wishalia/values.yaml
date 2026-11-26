@@ -74,8 +74,18 @@ postgresql:
   image:
     registry: docker.io
     repository: library/postgres
-    tag: "18-alpine"
+    tag: "19-alpine"
     pullPolicy: IfNotPresent
+  # Moving to a new major version: when the volume holds the data of fromImage's version and none
+  # of the new one, two init containers dump it with fromImage and restore it into the new
+  # version, once. The old folder is kept, to go back. Off: a new major version starts empty.
+  upgrade:
+    enabled: true
+    fromImage:
+      registry: docker.io
+      repository: library/postgres
+      tag: "18-alpine"
+      pullPolicy: IfNotPresent
   auth:
     database: wishalia
     username: wishalia
@@ -158,7 +168,7 @@ images:
     enabled: false
     image:
       repository: dxflrs/garage
-      tag: v2.5.0
+      tag: v2.6.0
       pullPolicy: IfNotPresent
     persistence:
       # An existing PersistentVolumeClaim; empty: the chart makes one (kept on helm uninstall)
@@ -331,7 +341,7 @@ volumePermissions:
   image:
     registry: docker.io
     repository: library/busybox
-    tag: "1.37.0"
+    tag: "1.38.0"
     pullPolicy: IfNotPresent
   resources:
     requests: { cpu: 10m, memory: 16Mi }
