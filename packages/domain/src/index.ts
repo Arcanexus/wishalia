@@ -56,6 +56,8 @@ export {
 export {
   MODE_CHOICES,
   nextMode,
+  displayChange,
+  type DisplayChange,
   parseModeChoice,
   parseThemeChoice,
   resolveTheme,

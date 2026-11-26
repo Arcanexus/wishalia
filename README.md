@@ -38,7 +38,8 @@ server, not hidden in the page.
 > magic links), the management API, the public view API (share links, contributions) and the REST
 > API v1 (personal access tokens, OpenAPI) are in place and tested. The management app has its
 > screens (signing in, passkeys, lists with their icon or image, quick add, editing, reordering, archiving and deleting lists
-> and items, a list's preview, events, sharing, settings), and the family sees a shared list or event in the public view, where
+> and items, a list's preview, events, sharing, settings, all saved as they change, with icons and
+> header menus), and the family sees a shared list or event in the public view, where
 > they reserve a gift, share any gift that has a price by giving part of it, chip in to a pool, and withdraw. The public host's home page welcomes visitors, signs them in,
 > and finds the lists their owners made public. The worker completes the items added with a link (title,
 > price, images; Amazon included), each step showing up live on the owner's and the guests' pages with no reload, and reads them again on demand, keeping what the owner typed, and the owner can choose, send and frame the image of each item (on a volume or in S3, through imgproxy);
@@ -60,6 +61,7 @@ server, not hidden in the page.
 | 🎄 **A face per list**   | Sixteen icons in the theme's colours, or your own image.                 |
 | 🗃️ **Tidy up**           | Archive a list or a wish and restore it, or delete it for good.          |
 | 👵 **For every age**     | Large touch targets, no password, an item added in under five seconds.   |
+| 💾 **Nothing to save**   | Every setting is saved as it changes: no « Save » button to forget.      |
 | 📱 **On the phone**      | Installs like an app; « Partager » from any shop adds a wish.            |
 | 📥 **Bring your lists**  | Import from Wishlistr, a CSV or JSON export, or a pasted list.           |
 | 🌍 **Your language**     | French and English, chosen by the browser or in the settings.            |

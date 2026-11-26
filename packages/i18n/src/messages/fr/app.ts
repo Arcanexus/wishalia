@@ -8,8 +8,6 @@ export const app = {
     lists: "Mes listes",
     events: "Événements",
     share: "Partager",
-    settings: "Réglages",
-    signOut: "Se déconnecter",
   },
   error: {
     notFound: "Page introuvable",
@@ -91,7 +89,7 @@ export const app = {
     failed: "L'ajout n'a pas abouti. Réessayez dans un instant.",
   },
   list: {
-    back: "← Mes listes",
+    back: "Mes listes",
     refreshAll: { label: "Recharger les liens de la liste", tip: "Recharger les liens" },
     preview: { label: "Aperçu : la liste comme vos proches la voient", tip: "Aperçu" },
     share: { label: "Partager cette liste", tip: "Partager cette liste" },
@@ -107,7 +105,8 @@ export const app = {
         : `${queued === 1 ? "1 envie va être rechargée depuis son lien" : `${queued} envies vont être rechargées depuis leur lien, l'une après l'autre`}.`,
     refreshKeeps:
       "Le titre et le prix suivent la page tant que vous ne les avez pas changés ; ce que vous avez saisi ou envoyé vous-même est gardé.",
-    settingsSaved: "Réglages de la liste enregistrés.",
+    settings: { label: "Réglages de la liste", tip: "Réglages de la liste" },
+    edit: { label: (title: string) => `Modifier « ${title} »`, tip: "Modifier" },
     secretLifted: "Le secret de la liste est levé.",
     refreshAsked: (title: string) => `Rechargement de « ${title} » demandé.`,
     saved: (title: string, moved: boolean) =>
@@ -141,9 +140,9 @@ export const app = {
     },
     unreadable: "Lien illisible",
     unreadableHelp:
-      "La page n'a pas pu être lue : réessayez avec le bouton « Recharger » (les flèches), ou complétez l'envie avec « Modifier ».",
-    image: "Image",
-    imageOf: (title: string) => `Image de « ${title} »`,
+      "La page n'a pas pu être lue : réessayez avec le bouton « Recharger » (les flèches), ou complétez l'envie avec le crayon « Modifier ».",
+    imageEdit: { label: (title: string) => `Changer les images de « ${title} »`, tip: "Changer les images" },
+    imageAdd: { label: (title: string) => `Ajouter une image à « ${title} »`, tip: "Ajouter une image" },
     refresh: { label: (title: string) => `Recharger le lien de « ${title} »`, tip: "Recharger" },
     received: "Je l'ai reçu",
     receivedLabel: (title: string) => `Je l'ai reçu : « ${title} »`,
@@ -168,8 +167,17 @@ export const app = {
     what: (what: string) => ` : ${what}`,
     quote: (message: string) => `« ${message} »`,
   },
+  /** Settings saved as they change (docs/management-app.md, « Saved as you go »). */
+  autosave: {
+    saving: "Enregistrement…",
+    saved: "Enregistré",
+    failed: "Pas encore enregistré : le serveur n'a pas répondu. Vos changements sont gardés ici.",
+    refused: "Pas enregistré : corrigez ce qui est signalé ci-dessus.",
+    retry: "Réessayer",
+    save: "Enregistrer",
+  },
   editor: {
-    edit: "Modifier",
+    close: "Fermer",
     editLabel: (title: string) => `Modifier « ${title} »`,
     errors: {
       invalid_title: "Donnez un nom à l'envie.",
@@ -201,11 +209,13 @@ export const app = {
     list: "Liste",
     link: "Lien (facultatif)",
     notes: "Notes pour vos proches (facultatif)",
-    saving: "Enregistrement…",
-    save: "Enregistrer",
   },
   listSettings: {
     title: "Réglages de la liste",
+    close: "Fermer les réglages",
+    ends: "Archiver ou supprimer",
+    archiveLabel: (name: string) => `Archiver « ${name} »`,
+    deleteLabel: (name: string) => `Supprimer « ${name} » définitivement`,
     errors: {
       invalid_name: "Donnez un nom à la liste, en 100 caractères au plus.",
       secret_already_lifted: "Le secret est levé : il ne se referme plus.",
@@ -245,7 +255,6 @@ export const app = {
       name: "Quand je le décide",
       help: "Vous levez le secret de toute la liste d'un coup, quand vous voulez.",
     },
-    save: "Enregistrer",
     secret: "Le secret",
     lifted: "Le secret de cette liste est levé.",
     liftHelp:
@@ -254,11 +263,9 @@ export const app = {
     lift: "Lever le secret de la liste",
     archive: "Archiver la liste",
     archiveHelp: "La liste disparaît de vos listes, et ses liens de partage n'affichent plus rien.",
-    archiveConfirm: (name: string) => `Je veux archiver « ${name} »`,
     delete: "Supprimer la liste",
     deleteHelp:
       "La liste et toutes ses envies disparaissent, avec leurs images, et ses liens de partage ne s'ouvrent plus. C'est définitif. Si un proche avait prévu d'offrir quelque chose, son lien de partage le prévient.",
-    deleteConfirm: (name: string) => `Je veux supprimer « ${name} » et ses envies, définitivement`,
   },
   removal: {
     itemTitle: (title: string) => `Supprimer « ${title} » ?`,
@@ -334,7 +341,6 @@ export const app = {
     fileHelp:
       "JPEG, PNG, WebP, GIF, AVIF ou HEIC, 10 Mo au plus. Sur un téléphone, vous pouvez aussi prendre une photo.",
     sending: "Envoi…",
-    sendFile: (name: string) => `Envoyer « ${name} »`,
     send: "Envoyer l'image",
     forgetWithLink:
       "Votre image est effacée, et l'envie reprend l'image de la page du lien : l'application relit la page.",
@@ -380,7 +386,6 @@ export const app = {
     fileHelp:
       "JPEG, PNG, WebP, GIF, AVIF ou HEIC, 10 Mo au plus. Elle s'affiche en carré : son centre est gardé.",
     sending: "Envoi…",
-    sendFile: (name: string) => `Envoyer « ${name} »`,
     send: "Envoyer l'image",
     forget: "Retirer votre image",
     forgetHelp: "Votre image est effacée, et l'icône choisie s'affiche à nouveau.",
@@ -409,6 +414,7 @@ export const app = {
     size: (percent: number) => `Taille du cadre : ${percent} %`,
     saving: "Enregistrement…",
     save: "Enregistrer le cadrage",
+    saved: "Cadrage enregistré",
     whole: "Garder l'image entière",
     loading: "Chargement de l'image…",
   },
@@ -471,7 +477,6 @@ export const app = {
     add: "Ajouter",
     addLabel: (title: string) => `Ajouter « ${title} » à l'événement`,
     settings: "Réglages de l'événement",
-    save: "Enregistrer",
   },
   share: {
     title: "Partager",
@@ -539,8 +544,6 @@ export const app = {
       help: "La langue de votre navigateur, quand l'application la parle.",
     },
     invalidName: "Écrivez un prénom ou un surnom, en 80 caractères au plus.",
-    saved: "C'est enregistré.",
-    save: "Enregistrer",
     passkeys: "Clés d'accès",
     passkeysHelp:
       "Une clé d'accès vous connecte avec l'empreinte, le visage ou le code de votre téléphone ou de votre ordinateur : sans mot de passe, sans attendre d'e-mail. Le lien par e-mail reste toujours possible.",
@@ -552,7 +555,6 @@ export const app = {
     rename: "Renommer",
     renameLabel: (name: string) => `Renommer la clé « ${name} »`,
     newName: "Nouveau nom",
-    saveName: "Enregistrer le nom",
     delete: "Supprimer",
     deleteLabel: (name: string) => `Supprimer la clé « ${name} »`,
     noPasskey: "Aucune clé d'accès pour l'instant.",

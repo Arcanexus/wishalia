@@ -1,20 +1,31 @@
 <script lang="ts">
-  import { enhance } from "$app/forms";
+  import { untrack } from "svelte";
+  import { applyAction } from "$app/forms";
+  import { invalidate } from "$app/navigation";
   import { appMessages } from "@wishalia/i18n/messages/app";
   import { useI18n } from "@wishalia/ui/i18n.ts";
 
+  import { autosave, type SaveState } from "./autosave.ts";
+  import IconButton from "./IconButton.svelte";
+  import SaveStatus from "./SaveStatus.svelte";
   import type { EditValues, Item, List } from "./types.ts";
 
-  /** Edits an item in place (spec §6), folded under its card until asked for. */
+  /**
+   * Edits an item in place (spec §6), under its card once the pencil asked for it. Every change is
+   * saved as it is made (docs/management-app.md, « Saved as you go »): no button to press.
+   */
   let {
     item,
     lists,
     failed = null,
+    onclose,
   }: {
     item: Item;
     lists: List[];
     /** What was typed and why it was refused, when the last try for this item failed. */
     failed?: { error: string; values: EditValues } | null;
+    /** The cross: the editor folds back under its card. */
+    onclose: () => void;
   } = $props();
 
   const i18n = useI18n();
@@ -22,42 +33,56 @@
   /** An amount as typed back into a field: « 320 », « 12,50 ». */
   const euros = (value: number | null) => (value === null ? "" : i18n.fmt.amount(value));
   const id = $derived(`edit-${item.id}`);
-  const values = $derived<EditValues>(
-    failed?.values ?? {
-      title: item.title,
-      url: item.url ?? "",
-      price: euros(item.priceCents),
-      notes: item.notes ?? "",
-      kind: item.kind,
-      quantity: item.quantity === null ? "" : String(item.quantity),
-      target: euros(item.targetCents),
-      repeatable: item.repeatable,
-      listId: item.listId,
-    },
+  // What the fields start with, once: the page reloading after a save never overwrites what is
+  // being typed
+  const values = untrack<EditValues>(
+    () =>
+      failed?.values ?? {
+        title: item.title,
+        url: item.url ?? "",
+        price: euros(item.priceCents),
+        notes: item.notes ?? "",
+        kind: item.kind,
+        quantity: item.quantity === null ? "" : String(item.quantity),
+        target: euros(item.targetCents),
+        repeatable: item.repeatable,
+        listId: item.listId,
+      },
   );
-  const invalid = (code: string) => (failed?.error === code ? "true" : undefined);
-  let saving = $state(false);
+  let error = $state<string | null>(untrack(() => failed?.error ?? null));
+  let saveState = $state<SaveState>(untrack(() => (failed ? "error" : "idle")));
+  let form = $state<HTMLFormElement>();
+  const invalid = (code: string) => (error === code ? "true" : undefined);
+  const headingId = $derived(`${id}-titre-editeur`);
 </script>
 
-<details class="edit" open={failed !== null} data-live-hold>
-  <summary class="button secondary" aria-label={m.editLabel(item.title)}>{m.edit}</summary>
+<section class="edit" {id} aria-labelledby={headingId} data-live-hold>
+  <div class="top">
+    <h4 id={headingId}>{m.editLabel(item.title)}</h4>
+    <IconButton icon="close" label={m.close} tip={m.close} onclick={onclose} />
+  </div>
   <form
     method="POST"
     action="?/edit"
-    use:enhance={() => {
-      saving = true;
-      return async ({ update }) => {
-        await update({ reset: false });
-        saving = false;
-      };
+    bind:this={form}
+    use:autosave={{
+      onState: (state) => (saveState = state),
+      onResult: async (result) => {
+        if (result.type === "success") {
+          error = null;
+          const moved = (result.data?.edit as { listId?: string } | undefined)?.listId !== item.listId;
+          // Gone to another list: the page says so, then reloads without it
+          if (moved) await applyAction(result);
+          await invalidate("wishalia:list");
+          return true;
+        }
+        error =
+          result.type === "failure" ? String((result.data?.edit as { error?: string })?.error ?? "") : "";
+        return false;
+      },
     }}
   >
     <input type="hidden" name="itemId" value={item.id} />
-    {#if failed}
-      <p class="notice error" role="alert">
-        {m.errors[failed.error] ?? m.failed}
-      </p>
-    {/if}
 
     <label for="{id}-titre">{m.name}</label>
     <input
@@ -166,9 +191,9 @@
       >{values.notes}</textarea
     >
 
-    <button type="submit" disabled={saving}>{saving ? m.saving : m.save}</button>
+    <SaveStatus state={saveState} error={error ? (m.errors[error] ?? m.failed) : null} />
   </form>
-</details>
+</section>
 
 <style>
   .help {
@@ -176,19 +201,22 @@
     margin: 0.35rem 0 0;
   }
   .edit {
-    flex-basis: 100%;
-  }
-  summary {
-    list-style: none;
-    width: fit-content;
-  }
-  summary::-webkit-details-marker {
-    display: none;
-  }
-  form {
+    grid-area: editor;
     border-top: 1px solid var(--border);
-    margin-top: 0.75rem;
+    margin-top: 0.25rem;
     padding-top: 0.75rem;
+  }
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  h4 {
+    margin: 0;
+    font-size: 1.05rem;
+    overflow-wrap: anywhere;
   }
   form > input,
   form > textarea,

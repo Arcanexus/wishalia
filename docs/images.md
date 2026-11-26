@@ -12,7 +12,8 @@ Images are optional: they need a place for the files, **a volume or an S3 bucket
 
 ## The « Image » page
 
-Each item of a list has an **Image** button. Its page has, in this order:
+Each item of a list has a small pencil over the corner of its image (a « + » on the empty frame of
+an item without one). Its page has, in this order, every choice saved at once:
 
 - **The image shown**, as the family sees it, and « Ne plus afficher d'image ».
 - **Recadrer**: a square frame over the image (the thumbnails are square). It moves four ways, for

@@ -1,26 +1,6 @@
-<script lang="ts" module>
-  /**
-   * The drawings, stroked in the colour of the text: two turning arrows, an eye, three linked dots,
-   * a box (archive), an arrow coming back (restore), a bin (delete).
-   */
-  export const ICONS = {
-    reload: ["M20 12a8 8 0 1 1-2.34-5.66", "M20 4v5h-5"],
-    eye: ["M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z", "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"],
-    share: [
-      "M18 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
-      "M6 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
-      "M18 16a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
-      "M8.6 13.5l6.8 4M15.4 6.5l-6.8 4",
-    ],
-    check: ["M5 12.5l4.5 4.5L19 7.5"],
-    archive: ["M3 4h18v4H3z", "M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8", "M10 12h4"],
-    restore: ["M9 14L4 9l5-5", "M4 9h10.5a5.5 5.5 0 0 1 0 11H11"],
-    trash: ["M4 7h16", "M10 11v6M14 11v6", "M6 7l1 13h10l1-13", "M9 7V4h6v3"],
-  } as const;
-  export type IconName = keyof typeof ICONS;
-</script>
-
 <script lang="ts">
+  import { ICONS, type IconName } from "@wishalia/ui/icons.ts";
+
   /**
    * A button or a link shown as an icon alone, its words in a tip shown on hover and on keyboard
    * focus (WCAG 1.4.13: it stays while the pointer is on it, and Escape hides it). Its name is its
@@ -33,15 +13,26 @@
     href,
     onclick,
     danger = false,
+    opens,
+    expanded,
+    controls,
   }: {
     icon: IconName;
     label: string;
     tip: string;
     href?: string | undefined;
-    /** A button that does something on the page (opens a dialog) instead of sending its form. */
+    /**
+     * Does something on the page instead of sending its form or following its link (the link stays
+     * for a page without JavaScript).
+     */
     onclick?: (() => void) | undefined;
     /** Drawn in the colour of danger: a deletion. */
     danger?: boolean;
+    /** It opens a modal dialog. */
+    opens?: "dialog" | undefined;
+    /** It shows or hides a part of the page (aria-expanded), the one whose id is `controls`. */
+    expanded?: boolean | undefined;
+    controls?: string | undefined;
   } = $props();
   let hidden = $state(false);
   const hide = (event: KeyboardEvent) => {
@@ -58,6 +49,14 @@
       class="button secondary icon"
       {href}
       aria-label={label}
+      aria-expanded={expanded}
+      aria-controls={expanded ? controls : undefined}
+      onclick={onclick
+        ? (event) => {
+            event.preventDefault();
+            onclick();
+          }
+        : undefined}
       onkeydown={hide}
       onpointerenter={show}
       onfocus={show}
@@ -73,7 +72,9 @@
       class="secondary icon"
       class:danger
       aria-label={label}
-      aria-haspopup={onclick ? "dialog" : undefined}
+      aria-haspopup={opens}
+      aria-expanded={expanded}
+      aria-controls={expanded ? controls : undefined}
       {onclick}
       onkeydown={hide}
       onpointerenter={show}

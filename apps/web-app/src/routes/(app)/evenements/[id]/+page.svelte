@@ -1,11 +1,15 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import Gifts from "#lib/Gifts.svelte";
   import { enhance } from "$app/forms";
+  import { invalidateAll } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { appMessages } from "@wishalia/i18n/messages/app";
   import { useI18n } from "@wishalia/ui/i18n.ts";
 
+  import { autosave, type SaveState } from "#lib/autosave.ts";
   import EventFields from "#lib/EventFields.svelte";
+  import SaveStatus from "#lib/SaveStatus.svelte";
 
   import type { PageProps } from "./$types";
 
@@ -30,6 +34,16 @@
   const i18n = useI18n();
   const all = $derived(appMessages(i18n.locale));
   const m = $derived(all.event);
+
+  // Saved as it changes (docs/management-app.md, « Saved as you go »); the fields start once, so
+  // that a reload after a save never overwrites what is being typed
+  const startValues = untrack(() => typedValues);
+  let saveState = $state<SaveState>(
+    untrack(() => (form?.update && "error" in form.update ? "error" : "idle")),
+  );
+  let updateError = $state<string | null>(
+    untrack(() => (form?.update && "error" in form.update ? String(form.update.error) : null)),
+  );
 </script>
 
 <svelte:head>
@@ -132,17 +146,25 @@
   <form
     method="POST"
     action="?/update"
-    use:enhance={() =>
-      async ({ update }) =>
-        update({ reset: false })}
+    use:autosave={{
+      onState: (state) => (saveState = state),
+      onResult: async (result) => {
+        if (result.type === "success") {
+          updateError = null;
+          await invalidateAll();
+          return true;
+        }
+        updateError =
+          result.type === "failure"
+            ? String((result.data?.update as { error?: string } | undefined)?.error ?? "failed")
+            : null;
+        return false;
+      },
+    }}
   >
     <input type="hidden" name="frozen" value={event.secretLifted ? "1" : "0"} />
-    <EventFields
-      values={typedValues}
-      error={form?.update && "error" in form.update ? form.update.error : null}
-      frozen={event.secretLifted}
-    />
-    <button type="submit">{m.save}</button>
+    <EventFields values={startValues} error={updateError} frozen={event.secretLifted} />
+    <SaveStatus state={saveState} error={updateError ? all.autosave.refused : null} />
   </form>
 </details>
 

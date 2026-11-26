@@ -76,6 +76,7 @@
     };
   };
   let grab: { dx: number; dy: number } | null = null;
+  let grabbing = $state(false);
   function down(event: PointerEvent) {
     if (event.button !== 0) return;
     const point = at(event);
@@ -83,6 +84,7 @@
     // A tap outside the frame brings it there; a press inside takes it along
     if (!inside) place(point.left - side / 2, point.top - side / 2);
     grab = { dx: point.left - x, dy: point.top - y };
+    grabbing = true;
     (event.currentTarget as Element).setPointerCapture(event.pointerId);
     event.preventDefault();
   }
@@ -91,7 +93,10 @@
     const point = at(event);
     place(point.left - grab.dx, point.top - grab.dy);
   }
-  const up = () => (grab = null);
+  const up = () => {
+    grab = null;
+    grabbing = false;
+  };
 
   function key(event: KeyboardEvent) {
     const step = short * (event.shiftKey ? 0.1 : 0.02);
@@ -109,6 +114,24 @@
     event.preventDefault();
   }
   let saving = $state(false);
+  let saved = $state(false);
+
+  // The frame is saved as it moves (docs/management-app.md, « Saved as you go »): once it rests
+  // for a moment, and never while a finger or the mouse still holds it
+  let cropForm = $state<HTMLFormElement>();
+  let sent: string | null = null;
+  $effect(() => {
+    if (!ready || !fractions || grabbing) return;
+    const key = JSON.stringify(fractions);
+    if (sent === null) sent = key;
+    if (key === sent) return;
+    saved = false;
+    const timer = setTimeout(() => {
+      sent = key;
+      cropForm?.requestSubmit();
+    }, 800);
+    return () => clearTimeout(timer);
+  });
 </script>
 
 {#if width && height}
@@ -116,11 +139,13 @@
     method="POST"
     action="?/crop"
     class="cropper"
+    bind:this={cropForm}
     use:enhance={() => {
       saving = true;
-      return async ({ update }) => {
+      return async ({ result, update }) => {
         await update({ reset: false });
         saving = false;
+        saved = result.type === "success";
       };
     }}
   >
@@ -165,10 +190,11 @@
       <input type="hidden" name="height" value={fractions.height} />
     {/if}
     <div class="buttons">
-      <button type="submit" disabled={saving}>{saving ? m.saving : m.save}</button>
+      <p class="muted state" role="status">{saving ? m.saving : saved ? m.saved : ""}</p>
       <button type="submit" name="whole" value="1" class="secondary" disabled={saving}>
         {m.whole}
       </button>
+      <noscript><button type="submit">{m.save}</button></noscript>
     </div>
   </form>
 {:else}
@@ -220,6 +246,12 @@
   .buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+  }
+  .state {
+    margin: 0;
+    font-weight: 600;
   }
 </style>

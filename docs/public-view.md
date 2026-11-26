@@ -19,7 +19,9 @@ The public host's own address (`https://<hosts.public>/`) welcomes visitors:
   address of another install); anything else says « Ce texte ne contient pas de lien de liste. »;
 - « Se connecter », to the management app ([Signing in](management-app.md#signing-in)), to manage
   one's lists or find one's gifts on every device; once signed in (the session is shared by the two
-  hosts), the page says « Bonjour Mamie ! » and offers « Mes listes » instead;
+  hosts), the page says « Bonjour Mamie ! » and offers « Mes listes » instead. At the top right of
+  the bar, an arrow going in signs in too; once signed in, the account menu (the first letter of the
+  name) leads to « Mes listes » and « Réglages du compte »;
 - « Trouver une liste publique »: a search by the person's first name or the list's name, without
   case or accents (« lea » finds « Léa »). Only the lists their owner made **public**
   ([A list's settings](management-app.md#a-lists-settings)) are ever there; a private list stays
@@ -191,9 +193,9 @@ envoyé. » A token that cannot be one is answered the same way without asking t
 ## Themes and accessibility
 
 The page follows the list's forced theme when it has one; otherwise the person's choice, with the
-Christmas theme in December and for a Christmas event. The header button switches between the
-device's mode, light and dark, kept on the device (`wishalia.mode`). Next to it, a button for the
-other language keeps it on the device too (`wishalia.locale`); otherwise the page speaks the
+Christmas theme in December and for a Christmas event. The display menu at the top right of the
+header chooses the mode (as the device, light or dark), the theme and the language, kept on the
+device (`wishalia.mode`, `wishalia.theme`, `wishalia.locale`); otherwise the page speaks the
 browser's language ([Languages](i18n.md)). Every page passes axe (WCAG 2.2
 AA) in light and dark, on a phone and a computer, and works without JavaScript, giving and
 withdrawing included.

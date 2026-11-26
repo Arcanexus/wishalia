@@ -37,7 +37,7 @@
   let busy = $state(false);
 </script>
 
-<IconButton icon="trash" {label} {tip} danger onclick={() => dialog?.showModal()} />
+<IconButton icon="trash" {label} {tip} danger opens="dialog" onclick={() => dialog?.showModal()} />
 
 <dialog bind:this={dialog} class="confirm" aria-labelledby="{id}-titre" aria-describedby="{id}-aide">
   <h2 id="{id}-titre">{title}</h2>

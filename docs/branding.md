@@ -41,12 +41,29 @@ The sixteen icons a list can show ([Pictures of the lists](list-pictures.md)) ar
 and there, `--logo-ribbon`. They sit in a rounded square on the page's background, so they follow
 each theme and mode without a variant. Drawings: `packages/ui/src/list-icons.ts`.
 
+## Icons
+
+The buttons of the apps are icons whenever an icon says the thing clearly, from one set
+(`packages/ui/src/icons.ts`, drawn by `@wishalia/ui/Icon.svelte`): plain strokes on a 24 × 24 grid,
+in the colour of the text, so that they follow every theme and mode. A pencil edits, a heart marks
+received, a box archives, a bin deletes (in the danger colour), two turning arrows reload, an eye
+previews, three linked dots share, a cog opens settings, a cross closes. An icon alone always
+carries its words as its accessible name and in a tip shown on hover and keyboard focus, which
+Escape hides (WCAG 1.4.13). A state is shown by an icon and a colour, never by colour alone.
+
+## Header
+
+The bar has the logo and the app's places on the left, and round icons at the top right: the
+**display menu** (mode, theme, language), then the **account menu** (the first letter of the
+person's name: their settings and signing out) or, signed out, an arrow going in to sign in. See
+[Management app](management-app.md#the-header).
+
 ## Themes
 
 Two themes, each in light and dark. **Neutral** is the default, all year round and for every event
 (birthday, birth…). **Christmas** replaces it for a list tied to a Christmas event, or in December.
-The app follows the device setting (`prefers-color-scheme`); a button in the header forces light or
-dark, and the choice is remembered.
+The app follows the device setting (`prefers-color-scheme`); the display menu of the header forces
+light or dark, or a theme, and the choice is remembered.
 
 ### Theme settings
 
@@ -54,8 +71,8 @@ Each person manages their themes in the settings of the apps (management app and
 
 - **Theme**: `Automatic` (default: Christmas for a Christmas list or in December, neutral
   otherwise), `Neutral` or `Christmas`.
-- **Mode**: `Same as my device` (default), `Light` or `Dark`. The header button is a shortcut to
-  this setting.
+- **Mode**: `Same as my device` (default), `Light` or `Dark`. The display menu at the top right of
+  the header (half a disc, a sun or a moon) is a shortcut to the mode, the theme and the language.
 
 The owner of a list can also **force a theme for that list** in the list's settings: `None`
 (default, each person's choice applies), `Neutral` or `Christmas`. A forced theme applies to
