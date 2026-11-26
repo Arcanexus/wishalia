@@ -18,6 +18,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- The built-in Garage stays in its Service through a short stall: on a slow volume (NFS) a burst
+  of uploads or deletions could hold `/health` past its ten seconds and take Garage out for a
+  while, so images failed to load. Readiness now waits twelve failures (two minutes) instead of
+  three.
 - Dragging a wish by its handle moves it as many places up or down as wanted in one go: it used to
   stop after one place, as the card moved under the finger or the pointer.
 - Adding a volume to a series no longer folds its card: it unfolds to show the new volume, and a
