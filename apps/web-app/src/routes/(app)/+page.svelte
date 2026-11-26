@@ -5,6 +5,8 @@
 
   import { appMessages } from "@wishalia/i18n/messages/app";
   import { useI18n } from "@wishalia/ui/i18n.ts";
+  import ConfirmDelete from "#lib/ConfirmDelete.svelte";
+  import IconButton from "#lib/IconButton.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
 
   import type { PageProps } from "./$types";
@@ -12,6 +14,7 @@
   let { data, form }: PageProps = $props();
   const i18n = useI18n();
   const m = $derived(appMessages(i18n.locale).home);
+  const removal = $derived(appMessages(i18n.locale).removal);
 
   const firstName = $derived(data.me.displayName.split(" ")[0] || data.me.displayName);
 </script>
@@ -24,6 +27,15 @@
 
 {#if page.url.searchParams.has("archivee")}
   <p class="notice" role="status">{m.archived}</p>
+{:else if page.url.searchParams.has("supprimee")}
+  <p class="notice" role="status">{m.deleted}</p>
+{/if}
+{#if form?.restore && "name" in form.restore}
+  <p class="notice" role="status">{m.restored(form.restore.name)}</p>
+{:else if form?.restore && "error" in form.restore}
+  <p class="notice error" role="alert">{m.restoreFailed}</p>
+{:else if form?.remove && "error" in form.remove}
+  <p class="notice error" role="alert">{removal.failed}</p>
 {/if}
 
 <QuickAdd listName={data.lists[0]?.name ?? null} result={form?.add ?? null} />
@@ -69,6 +81,37 @@
   </p>
 </section>
 
+{#if data.archived.length > 0}
+  <details class="archived">
+    <summary>{m.archivedLists(data.archived.length)}</summary>
+    <p class="muted">{m.archivedHelp}</p>
+    <ul class="rows">
+      {#each data.archived as list (list.id)}
+        <li class="card row-item">
+          <div class="text">
+            <span class="name">{list.name}</span>
+            <span class="muted">{m.count(list.itemCount)}</span>
+          </div>
+          <div class="buttons">
+            <form method="POST" action="?/restoreList" use:enhance>
+              <input type="hidden" name="listId" value={list.id} />
+              <IconButton icon="restore" label={m.restore.label(list.name)} tip={m.restore.tip} />
+            </form>
+            <ConfirmDelete
+              label={appMessages(i18n.locale).list.deleteLabel(list.name)}
+              tip={appMessages(i18n.locale).list.deleteTip}
+              title={removal.listTitle(list.name)}
+              help={[removal.listHelp, removal.guests]}
+              action="?/deleteList"
+              fields={{ listId: list.id }}
+            />
+          </div>
+        </li>
+      {/each}
+    </ul>
+  </details>
+{/if}
+
 <style>
   .lists {
     list-style: none;
@@ -107,6 +150,40 @@
   }
   .import {
     margin-top: 1.5rem;
+  }
+  .archived {
+    margin-top: 2rem;
+  }
+  .archived summary {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .rows {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+  .row-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+  .buttons {
+    display: flex;
+    gap: 0.5rem;
   }
   @media (max-width: 30rem) {
     .row {

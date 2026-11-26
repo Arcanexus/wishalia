@@ -53,7 +53,15 @@ export const app = {
   home: {
     title: "Mes listes",
     hello: (name: string) => `Bonjour ${name}`,
-    archived: "La liste est archivée : elle ne s'affiche plus, ni pour vous ni pour vos proches.",
+    archived:
+      "La liste est archivée : vos proches ne la voient plus. Vous la retrouvez dans « Listes archivées », pour la restaurer.",
+    deleted: "La liste est supprimée, avec ses envies.",
+    archivedLists: (n: number) => `Listes archivées (${n})`,
+    archivedHelp:
+      "Vos proches ne les voient plus. Restaurée, une liste revient telle qu'elle était, avec ses liens de partage.",
+    restore: { label: (name: string) => `Restaurer « ${name} »`, tip: "Restaurer" },
+    restored: (name: string) => `« ${name} » est de retour dans vos listes.`,
+    restoreFailed: "La liste n'a pas pu être restaurée. Réessayez dans un instant.",
     none: "Pas encore de liste : votre première envie en crée une, « Mes envies ». Vous pouvez aussi en créer une ci-dessous.",
     count: (n: number) => (n === 0 ? "Aucune envie" : n === 1 ? "1 envie" : `${n} envies`),
     newList: "Nouvelle liste",
@@ -141,6 +149,10 @@ export const app = {
     receivedLabel: (title: string) => `Je l'ai reçu : « ${title} »`,
     archive: "Archiver",
     archiveLabel: (title: string) => `Archiver « ${title} »`,
+    archiveTip: "Archiver (vous pourrez la restaurer)",
+    deleteLabel: (title: string) => `Supprimer « ${title} » définitivement`,
+    deleteTip: "Supprimer",
+    deleted: (title: string) => `« ${title} » est supprimé.`,
     closed: (n: number) => `Reçues et archivées (${n})`,
     receivedState: "Reçu",
     archivedState: "Archivé",
@@ -243,6 +255,23 @@ export const app = {
     archive: "Archiver la liste",
     archiveHelp: "La liste disparaît de vos listes, et ses liens de partage n'affichent plus rien.",
     archiveConfirm: (name: string) => `Je veux archiver « ${name} »`,
+    delete: "Supprimer la liste",
+    deleteHelp:
+      "La liste et toutes ses envies disparaissent, avec leurs images, et ses liens de partage ne s'ouvrent plus. C'est définitif. Si un proche avait prévu d'offrir quelque chose, son lien de partage le prévient.",
+    deleteConfirm: (name: string) => `Je veux supprimer « ${name} » et ses envies, définitivement`,
+  },
+  removal: {
+    itemTitle: (title: string) => `Supprimer « ${title} » ?`,
+    itemHelp:
+      "L'envie disparaît de la liste, des événements et des liens de partage, avec ses images. C'est définitif : elle ne pourra pas être restaurée.",
+    listTitle: (name: string) => `Supprimer la liste « ${name} » ?`,
+    listHelp:
+      "La liste et toutes ses envies disparaissent, avec leurs images, et ses liens de partage ne s'ouvrent plus. C'est définitif : elle ne pourra pas être restaurée.",
+    guests: "Si un proche avait prévu de l'offrir, son lien de partage le prévient.",
+    archiveInstead: "Pour seulement la cacher à vos proches, archivez-la : vous pourrez la restaurer.",
+    cancel: "Annuler",
+    confirm: "Supprimer définitivement",
+    failed: "La suppression n'a pas abouti. Réessayez dans un instant.",
   },
   preview: {
     title: (name: string) => `Aperçu de ${name}`,

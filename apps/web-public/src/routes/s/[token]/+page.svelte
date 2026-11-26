@@ -137,6 +137,42 @@
     </p>
   {/if}
 
+  {#if data.gone.length > 0}
+    <section class="card gone" aria-labelledby="gone-title">
+      <h2 id="gone-title">{m.gone.title}</h2>
+      <ul>
+        {#each data.gone as gift (gift.id)}
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9.5" /><path d="M12 7.5v5.5" /><path d="M12 16.5v.01" />
+            </svg>
+            <div class="said">
+              <p>{gift.state === "archived" ? m.gone.archived(gift.title) : m.gone.deleted(gift.title)}</p>
+              {#if gift.state === "archived" || gift.onDevice}
+                <form method="POST" action="?/withdraw" use:enhance>
+                  <input type="hidden" name="id" value={gift.id} />
+                  {#if gift.state === "archived"}
+                    <button type="submit" class="secondary" aria-label={m.gone.withdrawLabel(gift.title)}>
+                      {m.gone.withdraw}
+                    </button>
+                  {:else if gift.onDevice}
+                    <!-- This device forgets the gift: the notice goes -->
+                    <button type="submit" class="secondary" aria-label={m.gone.dismissLabel(gift.title)}>
+                      {m.gone.dismiss}
+                    </button>
+                  {/if}
+                </form>
+              {/if}
+              {#if form?.withdraw && "id" in form.withdraw && form.withdraw.id === gift.id}
+                <p class="notice error" role="alert">{withdrawError(form.withdraw.error, i18n.locale)}</p>
+              {/if}
+            </div>
+          </li>
+        {/each}
+      </ul>
+    </section>
+  {/if}
+
   {#if overall}
     <EventGauge gauge={overall} label={view.event ? v.gaugeEvent : v.gaugeList} />
   {/if}
@@ -247,6 +283,39 @@
     margin: 1.5rem 0;
     display: grid;
     gap: 1rem;
+  }
+  .gone {
+    margin: 0 0 1.5rem;
+    border-left: 4px solid var(--accent);
+  }
+  .gone h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.2rem;
+  }
+  .gone ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+  }
+  .gone li {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+  .gone svg {
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-top: 0.1rem;
+    fill: none;
+    stroke: var(--text);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+  }
+  .gone p {
+    margin: 0 0 0.5rem;
   }
   .mine {
     display: flex;

@@ -145,3 +145,10 @@ export {
   type LiveItem,
   type Stage,
 } from "./live.js";
+export {
+  DELETED_NOTICE_DAYS,
+  deletedItemFields,
+  goneGift,
+  type GoneSignals,
+  type GoneState,
+} from "./removal.js";

@@ -1,5 +1,5 @@
 import { schema } from "@wishalia/db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
@@ -19,7 +19,13 @@ export const liveRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db }) =>
     const [list] = await db
       .select({ id: schema.wishLists.id })
       .from(schema.wishLists)
-      .where(and(eq(schema.wishLists.id, listId), eq(schema.wishLists.ownerId, userId(request))));
+      .where(
+        and(
+          eq(schema.wishLists.id, listId),
+          eq(schema.wishLists.ownerId, userId(request)),
+          isNull(schema.wishLists.deletedAt),
+        ),
+      );
     if (!list) throw notFound();
     reply.header("cache-control", "private, no-store");
     return listLive(db, list.id);

@@ -257,7 +257,12 @@ describe("the app pages", () => {
       "GET /manage/lists": () => json([list()]),
       "POST /manage/lists": (body) => json(list(body as object), 201),
     });
-    expect((await run(home, fakeEvent().event)).value).toEqual({ lists: [list()] });
+    expect((await run(home, fakeEvent().event)).value).toEqual({ lists: [list()], archived: [list()] });
+    // The archived lists come apart, to restore or delete them
+    expect(api.calls.filter((call) => call.method === "GET").map((call) => call.path)).toEqual([
+      "/manage/lists",
+      "/manage/lists",
+    ]);
     const created = await run(homeActions.createList, fakeEvent({ form: { name: " Noël " } }).event);
     expect(created.thrown).toMatchObject({ status: 303, location: `/listes/${LIST}` });
     expect(api.calls.at(-1)?.body).toEqual({ name: "Noël" });
@@ -428,6 +433,78 @@ describe("a list's preview", () => {
     fakeApi({ "GET /manage/lists": () => json({ error: "boom" }, 500) });
     expect((await run(previewPage, fakeEvent({ params: { id: LIST } }).event)).thrown).toMatchObject({
       status: 500,
+    });
+  });
+});
+
+describe("archived and deleted lists and items", () => {
+  it("restore an archived list from the home page", async () => {
+    const api = fakeApi({ [`PATCH /manage/lists/${LIST}`]: () => json(list({ archivedAt: null })) });
+    expect((await run(homeActions.restoreList, fakeEvent({ form: { listId: LIST } }).event)).value).toEqual({
+      restore: { listId: LIST, name: "Noël" },
+    });
+    expect(api.calls[0]?.body).toEqual({ archived: false });
+    expect(
+      (await run(homeActions.restoreList, fakeEvent({ form: { listId: "x" } }).event)).value,
+    ).toMatchObject({
+      status: 400,
+    });
+    fakeApi({ [`PATCH /manage/lists/${LIST}`]: () => json({ error: "not_found" }, 404) });
+    expect(
+      (await run(homeActions.restoreList, fakeEvent({ form: { listId: LIST } }).event)).value,
+    ).toMatchObject({
+      status: 404,
+      data: { restore: { error: "not_found" } },
+    });
+  });
+
+  it("delete a list for good only once confirmed, from the home page or its own page", async () => {
+    const api = fakeApi({ [`DELETE /manage/lists/${LIST}`]: () => new Response(null, { status: 204 }) });
+    expect(
+      (await run(homeActions.deleteList, fakeEvent({ form: { listId: LIST } }).event)).value,
+    ).toMatchObject({
+      status: 400,
+      data: { remove: { error: "confirm" } },
+    });
+    expect(api.calls).toHaveLength(0);
+    const fromHome = await run(
+      homeActions.deleteList,
+      fakeEvent({ form: { listId: LIST, confirm: "oui" } }).event,
+    );
+    expect(fromHome.thrown).toMatchObject({ status: 303, location: "/?supprimee=1" });
+    const page = fakeEvent({ form: { confirm: "oui" } }).event;
+    const fromPage = await run(listActions.deleteList, { ...page, params: { id: LIST } } as never);
+    expect(fromPage.thrown).toMatchObject({ status: 303, location: "/?supprimee=1" });
+    expect(api.calls.map((call) => `${call.method} ${call.path}`)).toEqual([
+      `DELETE /manage/lists/${LIST}`,
+      `DELETE /manage/lists/${LIST}`,
+    ]);
+    expect(
+      (await run(homeActions.deleteList, fakeEvent({ form: { listId: "x", confirm: "oui" } }).event)).value,
+    ).toMatchObject({ status: 400 });
+    fakeApi({ [`DELETE /manage/lists/${LIST}`]: () => json({ error: "not_found" }, 404) });
+    expect(
+      (await run(homeActions.deleteList, fakeEvent({ form: { listId: LIST, confirm: "oui" } }).event)).value,
+    ).toMatchObject({ status: 404, data: { remove: { error: "not_found" } } });
+  });
+
+  it("delete an item for good only once confirmed", async () => {
+    const api = fakeApi({ [`DELETE /manage/items/${ITEM}`]: () => new Response(null, { status: 204 }) });
+    const ask = (form: Record<string, string>) =>
+      run(listActions.deleteItem, fakeEvent({ form }).event as never);
+    expect((await ask({ itemId: ITEM, title: "Vélo" })).value).toMatchObject({
+      status: 400,
+      data: { remove: { error: "confirm" } },
+    });
+    expect(api.calls).toHaveLength(0);
+    expect((await ask({ itemId: ITEM, title: "Vélo", confirm: "oui" })).value).toEqual({
+      remove: { itemId: ITEM, title: "Vélo" },
+    });
+    expect((await ask({ itemId: "x", confirm: "oui" })).value).toMatchObject({ status: 400 });
+    fakeApi({ [`DELETE /manage/items/${ITEM}`]: () => json({ error: "not_found" }, 404) });
+    expect((await ask({ itemId: ITEM, confirm: "oui" })).value).toMatchObject({
+      status: 404,
+      data: { remove: { error: "not_found" } },
     });
   });
 });

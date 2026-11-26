@@ -38,6 +38,7 @@ PAGES: list[tuple[str, list[tuple[str, str]]]] = [
         ("live-updates.md", "Live-updates"),
         ("images.md", "Images"),
         ("import.md", "Import"),
+        ("archive-delete.md", "Archive-and-delete"),
     ]),
     ("Reference", [
         ("configuration.md", "Configuration"),

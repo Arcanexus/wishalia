@@ -1,6 +1,6 @@
 import { schema } from "@wishalia/db";
 import { refreshSchedule } from "@wishalia/domain";
-import { and, eq, inArray, isNotNull, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
@@ -63,7 +63,13 @@ export const refreshRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, n
     const [list] = await db
       .select({ id: schema.wishLists.id })
       .from(schema.wishLists)
-      .where(and(eq(schema.wishLists.id, listId), eq(schema.wishLists.ownerId, ownerId)));
+      .where(
+        and(
+          eq(schema.wishLists.id, listId),
+          eq(schema.wishLists.ownerId, ownerId),
+          isNull(schema.wishLists.deletedAt),
+        ),
+      );
     if (!list) throw notFound();
     if (!lists.hit(ownerId, now()).allowed) throw new HttpError(429, "rate_limited");
 

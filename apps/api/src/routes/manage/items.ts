@@ -10,7 +10,7 @@ import {
 } from "@wishalia/domain";
 import type { Locale } from "@wishalia/i18n";
 import { apiMessages } from "@wishalia/i18n/messages/api";
-import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
@@ -18,6 +18,7 @@ import { type HistoryEntry, recordHistory, type Tx } from "../../history.js";
 import { first, HttpError, notFound, parse, userId } from "../../http.js";
 import type { ManageDeps } from "./index.js";
 import { imageOf } from "../../images.js";
+import { deleteItems } from "../../removal.js";
 import { itemSecret } from "../../secrets.js";
 import { itemImageRoutes } from "./item-images.js";
 import { ownerItem } from "./serialize.js";
@@ -49,13 +50,19 @@ export const itemPatch = z
 
 const itemParams = z.object({ itemId: z.uuid() });
 
-/** An item of the signed-in owner, or 404. */
+/** An item of the signed-in owner, or 404: a deleted one too. */
 export async function ownedItem(tx: Tx, ownerId: string, itemId: string) {
   const [row] = await tx
     .select({ wish: schema.wishes })
     .from(schema.wishes)
     .innerJoin(schema.wishLists, eq(schema.wishLists.id, schema.wishes.listId))
-    .where(and(eq(schema.wishes.id, itemId), eq(schema.wishLists.ownerId, ownerId)));
+    .where(
+      and(
+        eq(schema.wishes.id, itemId),
+        eq(schema.wishLists.ownerId, ownerId),
+        isNull(schema.wishes.deletedAt),
+      ),
+    );
   if (!row) throw notFound();
   return row.wish;
 }
@@ -71,7 +78,13 @@ async function targetList(
     const [list] = await tx
       .select({ id: schema.wishLists.id })
       .from(schema.wishLists)
-      .where(and(eq(schema.wishLists.id, listId), eq(schema.wishLists.ownerId, ownerId)));
+      .where(
+        and(
+          eq(schema.wishLists.id, listId),
+          eq(schema.wishLists.ownerId, ownerId),
+          isNull(schema.wishLists.deletedAt),
+        ),
+      );
     if (!list) throw notFound();
     return list.id;
   }
@@ -308,5 +321,22 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now,
         actorId: entry.actorId,
         payload: entry.payload,
       }));
+  });
+
+  /**
+   * Deletes an item for good (docs/archive-delete.md), open, received or archived: it leaves its
+   * list, its events and every link, its images go, and the gifts still pledged to it are
+   * cancelled (their guests are told on their link). Always allowed, whatever was given: saying no
+   * would give a gift away (anti-spoil). Deleting twice answers 404.
+   */
+  app.delete("/items/:itemId", async (request, reply) => {
+    const { itemId } = parse(itemParams, request.params);
+    const ownerId = userId(request);
+    const files = await db.transaction(async (tx) => {
+      await ownedItem(tx, ownerId, itemId);
+      return deleteItems(tx, [itemId], ownerId, now());
+    });
+    if (images) await Promise.allSettled(files.map((key) => images.storage.delete(key)));
+    return reply.code(204).send();
   });
 };

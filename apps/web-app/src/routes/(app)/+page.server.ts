@@ -2,17 +2,24 @@ import { fail, redirect } from "@sveltejs/kit";
 
 import { ApiError, apiJson } from "#lib/server/api.ts";
 import { quickAdd, setItemStatus } from "#lib/server/items.ts";
+import { deleteList, restoreList } from "#lib/server/lists.ts";
 import type { List } from "#lib/types.ts";
 
 import type { Actions, PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async (event) => ({
-  lists: await apiJson<List[]>(event, "/manage/lists"),
-});
+export const load: PageServerLoad = async (event) => {
+  const [lists, archived] = await Promise.all([
+    apiJson<List[]>(event, "/manage/lists"),
+    apiJson<List[]>(event, "/manage/lists?archived=true"),
+  ]);
+  return { lists, archived };
+};
 
 export const actions: Actions = {
   add: (event) => quickAdd(event),
   status: (event) => setItemStatus(event),
+  restoreList: (event) => restoreList(event),
+  deleteList: (event) => deleteList(event),
 
   createList: async (event) => {
     const form = await event.request.formData();

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { first, HttpError, notFound, parse, userId } from "../../http.js";
 import type { Tx } from "../../history.js";
 import { imagesOf } from "../../images.js";
+import { deleteItems } from "../../removal.js";
 import { hashToken, newToken } from "../../tokens.js";
 import type { ListDeps } from "./index.js";
 import { ownerItem, ownerList } from "./serialize.js";
@@ -26,6 +27,16 @@ export const listPatch = z
   .partial()
   .strict();
 const idParams = z.object({ listId: z.uuid() });
+/** `?archived=true` gives the archived lists, to restore or delete them. */
+const listsQuery = z.object({ archived: z.enum(["true", "false"]).optional() });
+
+/** A list of the owner that is not deleted: a deleted list answers 404 everywhere. */
+const ownedList = (listId: string, ownerId: string) =>
+  and(
+    eq(schema.wishLists.id, listId),
+    eq(schema.wishLists.ownerId, ownerId),
+    isNull(schema.wishLists.deletedAt),
+  );
 /** The list's open items, every one of them, in their new order. */
 export const orderInput = z.object({ itemIds: z.array(z.uuid()).min(1).max(1000) }).strict();
 
@@ -95,9 +106,13 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
     return urls;
   };
 
-  /** The owner's lists, in their order, with the number of open items. */
+  /**
+   * The owner's lists, in their order, with the number of open items; with `?archived=true`, the
+   * archived ones instead (never the deleted ones).
+   */
   app.get("/lists", async (request) => {
     const ownerId = userId(request);
+    const { archived } = parse(listsQuery, request.query);
     const rows = await db
       .select({ list: schema.wishLists, items: count(schema.wishes.id) })
       .from(schema.wishLists)
@@ -105,7 +120,14 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
         schema.wishes,
         and(eq(schema.wishes.listId, schema.wishLists.id), eq(schema.wishes.status, "open")),
       )
-      .where(and(eq(schema.wishLists.ownerId, ownerId), isNull(schema.wishLists.archivedAt)))
+      .where(
+        and(
+          eq(schema.wishLists.ownerId, ownerId),
+          archived === "true"
+            ? and(isNotNull(schema.wishLists.archivedAt), isNull(schema.wishLists.deletedAt))
+            : isNull(schema.wishLists.archivedAt),
+        ),
+      )
       .groupBy(schema.wishLists.id)
       .orderBy(asc(schema.wishLists.position), asc(schema.wishLists.createdAt));
     const urls = await openUrls(
@@ -133,7 +155,7 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
   app.patch("/lists/:listId", async (request) => {
     const { listId } = parse(idParams, request.params);
     const patch = parse(listPatch, request.body);
-    const mine = and(eq(schema.wishLists.id, listId), eq(schema.wishLists.ownerId, userId(request)));
+    const mine = ownedList(listId, userId(request));
     if (patch.revealMode !== undefined) {
       const [before] = await db.select().from(schema.wishLists).where(mine);
       if (!before) throw notFound();
@@ -147,7 +169,7 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
         .set({
           ...(patch.name !== undefined ? { name: patch.name } : {}),
           ...(patch.position !== undefined ? { position: patch.position } : {}),
-          ...(patch.archived !== undefined ? { archivedAt: patch.archived ? new Date() : null } : {}),
+          ...(patch.archived !== undefined ? { archivedAt: patch.archived ? now() : null } : {}),
           ...(patch.theme !== undefined ? { theme: patch.theme } : {}),
           ...(patch.revealMode !== undefined ? { revealMode: patch.revealMode } : {}),
           ...(patch.visibility !== undefined ? { visibility: patch.visibility } : {}),
@@ -174,7 +196,7 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
       const [list] = await tx
         .select({ id: schema.wishLists.id })
         .from(schema.wishLists)
-        .where(and(eq(schema.wishLists.id, listId), eq(schema.wishLists.ownerId, userId(request))));
+        .where(ownedList(listId, userId(request)));
       if (!list) throw notFound();
       const open = await tx
         .select({ id: schema.wishes.id })
@@ -198,7 +220,7 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
    */
   app.post("/lists/:listId/reveal", async (request) => {
     const { listId } = parse(idParams, request.params);
-    const mine = and(eq(schema.wishLists.id, listId), eq(schema.wishLists.ownerId, userId(request)));
+    const mine = ownedList(listId, userId(request));
     const [list] = await db.select().from(schema.wishLists).where(mine);
     if (!list) throw notFound();
     if (list.revealMode !== "manual") throw new HttpError(409, "reveal_on_received");
@@ -214,12 +236,12 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
     const [list] = await db
       .select({ id: schema.wishLists.id })
       .from(schema.wishLists)
-      .where(and(eq(schema.wishLists.id, listId), eq(schema.wishLists.ownerId, userId(request))));
+      .where(ownedList(listId, userId(request)));
     if (!list) throw notFound();
     const rows = await db
       .select()
       .from(schema.wishes)
-      .where(eq(schema.wishes.listId, listId))
+      .where(and(eq(schema.wishes.listId, listId), isNull(schema.wishes.deletedAt)))
       .orderBy(
         sql`CASE ${schema.wishes.status} WHEN 'open' THEN 0 WHEN 'received' THEN 1 ELSE 2 END`,
         asc(schema.wishes.position),
@@ -227,5 +249,45 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
       );
     const pictures = await imagesOf(db, images, rows);
     return rows.map((row) => ownerItem(row, pictures.get(row.id) ?? null));
+  });
+
+  /**
+   * Deletes a list for good (docs/archive-delete.md), archived or not: it and every one of its
+   * items leave every screen and API, its share links stop working, and the gifts still pledged
+   * to its items are cancelled (their guests are told). Always allowed, whatever was given: saying
+   * no would give a gift away (anti-spoil). Deleting twice answers 404.
+   */
+  app.delete("/lists/:listId", async (request, reply) => {
+    const { listId } = parse(idParams, request.params);
+    const ownerId = userId(request);
+    const at = now();
+    const files = await db.transaction(async (tx) => {
+      const [list] = await tx
+        .update(schema.wishLists)
+        .set({
+          deletedAt: at,
+          archivedAt: sql`coalesce(${schema.wishLists.archivedAt}, ${at.toISOString()}::timestamptz)`,
+        })
+        .where(ownedList(listId, ownerId))
+        .returning({ id: schema.wishLists.id });
+      if (!list) throw notFound();
+      await tx
+        .update(schema.shareLinks)
+        .set({ revokedAt: at })
+        .where(and(eq(schema.shareLinks.listId, listId), isNull(schema.shareLinks.revokedAt)));
+      const items = await tx
+        .select({ id: schema.wishes.id })
+        .from(schema.wishes)
+        .where(and(eq(schema.wishes.listId, listId), isNull(schema.wishes.deletedAt)));
+      return deleteItems(
+        tx,
+        items.map((item) => item.id),
+        ownerId,
+        at,
+        { listId },
+      );
+    });
+    if (images) await Promise.allSettled(files.map((key) => images.storage.delete(key)));
+    return reply.code(204).send();
   });
 };

@@ -2,7 +2,7 @@ import { error, fail } from "@sveltejs/kit";
 import { parseAmount } from "@wishalia/domain";
 
 import { genericMeta } from "#lib/meta.ts";
-import { isWellFormedToken, loadView, publicFetch } from "#lib/server/api.ts";
+import { isWellFormedToken, loadGone, loadView, publicFetch } from "#lib/server/api.ts";
 import {
   readGifts,
   readGuestName,
@@ -46,7 +46,13 @@ export const load: PageServerLoad = async (event) => {
   event.setHeaders({ "cache-control": "private, no-store" });
 
   // The withdraw keys stay on the server: the page only learns what was given
-  const kept = readGifts(event.cookies).map(({ key: _key, ...gift }) => gift);
+  const stored = readGifts(event.cookies);
+  const kept = stored.map(({ key: _key, ...gift }) => gift);
+  // The person's gifts whose item left the list: they must not buy it (docs/archive-delete.md)
+  const ownIds = new Set(stored.map((gift) => gift.id));
+  const gone = (
+    view.viewer === "owner" ? [] : await loadGone(event, event.params.token, stored, view.me !== null)
+  ).map((gift) => ({ ...gift, onDevice: ownIds.has(gift.id) }));
   // Nobody known on this device: what others give stays folded until they say they are not the
   // owner. It is left out of the page, not hidden in it, and the order gives nothing away either.
   const folded =
@@ -62,6 +68,7 @@ export const load: PageServerLoad = async (event) => {
     view: { ...view, items },
     folded,
     mine: folded ? [] : myGifts(view, kept),
+    gone,
     guestName: readGuestName(event.cookies),
   };
 };

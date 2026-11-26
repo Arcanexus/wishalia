@@ -1,6 +1,6 @@
 import { error, type RequestEvent } from "@sveltejs/kit";
 
-import type { PublicView } from "@wishalia/ui/public/types.ts";
+import type { GoneGift, PublicView } from "@wishalia/ui/public/types.ts";
 
 /**
  * Calls to the internal API, server side: the browser never reaches it (spec §8). The share token
@@ -59,6 +59,26 @@ export async function loadView(event: ApiEvent, token: string): Promise<PublicVi
   if (response.status === 404) return null;
   if (!response.ok) throw error(503, "unavailable");
   return (await response.json()) as PublicView;
+}
+
+/**
+ * The person's own gifts whose item left the list, archived or deleted, so that the page tells
+ * them not to buy it. Asked with the withdraw keys of this device (never shown to the page) and
+ * the account's session. Nothing to ask without either; a failure only leaves the notice out.
+ */
+export async function loadGone(
+  event: ApiEvent,
+  token: string,
+  kept: { id: string; key: string }[],
+  signedIn: boolean,
+): Promise<GoneGift[]> {
+  if (kept.length === 0 && !signedIn) return [];
+  const response = await publicFetch(event, token, "/public/gifts/gone", {
+    method: "POST",
+    body: { gifts: kept.map(({ id, key }) => ({ id, key })) },
+  });
+  if (!response.ok) return [];
+  return (await response.json()) as GoneGift[];
 }
 
 /** A public list, as the home page's search gives it: never anything about a gift. */
