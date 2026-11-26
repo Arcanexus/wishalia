@@ -30,6 +30,11 @@
       "svelte": "./src/StageIcon.svelte",
       "default": "./src/StageIcon.svelte"
     },
+    "./Footer.svelte": {
+      "svelte": "./src/Footer.svelte",
+      "default": "./src/Footer.svelte"
+    },
+    "./footer.ts": "./src/footer.ts",
     "./Icon.svelte": {
       "svelte": "./src/Icon.svelte",
       "default": "./src/Icon.svelte"

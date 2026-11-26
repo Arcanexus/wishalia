@@ -10,6 +10,7 @@ ConfigMap and loads the sensitive ones from `existingSecret`. Nothing is hard-co
 | `APP_NAME`                              | all                 | `config.appName`: the product name shown to people.                                                                                                                            |
 | `DEFAULT_LOCALE`                        | all                 | `config.defaultLocale`: `fr` (default) or `en`, the language for a browser that asks for none Wishalia speaks ([Languages](i18n.md)).                                          |
 | `LOG_LEVEL`                             | api                 | `config.logLevel`: `fatal`, `error`, `warn`, `info`, `debug`, `trace` or `silent`.                                                                                             |
+| `HELP_URL`                              | web-app, web-public | `config.helpUrl`, when set: where the help link at the foot of the pages leads ([User guide](user-guide.md)).                                                                  |
 | `PORT`                                  | all                 | The port of the component (3000 in the images).                                                                                                                                |
 | `ORIGIN`                                | web-app, web-public | `https://` + the host of the frontend. SvelteKit checks form posts against it (CSRF).                                                                                          |
 | `API_URL`                               | web-app, web-public | Internal URL of the API Service.                                                                                                                                               |
@@ -29,7 +30,7 @@ ConfigMap and loads the sensitive ones from `existingSecret`. Nothing is hard-co
 | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET` | api, worker         | With `s3`: `images.s3.*`, the bucket of the images.                                                                                                                            |
 | `IMGPROXY_URL`                          | web-app, web-public | When `images.enabled`: the internal URL of imgproxy, whose thumbnails the frontends serve under `/img/`.                                                                       |
 | `BODY_SIZE_LIMIT`                       | web-app             | `images.uploadLimit` (`12M`) when `images.enabled`, else `3M`: the largest form, for the images the owner sends and the imported lists.                                        |
-| `APP_VERSION`                           | all                 | Set in the image from the release tag, shown by `/healthz`.                                                                                                                    |
+| `APP_VERSION`                           | all                 | Set in the image from the release tag, shown by `/healthz` and at the foot of the pages.                                                                                       |
 
 ## In the Secret
 

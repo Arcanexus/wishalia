@@ -26,6 +26,7 @@ const run = (handler: unknown, event: unknown) =>
 describe("the root layout", () => {
   it("gives the app's name and the display choices the header menu shows", async () => {
     vi.stubEnv("APP_NAME", "Les envies");
+    vi.stubEnv("APP_VERSION", "1.2.3");
     const { event } = fakeEvent();
     event.locals.mode = "light";
     expect((await run(rootLayout, event)).value).toEqual({
@@ -33,7 +34,20 @@ describe("the root layout", () => {
       locale: "fr",
       mode: "light",
       themeChoice: "auto",
+      version: "1.2.3",
+      help: "https://github.com/Arcanexus/wishalia/wiki/Guide-utilisateur",
     });
+  });
+
+  it("gives the foot of the pages the built version and the server's own help page", async () => {
+    vi.stubEnv("APP_VERSION", "dev");
+    vi.stubEnv("HELP_URL", "https://aide.example.org/");
+    const { event } = fakeEvent();
+    expect((await run(rootLayout, event)).value).toMatchObject({
+      version: __WISHALIA_VERSION__,
+      help: "https://aide.example.org/",
+    });
+    expect(__WISHALIA_VERSION__).toMatch(/^\d+\.\d+\.\d+/);
   });
 });
 

@@ -56,8 +56,6 @@
       {/each}
     </ul>
   {/if}
-
-  <p class="muted secret">{v.secret(data.me.displayName)}</p>
 </div>
 
 <style>
@@ -98,9 +96,5 @@
   }
   .empty {
     margin: 1.5rem 0;
-  }
-  .secret {
-    text-align: center;
-    margin-top: 2rem;
   }
 </style>

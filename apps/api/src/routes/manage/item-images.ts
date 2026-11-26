@@ -3,11 +3,11 @@ import { randomUUID } from "node:crypto";
 import { schema } from "@wishalia/db";
 import { MAX_IMAGE_BYTES, MAX_IMAGE_PIXELS, normalizeCrop } from "@wishalia/domain";
 import { imageSources, sniffImage } from "@wishalia/storage";
-import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
-import { recordHistory } from "../../history.js";
+import { recordHistory, type Tx } from "../../history.js";
 import { first, HttpError, parse, userId } from "../../http.js";
 import { imageOf, type Images } from "../../images.js";
 import type { ManageDeps } from "./index.js";
@@ -28,6 +28,15 @@ export const imagePatch = z
   .strict()
   .refine((patch) => patch.imageId !== undefined || patch.crop !== undefined, { message: "empty" });
 
+/** The volumes of a series that are still there, in their order. */
+async function volumesOf(tx: Tx, seriesId: string) {
+  return tx
+    .select({ id: schema.wishes.id, title: schema.wishes.title })
+    .from(schema.wishes)
+    .where(and(eq(schema.wishes.parentId, seriesId), isNull(schema.wishes.deletedAt)))
+    .orderBy(asc(schema.wishes.position), asc(schema.wishes.createdAt));
+}
+
 function enabled(images: Images | null): Images {
   if (!images) throw new HttpError(503, "images_off");
   return images;
@@ -45,30 +54,45 @@ export const itemImageRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db,
     (_request, body, done) => done(null, body),
   );
 
-  /** The images to choose from, the owner's own first, then the page's in its order. */
+  /**
+   * The images to choose from, the owner's own first, then the page's in its order. A series
+   * (docs/series.md) also offers every image of its volumes, volume by volume, in their order:
+   * each of them comes with the volume it belongs to.
+   */
   app.get("/items/:itemId/images", async (request) => {
     const { itemId } = parse(itemParams, request.params);
     const item = await ownedItem(db, userId(request), itemId);
     const settings = images;
     if (!settings) return { imageId: null, crop: null, images: [] };
+    const volumes = item.kind === "series" ? await volumesOf(db, itemId) : [];
     const rows = await db
       .select()
       .from(schema.wishImages)
-      .where(eq(schema.wishImages.wishId, itemId))
+      .where(inArray(schema.wishImages.wishId, [itemId, ...volumes.map((volume) => volume.id)]))
       .orderBy(
         desc(schema.wishImages.source),
         asc(schema.wishImages.position),
         asc(schema.wishImages.createdAt),
       );
+    const place = new Map(volumes.map((volume, index) => [volume.id, index]));
+    const ordered = [
+      ...rows.filter((row) => row.wishId === itemId),
+      ...rows
+        .filter((row) => row.wishId !== itemId)
+        // A stable sort: within a volume, its own first and the page's in order, as above
+        .sort((a, b) => (place.get(a.wishId) ?? 0) - (place.get(b.wishId) ?? 0)),
+    ];
+    const titles = new Map(volumes.map((volume) => [volume.id, volume.title]));
     return {
       imageId: item.imageId,
       crop: item.imageCrop,
-      images: rows.map((row) => ({
+      images: ordered.map((row) => ({
         id: row.id,
         source: row.source,
         width: row.width,
         height: row.height,
         sources: imageSources(settings.imgproxy, row.key, null),
+        volume: row.wishId === itemId ? null : { id: row.wishId, title: titles.get(row.wishId) ?? "" },
       })),
     };
   });
@@ -236,10 +260,15 @@ export const itemImageRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db,
     const updated = await db.transaction(async (tx) => {
       const before = await ownedItem(tx, ownerId, itemId);
       if (patch.imageId) {
+        // One of its own images, or for a series one of its volumes' (docs/series.md)
+        const owners =
+          before.kind === "series"
+            ? [itemId, ...(await volumesOf(tx, itemId)).map((volume) => volume.id)]
+            : [itemId];
         const [image] = await tx
           .select({ id: schema.wishImages.id })
           .from(schema.wishImages)
-          .where(and(eq(schema.wishImages.id, patch.imageId), eq(schema.wishImages.wishId, itemId)));
+          .where(and(eq(schema.wishImages.id, patch.imageId), inArray(schema.wishImages.wishId, owners)));
         if (!image) {
           throw new HttpError(400, "invalid_request", {
             issues: [{ path: "imageId", message: "not an image of this item" }],

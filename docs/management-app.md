@@ -49,6 +49,20 @@ signed in ([Public view](public-view.md)).
 
 ![The display menu: mode, theme and language](images/app-display-menu.png)
 
+## The foot of the pages
+
+Every page of the app, the sign-in page included, ends with two things, on both frontends:
+
+- **« Aide : le guide d'utilisation »**, with a question mark, opens the [user guide](user-guide.md)
+  of the wiki in a new tab, in the page's language ([Guide d'utilisation](guide-utilisateur.md) in
+  French). A server can lead it to its own help page with `config.helpUrl` (`HELP_URL`, see
+  [Configuration](configuration.md)).
+- **« Version 0.0.9 »**: the version that runs, to give when reporting a problem. It is the release
+  of the image (`APP_VERSION`, set from the tag), or the version the app was built from for an
+  image of a branch or a development run.
+
+![The foot of a page: the help link and the version](images/app-footer.png)
+
 ## Saved as you go
 
 No setting has a « Enregistrer » button: the name, the theme or the mode of the account, a list's
@@ -114,8 +128,10 @@ change lands in the item's history. See [Archiving and deleting](archive-delete.
 ![The items of a list, each in the same grid](images/app-list-items.png)
 
 The open items can be put in any order, the one relatives see them in. Each card has a handle to
-drag with a mouse or a finger, and two arrows, « Monter » and « Descendre », that move the item one
-place in a single tap or from the keyboard (they also work without JavaScript). The new place shows
+drag with a mouse or a finger, as many places up or down as wanted in one go (the cards make room
+as it passes, and the page scrolls along near its edges), and two arrows, « Monter » and
+« Descendre », that move the item one place in a single tap or from the keyboard (they also work
+without JavaScript). The new place shows
 at once and a screen reader hears it (« « Lampe » est maintenant en position 2 sur 5. »); the
 keyboard stays on the moved item. When the list changed on another device meanwhile, nothing moves
 and the page says so, with the current order.

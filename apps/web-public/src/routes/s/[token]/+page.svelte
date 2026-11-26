@@ -220,10 +220,6 @@
   <div class="visually-hidden" role="status">
     {#if form?.given}{m.given}{:else if form?.withdrawn}{m.withdrawn}{:else if form?.unfolded}{m.unfolded}{/if}
   </div>
-
-  {#if view.viewer !== "owner"}
-    <p class="muted secret">{v.secret(owner)}</p>
-  {/if}
 </main>
 
 {#snippet giving(item: PublicItem)}
@@ -391,9 +387,5 @@
   }
   .empty {
     margin: 1.5rem 0;
-  }
-  .secret {
-    text-align: center;
-    margin-top: 2rem;
   }
 </style>
