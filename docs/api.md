@@ -61,8 +61,15 @@ JSON only: `{ "error": "<code>" }`, with `issues` (`path`, `message`) for a `400
 | `DELETE /manage/items/:id`              |                                                                                                                        | `204`: deleted for good, open, received or archived; see [Archiving and deleting](archive-delete.md). `404` once deleted.                                                                                                          |
 | `DELETE /manage/items/:id/image/upload` |                                                                                                                        | Removes the image the owner sent, file included. The item shows the page's first image (or none), and is queued for a fresh enrichment when it has a link. `404 no_upload`. History: `image_changed`.                              |
 
+An item carries `enrichment` (`pending`, `done`, `failed` or `null`) and, while pending,
+`enrichmentStep: "images"` once its title and price are written and its images are on their way.
+`GET /manage/lists/:id/live` answers `{ version, live }`: a fingerprint of the list's items as shown,
+never moved by a contribution, and how many are still being completed, never cached
+([Live updates](live-updates.md)).
+
 An item carries `image`: signed paths of its picture in three sizes (`small`, `medium`, `large`),
-served by the frontends under `/img/`, or `null`; and `imageCrop`. The files' place (on the volume or
+served by the frontends under `/img/`, and `gallery`, the signed `large` paths of its other images
+(whole, in the page's order, seven at most), or `null`; and `imageCrop`. The files' place (on the volume or
 in the bucket) is never given. See [Images](images.md).
 
 The quick add takes what the person typed or shared: a URL, free text, or text with a URL in it.

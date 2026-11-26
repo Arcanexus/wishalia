@@ -1,5 +1,5 @@
 {
-  "id": "897ea8e8-931f-4e10-955c-2787adec8045",
+  "id": "1fc76b9b-36f5-4208-bdba-ca688516273a",
   "prevId": "6508be00-7abf-474d-b0b3-3716e9f5a942",
   "version": "7",
   "dialect": "postgresql",
@@ -1463,12 +1463,6 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -1667,6 +1661,13 @@
           "notNull": true,
           "default": 0
         },
+        "enrichment_step": {
+          "name": "enrichment_step",
+          "type": "enrichment_step",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
         "enrichment_at": {
           "name": "enrichment_at",
           "type": "timestamp with time zone",
@@ -1686,12 +1687,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -1822,6 +1817,11 @@
       "name": "enrichment_state",
       "schema": "public",
       "values": ["pending", "running", "done", "failed"]
+    },
+    "public.enrichment_step": {
+      "name": "enrichment_step",
+      "schema": "public",
+      "values": ["images"]
     },
     "public.event_kind": {
       "name": "event_kind",

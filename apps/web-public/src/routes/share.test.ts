@@ -59,6 +59,7 @@ function event(token = TOKEN, cookie?: string, jar: Record<string, string> = {})
       cookies: { get: (name: string) => jar[name] },
       locals,
       setHeaders,
+      depends: vi.fn(),
     } as unknown as Parameters<typeof load>[0],
     locals,
     setHeaders,

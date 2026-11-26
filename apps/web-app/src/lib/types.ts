@@ -53,6 +53,8 @@ export interface Item {
   position: number;
   /** The completion from the link (title, price): "pending" while the worker has it to do. */
   enrichment?: "pending" | "done" | "failed" | null;
+  /** While pending: "images" once the title and price are written and the images are on their way. */
+  enrichmentStep?: "images" | null;
   createdAt: string;
 }
 
@@ -61,6 +63,8 @@ export interface ImageSources {
   small: string;
   medium: string;
   large: string;
+  /** The item's other images, whole: only on an item's image shown (opened big). */
+  gallery?: string[];
 }
 
 /** A frame, as fractions (0 to 1) of the image's width and height. */

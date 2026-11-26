@@ -29,7 +29,8 @@ alone on a phone, with the same name for a screen reader), ends the session on t
 
 The home page greets the person, then offers the **quick add**: one field for a link or a few words.
 The item shows at once and the field empties for the next one; the worker completes the title and the
-price from the link later ([Completing items from their link](enrichment.md)). From the home page the item goes into the first list (« Mes
+price from the link later ([Completing items from their link](enrichment.md)), and the page shows
+each step by itself, with no reload ([Live updates](live-updates.md)). From the home page the item goes into the first list (« Mes
 envies », created by the very first add), from a list page into that list.
 
 When the link is already in one of the person's open items, the app says so and offers to undo the
@@ -127,7 +128,9 @@ the page, and the page says so. The API writes the history: `updated`, `price_ch
 
 Each item has an **Image** button. Its page shows the image the family sees, lets the owner frame it
 in a square (drag, tap, arrow keys or a slider), choose another of the images found on the page of
-the link, or send their own photo, up to 10 MB. See [Images](images.md) for the details.
+the link, or send their own photo, up to 10 MB. A click on an item's thumbnail opens its images
+big, in the page, to go from one to the next and close with the cross, Échap or a click outside. See
+[Images](images.md) for the details.
 
 ![The image page of an item, on a phone](images/app-item-image.png)
 

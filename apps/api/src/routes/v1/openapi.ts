@@ -86,8 +86,8 @@ const schemas: Record<string, Schema> = {
       url: nullable("string"),
       notes: nullable("string"),
       image: {
-        oneOf: [ref("ImageSources"), { type: "null" }],
-        description: "The image shown, framed, in three sizes; null without one.",
+        oneOf: [ref("ItemImage"), { type: "null" }],
+        description: "The image shown, framed, in three sizes, and the others; null without one.",
       },
       imageCrop: { oneOf: [ref("Crop"), { type: "null" }] },
       priceCents: nullable("integer"),
@@ -101,6 +101,10 @@ const schemas: Record<string, Schema> = {
       enrichment: {
         enum: ["pending", "done", "failed", null],
         description: "The completion from the link: pending while the worker has it to do.",
+      },
+      enrichmentStep: {
+        enum: ["images", null],
+        description: "While pending: images once the title and price are written and the images load.",
       },
       createdAt: { type: "string", format: "date-time" },
       updatedAt: { type: "string", format: "date-time" },
@@ -116,6 +120,22 @@ const schemas: Record<string, Schema> = {
       medium: { type: "string" },
       large: { type: "string" },
     },
+  },
+  ItemImage: {
+    allOf: [
+      ref("ImageSources"),
+      {
+        type: "object",
+        properties: {
+          gallery: {
+            type: "array",
+            maxItems: 7,
+            items: { type: "string" },
+            description: "The item's other images, whole (large size), in the order of its page.",
+          },
+        },
+      },
+    ],
   },
   Crop: {
     type: "object",

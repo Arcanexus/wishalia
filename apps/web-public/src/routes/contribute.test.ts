@@ -85,6 +85,7 @@ function event(form?: Record<string, string>, cookies: Record<string, string> = 
         locale: "fr",
       },
       setHeaders: () => {},
+      depends: () => {},
     },
   };
 }

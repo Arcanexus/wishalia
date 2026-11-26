@@ -62,6 +62,8 @@ export interface ImageSources {
   small: string;
   medium: string;
   large: string;
+  /** The item's other images, whole, for the viewer that opens them big. */
+  gallery?: string[];
 }
 
 export interface PublicItem {
@@ -73,6 +75,8 @@ export interface PublicItem {
   notes: string | null;
   /** The image the owner shows, framed; null without one. */
   image?: ImageSources | null;
+  /** Being completed from its link (docs/live-updates.md): the page follows it live. */
+  stage?: "reading" | "images" | null;
   priceCents: number | null;
   targetCents: number | null;
   quantity: number | null;

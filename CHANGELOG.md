@@ -17,6 +17,26 @@ All notable changes to this project are documented here. The format follows
 - An icon next to each item's price says where it stands at a glance: a gift (nobody takes care of
   it yet), a half disc (partly given), a check (already given), a heart (received), with its words
   on hover and for a screen reader.
+- An item's image opens big, in the page, on the owner's lists, in the preview and on the family's
+  page: the image shown, whole, then the item's other images (those found on the page of its link,
+  Amazon's gallery included), with arrow buttons and dots, the arrow keys, Home and End, or a swipe.
+  The cross, Escape or a click outside the frame closes it, and the focus goes back to the image. A
+  real modal dialog, named for a screen reader; nothing big is loaded before it opens. Every item's
+  `image` (management API, REST API v1 and the public view) now carries `gallery`, the signed paths
+  of its other images, whole (seven at most).
+- The pages follow the reading of links live, with no reload: the list page, the image page of an
+  item and the guests' page. Each step has its own icon, its words next to it and the longer help
+  on hover: a chain link in a turning ring for « Lecture du lien… », a picture for « Recherche des
+  images… » (the title and price are already shown), a warning sign for « Lien illisible ». A
+  screen reader hears each change once, politely (« « Lampe » : titre et prix trouvés. »), and the
+  guests' page says « Mise à jour depuis le lien… » then that the item is up to date. The page asks
+  its own server a few-byte question (`{ version, live }`) every 2 seconds, then 10, only while an
+  item is on its way and the tab is shown, and reloads only when something moved, never under a
+  wish being edited or a gift being written. API: `GET /manage/lists/:id/live`, `GET /public/live`,
+  `enrichmentStep` on the items, `stage` on the guests' items. The fingerprint never moves with a
+  contribution (anti-spoil). See [Live updates](docs/live-updates.md).
+- The worker writes the title and the price as soon as the page is read, then fetches the images:
+  migration 0012 adds `enrichment_step` to the items.
 
 - Every list and every wish can be archived and restored, or deleted for good. A wish has a box
   (« Archiver ») and a bin (« Supprimer », after a dialog that says it cannot be undone); archived
@@ -27,7 +47,7 @@ All notable changes to this project are documented here. The format follows
   envies ont quitté la liste », so that they do not buy it; an archived wish's gift can be taken
   back. The owner is never told whether anything was given (anti-spoil). API: `DELETE
   /manage/lists/:id`, `DELETE /manage/items/:id`, `GET /manage/lists?archived=true`, `POST
-  /public/gifts/gone`, and the same routes in the REST API v1. Migration 0012 adds `deleted_at`.
+  /public/gifts/gone`, and the same routes in the REST API v1. Migration 0013 adds `deleted_at`.
 
 ### Changed
 
@@ -41,6 +61,11 @@ All notable changes to this project are documented here. The format follows
 ### Fixed
 
 - An event's link no longer shows the wishes of an archived list.
+
+### Fixed
+
+- The list page stopped looking again after its first check while items were being completed:
+  their title, price and image only showed after a manual reload.
 
 ## [0.0.5] - 2026-11-25
 

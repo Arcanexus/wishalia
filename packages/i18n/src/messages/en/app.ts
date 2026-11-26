@@ -125,6 +125,14 @@ export const app: AppMessages = {
     reading: "Reading the link…",
     readingWhat: (images) =>
       `The title, the price${images ? " and the images" : ""} are on their way from the page.`,
+    findingImages: "Finding the images…",
+    findingImagesWhat: "The title and the price are up to date: the page's images are on their way.",
+    live: {
+      details: (title) => `“${title}”: title and price found.`,
+      image: (title) => `“${title}”: image added.`,
+      done: (title) => `“${title}” is up to date.`,
+      failed: (title) => `“${title}”: the link couldn't be read.`,
+    },
     unreadable: "Unreadable link",
     unreadableHelp:
       "The page couldn't be read: try again with the “Reload” button (the arrows), or complete the wish with “Edit”.",

@@ -1,12 +1,17 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import { enhance } from "$app/forms";
+  import { invalidate } from "$app/navigation";
   import { page } from "$app/state";
+
+  import { liveChanges, type LiveItem } from "@wishalia/domain";
 
   import { publicMessages } from "@wishalia/i18n/messages/public";
   import { viewMessages } from "@wishalia/i18n/messages/view";
   import LanguageButtons from "@wishalia/ui/LanguageButtons.svelte";
   import Logo from "@wishalia/ui/Logo.svelte";
   import { useI18n } from "@wishalia/ui/i18n.ts";
+  import { followLive, holding } from "@wishalia/ui/live.ts";
   import ModeButton from "@wishalia/ui/ModeButton.svelte";
   import EventGauge from "@wishalia/ui/public/EventGauge.svelte";
   import ItemCard from "@wishalia/ui/public/ItemCard.svelte";
@@ -38,6 +43,38 @@
     new Intl.DateTimeFormat(i18n.fmt.tag, { day: "numeric", month: "long", timeZone: "UTC" }),
   );
   const short = (date: string) => shortDay.format(new Date(`${date}T00:00:00Z`));
+
+  // While the owner's items are completed from their links, the page follows them live
+  // (docs/live-updates.md): a few-byte question now and then, a reload only when something moved,
+  // never while a gift is being written
+  const completing = $derived(view.items.some((item) => item.stage));
+  $effect(() => {
+    if (!completing) return;
+    const follower = untrack(() =>
+      followLive({
+        url: `/s/${encodeURIComponent(page.params.token ?? "")}/suivi`,
+        reload: () => invalidate("wishalia:view"),
+        canReload: () => !holding(),
+      }),
+    );
+    return () => follower.stop();
+  });
+  // What a screen reader hears once an item is up to date: one polite line
+  let heard = $state("");
+  let before: LiveItem[] = [];
+  $effect(() => {
+    const now = view.items.map((item) => ({
+      id: item.id,
+      title: item.title,
+      priceCents: item.priceCents,
+      stage: item.stage ?? null,
+      image: item.image?.small ?? null,
+    }));
+    const done = liveChanges(before, now).filter((change) => change.kind === "done");
+    before = now;
+    if (done.length > 0)
+      heard = done.map((change) => viewMessages(i18n.locale).updated(change.title)).join(" ");
+  });
 </script>
 
 <svelte:head>
@@ -185,6 +222,7 @@
     </ul>
   {/if}
 
+  <div class="visually-hidden" role="status">{heard}</div>
   <div class="visually-hidden" role="status">
     {#if form?.given}{m.given}{:else if form?.withdrawn}{m.withdrawn}{:else if form?.unfolded}{m.unfolded}{/if}
   </div>

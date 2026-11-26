@@ -1,19 +1,24 @@
 <script lang="ts">
-  import { onDestroy, tick } from "svelte";
+  import { tick, untrack } from "svelte";
   import { enhance } from "$app/forms";
-  import { invalidateAll } from "$app/navigation";
+  import { invalidate } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { appMessages } from "@wishalia/i18n/messages/app";
+  import { isLive, liveChanges, type LiveItem } from "@wishalia/domain";
+  import Gallery from "@wishalia/ui/Gallery.svelte";
   import { useI18n } from "@wishalia/ui/i18n.ts";
+  import { followLive, holding } from "@wishalia/ui/live.ts";
 
   import ConfirmDelete from "#lib/ConfirmDelete.svelte";
   import Gifts from "#lib/Gifts.svelte";
   import ItemEditor from "#lib/ItemEditor.svelte";
   import ListSettings from "#lib/ListSettings.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
+  import StageIcon from "@wishalia/ui/StageIcon.svelte";
   import IconButton from "#lib/IconButton.svelte";
   import { dropIndex, moveId } from "#lib/reorder.ts";
+  import { itemStage } from "#lib/stage.ts";
   import type { Item } from "#lib/types.ts";
 
   import type { PageProps } from "./$types";
@@ -27,27 +32,35 @@
   const images = $derived(data.me.features?.images ?? false);
   const byId = $derived(new Map(open.map((item) => [item.id, item])));
 
-  // While the worker completes items from their links, the page looks again: every 3 seconds for
-  // the first minute, then every 15 seconds up to 10 minutes (a link tried again waits in the
-  // queue). It never polls without a reason.
-  const completing = $derived(open.some((item) => item.enrichment === "pending"));
-  let polls = 0;
-  // Asking to read links again starts the looking over
+  // While the worker completes items from their links, the page follows it live
+  // (docs/live-updates.md): a few-byte question every 2 seconds, then every 10, and the list loads
+  // again only when something changed. Never with the tab hidden, never without a reason.
+  const completing = $derived(open.some((item) => isLive(stage(item))));
+  // Asking to read links again starts the following over
   let refreshes = $state(0);
-  let timer: ReturnType<typeof setTimeout> | undefined;
   $effect(() => {
     void refreshes;
-    if (!completing || polls >= 56 || order || dragging) return;
-    timer = setTimeout(
-      () => {
-        polls += 1;
-        void invalidateAll();
-      },
-      polls < 20 ? 3000 : 15000,
+    if (!completing) return;
+    const follower = untrack(() =>
+      followLive({
+        url: resolve("/(app)/listes/[id]/suivi", { id: data.list.id }),
+        reload: () => invalidate("wishalia:list"),
+        // Never under a dragged item or a wish being edited
+        canReload: () => !order && !dragging && !holding(),
+      }),
     );
-    return () => clearTimeout(timer);
+    return () => follower.stop();
   });
-  onDestroy(() => clearTimeout(timer));
+
+  // What a screen reader hears as the items fill in: one polite line per item and step
+  let heard = $state("");
+  let before: LiveItem[] = [];
+  $effect(() => {
+    const now = open.map(liveItem);
+    const changes = liveChanges(before, now);
+    before = now;
+    if (changes.length > 0) heard = changes.map((change) => m.live[change.kind](change.title)).join(" ");
+  });
 
   // The order on screen while an item moves, before the server confirms it (optimistic)
   let order = $state<string[] | null>(null);
@@ -127,7 +140,6 @@
     () =>
     async ({ update }: { update: (options?: { reset?: boolean }) => Promise<void> }) => {
       await update({ reset: false });
-      polls = 0;
       refreshes += 1;
     };
   const linked = $derived(open.some((item) => webLink(item) !== null));
@@ -155,6 +167,14 @@
     form?.edit && "error" in form.edit && form.edit.itemId === item.id
       ? { error: form.edit.error, values: form.edit.values }
       : null;
+  const stage = itemStage;
+  const liveItem = (item: Item): LiveItem => ({
+    id: item.id,
+    title: item.title,
+    priceCents: item.priceCents,
+    stage: stage(item),
+    image: item.image?.small ?? null,
+  });
   const host = (url: string) => URL.parse(url)?.hostname.replace(/^www\./, "") ?? url;
 </script>
 
@@ -205,6 +225,9 @@
 <ListSettings list={data.list} {form} />
 
 <QuickAdd listName={data.list.name} result={form?.add ?? null} />
+
+<!-- The items filling in, as the worker goes: said once, politely, never stealing the focus -->
+<div role="status" class="visually-hidden">{heard}</div>
 
 <div role="status" class="visually-hidden">
   {#if moved}
@@ -300,16 +323,18 @@
             <!-- Its image may come with the link: a place kept for it, that breathes while it waits -->
             <span class="thumb waiting" aria-hidden="true"></span>
           {:else if item.image}
-            <!-- The name next to it says what it is: decorative for a screen reader -->
-            <img
-              class="thumb"
-              src={item.image.small}
-              alt=""
-              width="192"
-              height="192"
-              loading="lazy"
-              decoding="async"
-            />
+            <!-- The link that opens it big carries the words: the thumbnail itself is decorative -->
+            <Gallery title={item.title} image={item.image}>
+              <img
+                class="thumb"
+                src={item.image.small}
+                alt=""
+                width="192"
+                height="192"
+                loading="lazy"
+                decoding="async"
+              />
+            </Gallery>
           {/if}
           <div class="body">
             <div class="text">
@@ -324,29 +349,21 @@
                 {/if}
               </p>
               {#if item.notes}<p class="notes">{item.notes}</p>{/if}
-              {#if item.enrichment === "pending"}
-                <p class="completing">
-                  <span class="reading">
-                    <!-- A circle that turns while the worker reads the page (still with reduced motion) -->
-                    <svg class="spinner" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-                      <circle class="track" cx="12" cy="12" r="9" fill="none" stroke-width="3" />
-                      <path
-                        class="arc"
-                        d="M12 3a9 9 0 0 1 9 9"
-                        fill="none"
-                        stroke-width="3"
-                        stroke-linecap="round"
-                      />
-                    </svg>
-                    {m.reading}
-                  </span>
-                  <span class="muted">{m.readingWhat(images)}</span>
+              {#if isLive(stage(item))}
+                {@const findingImages = stage(item) === "images"}
+                {@const help = findingImages ? m.findingImagesWhat : m.readingWhat(images)}
+                <!-- An icon that says the step, its words next to it, the longer help on hover -->
+                <p class="completing" title={help}>
+                  <StageIcon stage={findingImages ? "images" : "reading"} />
+                  <span class="reading">{findingImages ? m.findingImages : m.reading}</span>
+                  <span class="visually-hidden">{help}</span>
                 </p>
               {:else if item.enrichment === "failed"}
                 <p class="completing">
-                  <span class="badge failed">{m.unreadable}</span>
-                  <span class="muted">{m.unreadableHelp}</span>
+                  <StageIcon stage="failed" />
+                  <span class="reading failed">{m.unreadable}</span>
                 </p>
+                <p class="muted help">{m.unreadableHelp}</p>
               {/if}
               {#if data.gifts[item.id]?.length}<Gifts gifts={data.gifts[item.id] ?? []} none="" />{/if}
             </div>
@@ -578,48 +595,24 @@
   }
   .completing {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 0.25rem 0.5rem;
+    gap: 0.5rem;
     margin: 0.5rem 0 0;
     font-size: 0.95rem;
   }
-  /* « Lecture du lien »: seen at a glance, by a turning icon and its words, not by colour alone */
+  /* « Lecture du lien »: seen at a glance, by an icon that says the step and its words, never by
+     colour alone; icon and words on one line, centred on each other */
   .reading {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
+    min-width: 0;
     font-weight: 600;
-    white-space: nowrap;
-  }
-  .spinner {
-    flex: none;
-    animation: turn 0.9s linear infinite;
-  }
-  .track {
-    stroke: var(--border);
-  }
-  .arc {
-    stroke: var(--progress);
-  }
-  @keyframes turn {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    border: 1px solid currentColor;
-    border-radius: 999px;
-    padding: 0.1rem 0.6rem;
-    font-weight: 600;
-    white-space: nowrap;
+    line-height: 1.2;
   }
   .failed {
     color: var(--text-2);
-    border-style: dashed;
+  }
+  .help {
+    margin: 0.25rem 0 0;
+    font-size: 0.95rem;
   }
   .waiting {
     display: block;
@@ -633,7 +626,6 @@
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .spinner,
     .waiting {
       animation: none;
     }
