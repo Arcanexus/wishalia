@@ -109,11 +109,9 @@ it, the page stays in place and the focus goes back to the title.
 
 ## Giving
 
-Under every item still open, one button says what it does, at the same place on every card (the
-left of the text column): « Acheter / Participer » (« Buy / Chip in ») for any gift given once, with
-or without a price, « J'en réserve » when several copies are left, « Je le réserve » for a gift for
-every occasion, « Je participe » for a pool or a gift others already started to share. It opens a
-short form, in the page, that asks only what the gift needs:
+Under every item still open, the same button, at the same place on every card (the left of the
+text column): « Acheter / Participer » (« Buy / Chip in »), whatever the item is. It opens a short
+form, in the page, that asks only what the gift needs, and sends it with « Valider »:
 
 - for a gift given once, with or without a price, the same two choices: « Je l'achète en entier
   (35 €) » (without a price: « Je l'achète en entier ») or « Je participe avec un montant », then

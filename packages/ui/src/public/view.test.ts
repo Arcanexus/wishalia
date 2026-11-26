@@ -10,7 +10,7 @@ const formatDay = (date: string) => view.formatDay(date, "fr");
 const formatEuros = (cents: number) => view.formatEuros(cents, "fr");
 const gaugeLine = (value: view.Gauge) => view.gaugeLine(value, "fr");
 const giveError = (code: string) => view.giveError(code, "fr");
-const giveLabel = (entry: PublicItem) => view.giveLabel(entry, "fr");
+const giveLabel = (_entry: PublicItem) => view.giveLabel("fr");
 const givers = (value: Funding) => view.givers(value, "fr");
 const heading = (value: Parameters<typeof view.heading>[0]) => view.heading(value, "fr");
 const initials = (name: string | null) => view.initials(name, "fr");
@@ -184,11 +184,12 @@ describe("giving helpers", () => {
   });
 
   it("names the button after the item", () => {
-    expect(giveLabel(item({ kind: "pool" }))).toBe("Je participe");
+    // The same button on every item, with or without a price, whatever its kind
+    expect(giveLabel(item({ kind: "pool" }))).toBe("Acheter / Participer");
     expect(giveLabel(item())).toBe("Acheter / Participer");
     expect(giveLabel(item({ priceCents: 2000 }))).toBe("Acheter / Participer");
-    expect(giveLabel(item({ repeatable: true }))).toBe("Je le réserve");
-    expect(giveLabel(item({ kind: "quantity", quantity: 3 }))).toBe("J'en réserve");
+    expect(giveLabel(item({ repeatable: true }))).toBe("Acheter / Participer");
+    expect(giveLabel(item({ kind: "quantity", quantity: 3 }))).toBe("Acheter / Participer");
   });
 
   it("says what went wrong in plain words", () => {
@@ -236,7 +237,7 @@ describe("a gift shared by amounts", () => {
       contributors: paul,
     });
     expect(plain(standing(started))).toBe("50 € réunis sur 200 € : il manque 150 €, avec Paul.");
-    expect(giveLabel(started)).toBe("Je participe");
+    expect(giveLabel(started)).toBe("Acheter / Participer");
     expect(canGive(started, { viewer: "guest", event: null })).toBe(true);
   });
 
@@ -245,7 +246,7 @@ describe("a gift shared by amounts", () => {
       funding: funding({ state: "in_progress", totalCents: 4500, remainingCents: null, contributors: paul }),
     });
     expect(plain(standing(started))).toBe("45 € réunis, avec Paul.");
-    expect(giveLabel(started)).toBe("Je participe");
+    expect(giveLabel(started)).toBe("Acheter / Participer");
     expect(canGive(started, { viewer: "guest", event: null })).toBe(true);
     expect(poolBar(started, [])?.target).toBeNull();
   });
@@ -272,7 +273,7 @@ describe("a gift shared by amounts", () => {
   });
 
   it("says so in English", () => {
-    expect(view.giveLabel(priced(), "en")).toBe("Buy / Chip in");
+    expect(view.giveLabel("en")).toBe("Buy / Chip in");
     expect(view.giveError("amount_too_high", "en")).toContain("more than what is missing");
   });
 });
@@ -391,7 +392,7 @@ describe("in English", () => {
   });
 
   it("names the buttons, the errors and the gauge", () => {
-    expect(view.giveLabel(item({ kind: "pool" }), en)).toBe("I'll chip in");
+    expect(view.giveLabel(en)).toBe("Buy / Chip in");
     expect(view.giveError("weird", en)).toContain("Try again");
     expect(view.withdrawError("list_closed", en)).toContain("lifted");
     expect(view.heading({ list: null, event: null }, en)).toBe("Wishlist");

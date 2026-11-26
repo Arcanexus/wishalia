@@ -8,9 +8,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
-- In the guests' view, a gift given once looks and works the same with or without a price: one
-  « Acheter / Participer » button (« Buy / Chip in »), and the same short form, « Je l'achète en
-  entier » or « Je participe avec un montant ». Without a price, the shares take any amount (« 45 €
+- In the guests' view, every item has the same « Acheter / Participer » button (« Buy / Chip in »),
+  whatever its kind, and every form is sent with « Valider ». A gift given once works the same with
+  or without a price: the same short form, « Je l'achète en entier » or « Je participe avec un
+  montant ». Without a price, the shares take any amount (« 45 €
   réunis, avec Paul. ») and the gift stays partly given until the owner marks it received.
   `POST /public/contributions` takes an `amountCents` on any unique gift given once.
 - Every card of the guests' view and of the preview keeps its square: an empty frame when the item

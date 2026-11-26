@@ -136,13 +136,8 @@ export function canGive(item: PublicItem, view: { viewer: string; event: PublicE
   return item.kind === "pool" || unitsLeft(item) > 0;
 }
 
-/** The button that opens the form, and sends it. */
-export function giveLabel(item: PublicItem, locale: Locale): string {
-  const labels = viewMessages(locale).giveLabel;
-  if (item.kind === "pool" || sharing(item)) return labels.pool;
-  if (takesShares(item)) return labels.share;
-  return item.kind === "quantity" && unitsLeft(item) > 1 ? labels.several : labels.one;
-}
+/** The button that opens the form: the same on every item, whatever it is (its form asks the rest). */
+export const giveLabel = (locale: Locale): string => viewMessages(locale).giveLabel;
 
 /** What went wrong, in plain words. */
 export const giveError = (code: string, locale: Locale) => {

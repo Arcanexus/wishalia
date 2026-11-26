@@ -57,12 +57,11 @@
   const partChosen = $derived(failed?.way === "part");
   const price = $derived(priceOf(item));
   const missing = $derived(price === null ? null : (item.funding?.remainingCents ?? price));
-  const submitLabel = $derived(shares && !started ? m.confirm : giveLabel(item, i18n.locale));
 </script>
 
 <details class="give" open={failed !== null} data-live-hold>
   <summary class="button secondary">
-    <span class="closed">{giveLabel(item, i18n.locale)}</span><span class="opened">{m.close}</span>
+    <span class="closed">{giveLabel(i18n.locale)}</span><span class="opened">{m.close}</span>
   </summary>
   <form
     method="POST"
@@ -207,7 +206,7 @@
       </span>
     </label>
 
-    <button type="submit" disabled={sending}>{sending ? m.sending : submitLabel}</button>
+    <button type="submit" disabled={sending}>{sending ? m.sending : m.confirm}</button>
   </form>
 </details>
 
