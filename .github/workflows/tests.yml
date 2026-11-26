@@ -241,13 +241,13 @@ jobs:
         run: |
           sts='select(.kind == "StatefulSet" and .metadata.name == "t-wishalia-postgresql") | .spec.template.spec'
           pg=$(helm template t charts/wishalia --set existingSecret=s)
-          echo "$pg" | yq -e "$sts | [.initContainers[].name] == [\"upgrade-dump\", \"upgrade-restore\"]" > /dev/null
+          echo "$pg" | yq -e "$sts | ([.initContainers[].name] | join(\",\")) == \"upgrade-dump,upgrade-restore\"" > /dev/null
           echo "$pg" | yq -e "$sts | .initContainers[0].image == \"docker.io/library/postgres:18-alpine\"" > /dev/null
           echo "$pg" | yq -e "$sts | .initContainers[1].image == .containers[0].image" > /dev/null
           echo "$pg" | yq -e "$sts | .initContainers[0].env[] | select(.name == \"TO_MAJOR\") | .value == \"19\"" > /dev/null
           # After volumePermissions, which gives the volume to the postgres user first
           helm template t charts/wishalia --set existingSecret=s --set volumePermissions.enabled=true \
-            | yq -e "$sts | [.initContainers[].name] == [\"volume-permissions\", \"upgrade-dump\", \"upgrade-restore\"]" > /dev/null
+            | yq -e "$sts | ([.initContainers[].name] | join(\",\")) == \"volume-permissions,upgrade-dump,upgrade-restore\"" > /dev/null
           # Nothing to upgrade: off, the same major version, or no volume
           for none in "--set postgresql.upgrade.enabled=false" "--set postgresql.image.tag=18.7-alpine" \
                       "--set postgresql.persistence.enabled=false"; do
