@@ -17,7 +17,9 @@ All notable changes to this project are documented here. The format follows
   Perfect Edition »), and the series' « Ranger des envies dans la série » ticks the wishes whose name
   starts like it, in their reading order. A field on the card adds a new volume; icons move a volume
   up or down, take it out, undo the series, archive or delete it with its volumes.
-- The guests see how many volumes are still to give; a complete series goes down the list. An event
+- The volumes fold under « 5 tomes » on both cards, the owner's and the guests'; the field that adds
+  a volume stays visible. The guests see one box per volume, filled once it is given, as for a gift
+  wanted in several copies; a complete series goes down the list. An event
   selects a series whole, with every volume.
 - API: `parentId` on every item and `kind: "series"`; `POST /manage/lists/:id/series`,
   `POST /manage/items/:id/volumes`, `PUT /manage/items/:id/order`, `POST /manage/items/:id/ungroup`,

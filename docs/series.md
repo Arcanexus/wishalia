@@ -48,15 +48,19 @@ it comes back whole when the volume leaves the series.
 
 ![A series on a phone, in dark mode](images/app-series-dark.png)
 
-The series' square shows its own image, or else the first volume's. The count of wishes of a list
+The volumes fold under « 5 tomes »: a chevron unfolds them, and they stay open while one of them is
+being edited. The field that adds a volume stays under the card, folded or not. The series' square
+shows its own image, or else the first volume's. The count of wishes of a list
 counts the volumes one by one, never the series.
 
 ## For the guests
 
 ![A series in the guests' view, on a phone in dark mode](images/public-series-dark.png)
 
-The guests see one card too: the series' name and notes, « Série · 5 tomes », and how many volumes
-are still to give (« 3 tomes sur 5 encore à offrir »). Under it, every volume has its square, its
+The guests see one card too: the series' name and notes, « Série », and one box per volume, filled
+once it is given, like a gift wanted in several copies (a screen reader hears « 3 tomes sur 5
+encore à offrir »; past 24 volumes, these words show instead). The volumes fold under « 5 tomes »;
+unfolded, every volume has its square, its
 price, its link, its badge (to give, partly given, given, received) and the same « Acheter /
 Participer » button as every wish: a volume with a price can be bought whole or shared, like any
 gift (see [Public view](public-view.md#giving)). The series itself takes no gift.

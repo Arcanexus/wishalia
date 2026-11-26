@@ -554,7 +554,7 @@
     <h3>{series.title}</h3>
     <p class="muted meta">
       <span class="kind with-icon">
-        <Icon name="series" size="1.2rem" />{s.kind} · {s.volumes(volumes.length)}
+        <Icon name="series" size="1.2rem" />{s.kind}
       </span>
       {#if total !== null}<span class="price">{s.total(i18n.fmt.money(total))}</span>{/if}
     </p>
@@ -628,16 +628,21 @@
       {#if others.length > 0}<button type="submit">{s.gather.submit}</button>{/if}
     </form>
   {/if}
-  <div class="wide">
-    {#if volumes.length === 0}
-      <p class="muted">{s.empty}</p>
-    {:else}
+  <!-- Folded by default; open while one of its volumes is being edited -->
+  {#if volumes.length === 0}
+    <p class="muted wide">{s.empty}</p>
+  {:else}
+    <details class="fold wide" open={volumes.some((volume) => volume.id === editing)}>
+      <summary><Icon name="chevronRight" size="1.2rem" />{s.volumes(volumes.length)}</summary>
       <ol class="volumes" aria-label={appMessages(i18n.locale).series.volumes(volumes.length)}>
         {#each volumes as volume (volume.id)}
           {@render volumeRow(volume, series, wanted)}
         {/each}
       </ol>
-    {/if}
+    </details>
+  {/if}
+  <!-- Adding a volume stays at hand, folded or not -->
+  <div class="wide">
     <form method="POST" action="?/addVolume" class="add-volume" use:enhance>
       <input type="hidden" name="parentId" value={series.id} />
       <label class="visually-hidden" for="tome-{series.id}">{s.addVolume.label(series.title)}</label>
@@ -991,6 +996,25 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+  }
+  /* A series' volumes fold under their summary, its chevron turning as it opens */
+  .fold summary {
+    gap: 0.5rem;
+    list-style: none;
+  }
+  .fold summary::-webkit-details-marker {
+    display: none;
+  }
+  .fold summary :global(.icon) {
+    transition: transform 0.15s ease;
+  }
+  .fold[open] summary :global(.icon) {
+    transform: rotate(90deg);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fold summary :global(.icon) {
+      transition: none;
+    }
   }
   .volumes {
     list-style: none;

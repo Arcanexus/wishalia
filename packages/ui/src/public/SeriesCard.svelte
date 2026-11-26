@@ -6,6 +6,7 @@
   import Gallery from "../Gallery.svelte";
   import Icon from "../Icon.svelte";
   import { useI18n } from "../i18n.ts";
+  import Copies from "./Copies.svelte";
   import ItemCard from "./ItemCard.svelte";
   import type { PublicEvent, PublicItem } from "./types.ts";
   import { seriesLeft } from "./view.ts";
@@ -60,7 +61,6 @@
       <h2 id={headingId}>{series.title}</h2>
       <p class="tags">
         <span class="tag with-icon"><Icon name="series" size="1rem" />{m.kind.series}</span>
-        <span class="tag">{m.series.volumes(volumes.length)}</span>
       </p>
       {#if series.notes}<p class="notes">{series.notes}</p>{/if}
       {#if scope === "list" && series.eventIds.length > 0}
@@ -68,17 +68,31 @@
           {m.forEvents(i18n.fmt.list(series.eventIds.flatMap((id) => eventsById.get(id)?.name ?? [])))}
         </p>
       {/if}
-      {#if left}<p class="standing" class:done={complete}>{m.series.left(left.left, left.total)}</p>{/if}
+      {#if left}
+        {#if left.total <= 24}
+          <!-- One box per volume, as for a gift wanted in several copies; its words for a screen reader -->
+          <Copies wanted={left.total} taken={left.total - left.left} />
+          <p class="visually-hidden">{m.series.left(left.left, left.total)}</p>
+        {:else}
+          <p class="standing" class:done={complete}>{m.series.left(left.left, left.total)}</p>
+        {/if}
+      {/if}
     </div>
   </div>
   {#if volumes.length > 0}
-    <ul class="volumes" aria-label={m.series.listLabel(series.title)}>
-      {#each volumes as entry (entry.id)}
-        <ItemCard item={entry} {events} {scope} label={volumeLabel(entry.title, series.title)}>
-          {@render volume?.(entry)}
-        </ItemCard>
-      {/each}
-    </ul>
+    <!-- Folded by default: the card stays short, its summary says how many volumes it holds -->
+    <details class="fold">
+      <summary>
+        <Icon name="chevronRight" size="1.2rem" />{m.series.volumes(volumes.length)}
+      </summary>
+      <ul class="volumes" aria-label={m.series.listLabel(series.title)}>
+        {#each volumes as entry (entry.id)}
+          <ItemCard item={entry} {events} {scope} label={volumeLabel(entry.title, series.title)}>
+            {@render volume?.(entry)}
+          </ItemCard>
+        {/each}
+      </ul>
+    </details>
   {/if}
 </li>
 
@@ -147,6 +161,37 @@
   }
   .standing.done {
     color: var(--text-2);
+  }
+  .fold {
+    margin-top: 0.75rem;
+    border-top: 1px solid var(--border);
+  }
+  .fold summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 48px;
+    cursor: pointer;
+    font-weight: 600;
+    list-style: none;
+  }
+  .fold summary::-webkit-details-marker {
+    display: none;
+  }
+  .fold summary :global(.icon) {
+    transition: transform 0.15s ease;
+  }
+  .fold[open] summary :global(.icon) {
+    transform: rotate(90deg);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fold summary :global(.icon) {
+      transition: none;
+    }
+  }
+  /* The first volume starts right under the summary */
+  .volumes > :global(.nested:first-child) {
+    margin-top: 0;
   }
   .volumes {
     list-style: none;

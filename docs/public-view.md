@@ -110,9 +110,9 @@ it, the page stays in place and the focus goes back to the title.
 
 ## A series
 
-A series of volumes (a manga, a comic, a collection) is one card: its name, « Série · 5 tomes », how
-many are still to give, and its volumes inside it, each with its own square, price, link, badge and
-button. Each volume is given on its own, like any gift (see [Series](series.md)).
+A series of volumes (a manga, a comic, a collection) is one card: its name, « Série », one box per
+volume filled once it is given (as for several copies), and its volumes folded under « 5 tomes »,
+each with its own square, price, link, badge and button once unfolded. Each volume is given on its own, like any gift (see [Series](series.md)).
 
 ![A series in the guests' view](images/public-series.png)
 
