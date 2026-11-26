@@ -6,6 +6,24 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- A fourth kind of wish, « Une série » (« A series »): the volumes of a book, comic or manga series,
+  or of a collection, on **one card**, like a gift wanted in several copies. Each volume keeps its own
+  name or number, price, link, images and history, and the guests give the volumes one by one, each
+  with the same « Acheter / Participer » button (see [Series](docs/series.md)).
+- Existing wishes go into a series: « Une série » in a wish's editor makes it the first volume of a
+  new series, named after it without its number (« Dragon Ball Perfect Edition T30 » → « Dragon Ball
+  Perfect Edition »), and the series' « Ranger des envies dans la série » ticks the wishes whose name
+  starts like it, in their reading order. A field on the card adds a new volume; icons move a volume
+  up or down, take it out, undo the series, archive or delete it with its volumes.
+- The guests see how many volumes are still to give; a complete series goes down the list. An event
+  selects a series whole, with every volume.
+- API: `parentId` on every item and `kind: "series"`; `POST /manage/lists/:id/series`,
+  `POST /manage/items/:id/volumes`, `PUT /manage/items/:id/order`, `POST /manage/items/:id/ungroup`,
+  `parentId` in the quick add and `PATCH /manage/items/:id`, the same on the REST API v1 (OpenAPI).
+  History entries `grouped` and `ungrouped`. Migration `0016_series` (`wishes.parent_id`).
+
 ## [0.0.8] - 2026-11-26
 
 ### Changed

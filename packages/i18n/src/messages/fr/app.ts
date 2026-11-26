@@ -187,6 +187,7 @@ export const app = {
       invalid_quantity: "Indiquez combien d'exemplaires vous souhaitez, de 1 à 1 000.",
       invalid_target: "L'objectif est un montant en euros, par exemple 320.",
       not_found: "Cette envie n'existe plus.",
+      is_series: "Une série ne se range pas dans une autre série.",
     } as Record<string, string>,
     failed: "L'enregistrement n'a pas abouti. Réessayez dans un instant.",
     name: "Nom",
@@ -197,6 +198,12 @@ export const app = {
     },
     quantity: { name: "Plusieurs exemplaires", help: "Chacun en réserve un ou plusieurs." },
     pool: { name: "Une cagnotte", help: "Chacun participe du montant qu'il veut." },
+    series: {
+      name: "Une série",
+      help: "Des tomes ou des volumes, chacun avec son prix, son lien et son image : vos proches les offrent un par un.",
+    },
+    seriesNow:
+      "L'envie devient le premier tome d'une nouvelle série : vous y ajoutez ensuite les autres tomes, ou des envies de la liste.",
     howMany: "Combien d'exemplaires ?",
     target: "Objectif de la cagnotte, en euros (facultatif)",
     targetPlaceholder: "Par exemple 320",
@@ -267,6 +274,45 @@ export const app = {
     deleteHelp:
       "La liste et toutes ses envies disparaissent, avec leurs images, et ses liens de partage ne s'ouvrent plus. C'est définitif. Si un proche avait prévu d'offrir quelque chose, son lien de partage le prévient.",
   },
+  /** Series (docs/series.md): one card, its volumes inside it. */
+  series: {
+    kind: "Série",
+    volumes: (n: number) => (n === 0 ? "Aucun tome" : `${n} tome${n > 1 ? "s" : ""}`),
+    total: (amount: string) => `${amount} en tout`,
+    edit: { label: (title: string) => `Modifier la série « ${title} »`, tip: "Modifier la série" },
+    name: "Nom de la série",
+    notes: "Notes pour vos proches (facultatif)",
+    notesHelp: "Pour toute la série, par exemple l'édition ou l'éditeur.",
+    addVolume: {
+      label: (title: string) => `Ajouter un tome à « ${title} »`,
+      placeholder: "Un lien, ou le nom du tome",
+      tip: "Ajouter le tome",
+    },
+    gather: {
+      label: (title: string) => `Ranger d'autres envies de la liste dans « ${title} »`,
+      tip: "Ranger des envies dans la série",
+      legend: (title: string) => `Quelles envies ranger dans « ${title} » ?`,
+      help: "Celles dont le nom commence comme celui de la série sont déjà cochées.",
+      submit: "Ranger dans la série",
+      none: "Aucune autre envie dans cette liste.",
+    },
+    takeOut: { label: (title: string) => `Sortir « ${title} » de la série`, tip: "Sortir de la série" },
+    ungroup: {
+      label: (title: string) => `Défaire la série « ${title} »`,
+      tip: "Défaire la série (ses tomes restent dans la liste)",
+    },
+    moveUp: (title: string) => `Monter « ${title} » dans la série`,
+    moveDown: (title: string) => `Descendre « ${title} » dans la série`,
+    empty: "Aucun tome pour le moment : ajoutez le premier ci-dessous.",
+    gathered: (n: number, title: string) =>
+      n === 0
+        ? `Aucune envie ajoutée à « ${title} ».`
+        : `${n === 1 ? "1 envie rangée" : `${n} envies rangées`} dans « ${title} ».`,
+    ungrouped: (title: string) => `La série « ${title} » est défaite : ses tomes sont dans la liste.`,
+    takenOut: (title: string) => `« ${title} » est sorti de la série.`,
+    added: (title: string) => `« ${title} » est ajouté à la série.`,
+    failed: "Ce changement de la série n'a pas abouti. Réessayez dans un instant.",
+  },
   removal: {
     itemTitle: (title: string) => `Supprimer « ${title} » ?`,
     itemHelp:
@@ -276,6 +322,9 @@ export const app = {
       "La liste et toutes ses envies disparaissent, avec leurs images, et ses liens de partage ne s'ouvrent plus. C'est définitif : elle ne pourra pas être restaurée.",
     guests: "Si un proche avait prévu de l'offrir, son lien de partage le prévient.",
     archiveInstead: "Pour seulement la cacher à vos proches, archivez-la : vous pourrez la restaurer.",
+    seriesHelp:
+      "La série et tous ses tomes disparaissent de la liste, des événements et des liens de partage, avec leurs images. C'est définitif : ils ne pourront pas être restaurés.",
+    ungroupInstead: "Pour garder les tomes comme des envies à part, défaites plutôt la série.",
     cancel: "Annuler",
     confirm: "Supprimer définitivement",
     failed: "La suppression n'a pas abouti. Réessayez dans un instant.",

@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { Config } from "../../config.js";
 import { eventInput, eventPatch } from "../manage/events.js";
 import { imagePatch } from "../manage/item-images.js";
-import { itemPatch, quickAddInput } from "../manage/items.js";
+import { itemPatch, quickAddInput, seriesInput, volumeOrderInput, volumesInput } from "../manage/items.js";
 import { listInput, listPatch } from "../manage/lists.js";
 
 type Schema = Record<string, unknown>;
@@ -89,7 +89,14 @@ const schemas: Record<string, Schema> = {
     properties: {
       id: { type: "string", format: "uuid" },
       listId: { type: "string", format: "uuid" },
-      kind: { enum: ["unique", "quantity", "pool"] },
+      kind: {
+        enum: ["unique", "quantity", "pool", "series"],
+        description: "series: a group of volumes (docs/series.md), given one by one; it has no price or link",
+      },
+      parentId: {
+        ...nullable("string", "uuid"),
+        description: "The series this item is a volume of; null for an item of its own",
+      },
       repeatable: { type: "boolean" },
       title: { type: "string" },
       url: nullable("string"),
@@ -317,9 +324,48 @@ export function openApiDocument(config: Config) {
           },
         },
       },
+      "/lists/{listId}/series": {
+        parameters: [uuidParam("listId")],
+        post: {
+          summary:
+            "Group items of the list into a new series, where the first of them stood; its name is the one given, or the words their titles share",
+          requestBody: body(seriesInput),
+          responses: {
+            201: json(ref("Item"), "The series"),
+            404: json(ref("Error"), "An item is not in this list"),
+            409: json(ref("Error"), "A series cannot go into a series"),
+          },
+        },
+      },
+      "/items/{itemId}/volumes": {
+        parameters: [uuidParam("itemId")],
+        post: {
+          summary: "Put items of the series' list into it, as its last volumes",
+          requestBody: body(volumesInput),
+          responses: {
+            200: json({ type: "object", properties: { added: { type: "integer" } } }, "How many went in"),
+            409: json(ref("Error"), "A series, or an item of another list"),
+          },
+        },
+      },
+      "/items/{itemId}/order": {
+        parameters: [uuidParam("itemId")],
+        put: {
+          summary: "Put a series' open volumes in a new order",
+          requestBody: body(volumeOrderInput),
+          responses: { 204: noContent, 409: json(ref("Error"), "The series changed meanwhile") },
+        },
+      },
+      "/items/{itemId}/ungroup": {
+        parameters: [uuidParam("itemId")],
+        post: {
+          summary: "Undo a series: its volumes become items of their own again, where it stood",
+          responses: { 204: noContent, 404: json(ref("Error"), "Not a series") },
+        },
+      },
       "/items": {
         post: {
-          summary: "Quick add: a URL and/or text",
+          summary: "Quick add: a URL and/or text; with parentId, the last volume of that series",
           requestBody: body(quickAddInput),
           responses: { 201: json(ref("Item"), "Created, with duplicateOf") },
         },

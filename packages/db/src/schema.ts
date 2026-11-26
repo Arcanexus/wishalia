@@ -29,7 +29,8 @@ const updatedAt = () =>
     .defaultNow()
     .$onUpdate(() => new Date());
 
-export const wishKind = pgEnum("wish_kind", ["unique", "quantity", "pool"]);
+/** « series »: a group of volumes (docs/series.md), each one an ordinary wish whose parent it is. */
+export const wishKind = pgEnum("wish_kind", ["unique", "quantity", "pool", "series"]);
 export const wishStatus = pgEnum("wish_status", ["open", "received", "archived"]);
 export const seriesVolumeState = pgEnum("series_volume_state", ["owned", "wanted", "given"]);
 export const eventKind = pgEnum("event_kind", ["birthday", "christmas", "other"]);
@@ -245,6 +246,11 @@ export const wishes = pgTable(
     targetCents: integer("target_cents"),
     /** Quantity only. */
     quantity: integer("quantity"),
+    /**
+     * The series this wish is a volume of (docs/series.md): a wish of the same list, of kind
+     * « series ». Null for a wish of its own. A series has no parent.
+     */
+    parentId: uuid("parent_id").references((): AnyPgColumn => wishes.id),
     seriesId: uuid("series_id").references(() => series.id),
     seriesNumber: integer("series_number"),
     seriesState: seriesVolumeState("series_state"),
@@ -270,6 +276,8 @@ export const wishes = pgTable(
     index("wishes_list_idx").on(table.listId, table.position),
     index("wishes_enrichment_idx").on(table.enrichment, table.createdAt),
     index("wishes_series_idx").on(table.seriesId, table.seriesNumber),
+    index("wishes_parent_idx").on(table.parentId, table.position),
+    check("wishes_parent_self", sql`${table.parentId} IS NULL OR ${table.parentId} <> ${table.id}`),
     check(
       "wishes_pool_target",
       sql`${table.kind} <> 'pool' OR ${table.targetCents} IS NULL OR ${table.targetCents} > 0`,
@@ -492,5 +500,8 @@ export const ITEM_EVENT_TYPES = [
   "enriched",
   "image_changed",
   "refresh_requested",
+  /** Put into a series (payload: the series), or taken out of one (docs/series.md). */
+  "grouped",
+  "ungrouped",
 ] as const;
 export type ItemEventType = (typeof ITEM_EVENT_TYPES)[number];

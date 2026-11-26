@@ -3,7 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fakeApi, fakeEvent, json, outcome } from "../../test/event.ts";
 import {
   editItem,
+  gatherVolumes,
   moveItem,
+  moveVolume,
+  takeOutVolume,
+  ungroupSeries,
   orderItems,
   quickAdd,
   refreshItem,
@@ -183,7 +187,7 @@ describe("editItem", () => {
     const cases: [Record<string, string>, string][] = [
       [{ itemId: "../x" }, "invalid_request"],
       [{ listId: "nope" }, "invalid_request"],
-      [{ kind: "series" }, "invalid_request"],
+      [{ kind: "bundle" }, "invalid_request"],
       [{ title: "  " }, "invalid_title"],
       [{ title: "x".repeat(301) }, "invalid_title"],
       [{ url: "javascript:alert(1)" }, "invalid_url"],
@@ -348,5 +352,131 @@ describe("reading links again", () => {
     vi.stubGlobal("fetch", () => Promise.reject(new Error("down")));
     await expect(refreshItem(fakeEvent({ form: { itemId: ITEM } }).event)).rejects.toThrow("down");
     await expect(refreshList(fakeEvent({ form: {} }).event, LIST)).rejects.toThrow("down");
+  });
+});
+
+describe("series (docs/series.md)", () => {
+  const SERIES = "7c9e6679-7425-40de-944b-e07fc1f90ae7";
+  const OTHER = "16fd2706-8baf-433b-82eb-8c7fada847da";
+  const values = { title: "Dragon Ball", url: "", price: "", notes: "Glénat", kind: "series", listId: LIST };
+
+  it("adds a volume into its series, and keeps what was typed on an error", async () => {
+    const api = fakeApi({
+      "POST /manage/items": () => json({ id: ITEM, title: "T35", listId: LIST, duplicateOf: [] }, 201),
+    });
+    expect(await quickAdd(fakeEvent({ form: { input: "T35", parentId: SERIES } }).event, LIST)).toEqual({
+      volume: { seriesId: SERIES, title: "T35" },
+    });
+    expect(api.calls[0]?.body).toEqual({ input: "T35", parentId: SERIES });
+    expect(await quickAdd(fakeEvent({ form: { input: "T35", parentId: "x" } }).event)).toMatchObject({
+      status: 400,
+    });
+    expect(await quickAdd(fakeEvent({ form: { input: " ", parentId: SERIES } }).event)).toMatchObject({
+      data: { add: { error: "empty", parentId: SERIES } },
+    });
+    fakeApi({ "POST /manage/items": () => json({ error: "not_found" }, 404) });
+    expect(await quickAdd(fakeEvent({ form: { input: "T35", parentId: SERIES } }).event)).toMatchObject({
+      status: 404,
+      data: { add: { error: "not_found", input: "T35", parentId: SERIES } },
+    });
+  });
+
+  it("saves a series' name, notes and list only", async () => {
+    const api = fakeApi({
+      [`PATCH /manage/items/${SERIES}`]: () => json({ id: SERIES, title: "Dragon Ball", listId: LIST }),
+    });
+    const form = { ...values, itemId: SERIES, series: "1" };
+    expect(await editItem(fakeEvent({ form }).event)).toEqual({
+      edit: { itemId: SERIES, title: "Dragon Ball", listId: LIST },
+    });
+    expect(api.calls[0]?.body).toEqual({ title: "Dragon Ball", notes: "Glénat", listId: LIST });
+  });
+
+  it("turns a wish into the first volume of a new series", async () => {
+    const api = fakeApi({
+      [`GET /manage/items/${ITEM}`]: () => json({ id: ITEM, title: "Dragon Ball T30", listId: LIST }),
+      [`POST /manage/lists/${LIST}/series`]: () => json({ id: SERIES, kind: "series" }, 201),
+    });
+    expect(await editItem(fakeEvent({ form: { ...values, itemId: ITEM } }).event)).toEqual({
+      edit: { itemId: ITEM, title: "Dragon Ball T30", listId: LIST, seriesId: SERIES },
+    });
+    expect(api.calls[1]?.body).toEqual({ itemIds: [ITEM] });
+    fakeApi({});
+    expect(await editItem(fakeEvent({ form: { ...values, itemId: ITEM } }).event)).toMatchObject({
+      status: 400,
+      data: { edit: { error: "not_found" } },
+    });
+  });
+
+  it("puts the wishes ticked into a series", async () => {
+    const api = fakeApi({ [`POST /manage/items/${SERIES}/volumes`]: () => json({ added: 2 }) });
+    const ticked = () => {
+      const data = new FormData();
+      data.set("seriesId", SERIES);
+      data.set("title", "Dragon Ball");
+      data.append("itemIds", ITEM);
+      data.append("itemIds", OTHER);
+      return data;
+    };
+    expect(await gatherVolumes(fakeEvent({ formData: ticked() }).event)).toEqual({
+      series: { seriesId: SERIES, gathered: 2, title: "Dragon Ball" },
+    });
+    expect(api.calls[0]?.body).toEqual({ itemIds: [ITEM, OTHER] });
+    expect(await gatherVolumes(fakeEvent({ form: { seriesId: SERIES, title: "x" } }).event)).toEqual({
+      series: { seriesId: SERIES, gathered: 0, title: "x" },
+    });
+    expect(await gatherVolumes(fakeEvent({ form: { seriesId: "x" } }).event)).toMatchObject({ status: 400 });
+    fakeApi({ [`POST /manage/items/${SERIES}/volumes`]: () => json({ error: "is_series" }, 409) });
+    expect(await gatherVolumes(fakeEvent({ formData: ticked() }).event)).toMatchObject({
+      status: 409,
+      data: { series: { error: "is_series" } },
+    });
+  });
+
+  it("takes a volume out, and undoes a series", async () => {
+    fakeApi({
+      [`PATCH /manage/items/${ITEM}`]: (body) => json({ id: ITEM, title: "T30", ...(body as object) }),
+      [`POST /manage/items/${SERIES}/ungroup`]: () => new Response(null, { status: 204 }),
+    });
+    expect(await takeOutVolume(fakeEvent({ form: { itemId: ITEM } }).event)).toEqual({
+      series: { takenOut: "T30" },
+    });
+    expect(await ungroupSeries(fakeEvent({ form: { itemId: SERIES, title: "Dragon Ball" } }).event)).toEqual({
+      series: { ungrouped: "Dragon Ball" },
+    });
+    expect(await takeOutVolume(fakeEvent({ form: { itemId: "x" } }).event)).toMatchObject({ status: 400 });
+    expect(await ungroupSeries(fakeEvent({ form: { itemId: "x" } }).event)).toMatchObject({ status: 400 });
+    fakeApi({});
+    expect(await ungroupSeries(fakeEvent({ form: { itemId: SERIES } }).event)).toMatchObject({ status: 404 });
+  });
+
+  it("moves a volume inside its series, and the list's own wishes without the volumes", async () => {
+    const items = [
+      { id: SERIES, status: "open", parentId: null, position: 0, title: "Dragon Ball" },
+      { id: OTHER, status: "open", parentId: SERIES, position: 0, title: "T30" },
+      { id: ITEM, status: "open", parentId: SERIES, position: 1, title: "T31" },
+    ];
+    const api = fakeApi({
+      [`GET /manage/lists/${LIST}/items`]: () => json(items),
+      [`PUT /manage/items/${SERIES}/order`]: () => new Response(null, { status: 204 }),
+    });
+    expect(await moveVolume(fakeEvent({ form: { itemId: ITEM, direction: "up" } }).event, LIST)).toEqual({
+      move: { title: "T31", position: 1, count: 2 },
+    });
+    expect(api.calls[1]?.body).toEqual({ itemIds: [ITEM, OTHER] });
+    expect(
+      await moveVolume(fakeEvent({ form: { itemId: SERIES, direction: "up" } }).event, LIST),
+    ).toMatchObject({
+      status: 409,
+    });
+    expect(
+      await moveVolume(fakeEvent({ form: { itemId: ITEM, direction: "left" } }).event, LIST),
+    ).toMatchObject({
+      status: 400,
+    });
+    // At the top of the list already, the series does not move, and its volumes are not counted
+    expect(await moveItem(fakeEvent({ form: { itemId: SERIES, direction: "up" } }).event, LIST)).toEqual({
+      move: { title: "Dragon Ball", position: 1, count: 1 },
+    });
   });
 });

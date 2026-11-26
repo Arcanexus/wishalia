@@ -1,6 +1,6 @@
 import { type Database, schema } from "@wishalia/db";
 import { LIST_ICONS } from "@wishalia/domain";
-import { and, asc, count, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
@@ -119,7 +119,8 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
   const openUrls = (listIds: string[]) => openUrlsOf(db, publicOrigin, listIds);
 
   /**
-   * The owner's lists, in their order, with the number of open items; with `?archived=true`, the
+   * The owner's lists, in their order, with the number of open items (the volumes of an open
+   * series count one by one, the series itself does not); with `?archived=true`, the
    * archived ones instead (never the deleted ones).
    */
   app.get("/lists", async (request) => {
@@ -130,7 +131,13 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
       .from(schema.wishLists)
       .leftJoin(
         schema.wishes,
-        and(eq(schema.wishes.listId, schema.wishLists.id), eq(schema.wishes.status, "open")),
+        and(
+          eq(schema.wishes.listId, schema.wishLists.id),
+          eq(schema.wishes.status, "open"),
+          ne(schema.wishes.kind, "series"),
+          // A volume counts while its series is open (docs/series.md)
+          sql`(${schema.wishes.parentId} IS NULL OR EXISTS (SELECT 1 FROM "wishes" AS "series" WHERE "series"."id" = ${schema.wishes.parentId} AND "series"."status" = 'open'))`,
+        ),
       )
       .where(
         and(
@@ -211,7 +218,8 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
   });
 
   /**
-   * Puts the list's open items in a new order (drag and drop). The order must name every open item
+   * Puts the list's open items in a new order (drag and drop); a series moves as one, its volumes
+   * keep their own order (PUT /items/:id/order). The order must name every open item
    * once: when the list changed meanwhile (another device), it answers 409 and nothing moves. No
    * history: the order says nothing about a gift.
    */
@@ -227,7 +235,13 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
       const open = await tx
         .select({ id: schema.wishes.id })
         .from(schema.wishes)
-        .where(and(eq(schema.wishes.listId, listId), eq(schema.wishes.status, "open")));
+        .where(
+          and(
+            eq(schema.wishes.listId, listId),
+            eq(schema.wishes.status, "open"),
+            isNull(schema.wishes.parentId),
+          ),
+        );
       const ids = new Set(open.map((row) => row.id));
       const given = new Set(itemIds);
       if (given.size !== itemIds.length || given.size !== ids.size || !itemIds.every((id) => ids.has(id))) {
@@ -256,7 +270,10 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
     return ownerList(row, 0, urls.get(row.id) ?? null, picture(row));
   });
 
-  /** The items of a list, open ones first in their order, then received and archived ones. */
+  /**
+   * The items of a list, open ones first in their order, then received and archived ones. The
+   * volumes of a series come too, each with its parentId: the app shows them inside their series.
+   */
   app.get("/lists/:listId/items", async (request) => {
     const { listId } = parse(idParams, request.params);
     const [list] = await db

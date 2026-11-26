@@ -18,6 +18,7 @@
     listId,
     images,
     small = false,
+    volume = false,
   }: {
     item: Item;
     listId: string;
@@ -25,6 +26,8 @@
     images: boolean;
     /** The smaller square of a received or archived item. */
     small?: boolean;
+    /** The square of a volume inside its series' card (docs/series.md), with its pencil. */
+    volume?: boolean;
   } = $props();
 
   const i18n = useI18n();
@@ -33,7 +36,7 @@
   let hidden = $state(false);
 </script>
 
-<div class="thumb" class:small>
+<div class="thumb" class:small class:volume>
   {#if item.image}
     <!-- The link that opens it big carries the words: the thumbnail itself is decorative -->
     <Gallery title={item.title} image={item.image} class="thumb-frame">
@@ -73,6 +76,16 @@
     .thumb {
       width: 6rem;
       height: 6rem;
+    }
+  }
+  .thumb.volume {
+    width: 3.75rem;
+    height: 3.75rem;
+  }
+  @media (min-width: 40rem) {
+    .thumb.volume {
+      width: 4.5rem;
+      height: 4.5rem;
     }
   }
   .thumb.small {

@@ -95,7 +95,7 @@ export const eventRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now
     await db.transaction(async (tx) => {
       await ownedEvent(tx, ownerId, eventId);
       const [item] = await tx
-        .select({ id: schema.wishes.id })
+        .select({ id: schema.wishes.id, parentId: schema.wishes.parentId })
         .from(schema.wishes)
         .innerJoin(schema.wishLists, eq(schema.wishLists.id, schema.wishes.listId))
         .where(
@@ -106,6 +106,8 @@ export const eventRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now
           ),
         );
       if (!item) throw notFound();
+      // A series comes to an event whole, with every volume: never one volume alone (docs/series.md)
+      if (item.parentId) throw new HttpError(409, "volume_of_series");
       const added = await tx
         .insert(schema.eventWishes)
         .values({ eventId, wishId: itemId })

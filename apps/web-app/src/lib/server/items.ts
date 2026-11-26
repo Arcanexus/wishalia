@@ -17,6 +17,23 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function quickAdd(event: FormEvent, pageListId?: string) {
   const form = await event.request.formData();
   const input = String(form.get("input") ?? "").trim();
+  // Into a series (docs/series.md): its last volume, in its list
+  const parentId = String(form.get("parentId") ?? "") || undefined;
+  if (parentId !== undefined) {
+    if (!UUID.test(parentId)) return fail(400, { add: { error: "invalid_request", input, parentId } });
+    if (!input) return fail(400, { add: { error: "empty", input, parentId } });
+    try {
+      const added = await apiJson<AddedItem>(event, "/manage/items", {
+        method: "POST",
+        body: { input, parentId },
+      });
+      return { volume: { seriesId: parentId, title: added.title } };
+    } catch (failure) {
+      if (failure instanceof ApiError)
+        return fail(failure.status, { add: { error: failure.code, input, parentId } });
+      throw failure;
+    }
+  }
   // The list of the page, else the one the person picked (the share page), else the first one
   const listId = pageListId ?? (String(form.get("listId") ?? "") || undefined);
   if (listId !== undefined && !UUID.test(listId))
@@ -75,7 +92,7 @@ export async function deleteItem(event: FormEvent) {
   }
 }
 
-const KINDS = ["unique", "quantity", "pool"] as const;
+const KINDS = ["unique", "quantity", "pool", "series"] as const;
 /** The highest amount the API takes: a typo, not a price. */
 const MAX_CENTS = 100_000_000;
 
@@ -111,9 +128,10 @@ export async function editItem(event: FormEvent) {
   const kind = KINDS.find((candidate) => candidate === values.kind);
   if (!kind) return refuse("invalid_request");
   if (!values.title || values.title.length > MAX_TITLE_LENGTH) return refuse("invalid_title");
+  if (values.notes.length > 4000) return refuse("invalid_notes");
+  if (kind === "series") return editSeries(event, itemId, form.get("series") === "1", values, refuse);
   const url = values.url ? cleanUrl(values.url) : null;
   if (values.url && url === null) return refuse("invalid_url");
-  if (values.notes.length > 4000) return refuse("invalid_notes");
   const priceCents = euros(values.price);
   if (priceCents === undefined) return refuse("invalid_price");
 
@@ -153,6 +171,134 @@ export async function editItem(event: FormEvent) {
   }
 }
 
+/**
+ * « Une série » chosen (docs/series.md). For the series itself, its name and notes are saved; for a
+ * wish of its own, it becomes the first volume of a new series, named after it.
+ */
+async function editSeries<F>(
+  event: FormEvent,
+  itemId: string,
+  isSeries: boolean,
+  values: EditValues,
+  refuse: (error: string) => F,
+) {
+  try {
+    if (isSeries) {
+      const series = await apiJson<Item>(event, `/manage/items/${itemId}`, {
+        method: "PATCH",
+        // A series goes to another list with all its volumes
+        body: {
+          title: values.title,
+          notes: values.notes || null,
+          ...(values.listId ? { listId: values.listId } : {}),
+        },
+      });
+      return { edit: { itemId: series.id, title: series.title, listId: series.listId } };
+    }
+    const item = await apiJson<Item>(event, `/manage/items/${itemId}`);
+    const series = await apiJson<Item>(event, `/manage/lists/${encodeURIComponent(item.listId)}/series`, {
+      method: "POST",
+      body: { itemIds: [itemId] },
+    });
+    return { edit: { itemId, title: item.title, listId: item.listId, seriesId: series.id } };
+  } catch (failure) {
+    if (failure instanceof ApiError)
+      return refuse(failure.code === "invalid_request" ? "invalid_request" : failure.code);
+    throw failure;
+  }
+}
+
+/** The answer of a change to a series, or its failure. */
+const seriesFailure = (failure: unknown) => {
+  if (failure instanceof ApiError) return fail(failure.status, { series: { error: failure.code } });
+  throw failure;
+};
+
+/**
+ * Puts the wishes ticked into a series, as its last volumes (« Ranger dans la série »).
+ */
+export async function gatherVolumes(event: FormEvent) {
+  const form = await event.request.formData();
+  const seriesId = String(form.get("seriesId") ?? "");
+  const title = String(form.get("title") ?? "").slice(0, MAX_TITLE_LENGTH);
+  const itemIds = form.getAll("itemIds").map(String);
+  if (!UUID.test(seriesId) || !itemIds.every((id) => UUID.test(id))) {
+    return fail(400, { series: { error: "invalid_request" } });
+  }
+  if (itemIds.length === 0) return { series: { seriesId, gathered: 0, title } };
+  try {
+    const { added } = await apiJson<{ added: number }>(event, `/manage/items/${seriesId}/volumes`, {
+      method: "POST",
+      body: { itemIds },
+    });
+    return { series: { seriesId, gathered: added, title } };
+  } catch (failure) {
+    return seriesFailure(failure);
+  }
+}
+
+/** Takes a volume out of its series: a wish of its own again, first in the list. */
+export async function takeOutVolume(event: FormEvent) {
+  const form = await event.request.formData();
+  const itemId = String(form.get("itemId") ?? "");
+  if (!UUID.test(itemId)) return fail(400, { series: { error: "invalid_request" } });
+  try {
+    const item = await apiJson<Item>(event, `/manage/items/${itemId}`, {
+      method: "PATCH",
+      body: { parentId: null },
+    });
+    return { series: { takenOut: item.title } };
+  } catch (failure) {
+    return seriesFailure(failure);
+  }
+}
+
+/** Undoes a series: its volumes go back into the list where it stood. */
+export async function ungroupSeries(event: FormEvent) {
+  const form = await event.request.formData();
+  const itemId = String(form.get("itemId") ?? "");
+  const title = String(form.get("title") ?? "").slice(0, MAX_TITLE_LENGTH);
+  if (!UUID.test(itemId)) return fail(400, { series: { error: "invalid_request" } });
+  try {
+    await apiJson<undefined>(event, `/manage/items/${itemId}/ungroup`, { method: "POST" });
+    return { series: { ungrouped: title } };
+  } catch (failure) {
+    return seriesFailure(failure);
+  }
+}
+
+/** Moves a volume one place up or down in its series, as the arrows of the list do. */
+export async function moveVolume(event: FormEvent, listId: string) {
+  const form = await event.request.formData();
+  const itemId = String(form.get("itemId") ?? "");
+  const direction = String(form.get("direction") ?? "");
+  if (!UUID.test(itemId) || (direction !== "up" && direction !== "down")) {
+    return fail(400, { move: { error: "invalid_request" } });
+  }
+  try {
+    const items = await apiJson<Item[]>(event, `/manage/lists/${encodeURIComponent(listId)}/items`);
+    const moving = items.find((item) => item.id === itemId && item.status === "open");
+    if (!moving?.parentId) return fail(409, { move: { error: "order_changed" } });
+    const open = items
+      .filter((item) => item.parentId === moving.parentId && item.status === "open")
+      .sort((a, b) => a.position - b.position);
+    const from = open.findIndex((item) => item.id === itemId);
+    const to = Math.min(open.length - 1, Math.max(0, from + (direction === "up" ? -1 : 1)));
+    const order = open.map((item) => item.id);
+    order.splice(from, 1);
+    order.splice(to, 0, itemId);
+    if (to !== from) {
+      await apiJson<undefined>(event, `/manage/items/${moving.parentId}/order`, {
+        method: "PUT",
+        body: { itemIds: order },
+      });
+    }
+    return { move: { title: moving.title, position: to + 1, count: open.length } };
+  } catch (failure) {
+    return moveFailure(failure);
+  }
+}
+
 /** Saves the order of a list's open items; 409 « order_changed » when the list changed meanwhile. */
 async function saveOrder(event: FormEvent, listId: string, itemIds: string[]) {
   await apiJson<undefined>(event, `/manage/lists/${encodeURIComponent(listId)}/order`, {
@@ -179,7 +325,8 @@ export async function moveItem(event: FormEvent, listId: string) {
   }
   try {
     const items = await apiJson<Item[]>(event, `/manage/lists/${encodeURIComponent(listId)}/items`);
-    const open = items.filter((item) => item.status === "open");
+    // The list's own wishes: a series moves as one, its volumes stay inside it
+    const open = items.filter((item) => item.status === "open" && !item.parentId);
     const from = open.findIndex((item) => item.id === itemId);
     const moving = open[from];
     if (!moving) return fail(409, { move: { error: "order_changed" } });

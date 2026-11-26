@@ -15,9 +15,20 @@
   import ListBadge from "@wishalia/ui/ListBadge.svelte";
   import EventGauge from "@wishalia/ui/public/EventGauge.svelte";
   import ItemCard from "@wishalia/ui/public/ItemCard.svelte";
+  import SeriesCard from "@wishalia/ui/public/SeriesCard.svelte";
+  import type { PublicItem } from "@wishalia/ui/public/types.ts";
 
   import GiveForm from "#lib/GiveForm.svelte";
-  import { canGive, gauge, formatDay, heading, myGiftLine, withdrawError } from "@wishalia/ui/public/view.ts";
+  import {
+    canGive,
+    cardsOf,
+    gauge,
+    formatDay,
+    heading,
+    myGiftLine,
+    volumesOf,
+    withdrawError,
+  } from "@wishalia/ui/public/view.ts";
 
   import type { PageProps } from "./$types";
 
@@ -27,6 +38,7 @@
   const v = $derived(viewMessages(i18n.locale).page);
   const view = $derived(data.view);
   const owner = $derived(view.owner.displayName);
+  const volumes = $derived(volumesOf(view.items));
   const openEvents = $derived(view.events.filter((event) => event.open));
   const eventsById = $derived(new Map(view.events.map((event) => [event.id, event])));
   /** The open events a gift can be for: on a list link, those of the item. */
@@ -187,43 +199,19 @@
     <p class="card empty">{v.empty}</p>
   {:else}
     <ul class="items">
-      {#each view.items as item (item.id)}
-        <ItemCard {item} events={view.events} scope={view.scope}>
-          {#each data.mine.filter((gift) => gift.itemId === item.id) as gift (gift.id)}
-            <div class="mine">
-              <p>
-                <strong>{myGiftLine(gift, item, i18n.locale)}</strong>
-                {#if gift.eventId && view.scope === "list" && eventsById.get(gift.eventId)}
-                  <span class="muted">{m.forEvent(eventsById.get(gift.eventId)?.name ?? "")}</span>
-                {/if}
-              </p>
-              <form method="POST" action="?/withdraw" use:enhance>
-                <input type="hidden" name="id" value={gift.id} />
-                <button type="submit" class="secondary" aria-label={m.withdrawLabel(item.title)}>
-                  {m.withdraw}
-                </button>
-              </form>
-              {#if form?.withdraw && "id" in form.withdraw && form.withdraw.id === gift.id}
-                <p class="notice error" role="alert">{withdrawError(form.withdraw.error, i18n.locale)}</p>
-              {/if}
-            </div>
-          {/each}
-
-          {#if form?.given?.itemId === item.id}
-            <p class="notice thanks">{m.thanks(owner)}</p>
-          {/if}
-
-          {#if !data.folded && canGive(item, view)}
-            <GiveForm
-              {item}
-              events={giftEvents(item.eventIds)}
-              {owner}
-              needsName={view.me === null}
-              guestName={data.guestName}
-              failed={form?.give && form.give.itemId === item.id ? form.give : null}
-            />
-          {/if}
-        </ItemCard>
+      {#each cardsOf(view.items) as item (item.id)}
+        {#if item.kind === "series"}
+          <!-- One card for the series, each volume inside it given on its own (docs/series.md) -->
+          <SeriesCard
+            series={item}
+            volumes={volumes.get(item.id) ?? []}
+            events={view.events}
+            scope={view.scope}
+            volume={giving}
+          />
+        {:else}
+          <ItemCard {item} events={view.events} scope={view.scope}>{@render giving(item)}</ItemCard>
+        {/if}
       {/each}
     </ul>
   {/if}
@@ -237,6 +225,43 @@
     <p class="muted secret">{v.secret(owner)}</p>
   {/if}
 </main>
+
+{#snippet giving(item: PublicItem)}
+  {#each data.mine.filter((gift) => gift.itemId === item.id) as gift (gift.id)}
+    <div class="mine">
+      <p>
+        <strong>{myGiftLine(gift, item, i18n.locale)}</strong>
+        {#if gift.eventId && view.scope === "list" && eventsById.get(gift.eventId)}
+          <span class="muted">{m.forEvent(eventsById.get(gift.eventId)?.name ?? "")}</span>
+        {/if}
+      </p>
+      <form method="POST" action="?/withdraw" use:enhance>
+        <input type="hidden" name="id" value={gift.id} />
+        <button type="submit" class="secondary" aria-label={m.withdrawLabel(item.title)}>
+          {m.withdraw}
+        </button>
+      </form>
+      {#if form?.withdraw && "id" in form.withdraw && form.withdraw.id === gift.id}
+        <p class="notice error" role="alert">{withdrawError(form.withdraw.error, i18n.locale)}</p>
+      {/if}
+    </div>
+  {/each}
+
+  {#if form?.given?.itemId === item.id}
+    <p class="notice thanks">{m.thanks(owner)}</p>
+  {/if}
+
+  {#if !data.folded && canGive(item, view)}
+    <GiveForm
+      {item}
+      events={giftEvents(item.eventIds)}
+      {owner}
+      needsName={view.me === null}
+      guestName={data.guestName}
+      failed={form?.give && form.give.itemId === item.id ? form.give : null}
+    />
+  {/if}
+{/snippet}
 
 <style>
   .top {

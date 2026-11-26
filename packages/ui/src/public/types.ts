@@ -4,7 +4,8 @@
  */
 
 export type Viewer = "owner" | "guest" | "anonymous";
-export type ItemKind = "unique" | "quantity" | "pool";
+/** « series » groups volumes, given one by one (docs/series.md). */
+export type ItemKind = "unique" | "quantity" | "pool" | "series";
 export type ItemState = "free" | "in_progress" | "almost" | "complete";
 
 export interface PublicEvent {
@@ -69,6 +70,8 @@ export interface ImageSources {
 export interface PublicItem {
   id: string;
   kind: ItemKind;
+  /** The series this item is a volume of: the page shows it inside the series' card. */
+  parentId?: string | null;
   repeatable: boolean;
   title: string;
   url: string | null;

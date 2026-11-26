@@ -67,7 +67,7 @@ export interface EditableWish {
   priceCents: number | null;
   targetCents: number | null;
   quantity: number | null;
-  kind: "unique" | "quantity" | "pool";
+  kind: "unique" | "quantity" | "pool" | "series";
   repeatable: boolean;
 }
 

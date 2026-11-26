@@ -80,3 +80,13 @@ describe("samplePreview", () => {
     expect(almost?.funding).toMatchObject({ state: "almost", totalCents: 600 });
   });
 });
+
+describe("samplePreview of a series", () => {
+  it("gives the series nothing and leaves an archived series' volumes out", () => {
+    const series = item({ id: "s", kind: "series" });
+    const volume = item({ id: "v", parentId: "s" });
+    const [shown] = samplePreview([series, volume], "fr");
+    expect(shown?.funding).toMatchObject({ state: "free", contributors: [] });
+    expect(samplePreview([{ ...series, status: "archived" }, volume], "fr")).toEqual([]);
+  });
+});

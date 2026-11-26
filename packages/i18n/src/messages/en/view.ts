@@ -34,6 +34,7 @@ export const view: ViewMessages = {
     already_shared: "Others are already chipping in: add the amount you like.",
     amount_too_high: "That is more than what is missing: choose a smaller amount.",
     shares_not_taken: "This gift is reserved whole.",
+    series_by_volume: "A series is given volume by volume: choose a volume.",
     amount_required: "Enter an amount, for example 20 or 12.50.",
     units_required: "Say how many you are giving.",
     name_required: "Enter your first name, so your family knows who is taking care of it.",
@@ -58,7 +59,17 @@ export const view: ViewMessages = {
   gaugeInProgress: (n) => `${n} in progress`,
   gaugeFree: (n) => `${n} to give`,
   segment: (label, amount) => `${label}: ${amount}`,
-  kind: { quantity: "Several copies", pool: "Kitty" },
+  kind: { quantity: "Several copies", pool: "Kitty", series: "Series" },
+  series: {
+    volumes: (n) => `${n} volume${n > 1 ? "s" : ""}`,
+    left: (left, total) =>
+      left === 0
+        ? "Every volume is given."
+        : left === total
+          ? `${total === 1 ? "The volume is" : `The ${total} volumes are`} waiting for a gift.`
+          : `${left} volume${left > 1 ? "s" : ""} of ${total} still to give.`,
+    listLabel: (title) => `The volumes of “${title}”`,
+  },
   wanted: (n) => `${n} wanted`,
   everyOccasion: "At every occasion",
   seeOn: (site) => `See on ${site}`,
