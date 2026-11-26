@@ -69,10 +69,50 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml $pg.podSecurityContext | nindent 8 }}
-      {{- if and .Values.volumePermissions.enabled $pg.persistence.enabled }}
+      {{- $permissions := and .Values.volumePermissions.enabled $pg.persistence.enabled }}
+      {{- $upgrade := include "wishalia.postgresql.upgrade" . }}
+      {{- if or $permissions $upgrade }}
       initContainers:
+        {{- if $permissions }}
         # volumePermissions: the data volume belongs to the postgres user
         {{- include "wishalia.volumePermissions" (dict "root" . "volume" "data" "path" "/var/lib/postgresql" "user" $pg.podSecurityContext.runAsUser "group" (default $pg.podSecurityContext.runAsUser $pg.podSecurityContext.runAsGroup)) | nindent 8 }}
+        {{- end }}
+        {{- if $upgrade }}
+        {{- $majors := fromJson $upgrade }}
+        # postgresql.upgrade: the data of the previous major version is dumped by its own image,
+        # then restored into the new one, once (docs/installation.md#upgrading-postgresql)
+        {{- range $step := list (dict "name" "upgrade-dump" "image" $pg.upgrade.fromImage "script" "files/postgresql-dump.sh") (dict "name" "upgrade-restore" "image" $pg.image "script" "files/postgresql-restore.sh") }}
+        - name: {{ $step.name }}
+          image: {{ printf "%s/%s:%s" $step.image.registry $step.image.repository $step.image.tag | quote }}
+          imagePullPolicy: {{ $step.image.pullPolicy }}
+          command: ["bash", "-c", {{ $.Files.Get $step.script | quote }}]
+          securityContext:
+            {{- toYaml $pg.securityContext | nindent 12 }}
+          env:
+            - name: FROM_MAJOR
+              value: {{ $majors.from | quote }}
+            - name: TO_MAJOR
+              value: {{ $majors.to | quote }}
+            - name: POSTGRES_DB
+              value: {{ $pg.auth.database | quote }}
+            - name: POSTGRES_USER
+              value: {{ $pg.auth.username | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wishalia.postgresql.secretName" $ }}
+                  key: {{ $pg.auth.passwordKey }}
+          resources:
+            {{- toYaml $pg.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql
+            - name: run
+              mountPath: /var/run/postgresql
+            - name: tmp
+              mountPath: /tmp
+        {{- end }}
+        {{- end }}
       {{- end }}
       containers:
         - name: postgresql

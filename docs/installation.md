@@ -35,7 +35,7 @@ listed in [Configuration](configuration.md).
 
 ### Without a database: the chart deploys PostgreSQL
 
-The default (`postgresql.enabled=true`). The chart runs the official `postgres` image (18, Alpine)
+The default (`postgresql.enabled=true`). The chart runs the official `postgres` image (19, Alpine)
 as a StatefulSet, with a 5 GiB volume (`postgresql.persistence`; or a claim you already have, `existingClaim`), as a non-root user, on a read-only
 root filesystem, behind a NetworkPolicy that only lets the API and the worker in. It gives the API
 and the worker their `DATABASE_URL` by itself.
@@ -59,9 +59,35 @@ and the worker their `DATABASE_URL` by itself.
   `volumePermissions.enabled=true`: an init container gives the volume's root folder to the pod's
   user before it starts (the image volume and Garage's too). The export must let root change an
   owner (no root squash).
-- **Backups**: yours to plan, e.g. a CronJob running `pg_dump`, or a snapshot of the volume. A new
-  major version of PostgreSQL (`postgresql.image.tag`) does not read the data of the previous one:
-  dump, upgrade, restore.
+- **Backups**: yours to plan, e.g. a CronJob running `pg_dump`, or a snapshot of the volume.
+
+### Upgrading PostgreSQL
+
+A new major version of PostgreSQL does not read the data folder of the previous one, and the
+official image keeps each version in its own folder (`/var/lib/postgresql/<major>/docker`). The
+chart moves the data by itself (`postgresql.upgrade`, on by default), at the first start of the new
+version, with two init containers:
+
+1. `upgrade-dump`, in the image of the previous version (`postgresql.upgrade.fromImage`,
+   `postgres:18-alpine`): when the volume holds the data of that version and none of the new one,
+   it starts the old server on its socket only, dumps the database to
+   `/var/lib/postgresql/upgrade/from-18.dump` and stops it.
+2. `upgrade-restore`, in the new image: it makes the new folder aside, restores the dump in it, and
+   only then gives it its name. A failed restore leaves no half-made database: the pod stops before
+   the server, and the next start tries again.
+
+Then the server starts on the new folder, and both steps find nothing left to do. On a fresh
+volume, with the same major version, or without persistence, they do nothing at all.
+
+- **Before**: take a backup (a snapshot of the volume, or a `pg_dump`), and make sure the volume
+  has room for a second copy of the data and its dump.
+- **Going back**: the folder of the previous version is left as it was. Set `postgresql.image.tag`
+  back (e.g. `18-alpine`) and PostgreSQL starts on it again, without what was written since.
+- **Once all is well**, free the space: `kubectl -n wishalia exec <release>-wishalia-postgresql-0 --
+rm -rf /var/lib/postgresql/18 /var/lib/postgresql/upgrade`.
+- **Your own tag**: `postgresql.image.tag` and `postgresql.upgrade.fromImage.tag` must start with
+  their major version (`19-alpine`, `19.0-alpine`). Off (`postgresql.upgrade.enabled=false`), a new
+  major version starts on an empty folder.
 
 ### You already have PostgreSQL
 

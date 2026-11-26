@@ -1,13 +1,17 @@
 # One Dockerfile for the four images: docker build --build-arg APP=api|worker|web-app|web-public .
 # The build runs on the build machine (no QEMU): the apps are plain JavaScript once built, with no
 # native module, so the output works on every target architecture.
-ARG NODE_VERSION=24
+ARG NODE_VERSION=26
+# Node.js 25 and later no longer ship Corepack: installed from npm, it reads the pnpm version of
+# package.json (packageManager)
+ARG COREPACK_VERSION=0.36.0
 
 FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS build
 ARG APP
+ARG COREPACK_VERSION
 RUN test -n "$APP" || (echo "build with --build-arg APP=api|worker|web-app|web-public" >&2; exit 1)
 ENV PNPM_HOME=/pnpm CI=true
-RUN corepack enable
+RUN npm install -g "corepack@${COREPACK_VERSION}" && corepack enable
 WORKDIR /repo
 
 # Dependencies first, for the layer cache: only the manifests and the lockfile

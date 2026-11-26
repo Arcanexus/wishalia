@@ -21,7 +21,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
       - name: Enable pnpm
-        run: corepack enable
+        # Node.js 25 and later no longer ship Corepack: the same version as the Dockerfile, from npm
+        run: npm install -g corepack@0.36.0 && corepack enable
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
@@ -236,6 +237,31 @@ jobs:
             exit 1
           fi
 
+      - name: A new major version of the built-in PostgreSQL dumps and restores its data, once
+        run: |
+          sts='select(.kind == "StatefulSet" and .metadata.name == "t-wishalia-postgresql") | .spec.template.spec'
+          pg=$(helm template t charts/wishalia --set existingSecret=s)
+          echo "$pg" | yq -e "$sts | [.initContainers[].name] == [\"upgrade-dump\", \"upgrade-restore\"]" > /dev/null
+          echo "$pg" | yq -e "$sts | .initContainers[0].image == \"docker.io/library/postgres:18-alpine\"" > /dev/null
+          echo "$pg" | yq -e "$sts | .initContainers[1].image == .containers[0].image" > /dev/null
+          echo "$pg" | yq -e "$sts | .initContainers[0].env[] | select(.name == \"TO_MAJOR\") | .value == \"19\"" > /dev/null
+          # After volumePermissions, which gives the volume to the postgres user first
+          helm template t charts/wishalia --set existingSecret=s --set volumePermissions.enabled=true \
+            | yq -e "$sts | [.initContainers[].name] == [\"volume-permissions\", \"upgrade-dump\", \"upgrade-restore\"]" > /dev/null
+          # Nothing to upgrade: off, the same major version, or no volume
+          for none in "--set postgresql.upgrade.enabled=false" "--set postgresql.image.tag=18.7-alpine" \
+                      "--set postgresql.persistence.enabled=false"; do
+            if helm template t charts/wishalia --set existingSecret=s $none | grep -q upgrade-dump; then
+              echo "::error::the upgrade rendered with $none"
+              exit 1
+            fi
+          done
+          # A tag without its major version cannot be compared
+          if helm template t charts/wishalia --set existingSecret=s --set postgresql.image.tag=latest > /dev/null 2>&1; then
+            echo "::error::the chart rendered a PostgreSQL tag without its major version"
+            exit 1
+          fi
+
       - name: The two hosts must differ
         run: |
           if helm template t charts/wishalia --set existingSecret=s --set ingress.enabled=true --set hosts.app=wishalia.example.com; then
@@ -302,6 +328,45 @@ jobs:
           $render $api --show-only templates/ingress.yaml | yq -e "$rule | .[0].path == \"/v1\"" > /dev/null
           $render $api --show-only templates/configmap.yaml \
             | yq -e '.data.API_ORIGIN == "https://api.wishalia.example.com"' > /dev/null
+
+  # The upgrade of the built-in PostgreSQL, for real: data written by the previous major version,
+  # the two init containers of the chart, then the new server, which must find it
+  postgresql-upgrade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e # v5
+      - name: Dump with the old image, restore with the new one
+        run: |
+          helm template t charts/wishalia --set existingSecret=s --show-only templates/postgresql.yaml > pg.yaml
+          sts='select(.kind == "StatefulSet") | .spec.template.spec'
+          old=$(yq -r "$sts | .initContainers[0].image" pg.yaml)
+          new=$(yq -r "$sts | .containers[0].image" pg.yaml)
+          yq -r "$sts | .initContainers[0].command[2]" pg.yaml > dump.sh
+          yq -r "$sts | .initContainers[1].command[2]" pg.yaml > restore.sh
+          from=$(yq -r "$sts | .initContainers[0].env[] | select(.name == \"FROM_MAJOR\") | .value" pg.yaml)
+          to=$(yq -r "$sts | .initContainers[0].env[] | select(.name == \"TO_MAJOR\") | .value" pg.yaml)
+          # As in the pod: the postgres user, a read-only root, the socket and /tmp apart
+          env="-e POSTGRES_USER=wishalia -e POSTGRES_PASSWORD=pw -e POSTGRES_DB=wishalia -e FROM_MAJOR=$from -e TO_MAJOR=$to"
+          run="--user 70:70 --read-only --tmpfs /tmp --tmpfs /var/run/postgresql:uid=70,gid=70 -v pgdata:/var/lib/postgresql -v $PWD:/s:ro"
+          docker run --rm -v pgdata:/var/lib/postgresql --entrypoint chown "$old" 70:70 /var/lib/postgresql
+          docker run -d --name before $env $run "$old"
+          until docker exec before pg_isready -h 127.0.0.1 -U wishalia; do sleep 1; done
+          docker exec before psql -U wishalia -d wishalia -v ON_ERROR_STOP=1 \
+            -c "create table wishes (id uuid primary key default gen_random_uuid(), title text, data jsonb)" \
+            -c "insert into wishes (title, data) values ('vélo', '{\"price\": 12900}')"
+          docker stop before
+          for step in "$old dump.sh" "$new restore.sh" "$old dump.sh" "$new restore.sh"; do
+            set -- $step
+            # Twice: the second time finds the new version and does nothing
+            docker run --rm $env $run "$1" bash -c "$(cat "$2")"
+          done
+          docker run -d --name after $env $run "$new"
+          until docker exec after pg_isready -h 127.0.0.1 -U wishalia; do sleep 1; done
+          test "$(docker exec after psql -U wishalia -d wishalia -Atc "select title || ' ' || (data->>'price') from wishes")" = "vélo 12900"
+          docker exec after psql -U wishalia -d wishalia -Atc "show server_version" | grep -q "^$to\."
 
   scripts:
     runs-on: ubuntu-latest

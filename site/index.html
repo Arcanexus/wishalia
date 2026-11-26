@@ -171,8 +171,9 @@
   --set hosts.app=app.wishalia.example.com \
   --set ingress.enabled=true</code></pre>
         <p>
-          PostgreSQL comes with the chart, or bring your own with <code>postgresql.enabled=false</code>. On
-          NFS, add <code>volumePermissions.enabled=true</code>.
+          PostgreSQL 19 comes with the chart, or bring your own with <code>postgresql.enabled=false</code>.
+          Coming from PostgreSQL 18, the chart moves the data by itself. On NFS, add
+          <code>volumePermissions.enabled=true</code>.
         </p>
         <p>
           <a href="https://github.com/Arcanexus/wishalia/wiki/Installation">Read the installation guide</a>

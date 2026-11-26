@@ -72,7 +72,7 @@ server, not hidden in the page.
 ## Quick start
 
 ```sh
-corepack enable && pnpm install
+npm install -g corepack && corepack enable && pnpm install
 docker compose up -d
 pnpm dev
 ```

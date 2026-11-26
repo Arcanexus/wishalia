@@ -90,6 +90,25 @@ web-public: { values: webPublic, exposed: true }
 {{- end }}
 
 {{- /*
+postgresql.upgrade: the two major versions as JSON ({"from": "18", "to": "19"}) when the built-in
+PostgreSQL keeps its data and its image is a newer major version than upgrade.fromImage. Empty
+otherwise: nothing to upgrade.
+*/ -}}
+{{- define "wishalia.postgresql.upgrade" -}}
+{{- $pg := .Values.postgresql }}
+{{- if and $pg.upgrade.enabled $pg.persistence.enabled }}
+{{- $to := regexFind "^[0-9]+" (toString $pg.image.tag) }}
+{{- $from := regexFind "^[0-9]+" (toString $pg.upgrade.fromImage.tag) }}
+{{- if not (and $to $from) }}
+{{- fail "postgresql.upgrade: postgresql.image.tag and postgresql.upgrade.fromImage.tag must start with their major version (e.g. 19-alpine, 18-alpine), or set postgresql.upgrade.enabled=false" }}
+{{- end }}
+{{- if gt (atoi $to) (atoi $from) }}
+{{- dict "from" $from "to" $to | toJson }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- /*
 Where the database comes from, checked once: the built-in PostgreSQL, or an existing one whose
 DATABASE_URL is in externalDatabase.existingSecret or in existingSecret. Returns nothing.
 */ -}}
