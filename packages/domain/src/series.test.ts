@@ -33,6 +33,13 @@ describe("seriesTitleOf", () => {
     expect(seriesTitleOf([])).toBeNull();
     expect(seriesTitleOf(["  "])).toBeNull();
   });
+  it("strips trailing punctuation quickly, however long a run of it", () => {
+    const run = ",".repeat(50_000);
+    const started = performance.now();
+    expect(seriesTitleOf([`Dragon Ball${run} T30`, `Dragon Ball${run} T31`])).toBe("Dragon Ball");
+    expect(seriesTitleOf([`Dragon Ball${run} T30`])).toBe("Dragon Ball");
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
 });
 
 describe("volumeLabel", () => {

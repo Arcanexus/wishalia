@@ -19,6 +19,16 @@ const NUMBER_WORDS =
 /** A volume's number at the end of a title: « 30 », « T30 », « #4 », « n°2 », « Vol.3 », « IV ». */
 const VOLUME_NUMBER = /^(t|tome|vol\.?|n°|no\.?|#)?(\d+|[ivxlc]+)\)?$/i;
 
+/** Spaces and punctuation left at the end of a guessed name. */
+const TRAILING = /[\s,:;–—-]/u;
+
+/** A name without the spaces and punctuation at its end, in one pass (no regex that backtracks). */
+function trimTrailing(text: string): string {
+  let end = text.length;
+  while (end > 0 && TRAILING.test(text[end - 1] ?? "")) end -= 1;
+  return text.slice(0, end);
+}
+
 /** The words of a title, split on spaces. */
 const wordsOf = (title: string) => title.trim().split(/\s+/u).filter(Boolean);
 
@@ -39,12 +49,7 @@ export function seriesTitleOf(titles: readonly string[]): string | null {
       words = words.slice(0, -1);
       while (words.length > 1 && NUMBER_WORDS.test(words[words.length - 1] ?? "")) words = words.slice(0, -1);
     }
-    return (
-      words
-        .join(" ")
-        .replace(/[\s,:;–—-]+$/u, "")
-        .slice(0, MAX_TITLE_LENGTH) || head.join(" ")
-    );
+    return trimTrailing(words.join(" ")).slice(0, MAX_TITLE_LENGTH) || head.join(" ");
   }
   let common = 0;
   while (
@@ -56,7 +61,7 @@ export function seriesTitleOf(titles: readonly string[]): string | null {
   let words = head.slice(0, common);
   // « Dragon Ball T » (from « T30 », « T31 ») or « Harry Potter, tome »: drop what announces a number
   while (words.length > 0 && NUMBER_WORDS.test(words[words.length - 1] ?? "")) words = words.slice(0, -1);
-  const found = words.join(" ").replace(/[\s,:;–—-]+$/u, "");
+  const found = trimTrailing(words.join(" "));
   return (found || head.join(" ")).slice(0, MAX_TITLE_LENGTH);
 }
 
