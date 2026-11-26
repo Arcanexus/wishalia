@@ -61,7 +61,8 @@ JSON only: `{ "error": "<code>" }`, with `issues` (`path`, `message`) for a `400
 | `DELETE /manage/items/:id/image/upload` |                                                                                                                        | Removes the image the owner sent, file included. The item shows the page's first image (or none), and is queued for a fresh enrichment when it has a link. `404 no_upload`. History: `image_changed`.                              |
 
 An item carries `image`: signed paths of its picture in three sizes (`small`, `medium`, `large`),
-served by the frontends under `/img/`, or `null`; and `imageCrop`. The files' place (on the volume or
+served by the frontends under `/img/`, and `gallery`, the signed `large` paths of its other images
+(whole, in the page's order, seven at most), or `null`; and `imageCrop`. The files' place (on the volume or
 in the bucket) is never given. See [Images](images.md).
 
 The quick add takes what the person typed or shared: a URL, free text, or text with a URL in it.

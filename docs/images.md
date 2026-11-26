@@ -32,6 +32,31 @@ Each item of a list has an **Image** button. Its page has, in this order:
 
 Every change writes an `image_changed` entry to the item's history (owner only).
 
+## Opening the images big
+
+On the owner's lists, in the preview and on the family's page, a click (or a tap) on an item's image
+opens it big, in the page: the image shown first, whole (not framed), then the item's other images,
+in the order of the page they come from. A corner of the thumbnail says how many there are. An item
+whose owner chose « Ne plus afficher d'image » opens nothing.
+
+![The images of an item, opened big on a computer](images/app-gallery.png)
+
+- **Moving from one to the next**: the arrow buttons (an arrow, its name in a tip on hover and on
+  keyboard focus), a dot for each image, the ← and → keys (Début and Fin for the first and the
+  last), or a swipe on a touch screen. It goes round at both ends.
+- **Closing**: the cross, Échap, or a click (a tap) outside the frame. The focus goes back to the
+  image that opened it.
+- **For everyone**: a real modal dialog, named after the item, that keeps the focus inside while it
+  is open; each image says its place to a screen reader (« Lampe de lecture en laiton, image 2 sur
+  4 »), and the place is read again when it changes. The buttons are 48 px, the dots 32 px.
+- **Light**: nothing big is fetched before it opens; then only the image shown and its two
+  neighbours. Without JavaScript, the image is a plain link to its big version.
+
+![The same on a phone, in dark mode](images/public-gallery-dark.png)
+
+The owner and the guests get the same images: signed paths only, never where a file is, and nothing
+about who gave what. At most eight images open together, the one shown included.
+
 ![A Christmas list on a phone, in dark mode, with the images of its items](images/app-list-christmas-dark.png)
 
 ## The page's images

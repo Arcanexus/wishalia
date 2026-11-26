@@ -14,4 +14,17 @@ export const common = {
     title: { notFound: "Introuvable", other: "Erreur" },
     somethingWrong: "Quelque chose s'est mal passé",
   },
+  /** The image viewer: an item's images, opened big (docs/images.md). */
+  gallery: {
+    open: (title: string, count: number) =>
+      count > 1 ? `Agrandir les ${count} images de « ${title} »` : `Agrandir l'image de « ${title} »`,
+    dialog: (title: string) => `Images de « ${title} »`,
+    image: (title: string, position: number, count: number) =>
+      count > 1 ? `${title}, image ${position} sur ${count}` : `${title}`,
+    position: (position: number, count: number) => `Image ${position} sur ${count}`,
+    show: (position: number) => `Voir l'image ${position}`,
+    previous: "Image précédente",
+    next: "Image suivante",
+    close: "Fermer",
+  },
 };
