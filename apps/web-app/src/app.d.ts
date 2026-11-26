@@ -3,6 +3,8 @@ import type { ModeChoice, ThemeChoice, ThemeName } from "@wishalia/domain";
 import type { Locale, LocaleChoice } from "@wishalia/i18n";
 
 declare global {
+  /** The app's version, from its package.json at build time (vite.config.ts). */
+  const __WISHALIA_VERSION__: string;
   namespace App {
     interface Locals {
       /** The person's own choices, from their preference cookies. */

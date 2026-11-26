@@ -6,6 +6,25 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- At the foot of every page, on both frontends: « Aide : le guide d'utilisation » (« Help: the user
+  guide »), which opens the new user guide of the wiki in the page's language
+  ([User guide](docs/user-guide.md), [Guide d'utilisation](docs/guide-utilisateur.md)), and the
+  version that runs. `config.helpUrl` (`HELP_URL`) leads the help link to a server's own page.
+- Changing a series' image offers every image of its volumes, volume by volume, each named after
+  its volume (« T30, image 2 »); the one chosen shows on the series' card, for the guests too. API:
+  `volume` on each image of `GET /manage/items/:id/images`.
+
+### Fixed
+
+- Dragging a wish by its handle moves it as many places up or down as wanted in one go: it used to
+  stop after one place, as the card moved under the finger or the pointer.
+- Adding a volume to a series no longer folds its card: it unfolds to show the new volume, and a
+  series unfolded by hand stays so as the page reloads.
+- The guests' sentence about the surprise says what it means: « Alex ne voit pas qui offre quoi :
+  la surprise reste entière. » (« Alex can't see who gives what: the surprise stays whole. »)
+
 ## [0.0.9] - 2026-11-26
 
 ### Added

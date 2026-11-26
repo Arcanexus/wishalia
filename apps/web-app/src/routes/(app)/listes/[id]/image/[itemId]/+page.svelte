@@ -5,7 +5,7 @@
   import { resolve } from "$app/paths";
 
   import { appMessages } from "@wishalia/i18n/messages/app";
-  import { isLive } from "@wishalia/domain";
+  import { isLive, volumeLabel } from "@wishalia/domain";
   import { useI18n } from "@wishalia/ui/i18n.ts";
   import { followLive, holding } from "@wishalia/ui/live.ts";
 
@@ -19,8 +19,19 @@
 
   const item = $derived(data.item);
   const on = $derived(data.me.features?.images ?? false);
-  const proposals = $derived(data.images.images.filter((image) => image.source === "page"));
-  const mine = $derived(data.images.images.find((image) => image.source === "upload"));
+  const own = $derived(data.images.images.filter((image) => !image.volume));
+  const proposals = $derived(own.filter((image) => image.source === "page"));
+  const mine = $derived(own.find((image) => image.source === "upload"));
+  // A series (docs/series.md) has no page of its own: it offers every image of its volumes
+  const isSeries = $derived(item.kind === "series");
+  const fromVolumes = $derived(
+    data.images.images.flatMap((image) => {
+      if (!image.volume) return [];
+      const volume = image.volume;
+      const nth = data.images.images.filter((other) => other.volume?.id === volume.id).indexOf(image) + 1;
+      return [{ ...image, label: m.ofVolume(volumeLabel(volume.title, item.title), nth) }];
+    }),
+  );
   const chosen = $derived(data.images.images.find((image) => image.id === data.images.imageId));
 
   const i18n = useI18n();
@@ -88,15 +99,17 @@
   {/if}
 
   <section class="card" aria-labelledby="page-titre">
-    <h2 id="page-titre">{m.page}</h2>
-    {#if item.enrichment === "pending"}
+    <h2 id="page-titre">{isSeries ? m.volumes : m.page}</h2>
+    {#if isSeries}
+      <p class="muted hint">{fromVolumes.length > 0 ? m.volumesHelp : m.noVolumeImage}</p>
+    {:else if item.enrichment === "pending"}
       <p class="muted">{m.reading}</p>
     {:else if proposals.length === 0 && !mine}
       <p class="muted">
         {item.url ? m.noneOnPage : m.addLink}
       </p>
     {/if}
-    {#if proposals.length > 0 || mine}
+    {#if proposals.length > 0 || mine || fromVolumes.length > 0}
       <!-- A tap on an image is the choice, saved at once; without JavaScript, a button -->
       <form
         method="POST"
@@ -131,6 +144,18 @@
                 />
                 <img src={image.sources.small} alt="" width="192" height="192" loading="lazy" />
                 <span>{m.nth(index + 1)}</span>
+              </label>
+            {/each}
+            {#each fromVolumes as image (image.id)}
+              <label class="choice">
+                <input
+                  type="radio"
+                  name="imageId"
+                  value={image.id}
+                  checked={image.id === data.images.imageId}
+                />
+                <img src={image.sources.small} alt="" width="192" height="192" loading="lazy" />
+                <span>{image.label}</span>
               </label>
             {/each}
           </div>

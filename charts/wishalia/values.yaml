@@ -19,6 +19,9 @@ config:
   # person can still choose theirs in the settings.
   defaultLocale: fr
   logLevel: info
+  # Where the help link at the foot of every page leads (https). Empty: the user guide of the
+  # project's wiki, in the page's language (docs/user-guide.md)
+  helpUrl: ""
 
 # Hosts of the two frontends. The public view and the management app are never served by the
 # same host (spec: separation of the public view and the management app).

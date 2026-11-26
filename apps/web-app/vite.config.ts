@@ -1,9 +1,16 @@
 import adapter from "@sveltejs/adapter-node";
 import { sveltekit } from "@sveltejs/kit/vite";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
+// The version at the foot of the pages, when the image does not name a release (docs/user-guide.md)
+const { version } = JSON.parse(readFileSync(new URL("package.json", import.meta.url), "utf8")) as {
+  version: string;
+};
+
 export default defineConfig({
+  define: { __WISHALIA_VERSION__: JSON.stringify(version) },
   plugins: [
     sveltekit({
       // Node server in the Docker image (node build): PORT, ORIGIN and the app variables come from the environment

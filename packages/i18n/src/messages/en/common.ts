@@ -35,4 +35,9 @@ export const common: CommonMessages = {
     next: "Next image",
     close: "Close",
   },
+  footer: {
+    help: "Help: the user guide",
+    helpNewTab: " (new tab)",
+    version: (version) => `Version ${version}`,
+  },
 };

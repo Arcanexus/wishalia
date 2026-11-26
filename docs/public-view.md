@@ -85,6 +85,15 @@ SVG attributes, never `style` attributes, which the page's CSP refuses.
 
 ![Where an event stands, and a pool past its target](images/public-gauge.png)
 
+Under the items, one sentence tells the guests the rule that protects the surprise: « Alex ne voit
+pas qui offre quoi : la surprise reste entière. » (« Alex can't see who gives what: the surprise stays
+whole. »). The owner sees it too, in their preview. The help link and the version end the page, as in the app
+([Management app](management-app.md#the-foot-of-the-pages)).
+
+![The sentence about the surprise, and the foot of the page](images/public-secret.png)
+
+![The same, in English and in dark mode](images/public-secret-en-dark.png)
+
 Between guests, a contribution shows its author's name, or « une personne discrète » when they chose
 to stay anonymous, never its amount. Items still to give come first, in the owner's order; those
 already given or received follow, quieter, with a dashed border.

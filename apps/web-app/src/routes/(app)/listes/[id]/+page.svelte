@@ -4,6 +4,7 @@
   import { invalidate } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
+  import { SvelteSet } from "svelte/reactivity";
   import { appMessages } from "@wishalia/i18n/messages/app";
   import {
     inReadingOrder,
@@ -124,16 +125,20 @@
       (same && !same.disabled ? same : other)?.focus();
     };
 
-  /** Drag by the handle, with a mouse, a pen or a finger; the arrows do the same in one tap. */
+  /**
+   * Drag by the handle, with a mouse, a pen or a finger, as many places up or down as wanted in
+   * one go; the arrows do the same one place a tap. The pointer is followed on the whole window:
+   * the card moves in the list as it goes, and a moved node loses the pointer's capture.
+   */
   function drag(event: PointerEvent, id: string) {
     if (event.button !== 0 || !list) return;
     event.preventDefault();
-    const handle = event.currentTarget as HTMLElement;
-    handle.setPointerCapture(event.pointerId);
+    const pointer = event.pointerId;
     const before = shown.map((item) => item.id);
     order = before;
     dragging = id;
     const follow = (move: PointerEvent) => {
+      if (move.pointerId !== pointer) return;
       const others = [...(list?.querySelectorAll<HTMLElement>(":scope > li") ?? [])].filter(
         (li) => li.dataset.id !== id,
       );
@@ -148,9 +153,10 @@
       else if (move.clientY > window.innerHeight - 64) window.scrollBy(0, 16);
     };
     const drop = async (end: PointerEvent) => {
-      handle.removeEventListener("pointermove", follow);
-      handle.removeEventListener("pointerup", drop);
-      handle.removeEventListener("pointercancel", drop);
+      if (end.pointerId !== pointer) return;
+      window.removeEventListener("pointermove", follow);
+      window.removeEventListener("pointerup", drop);
+      window.removeEventListener("pointercancel", drop);
       dragging = null;
       if (end.type === "pointercancel" || !order || order.join() === before.join()) {
         order = null;
@@ -160,9 +166,9 @@
       await tick();
       orderForm?.requestSubmit();
     };
-    handle.addEventListener("pointermove", follow);
-    handle.addEventListener("pointerup", drop);
-    handle.addEventListener("pointercancel", drop);
+    window.addEventListener("pointermove", follow);
+    window.addEventListener("pointerup", drop);
+    window.addEventListener("pointercancel", drop);
   }
   const closed = $derived(own.filter((item) => item.status !== "open"));
 
@@ -215,6 +221,9 @@
   $effect(() => {
     if (form?.series && "gathered" in form.series) gathering = null;
   });
+  // The series unfolded by the owner: they stay so as the page reloads, after a volume is added too
+  const unfolded = new SvelteSet<string>();
+  const fold = (id: string, open: boolean) => (open ? unfolded.add(id) : unfolded.delete(id));
   /** A wish whose name starts like the series': ticked in advance. */
   const belongs = (item: Item, series: Item) => volumeLabel(item.title, series.title) !== item.title;
   $effect(() => {
@@ -628,11 +637,16 @@
       {#if others.length > 0}<button type="submit">{s.gather.submit}</button>{/if}
     </form>
   {/if}
-  <!-- Folded by default; open while one of its volumes is being edited -->
+  <!-- Folded by default; open once unfolded, while one of its volumes is being edited, and after
+       a volume is added to it, to show it -->
   {#if volumes.length === 0}
     <p class="muted wide">{s.empty}</p>
   {:else}
-    <details class="fold wide" open={volumes.some((volume) => volume.id === editing)}>
+    <details
+      class="fold wide"
+      open={unfolded.has(series.id) || volumes.some((volume) => volume.id === editing)}
+      ontoggle={(event) => fold(series.id, event.currentTarget.open)}
+    >
       <summary><Icon name="chevronRight" size="1.2rem" />{s.volumes(volumes.length)}</summary>
       <ol class="volumes" aria-label={appMessages(i18n.locale).series.volumes(volumes.length)}>
         {#each volumes as volume (volume.id)}
@@ -643,7 +657,15 @@
   {/if}
   <!-- Adding a volume stays at hand, folded or not -->
   <div class="wide">
-    <form method="POST" action="?/addVolume" class="add-volume" use:enhance>
+    <form
+      method="POST"
+      action="?/addVolume"
+      class="add-volume"
+      use:enhance={() => {
+        unfolded.add(series.id);
+        return async ({ update }) => update();
+      }}
+    >
       <input type="hidden" name="parentId" value={series.id} />
       <label class="visually-hidden" for="tome-{series.id}">{s.addVolume.label(series.title)}</label>
       <input

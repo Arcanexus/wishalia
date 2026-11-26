@@ -49,9 +49,16 @@ it comes back whole when the volume leaves the series.
 ![A series on a phone, in dark mode](images/app-series-dark.png)
 
 The volumes fold under « 5 tomes »: a chevron unfolds them, and they stay open while one of them is
-being edited. The field that adds a volume stays under the card, folded or not. The series' square
-shows its own image, or else the first volume's. The count of wishes of a list
+being edited. The field that adds a volume stays under the card, folded or not; adding a volume
+unfolds the card to show it, and a card the owner unfolded stays so as the page reloads. The series'
+square shows the image chosen for it, or else the first volume's. Its pencil opens « Image de … »,
+which offers, under « Les images des tomes », **every image of every volume**, volume by volume in
+their order, each named after its volume (« T30 », « T31, image 2 »): a tap shows it on the series'
+card, framed as the owner likes, for the guests too. A photo of the owner's own works as for any
+wish. When the volume's image goes, the series shows its first volume's again. The count of wishes of a list
 counts the volumes one by one, never the series.
+
+![Choosing the series' image among its volumes' images](images/app-series-image.png)
 
 ## For the guests
 

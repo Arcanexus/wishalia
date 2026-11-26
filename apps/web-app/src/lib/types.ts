@@ -92,6 +92,8 @@ export interface ItemImages {
     width: number | null;
     height: number | null;
     sources: ImageSources;
+    /** For a series, the volume an image belongs to (docs/series.md); null for its own. */
+    volume?: { id: string; title: string } | null;
   }[];
 }
 

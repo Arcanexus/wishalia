@@ -39,4 +39,10 @@ export const common = {
     next: "Image suivante",
     close: "Fermer",
   },
+  /** The foot of every page: help for the people, and the version that runs (docs/user-guide.md). */
+  footer: {
+    help: "Aide : le guide d'utilisation",
+    helpNewTab: " (nouvel onglet)",
+    version: (version: string) => `Version ${version}`,
+  },
 };
