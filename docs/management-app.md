@@ -163,14 +163,18 @@ opens it without JavaScript too). Saved as they change, it holds:
 
 The pencil, « Modifier », opens the item in place, under its card (its link, `?modifier=<id>`,
 does it without JavaScript), and the cross folds it back. Every field is saved as it changes: its name, what kind of gift it is, its price,
-its list, its link and notes for the family. The kind is a choice of three, each with a line that
+its list, its link and notes for the family. The kind is a choice of four, each with a line that
 says what it means:
 
 - **Un cadeau**: one person reserves it; « À chaque occasion » makes it a gift that can be given
   again at every event (it is then never marked received);
 - **Plusieurs exemplaires**: how many are wanted, from 1 to 1,000; each guest reserves one or more;
 - **Une cagnotte**: a target in euros, optional; each guest chips in what they want, past the target
-  if they like.
+  if they like;
+- **Une série**: the wish becomes the first volume of a new series, one card with its volumes inside,
+  each given on its own (see [Series](series.md)).
+
+![Editing a wish, on a phone: the four kinds](images/app-edit-item.png)
 
 Only the fields of the kind chosen show, by CSS, so the form works the same without JavaScript.
 Amounts are typed as the person writes them (« 24 », « 12,50 »). A link is cleaned like in the quick

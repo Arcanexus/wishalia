@@ -409,3 +409,59 @@ describe("in English", () => {
     ).toBe("You are reserving 2.");
   });
 });
+
+describe("series (docs/series.md)", () => {
+  const series = item({ id: "s", kind: "series", title: "Dragon Ball", funding: funding() });
+  const t30 = item({ id: "t30", parentId: "s", title: "Dragon Ball T30" });
+  const t31 = item({
+    id: "t31",
+    parentId: "s",
+    title: "Dragon Ball T31",
+    funding: funding({ state: "complete" }),
+  });
+  const lamp = item({ id: "lamp" });
+
+  it("shows the volumes inside their series' card", () => {
+    expect(view.cardsOf([series, t30, t31, lamp]).map((entry) => entry.id)).toEqual(["s", "lamp"]);
+    expect(
+      view
+        .volumesOf([series, t30, t31, lamp])
+        .get("s")
+        ?.map((entry) => entry.id),
+    ).toEqual(["t30", "t31"]);
+  });
+
+  it("sorts a series as one, complete once every volume is", () => {
+    const given = { ...t30, funding: funding({ state: "complete" }) };
+    expect(view.sortForGuests([series, given, t31, lamp]).map((entry) => entry.id)).toEqual([
+      "lamp",
+      "s",
+      "t30",
+      "t31",
+    ]);
+    expect(view.sortForGuests([series, t30, t31, lamp]).map((entry) => entry.id)).toEqual([
+      "s",
+      "t30",
+      "t31",
+      "lamp",
+    ]);
+    const received = [
+      { ...t30, status: "received" as const },
+      { ...t31, status: "received" as const },
+    ];
+    expect(view.sortForGuests([series, ...received, lamp, given]).map((entry) => entry.id)[0]).toBe("lamp");
+  });
+
+  it("says how many volumes are left, never to the owner", () => {
+    expect(view.seriesLeft([t30, t31])).toEqual({ left: 1, total: 2 });
+    expect(view.seriesLeft([{ ...t30, funding: null }])).toBeNull();
+    expect(view.seriesLeft([])).toBeNull();
+  });
+
+  it("is never given itself, and counts by its volumes", () => {
+    expect(standing(series)).toBeNull();
+    expect(view.unitsLeft(series)).toBe(0);
+    expect(view.canGive(series, { viewer: "guest", event: null })).toBe(false);
+    expect(view.gauge([series, t30, t31])).toEqual({ complete: 1, inProgress: 0, free: 1 });
+  });
+});

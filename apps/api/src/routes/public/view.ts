@@ -49,40 +49,61 @@ export async function itemInView(
   itemId: string,
   { archived = false }: { archived?: boolean } = {},
 ): Promise<WishRow | undefined> {
-  const visible = and(
-    eq(schema.wishes.id, itemId),
-    archived ? isNull(schema.wishes.deletedAt) : ne(schema.wishes.status, "archived"),
-  );
-  if (link.scope === "list" && link.listId) {
-    const [row] = await tx
-      .select({ wish: schema.wishes })
+  const shown = (id: string) =>
+    and(
+      eq(schema.wishes.id, id),
+      archived ? isNull(schema.wishes.deletedAt) : ne(schema.wishes.status, "archived"),
+    );
+  const [row] = await tx
+    .select({ wish: schema.wishes })
+    .from(schema.wishes)
+    .innerJoin(schema.wishLists, eq(schema.wishLists.id, schema.wishes.listId))
+    // An archived list is out of a list link's view; an event link still finds its archived items
+    .where(
+      and(
+        shown(itemId),
+        archived && link.scope === "event" ? undefined : isNull(schema.wishLists.archivedAt),
+      ),
+    );
+  const wish = row?.wish;
+  if (!wish) return undefined;
+  // A volume is seen through its series (docs/series.md): an archived series hides its volumes
+  if (wish.parentId) {
+    const [series] = await tx
+      .select({ id: schema.wishes.id })
       .from(schema.wishes)
-      .innerJoin(schema.wishLists, eq(schema.wishLists.id, schema.wishes.listId))
-      .where(and(visible, eq(schema.wishes.listId, link.listId), isNull(schema.wishLists.archivedAt)));
-    return row?.wish;
+      .where(shown(wish.parentId));
+    if (!series) return undefined;
   }
+  if (link.scope === "list" && link.listId) return wish.listId === link.listId ? wish : undefined;
   if (link.scope === "event" && link.eventId) {
-    const [row] = await tx
-      .select({ wish: schema.wishes })
-      .from(schema.wishes)
-      .innerJoin(
-        schema.eventWishes,
-        and(eq(schema.eventWishes.wishId, schema.wishes.id), eq(schema.eventWishes.eventId, link.eventId)),
-      )
-      .innerJoin(schema.wishLists, eq(schema.wishLists.id, schema.wishes.listId))
-      .where(and(visible, archived ? undefined : isNull(schema.wishLists.archivedAt)));
-    return row?.wish;
+    // The event selects the series, and with it every volume
+    const [selected] = await tx
+      .select({ wishId: schema.eventWishes.wishId })
+      .from(schema.eventWishes)
+      .where(
+        and(
+          eq(schema.eventWishes.eventId, link.eventId),
+          eq(schema.eventWishes.wishId, wish.parentId ?? wish.id),
+        ),
+      );
+    return selected ? wish : undefined;
   }
   return undefined;
 }
 
 /** The events of the owner an item is in, for the contribution picker of a list link. */
-export async function eventsOfItem(tx: Tx, ownerId: string, itemId: string): Promise<EventRow[]> {
+export async function eventsOfItem(
+  tx: Tx,
+  ownerId: string,
+  wish: { id: string; parentId: string | null },
+): Promise<EventRow[]> {
+  // A volume is in the events of its series
   const rows = await tx
     .select({ event: schema.events })
     .from(schema.eventWishes)
     .innerJoin(schema.events, eq(schema.events.id, schema.eventWishes.eventId))
-    .where(and(eq(schema.eventWishes.wishId, itemId), eq(schema.events.ownerId, ownerId)))
+    .where(and(eq(schema.eventWishes.wishId, wish.parentId ?? wish.id), eq(schema.events.ownerId, ownerId)))
     .orderBy(asc(schema.events.date));
   return rows.map((row) => row.event);
 }
@@ -155,6 +176,9 @@ async function loadView(db: Database, link: LinkRow): Promise<ViewData> {
       .from(schema.wishes)
       .where(and(eq(schema.wishes.listId, list.id), ne(schema.wishes.status, "archived")))
       .orderBy(asc(schema.wishes.position), asc(schema.wishes.createdAt));
+    // The volumes of an archived series leave with it
+    const shown = new Set(items.map((item) => item.id));
+    items = items.filter((item) => item.parentId === null || shown.has(item.parentId));
   } else if (link.scope === "event" && link.eventId) {
     const [event] = await db.select().from(schema.events).where(eq(schema.events.id, link.eventId));
     if (!event) throw new HttpError(404, "link_not_found");
@@ -174,6 +198,16 @@ async function loadView(db: Database, link: LinkRow): Promise<ViewData> {
       )
       .orderBy(asc(schema.eventWishes.position), asc(schema.eventWishes.addedAt));
     items = rows.map((row) => row.wish);
+    // A series selected brings its volumes, in their order (docs/series.md)
+    const seriesIds = items.filter((item) => item.kind === "series").map((item) => item.id);
+    if (seriesIds.length > 0) {
+      const volumes = await db
+        .select()
+        .from(schema.wishes)
+        .where(and(inArray(schema.wishes.parentId, seriesIds), ne(schema.wishes.status, "archived")))
+        .orderBy(asc(schema.wishes.position), asc(schema.wishes.createdAt));
+      items = [...items, ...volumes];
+    }
   } else {
     throw new HttpError(404, "link_not_found");
   }
@@ -197,6 +231,10 @@ async function loadView(db: Database, link: LinkRow): Promise<ViewData> {
       .orderBy(asc(schema.events.date));
     for (const row of links) {
       itemEvents.set(row.wishId, [...(itemEvents.get(row.wishId) ?? []), row.event]);
+    }
+    // A volume is in the events of its series
+    for (const item of items) {
+      if (item.parentId) itemEvents.set(item.id, itemEvents.get(item.parentId) ?? []);
     }
     const rows = await db
       .select({
@@ -386,6 +424,8 @@ export const viewRoutes: FastifyPluginAsync<{
         return {
           id: wish.id,
           kind: wish.kind,
+          // The series it is a volume of (docs/series.md): the page shows it inside its card
+          parentId: wish.parentId,
           repeatable: wish.repeatable,
           title: wish.title,
           url: wish.url,

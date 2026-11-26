@@ -14,6 +14,7 @@ list never sees who gave what, until they choose to lift the secret after the ev
 | Install it on my phone          | [Install the app](install-app.md)                                  |
 | Bring my lists from elsewhere   | [Importing a list](import.md)                                      |
 | Give a list an icon or an image | [Pictures of the lists](list-pictures.md)                          |
+| Group the volumes of a series   | [Series](series.md)                                                |
 | See what my family sees         | [Public view](public-view.md)                                      |
 | Deploy it on Kubernetes         | [Installation](installation.md)                                    |
 | Set a variable or a chart value | [Configuration](configuration.md), [Chart values](chart-values.md) |

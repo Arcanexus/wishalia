@@ -165,3 +165,13 @@ export {
   type ListIcon,
   type ListPicture,
 } from "./list-pictures.js";
+export {
+  inReadingOrder,
+  MAX_VOLUMES,
+  refuseVolume,
+  seriesPriceCents,
+  seriesTitleOf,
+  volumeLabel,
+  type Groupable,
+  type GroupRefusal,
+} from "./series.js";

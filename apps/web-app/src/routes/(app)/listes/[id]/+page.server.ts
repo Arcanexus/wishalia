@@ -4,7 +4,11 @@ import { appMessages } from "@wishalia/i18n/messages/app";
 import { ApiError, apiJson } from "#lib/server/api.ts";
 import {
   editItem,
+  gatherVolumes,
   moveItem,
+  moveVolume,
+  takeOutVolume,
+  ungroupSeries,
   orderItems,
   quickAdd,
   refreshItem,
@@ -58,6 +62,12 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
   add: (event) => quickAdd(event, event.params.id),
+  // Series (docs/series.md): a volume added, wishes put in, one taken out, the series undone
+  addVolume: (event) => quickAdd(event),
+  gather: (event) => gatherVolumes(event),
+  takeOut: (event) => takeOutVolume(event),
+  ungroup: (event) => ungroupSeries(event),
+  moveVolume: (event) => moveVolume(event, event.params.id),
   status: (event) => setItemStatus(event),
   edit: (event) => editItem(event),
   move: (event) => moveItem(event, event.params.id),

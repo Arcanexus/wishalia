@@ -39,7 +39,10 @@ export type ItemStatus = "open" | "received" | "archived";
 export interface Item {
   id: string;
   listId: string;
-  kind: "unique" | "quantity" | "pool";
+  /** « series » groups volumes (docs/series.md): wishes whose parentId it is. */
+  kind: "unique" | "quantity" | "pool" | "series";
+  /** The series this wish is a volume of, null for a wish of its own. */
+  parentId: string | null;
   /** Given again at every occasion: never received. */
   repeatable: boolean;
   title: string;

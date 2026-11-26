@@ -45,6 +45,7 @@ export const view = {
     already_shared: "D'autres participent déjà : complétez avec le montant de votre choix.",
     amount_too_high: "C'est plus que ce qu'il manque : choisissez un montant plus petit.",
     shares_not_taken: "Ce cadeau se réserve en entier.",
+    series_by_volume: "Une série s'offre tome par tome : choisissez un tome.",
     amount_required: "Indiquez un montant, par exemple 20 ou 12,50.",
     units_required: "Indiquez combien vous en offrez.",
     name_required: "Indiquez votre prénom, pour que vos proches sachent qui s'en occupe.",
@@ -70,7 +71,18 @@ export const view = {
   gaugeFree: (n: number) => `${n} à offrir`,
   /** The legend of a pool's bar: « Noël : 40 € ». */
   segment: (label: string, amount: string) => `${label} : ${amount}`,
-  kind: { quantity: "Plusieurs exemplaires", pool: "Cagnotte" },
+  kind: { quantity: "Plusieurs exemplaires", pool: "Cagnotte", series: "Série" },
+  /** A series' card (docs/series.md): its volumes, given one by one. */
+  series: {
+    volumes: (n: number) => `${n} tome${n > 1 ? "s" : ""}`,
+    left: (left: number, total: number) =>
+      left === 0
+        ? "Tous les tomes sont offerts."
+        : left === total
+          ? `${total === 1 ? "Le tome attend" : `Les ${total} tomes attendent`} un cadeau.`
+          : `${left} tome${left > 1 ? "s" : ""} sur ${total} encore à offrir.`,
+    listLabel: (title: string) => `Les tomes de « ${title} »`,
+  },
   wanted: (n: number) => `${n} souhaités`,
   everyOccasion: "À chaque occasion",
   seeOn: (site: string) => `Voir sur ${site}`,

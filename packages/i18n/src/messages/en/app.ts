@@ -179,6 +179,7 @@ export const app: AppMessages = {
       invalid_quantity: "Say how many copies you would like, from 1 to 1,000.",
       invalid_target: "The goal is an amount in euros, for example 320.",
       not_found: "This wish no longer exists.",
+      is_series: "A series does not go into another series.",
     },
     failed: "Saving didn't go through. Try again in a moment.",
     name: "Name",
@@ -189,6 +190,12 @@ export const app: AppMessages = {
     },
     quantity: { name: "Several copies", help: "Each person reserves one or more." },
     pool: { name: "A kitty", help: "Each person chips in what they like." },
+    series: {
+      name: "A series",
+      help: "Volumes or tomes, each with its price, link and image: your family gives them one by one.",
+    },
+    seriesNow:
+      "The wish becomes the first volume of a new series: you then add the other volumes, or wishes of the list.",
     howMany: "How many copies?",
     target: "Goal of the kitty, in euros (optional)",
     targetPlaceholder: "For example 320",
@@ -254,6 +261,42 @@ export const app: AppMessages = {
     deleteHelp:
       "The list and all its wishes go, with their images, and its share links no longer open. This is for good. If someone in your family meant to give something, their share link tells them.",
   },
+  series: {
+    kind: "Series",
+    volumes: (n) => (n === 0 ? "No volume" : `${n} volume${n > 1 ? "s" : ""}`),
+    total: (amount) => `${amount} in all`,
+    edit: { label: (title) => `Edit the series “${title}”`, tip: "Edit the series" },
+    name: "Name of the series",
+    notes: "Notes for your family (optional)",
+    notesHelp: "For the whole series, such as the edition or the publisher.",
+    addVolume: {
+      label: (title) => `Add a volume to “${title}”`,
+      placeholder: "A link, or the volume's name",
+      tip: "Add the volume",
+    },
+    gather: {
+      label: (title) => `Put other wishes of the list into “${title}”`,
+      tip: "Put wishes into the series",
+      legend: (title) => `Which wishes go into “${title}”?`,
+      help: "Those whose name starts like the series' are already ticked.",
+      submit: "Put into the series",
+      none: "No other wish in this list.",
+    },
+    takeOut: { label: (title) => `Take “${title}” out of the series`, tip: "Take out of the series" },
+    ungroup: {
+      label: (title) => `Undo the series “${title}”`,
+      tip: "Undo the series (its volumes stay in the list)",
+    },
+    moveUp: (title) => `Move “${title}” up in the series`,
+    moveDown: (title) => `Move “${title}” down in the series`,
+    empty: "No volume yet: add the first one below.",
+    gathered: (n, title) =>
+      n === 0 ? `No wish added to “${title}”.` : `${n === 1 ? "1 wish" : `${n} wishes`} put into “${title}”.`,
+    ungrouped: (title) => `The series “${title}” is undone: its volumes are in the list.`,
+    takenOut: (title) => `“${title}” is out of the series.`,
+    added: (title) => `“${title}” is added to the series.`,
+    failed: "This change to the series did not go through. Try again in a moment.",
+  },
   removal: {
     itemTitle: (title) => `Delete “${title}”?`,
     itemHelp:
@@ -263,6 +306,9 @@ export const app: AppMessages = {
       "The list and all its wishes go, with their images, and its share links no longer open. This is for good: it can't be restored.",
     guests: "If someone in your family meant to give it, their share link tells them.",
     archiveInstead: "To only hide it from your family, archive it: you can restore it.",
+    seriesHelp:
+      "The series and all its volumes leave the list, the events and the share links, with their images. This is final: they cannot be restored.",
+    ungroupInstead: "To keep the volumes as wishes of their own, undo the series instead.",
     cancel: "Cancel",
     confirm: "Delete for good",
     failed: "The deletion didn't go through. Try again in a moment.",

@@ -5,7 +5,14 @@
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { appMessages } from "@wishalia/i18n/messages/app";
-  import { isLive, liveChanges, type LiveItem } from "@wishalia/domain";
+  import {
+    inReadingOrder,
+    isLive,
+    liveChanges,
+    seriesPriceCents,
+    volumeLabel,
+    type LiveItem,
+  } from "@wishalia/domain";
   import Icon from "@wishalia/ui/Icon.svelte";
   import { useI18n } from "@wishalia/ui/i18n.ts";
   import { followLive, holding } from "@wishalia/ui/live.ts";
@@ -17,6 +24,7 @@
   import ListPictureLink from "#lib/ListPictureLink.svelte";
   import ListSettings from "#lib/ListSettings.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
+  import SeriesEditor from "#lib/SeriesEditor.svelte";
   import StageIcon from "@wishalia/ui/StageIcon.svelte";
   import IconButton from "#lib/IconButton.svelte";
   import { dropIndex, moveId } from "#lib/reorder.ts";
@@ -29,15 +37,36 @@
   const i18n = useI18n();
   const m = $derived(appMessages(i18n.locale).list);
   const removal = $derived(appMessages(i18n.locale).removal);
+  const s = $derived(appMessages(i18n.locale).series);
 
-  const open = $derived(data.items.filter((item) => item.status === "open"));
+  // The list's own wishes; the volumes of a series show inside its card (docs/series.md)
+  const own = $derived(data.items.filter((item) => !item.parentId));
+  const open = $derived(own.filter((item) => item.status === "open"));
+  /** Series id → its volumes, in their order. */
+  const volumesBy = $derived(
+    Map.groupBy(
+      [...data.items].filter((item) => item.parentId).sort((a, b) => a.position - b.position),
+      (item) => item.parentId ?? "",
+    ),
+  );
+  /** What is still wanted: the open wishes of their own, and the open volumes of open series. */
+  const working = $derived([
+    ...open.filter((item) => item.kind !== "series"),
+    ...open.flatMap((item) =>
+      item.kind === "series"
+        ? (volumesBy.get(item.id) ?? []).filter((volume) => volume.status === "open")
+        : [],
+    ),
+  ]);
+  /** The wishes of their own that can go into a series: never a series itself. */
+  const candidates = $derived(open.filter((item) => item.kind !== "series"));
   const images = $derived(data.me.features?.images ?? false);
   const byId = $derived(new Map(open.map((item) => [item.id, item])));
 
   // While the worker completes items from their links, the page follows it live
   // (docs/live-updates.md): a few-byte question every 2 seconds, then every 10, and the list loads
   // again only when something changed. Never with the tab hidden, never without a reason.
-  const completing = $derived(open.some((item) => isLive(stage(item))));
+  const completing = $derived(working.some((item) => isLive(stage(item))));
   // Asking to read links again starts the following over
   let refreshes = $state(0);
   $effect(() => {
@@ -58,7 +87,7 @@
   let heard = $state("");
   let before: LiveItem[] = [];
   $effect(() => {
-    const now = open.map(liveItem);
+    const now = working.map(liveItem);
     const changes = liveChanges(before, now);
     before = now;
     if (changes.length > 0) heard = changes.map((change) => m.live[change.kind](change.title)).join(" ");
@@ -135,7 +164,7 @@
     handle.addEventListener("pointerup", drop);
     handle.addEventListener("pointercancel", drop);
   }
-  const closed = $derived(data.items.filter((item) => item.status !== "open"));
+  const closed = $derived(own.filter((item) => item.status !== "open"));
 
   /** After a « Recharger »: the page shows « Lecture du lien… » and looks again, from the start. */
   const reread =
@@ -144,7 +173,7 @@
       await update({ reset: false });
       refreshes += 1;
     };
-  const linked = $derived(open.some((item) => webLink(item) !== null));
+  const linked = $derived(working.some((item) => webLink(item) !== null));
   const refreshError = $derived(
     form?.refresh && "error" in form.refresh
       ? form.refresh.error === "rate_limited"
@@ -181,6 +210,13 @@
   // (?modifier=…, ?reglages) open them before the page's JavaScript has loaded, or after a refusal
   let editing = $state<string | null>(untrack(() => page.url.searchParams.get("modifier")));
   let settingsOpen = $state(untrack(() => page.url.searchParams.has("reglages")));
+  // The series whose « ranger des envies » panel is open (?ranger=…, also without JavaScript)
+  let gathering = $state<string | null>(untrack(() => page.url.searchParams.get("ranger")));
+  $effect(() => {
+    if (form?.series && "gathered" in form.series) gathering = null;
+  });
+  /** A wish whose name starts like the series': ticked in advance. */
+  const belongs = (item: Item, series: Item) => volumeLabel(item.title, series.title) !== item.title;
   $effect(() => {
     if (form?.edit && "error" in form.edit) editing = form.edit.itemId;
   });
@@ -260,7 +296,7 @@
 
 <ListSettings list={data.list} {form} bind:open={settingsOpen} />
 
-<QuickAdd listName={data.list.name} result={form?.add ?? null} />
+<QuickAdd listName={data.list.name} result={form?.add && !("parentId" in form.add) ? form.add : null} />
 
 <!-- The items filling in, as the worker goes: said once, politely, never stealing the focus -->
 <div role="status" class="visually-hidden">{heard}</div>
@@ -280,15 +316,26 @@
     {m.statusChanged(form.status.title, form.status.status)}
   {:else if form?.remove && "title" in form.remove}
     {m.deleted(form.remove.title)}
+  {:else if form?.volume}
+    {s.added(form.volume.title)}
+  {:else if form?.series && "gathered" in form.series}
+    {s.gathered(form.series.gathered, form.series.title)}
+  {:else if form?.series && "ungrouped" in form.series}
+    {s.ungrouped(form.series.ungrouped)}
+  {:else if form?.series && "takenOut" in form.series}
+    {s.takenOut(form.series.takenOut)}
   {/if}
 </div>
 
 {#if form?.remove && "error" in form.remove}
   <p class="notice error" role="alert">{removal.failed}</p>
 {/if}
+{#if form?.series && "error" in form.series}
+  <p class="notice error" role="alert">{s.failed}</p>
+{/if}
 
 <section aria-labelledby="envies-titre">
-  <h2 id="envies-titre">{m.wishes(open.length)}</h2>
+  <h2 id="envies-titre">{m.wishes(working.length)}</h2>
   {#if open.length === 0}
     <p class="muted">{m.empty}</p>
   {:else}
@@ -305,6 +352,7 @@
           class="card item"
           class:dragging={dragging === item.id}
           class:sortable={shown.length > 1}
+          class:series={item.kind === "series"}
           data-id={item.id}
         >
           {#if shown.length > 1}
@@ -358,83 +406,89 @@
               </button>
             </form>
           {/if}
-          <ItemThumb {item} listId={data.list.id} {images} />
-          <div class="text">
-            <h3>{item.title}</h3>
-            <p class="muted meta">
-              {#if kindLine(item)}<span class="kind">{kindLine(item)}</span>{/if}
-              {#if item.priceCents !== null}<span class="price">{i18n.fmt.money(item.priceCents)}</span>{/if}
-              {#if link}
-                <a class="site" href={link} rel="noopener noreferrer external" target="_blank">
-                  {host(link)}<Icon name="external" size="1rem" /><span class="visually-hidden">
-                    {m.newTab}
-                  </span>
-                </a>
+          {#if item.kind === "series"}
+            {@render seriesCard(item)}
+          {:else}
+            <ItemThumb {item} listId={data.list.id} {images} />
+            <div class="text">
+              <h3>{item.title}</h3>
+              <p class="muted meta">
+                {#if kindLine(item)}<span class="kind">{kindLine(item)}</span>{/if}
+                {#if item.priceCents !== null}<span class="price">
+                    {i18n.fmt.money(item.priceCents)}
+                  </span>{/if}
+                {#if link}
+                  <a class="site" href={link} rel="noopener noreferrer external" target="_blank">
+                    {host(link)}<Icon name="external" size="1rem" /><span class="visually-hidden">
+                      {m.newTab}
+                    </span>
+                  </a>
+                {/if}
+              </p>
+              {#if item.notes}<p class="notes">{item.notes}</p>{/if}
+              {#if isLive(stage(item))}
+                {@const findingImages = stage(item) === "images"}
+                {@const help = findingImages ? m.findingImagesWhat : m.readingWhat(images)}
+                <!-- An icon that says the step, its words next to it, the longer help on hover -->
+                <p class="completing" title={help}>
+                  <StageIcon stage={findingImages ? "images" : "reading"} />
+                  <span class="reading">{findingImages ? m.findingImages : m.reading}</span>
+                  <span class="visually-hidden">{help}</span>
+                </p>
+              {:else if item.enrichment === "failed"}
+                <p class="completing">
+                  <StageIcon stage="failed" />
+                  <span class="reading failed">{m.unreadable}</span>
+                </p>
+                <p class="muted help">{m.unreadableHelp}</p>
               {/if}
-            </p>
-            {#if item.notes}<p class="notes">{item.notes}</p>{/if}
-            {#if isLive(stage(item))}
-              {@const findingImages = stage(item) === "images"}
-              {@const help = findingImages ? m.findingImagesWhat : m.readingWhat(images)}
-              <!-- An icon that says the step, its words next to it, the longer help on hover -->
-              <p class="completing" title={help}>
-                <StageIcon stage={findingImages ? "images" : "reading"} />
-                <span class="reading">{findingImages ? m.findingImages : m.reading}</span>
-                <span class="visually-hidden">{help}</span>
-              </p>
-            {:else if item.enrichment === "failed"}
-              <p class="completing">
-                <StageIcon stage="failed" />
-                <span class="reading failed">{m.unreadable}</span>
-              </p>
-              <p class="muted help">{m.unreadableHelp}</p>
-            {/if}
-            {#if data.gifts[item.id]?.length}<Gifts gifts={data.gifts[item.id] ?? []} none="" />{/if}
-          </div>
-          <!-- The same icons, in the same order, on every card; « reload », only for a link, comes
+              {#if data.gifts[item.id]?.length}<Gifts gifts={data.gifts[item.id] ?? []} none="" />{/if}
+            </div>
+            <!-- The same icons, in the same order, on every card; « reload », only for a link, comes
                first so that the others stay lined up from one card to the next -->
-          <div class="tools">
-            {#if link && item.enrichment !== "pending"}
-              <form method="POST" action="?/refresh" use:enhance={reread}>
+            <div class="tools">
+              {#if link && item.enrichment !== "pending"}
+                <form method="POST" action="?/refresh" use:enhance={reread}>
+                  <input type="hidden" name="itemId" value={item.id} />
+                  <IconButton icon="reload" label={m.refresh.label(item.title)} tip={m.refresh.tip} />
+                </form>
+              {/if}
+              <form method="POST" action="?/status" use:enhance>
                 <input type="hidden" name="itemId" value={item.id} />
-                <IconButton icon="reload" label={m.refresh.label(item.title)} tip={m.refresh.tip} />
+                <input type="hidden" name="status" value="received" />
+                <IconButton icon="heart" label={m.receivedLabel(item.title)} tip={m.received} />
               </form>
+              <IconButton
+                icon="pencil"
+                label={m.edit.label(item.title)}
+                tip={m.edit.tip}
+                href="?modifier={item.id}"
+                expanded={editing === item.id}
+                controls="edit-{item.id}"
+                onclick={() => toggleEdit(item.id)}
+              />
+              <form method="POST" action="?/status" use:enhance>
+                <input type="hidden" name="itemId" value={item.id} />
+                <input type="hidden" name="status" value="archived" />
+                <IconButton icon="archive" label={m.archiveLabel(item.title)} tip={m.archiveTip} />
+              </form>
+              <ConfirmDelete
+                label={m.deleteLabel(item.title)}
+                tip={m.deleteTip}
+                title={removal.itemTitle(item.title)}
+                help={[removal.itemHelp, removal.guests, removal.archiveInstead]}
+                action="?/deleteItem"
+                fields={{ itemId: item.id, title: item.title }}
+              />
+            </div>
+            {#if editing === item.id}
+              <ItemEditor
+                {item}
+                lists={data.lists}
+                failed={failedEdit(item)}
+                onclose={() => toggleEdit(item.id)}
+              />
             {/if}
-            <form method="POST" action="?/status" use:enhance>
-              <input type="hidden" name="itemId" value={item.id} />
-              <input type="hidden" name="status" value="received" />
-              <IconButton icon="heart" label={m.receivedLabel(item.title)} tip={m.received} />
-            </form>
-            <IconButton
-              icon="pencil"
-              label={m.edit.label(item.title)}
-              tip={m.edit.tip}
-              href="?modifier={item.id}"
-              expanded={editing === item.id}
-              controls="edit-{item.id}"
-              onclick={() => toggleEdit(item.id)}
-            />
-            <form method="POST" action="?/status" use:enhance>
-              <input type="hidden" name="itemId" value={item.id} />
-              <input type="hidden" name="status" value="archived" />
-              <IconButton icon="archive" label={m.archiveLabel(item.title)} tip={m.archiveTip} />
-            </form>
-            <ConfirmDelete
-              label={m.deleteLabel(item.title)}
-              tip={m.deleteTip}
-              title={removal.itemTitle(item.title)}
-              help={[removal.itemHelp, removal.guests, removal.archiveInstead]}
-              action="?/deleteItem"
-              fields={{ itemId: item.id, title: item.title }}
-            />
-          </div>
-          {#if editing === item.id}
-            <ItemEditor
-              {item}
-              lists={data.lists}
-              failed={failedEdit(item)}
-              onclose={() => toggleEdit(item.id)}
-            />
           {/if}
         </li>
       {/each}
@@ -454,6 +508,7 @@
             <p class="muted meta state">
               <Icon name={item.status === "received" ? "heart" : "archive"} size="1rem" />
               {item.status === "received" ? m.receivedState : m.archivedState}
+              {#if item.kind === "series"}<span>· {s.volumes(volumesBy.get(item.id)?.length ?? 0)}</span>{/if}
             </p>
             {#if data.gifts[item.id]}
               <Gifts gifts={data.gifts[item.id] ?? []} none={m.noGiftOutside} />
@@ -469,7 +524,7 @@
               label={m.deleteLabel(item.title)}
               tip={m.deleteTip}
               title={removal.itemTitle(item.title)}
-              help={[removal.itemHelp, removal.guests]}
+              help={[item.kind === "series" ? removal.seriesHelp : removal.itemHelp, removal.guests]}
               action="?/deleteItem"
               fields={{ itemId: item.id, title: item.title }}
             />
@@ -479,6 +534,250 @@
     </ul>
   </details>
 {/if}
+
+<!-- A series (docs/series.md): one card, as a wish with several copies, its volumes inside it -->
+{#snippet seriesCard(series: Item)}
+  {@const volumes = volumesBy.get(series.id) ?? []}
+  {@const wanted = volumes.filter((volume) => volume.status === "open")}
+  {@const total = seriesPriceCents(volumes)}
+  <!-- The wishes that look like its volumes first, ticked, in their reading order -->
+  {@const others = [
+    ...inReadingOrder(candidates.filter((item) => belongs(item, series))),
+    ...candidates.filter((item) => !belongs(item, series)),
+  ]}
+  <ItemThumb
+    item={{ ...series, image: series.image ?? wanted.find((volume) => volume.image)?.image ?? null }}
+    listId={data.list.id}
+    {images}
+  />
+  <div class="text">
+    <h3>{series.title}</h3>
+    <p class="muted meta">
+      <span class="kind with-icon">
+        <Icon name="series" size="1.2rem" />{s.kind}
+      </span>
+      {#if total !== null}<span class="price">{s.total(i18n.fmt.money(total))}</span>{/if}
+    </p>
+    {#if series.notes}<p class="notes">{series.notes}</p>{/if}
+  </div>
+  <div class="tools">
+    <IconButton
+      icon="pencil"
+      label={s.edit.label(series.title)}
+      tip={s.edit.tip}
+      href="?modifier={series.id}"
+      expanded={editing === series.id}
+      controls="edit-{series.id}"
+      onclick={() => toggleEdit(series.id)}
+    />
+    <IconButton
+      icon="gather"
+      label={s.gather.label(series.title)}
+      tip={s.gather.tip}
+      href="?ranger={series.id}"
+      expanded={gathering === series.id}
+      controls="ranger-{series.id}"
+      onclick={() => (gathering = gathering === series.id ? null : series.id)}
+    />
+    <form method="POST" action="?/status" use:enhance>
+      <input type="hidden" name="itemId" value={series.id} />
+      <input type="hidden" name="status" value="archived" />
+      <IconButton icon="archive" label={m.archiveLabel(series.title)} tip={m.archiveTip} />
+    </form>
+    <form method="POST" action="?/ungroup" use:enhance>
+      <input type="hidden" name="itemId" value={series.id} />
+      <input type="hidden" name="title" value={series.title} />
+      <IconButton icon="ungroup" label={s.ungroup.label(series.title)} tip={s.ungroup.tip} />
+    </form>
+    <ConfirmDelete
+      label={m.deleteLabel(series.title)}
+      tip={m.deleteTip}
+      title={removal.itemTitle(series.title)}
+      help={[removal.seriesHelp, removal.guests, removal.ungroupInstead]}
+      action="?/deleteItem"
+      fields={{ itemId: series.id, title: series.title }}
+    />
+  </div>
+  {#if editing === series.id}
+    <SeriesEditor
+      {series}
+      lists={data.lists}
+      failed={failedEdit(series)}
+      onclose={() => toggleEdit(series.id)}
+    />
+  {/if}
+  {#if gathering === series.id}
+    <form method="POST" action="?/gather" class="gather wide" id="ranger-{series.id}" use:enhance>
+      <input type="hidden" name="seriesId" value={series.id} />
+      <input type="hidden" name="title" value={series.title} />
+      <fieldset>
+        <legend>{s.gather.legend(series.title)}</legend>
+        {#if others.length === 0}
+          <p class="muted">{s.gather.none}</p>
+        {:else}
+          <p class="muted help">{s.gather.help}</p>
+          {#each others as other (other.id)}
+            <label class="pick">
+              <input type="checkbox" name="itemIds" value={other.id} checked={belongs(other, series)} />
+              <ItemThumb item={other} listId={data.list.id} images={false} small />
+              <span>{other.title}</span>
+            </label>
+          {/each}
+        {/if}
+      </fieldset>
+      {#if others.length > 0}<button type="submit">{s.gather.submit}</button>{/if}
+    </form>
+  {/if}
+  <!-- Folded by default; open while one of its volumes is being edited -->
+  {#if volumes.length === 0}
+    <p class="muted wide">{s.empty}</p>
+  {:else}
+    <details class="fold wide" open={volumes.some((volume) => volume.id === editing)}>
+      <summary><Icon name="chevronRight" size="1.2rem" />{s.volumes(volumes.length)}</summary>
+      <ol class="volumes" aria-label={appMessages(i18n.locale).series.volumes(volumes.length)}>
+        {#each volumes as volume (volume.id)}
+          {@render volumeRow(volume, series, wanted)}
+        {/each}
+      </ol>
+    </details>
+  {/if}
+  <!-- Adding a volume stays at hand, folded or not -->
+  <div class="wide">
+    <form method="POST" action="?/addVolume" class="add-volume" use:enhance>
+      <input type="hidden" name="parentId" value={series.id} />
+      <label class="visually-hidden" for="tome-{series.id}">{s.addVolume.label(series.title)}</label>
+      <input
+        id="tome-{series.id}"
+        name="input"
+        type="text"
+        enterkeyhint="send"
+        autocomplete="off"
+        maxlength="4000"
+        placeholder={s.addVolume.placeholder}
+      />
+      <IconButton icon="plus" label={s.addVolume.label(series.title)} tip={s.addVolume.tip} />
+    </form>
+    {#if form?.add && "parentId" in form.add && form.add.parentId === series.id && "error" in form.add}
+      <p class="notice error" role="alert">{s.failed}</p>
+    {/if}
+  </div>
+{/snippet}
+
+{#snippet volumeRow(volume: Item, series: Item, wanted: Item[])}
+  {@const link = webLink(volume)}
+  {@const isOpen = volume.status === "open"}
+  {@const place = wanted.indexOf(volume)}
+  {@const label = volumeLabel(volume.title, series.title)}
+  <li class="volume" class:sortable={isOpen && wanted.length > 1} class:done={!isOpen} data-id={volume.id}>
+    {#if isOpen && wanted.length > 1}
+      <form method="POST" action="?/moveVolume" class="mover" use:enhance>
+        <input type="hidden" name="itemId" value={volume.id} />
+        <button
+          type="submit"
+          name="direction"
+          value="up"
+          class="secondary"
+          disabled={place === 0}
+          aria-label={s.moveUp(label)}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+        </button>
+        <button
+          type="submit"
+          name="direction"
+          value="down"
+          class="secondary"
+          disabled={place === wanted.length - 1}
+          aria-label={s.moveDown(label)}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+        </button>
+      </form>
+    {/if}
+    <ItemThumb item={volume} listId={data.list.id} images={images && isOpen} volume />
+    <div class="text">
+      <h4>{label}</h4>
+      <p class="muted meta">
+        {#if !isOpen}
+          <span class="with-icon">
+            <Icon name={volume.status === "received" ? "heart" : "archive"} size="1rem" />
+            {volume.status === "received" ? m.receivedState : m.archivedState}
+          </span>
+        {/if}
+        {#if kindLine(volume)}<span class="kind">{kindLine(volume)}</span>{/if}
+        {#if volume.priceCents !== null}<span class="price">{i18n.fmt.money(volume.priceCents)}</span>{/if}
+        {#if link}
+          <a class="site" href={link} rel="noopener noreferrer external" target="_blank">
+            {host(link)}<Icon name="external" size="1rem" /><span class="visually-hidden">{m.newTab}</span>
+          </a>
+        {/if}
+      </p>
+      {#if isOpen && isLive(stage(volume))}
+        {@const findingImages = stage(volume) === "images"}
+        <p class="completing" title={findingImages ? m.findingImagesWhat : m.readingWhat(images)}>
+          <StageIcon stage={findingImages ? "images" : "reading"} />
+          <span class="reading">{findingImages ? m.findingImages : m.reading}</span>
+        </p>
+      {:else if isOpen && volume.enrichment === "failed"}
+        <p class="completing">
+          <StageIcon stage="failed" />
+          <span class="reading failed">{m.unreadable}</span>
+        </p>
+      {/if}
+      {#if data.gifts[volume.id]?.length}<Gifts gifts={data.gifts[volume.id] ?? []} none="" />{/if}
+    </div>
+    <div class="tools">
+      {#if isOpen}
+        {#if link && volume.enrichment !== "pending"}
+          <form method="POST" action="?/refresh" use:enhance={reread}>
+            <input type="hidden" name="itemId" value={volume.id} />
+            <IconButton icon="reload" label={m.refresh.label(volume.title)} tip={m.refresh.tip} />
+          </form>
+        {/if}
+        <form method="POST" action="?/status" use:enhance>
+          <input type="hidden" name="itemId" value={volume.id} />
+          <input type="hidden" name="status" value="received" />
+          <IconButton icon="heart" label={m.receivedLabel(volume.title)} tip={m.received} />
+        </form>
+        <IconButton
+          icon="pencil"
+          label={m.edit.label(volume.title)}
+          tip={m.edit.tip}
+          href="?modifier={volume.id}"
+          expanded={editing === volume.id}
+          controls="edit-{volume.id}"
+          onclick={() => toggleEdit(volume.id)}
+        />
+      {:else}
+        <form method="POST" action="?/status" use:enhance>
+          <input type="hidden" name="itemId" value={volume.id} />
+          <input type="hidden" name="status" value="open" />
+          <IconButton icon="restore" label={m.reopenLabel(volume.title)} tip={m.reopen} />
+        </form>
+      {/if}
+      <form method="POST" action="?/takeOut" use:enhance>
+        <input type="hidden" name="itemId" value={volume.id} />
+        <IconButton icon="takeOut" label={s.takeOut.label(volume.title)} tip={s.takeOut.tip} />
+      </form>
+      <ConfirmDelete
+        label={m.deleteLabel(volume.title)}
+        tip={m.deleteTip}
+        title={removal.itemTitle(volume.title)}
+        help={[removal.itemHelp, removal.guests]}
+        action="?/deleteItem"
+        fields={{ itemId: volume.id, title: volume.title }}
+      />
+    </div>
+    {#if editing === volume.id}
+      <ItemEditor
+        item={volume}
+        lists={data.lists}
+        failed={failedEdit(volume)}
+        onclose={() => toggleEdit(volume.id)}
+      />
+    {/if}
+  </li>
+{/snippet}
 
 <style>
   .back {
@@ -687,6 +986,131 @@
   }
   .closed {
     margin-top: 2rem;
+  }
+  /* A series: its panel and its volumes under the card's line, across the whole card */
+  .wide {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+  .with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  /* A series' volumes fold under their summary, its chevron turning as it opens */
+  .fold summary {
+    gap: 0.5rem;
+    list-style: none;
+  }
+  .fold summary::-webkit-details-marker {
+    display: none;
+  }
+  .fold summary :global(.icon) {
+    transition: transform 0.15s ease;
+  }
+  .fold[open] summary :global(.icon) {
+    transform: rotate(90deg);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fold summary :global(.icon) {
+      transition: none;
+    }
+  }
+  .volumes {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    border-top: 1px solid var(--border);
+  }
+  /* A volume: the same grid as a card, smaller, one line each */
+  .volume {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "thumb text"
+      "tools tools"
+      "editor editor";
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .volume.sortable {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "mover thumb text"
+      "mover tools tools"
+      "editor editor editor";
+  }
+  @media (min-width: 40rem) {
+    .volume {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-areas:
+        "thumb text tools"
+        "editor editor editor";
+    }
+    .volume.sortable {
+      grid-template-columns: auto auto minmax(0, 1fr) auto;
+      grid-template-areas:
+        "mover thumb text tools"
+        "editor editor editor editor";
+    }
+  }
+  .volume .mover {
+    margin-left: 0;
+  }
+  .volume .mover button {
+    min-height: 2rem;
+    width: 2.5rem;
+  }
+  h4 {
+    font-size: 1.05rem;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .volume.done h4 {
+    color: var(--text-2);
+  }
+  .add-volume {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 0.75rem;
+  }
+  .add-volume input[type="text"] {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .gather {
+    border-top: 1px solid var(--border);
+    padding-top: 0.75rem;
+  }
+  .gather fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0 0 0.75rem;
+  }
+  .gather legend {
+    font-weight: 600;
+    padding: 0;
+    margin-bottom: 0.25rem;
+  }
+  .pick {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 48px;
+    padding: 0.25rem 0;
+    font-weight: 400;
+    cursor: pointer;
+  }
+  .pick input {
+    width: 1.4rem;
+    height: 1.4rem;
+    min-height: 1.4rem;
+    flex: none;
+    accent-color: var(--action);
   }
   summary {
     min-height: 48px;

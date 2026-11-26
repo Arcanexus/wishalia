@@ -20,8 +20,17 @@
     item,
     events,
     scope,
+    label = null,
     children,
-  }: { item: PublicItem; events: PublicEvent[]; scope: "list" | "event"; children?: Snippet } = $props();
+  }: {
+    item: PublicItem;
+    events: PublicEvent[];
+    scope: "list" | "event";
+    /** A volume inside its series' card (docs/series.md): its short name (« T30 »), a smaller row. */
+    label?: string | null;
+    children?: Snippet;
+  } = $props();
+  const nested = $derived(label !== null);
 
   const i18n = useI18n();
   const m = $derived(viewMessages(i18n.locale));
@@ -32,7 +41,12 @@
   const bar = $derived(
     item.funding && item.status !== "received" ? poolBar(item, events, i18n.locale) : null,
   );
-  const kindLabels = $derived({ unique: null, quantity: m.kind.quantity, pool: m.kind.pool });
+  const kindLabels = $derived({
+    unique: null,
+    quantity: m.kind.quantity,
+    pool: m.kind.pool,
+    series: m.kind.series,
+  });
 
   /** Only web links become links: never a javascript: or data: address. */
   const webLink = (url: string | null) => (url && /^https?:\/\//i.test(url) ? url : null);
@@ -40,7 +54,7 @@
 </script>
 
 <!-- Every card keeps its square, with or without an image: titles and buttons line up from card to card -->
-<li class="card item" class:complete>
+<li class="item" class:card={!nested} class:nested class:complete>
   {#if item.image}
     <!-- The link that opens it big carries the words: the thumbnail itself is decorative -->
     <Gallery title={item.title} image={item.image}>
@@ -59,7 +73,7 @@
   {/if}
   <div class="content">
     <div class="head">
-      <h2>{item.title}</h2>
+      {#if nested}<h3>{label}</h3>{:else}<h2>{item.title}</h2>{/if}
       <span class="aside">
         {#if item.kind === "pool" && item.targetCents}
           <span class="price">{i18n.fmt.money(item.targetCents)}</span>
@@ -114,7 +128,7 @@
         </a>
       </p>
     {/if}
-    {#if scope === "list" && item.eventIds.length > 0}
+    {#if scope === "list" && item.eventIds.length > 0 && !nested}
       <p class="muted small">
         {m.forEvents(i18n.fmt.list(item.eventIds.flatMap((id) => eventsById.get(id)?.name ?? [])))}
       </p>
@@ -173,7 +187,8 @@
       grid-template-columns: 8rem minmax(0, 1fr);
     }
   }
-  .item h2 {
+  .item h2,
+  .item h3 {
     font-size: 1.25rem;
     line-height: 1.75rem;
     margin: 0;
@@ -274,10 +289,28 @@
   .standing {
     font-weight: 600;
   }
+  /* A volume, inside its series' card: a row under a line, its square a little smaller */
+  .nested {
+    padding: 1rem 0 0;
+    margin-top: 1rem;
+    border-top: 1px solid var(--border);
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+  }
+  @media (min-width: 40rem) {
+    .nested {
+      grid-template-columns: 6rem minmax(0, 1fr);
+    }
+  }
+  .nested h3 {
+    font-size: 1.15rem;
+  }
   /* Already given: quieter, without fading the text (contrast stays AA) */
-  .complete {
+  .complete.card {
     background: transparent;
     border-style: dashed;
+  }
+  .complete.nested {
+    border-top-style: dashed;
   }
   .complete .standing {
     color: var(--text-2);

@@ -5,7 +5,8 @@ import { cents, sum, type Cents } from "./money.js";
  * derived from the active contributions, across every event (spec, section 2.1 and 2.2).
  */
 
-export type WishKind = "unique" | "quantity" | "pool";
+/** « series » groups volumes (docs/series.md): it is never given itself, its volumes are. */
+export type WishKind = "unique" | "quantity" | "pool" | "series";
 
 export interface WishFunding {
   kind: WishKind;
@@ -117,6 +118,9 @@ export function progress(wish: WishFunding, contributions: readonly Contribution
       const wanted = Math.max(1, wish.quantity ?? 1);
       return Math.min(1, reservedUnits(contributions) / wanted);
     }
+    case "series":
+      // Given volume by volume: the series itself takes nothing
+      return 0;
     case "unique": {
       if (reservedUnits(contributions) > 0) return 1;
       // Shared by amounts: covered once the shares reach the price; without a price, only partly

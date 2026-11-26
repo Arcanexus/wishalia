@@ -127,7 +127,7 @@ spec:
   source:
     repoURL: ghcr.io/arcanexus/charts
     chart: wishalia
-    targetRevision: 0.0.8
+    targetRevision: 0.0.9
     helm:
       valuesObject:
         hosts:

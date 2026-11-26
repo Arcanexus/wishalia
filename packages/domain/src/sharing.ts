@@ -41,7 +41,8 @@ export type ContributionRefusal =
   | "already_shared"
   | "not_enough_left"
   | "amount_too_high"
-  | "shares_not_taken";
+  | "shares_not_taken"
+  | "series_by_volume";
 
 export interface ContributableWish extends WishFunding {
   status: "open" | "received" | "archived";
@@ -63,6 +64,8 @@ export function refuseContribution(
   request: ContributionRequest,
 ): ContributionRefusal | null {
   if (wish.status !== "open") return "item_closed";
+  // A series is given volume by volume (docs/series.md)
+  if (wish.kind === "series") return "series_by_volume";
   if (wish.kind === "pool") {
     return request.amountCents && request.amountCents > 0 ? null : "amount_required";
   }

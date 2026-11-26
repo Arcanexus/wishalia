@@ -62,6 +62,14 @@ export const ICONS = {
   external: ["M14 4h6v6", "M20 4l-9 9", "M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"],
   close: ["M6 6l12 12M18 6L6 18"],
   warning: ["M12 3L2 20h20L12 3z", "M12 10v4", "M12 17h.01"],
+  /** A series (docs/series.md): volumes side by side on a shelf, the last one leaning. */
+  series: ["M4 4h4v16H4z", "M10 4h4v16h-4z", "M15.5 5.2l3.8-1 3.2 15.4-3.8 1z", "M2 20h20"],
+  /** Out of the series: an arrow leaving its box. */
+  takeOut: ["M14 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h9", "M12 12h9", "M17.5 8.5L21 12l-3.5 3.5"],
+  /** Undo a series: the volumes apart again. */
+  ungroup: ["M4 4h6v6H4z", "M14 4h6v6h-6z", "M4 14h6v6H4z", "M14 14h6v6h-6z"],
+  /** Put wishes of the list into a series. */
+  gather: ["M4 6h9M4 12h9M4 18h9", "M17 9l3 3-3 3", "M13 12h7"],
 } as const;
 
 export type IconName = keyof typeof ICONS;

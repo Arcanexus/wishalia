@@ -25,6 +25,9 @@ export function sampleFunding(item: SampleSource, index: number, locale: Locale)
   const [first, second] = sampleNames(locale);
   const given = index % 3 !== 2;
   switch (item.kind) {
+    case "series":
+      // Given volume by volume: each volume gets its own made-up funding
+      return { state: "free", progress: 0, contributors: [] };
     case "unique":
       if (item.repeatable) {
         return { state: "free", progress: 0, timesGiven: given ? 1 : 0, contributors: [] };
@@ -75,8 +78,10 @@ export function sampleFunding(item: SampleSource, index: number, locale: Locale)
 
 /** The items the relatives see, in the owner's order, each with made-up funding. */
 export function samplePreview(items: readonly SampleSource[], locale: Locale): PublicItem[] {
+  // An archived series takes its volumes out of the preview, as out of the guests' view
+  const archived = new Set(items.filter((item) => item.status === "archived").map((item) => item.id));
   return items
-    .filter((item) => item.status !== "archived")
+    .filter((item) => item.status !== "archived" && !(item.parentId && archived.has(item.parentId)))
     .map((item, index): PublicItem => ({
       ...item,
       status: item.status === "received" ? "received" : "open",

@@ -47,17 +47,31 @@ export const load: PageServerLoad = async (event) => {
   const choices = lists
     .map((list, index) => ({
       list: { id: list.id, name: list.name },
-      items: (byList[index] ?? []).filter((item) => item.status === "open" && !chosen.has(item.id)),
+      // A volume comes with its series, never alone (docs/series.md)
+      items: (byList[index] ?? []).filter(
+        (item) => item.status === "open" && !item.parentId && !chosen.has(item.id),
+      ),
     }))
     .filter((group) => group.items.length > 0);
 
   // Who gave what: only once the secret is lifted, and the API gives nothing before (anti-spoil)
   const gifts: Record<string, Gift[]> = {};
   if (found.secretLifted) {
+    // A series was given volume by volume: its gifts are those of its volumes
+    const all = byList.flat();
+    const givenTo = (item: Item) =>
+      item.kind === "series" ? all.filter((volume) => volume.parentId === item.id) : [item];
     const histories = await Promise.all(
-      selected.map((item) => apiJson<HistoryEntry[]>(event, `/manage/items/${item.id}/history`)),
+      selected.map((item) =>
+        Promise.all(
+          givenTo(item).map((one) => apiJson<HistoryEntry[]>(event, `/manage/items/${one.id}/history`)),
+        ),
+      ),
     );
-    selected.forEach((item, index) => (gifts[item.id] = giftsFor(histories[index] ?? [], id)));
+    selected.forEach(
+      (item, index) =>
+        (gifts[item.id] = (histories[index] ?? []).flatMap((history) => giftsFor(history, id))),
+    );
   }
 
   event.locals.christmas = found.kind === "christmas";

@@ -10,13 +10,47 @@ import type { Funding, MyGift, PublicEvent, PublicItem } from "./types.ts";
 
 const done = (item: PublicItem) => item.status === "received" || item.funding?.state === "complete";
 
-/** Open items first in the owner's order, then the complete ones, then the received ones. */
+/** Series id → its volumes, in the owner's order (docs/series.md). */
+export function volumesOf(items: readonly PublicItem[]): Map<string, PublicItem[]> {
+  const volumes = new Map<string, PublicItem[]>();
+  for (const item of items) {
+    if (item.parentId) volumes.set(item.parentId, [...(volumes.get(item.parentId) ?? []), item]);
+  }
+  return volumes;
+}
+
+/** The items shown as cards: every item but the volumes, which show inside their series. */
+export const cardsOf = (items: readonly PublicItem[]): PublicItem[] => items.filter((item) => !item.parentId);
+
+/**
+ * Open items first in the owner's order, then the complete ones, then the received ones. A series
+ * is complete once every volume is; its volumes keep their order, right after it.
+ */
 export function sortForGuests(items: readonly PublicItem[]): PublicItem[] {
-  const rank = (item: PublicItem) => (item.status === "received" ? 2 : done(item) ? 1 : 0);
-  return items
+  const volumes = volumesOf(items);
+  const finished = (item: PublicItem) => item.status === "received" || done(item);
+  const rank = (item: PublicItem) => {
+    if (item.kind !== "series") return item.status === "received" ? 2 : done(item) ? 1 : 0;
+    const inside = volumes.get(item.id) ?? [];
+    if (inside.length > 0 && inside.every((volume) => volume.status === "received")) return 2;
+    return inside.length > 0 && inside.every(finished) ? 1 : 0;
+  };
+  return cardsOf(items)
     .map((item, index) => ({ item, index }))
     .sort((a, b) => rank(a.item) - rank(b.item) || a.index - b.index)
-    .map(({ item }) => item);
+    .flatMap(({ item }) => [item, ...(volumes.get(item.id) ?? [])]);
+}
+
+/**
+ * How many of a series' volumes still wait for a gift, out of how many; null when the guest may
+ * not see where they stand (the owner, a folded page).
+ */
+export function seriesLeft(volumes: readonly PublicItem[]): { left: number; total: number } | null {
+  if (volumes.length === 0 || volumes.some((volume) => volume.status === "open" && !volume.funding)) {
+    return null;
+  }
+  const left = volumes.filter((volume) => volume.status === "open" && volume.funding?.state !== "complete");
+  return { left: left.length, total: volumes.length };
 }
 
 /** The words and formats of one language. */
@@ -64,6 +98,9 @@ export function standing(item: PublicItem, locale: Locale): string | null {
   if (!funding) return null;
   const who = givers(funding, locale);
   switch (item.kind) {
+    case "series":
+      // Its card says how many volumes are left (seriesLeft)
+      return null;
     case "unique":
       // Nobody gave yet: the badge says so (see `availability`), no words needed
       if (item.repeatable) return funding.timesGiven ? m.repeatGiven(funding.timesGiven) : null;
@@ -121,7 +158,7 @@ export function heading(
 
 /** How many copies of an item are still free (1 for a free gift, 0 when all are taken). */
 export function unitsLeft(item: PublicItem): number {
-  if (item.kind === "pool") return 0;
+  if (item.kind === "pool" || item.kind === "series") return 0;
   const wanted = item.kind === "quantity" ? Math.max(1, item.quantity ?? 1) : 1;
   // A repeatable item starts again at every occasion: the API counts per event
   if (item.repeatable) return wanted;
@@ -227,7 +264,10 @@ export interface Gauge {
 }
 
 export function gauge(items: readonly PublicItem[]): Gauge | null {
-  const counted = items.filter((item) => item.funding !== null || item.status === "received");
+  // A series counts by its volumes
+  const counted = items.filter(
+    (item) => item.kind !== "series" && (item.funding !== null || item.status === "received"),
+  );
   if (counted.length === 0) return null;
   const result: Gauge = { complete: 0, inProgress: 0, free: 0 };
   for (const item of counted) {

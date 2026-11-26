@@ -70,10 +70,13 @@
       onResult: async (result) => {
         if (result.type === "success") {
           error = null;
-          const moved = (result.data?.edit as { listId?: string } | undefined)?.listId !== item.listId;
+          const saved = result.data?.edit as { listId?: string; seriesId?: string } | undefined;
+          const moved = saved?.listId !== item.listId;
           // Gone to another list: the page says so, then reloads without it
           if (moved) await applyAction(result);
           await invalidate("wishalia:list");
+          // Become the first volume of a series: the series' card shows it now
+          if (saved?.seriesId) onclose();
           return true;
         }
         error =
@@ -112,7 +115,17 @@
           <strong>{m.pool.name}</strong><span class="muted">{m.pool.help}</span>
         </span>
       </label>
+      {#if !item.parentId}
+        <!-- A volume is already in a series: only a wish of its own becomes one (docs/series.md) -->
+        <label class="choice">
+          <input type="radio" name="kind" value="series" checked={values.kind === "series"} />
+          <span>
+            <strong>{m.series.name}</strong><span class="muted">{m.series.help}</span>
+          </span>
+        </label>
+      {/if}
     </fieldset>
+    <p class="for-series muted help">{m.seriesNow}</p>
 
     <!-- Shown by CSS for the kind chosen, so that it works without JavaScript too -->
     <div class="for-quantity">
@@ -278,8 +291,13 @@
   /* Only the fields of the kind chosen */
   .for-quantity,
   .for-pool,
-  .for-unique {
+  .for-unique,
+  .for-series {
     display: none;
+  }
+  form:has(input[name="kind"][value="series"]:checked) .for-series {
+    display: block;
+    margin: -0.5rem 0 1rem;
   }
   form:has(input[name="kind"][value="quantity"]:checked) .for-quantity,
   form:has(input[name="kind"][value="pool"]:checked) .for-pool,

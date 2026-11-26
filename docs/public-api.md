@@ -65,6 +65,10 @@ in no event or got contributions without one. One kept secret is enough to answe
 since a total or a state would give it away. The owner therefore gets `null` until every secret of
 an item is lifted.
 
+A series ([Series](series.md)) comes as an item of `kind: "series"`, its volumes as items whose
+`parentId` is its id, after it in an event's view; the series itself takes no contribution
+(`409 series_by_volume`), its volumes do, each on its own. A volume is in the events of its series.
+
 The items come in the owner's order, never sorted by funding: the public view puts complete items
 last itself.
 

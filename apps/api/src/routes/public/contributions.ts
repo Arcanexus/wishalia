@@ -84,7 +84,7 @@ export const contributionRoutes: FastifyPluginAsync<{
         if (!pinned) throw notFound();
         event = pinned;
       } else if (input.eventId !== undefined) {
-        const events = await eventsOfItem(tx, link.ownerId, wish.id);
+        const events = await eventsOfItem(tx, link.ownerId, wish);
         event = events.find((candidate) => candidate.id === input.eventId) ?? null;
         if (!event) throw notFound();
       }

@@ -16,6 +16,8 @@ export function ownerItem(row: WishRow, image: ItemImage | null = null) {
     id: row.id,
     listId: row.listId,
     kind: row.kind,
+    /** The series this wish is a volume of (docs/series.md), null for a wish of its own. */
+    parentId: row.parentId,
     repeatable: row.repeatable,
     title: row.title,
     url: row.url,

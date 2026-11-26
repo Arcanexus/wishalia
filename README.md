@@ -33,11 +33,12 @@ Christmas), and chip in together for the same gift. Its core promise: **the owne
 sees who gave what**, until they lift the secret after the event. The rule is enforced on the
 server, not hidden in the page.
 
-> **Status:** latest release, [v0.0.8](https://github.com/Arcanexus/wishalia/releases/tag/v0.0.8): early, for trying at home. The four components build, test, ship as images and deploy with the Helm
+> **Status:** latest release, [v0.0.9](https://github.com/Arcanexus/wishalia/releases/tag/v0.0.9): early, for trying at home. The four components build, test, ship as images and deploy with the Helm
 > chart. The data model, the business rules (funding, anti-spoil), the sign-in (OIDC, passkeys,
 > magic links), the management API, the public view API (share links, contributions) and the REST
 > API v1 (personal access tokens, OpenAPI) are in place and tested. The management app has its
-> screens (signing in, passkeys, lists with their icon or image, quick add, editing, reordering, archiving and deleting lists
+> screens (signing in, passkeys, lists with their icon or image, quick add, editing, reordering, series of volumes
+> (one card for a manga or book series, each volume given on its own), archiving and deleting lists
 > and items, a list's preview, events, sharing, settings, all saved as they change, with icons and
 > header menus), and the family sees a shared list or event in the public view, where
 > they reserve a gift, share any gift by giving part of it (up to its price, when it has one), chip in to a pool, and withdraw. The public host's home page welcomes visitors, signs them in,
@@ -57,7 +58,8 @@ server, not hidden in the page.
 | 🤫 **Nothing spoiled**   | No amount, name or progress shown to the owner, link previews included.  |
 | 🎁 **Gifts together**    | Several contributions per item, across events, overshoot allowed.        |
 | 🔎 **Private or public** | Private lists by link only; public ones found from the home page.        |
-| 📅 **Lists and events**  | Durable lists, recurring events, series of books, recurring wishes.      |
+| 📅 **Lists and events**  | Durable lists, recurring events, recurring wishes.                       |
+| 📚 **Series**            | The volumes of a series on one card, each reserved on its own.           |
 | 🎄 **A face per list**   | Sixteen icons in the theme's colours, or your own image.                 |
 | 🗃️ **Tidy up**           | Archive a list or a wish and restore it, or delete it for good.          |
 | 👵 **For every age**     | Large touch targets, no password, an item added in under five seconds.   |

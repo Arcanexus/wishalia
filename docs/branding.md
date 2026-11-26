@@ -47,7 +47,9 @@ The buttons of the apps are icons whenever an icon says the thing clearly, from 
 (`packages/ui/src/icons.ts`, drawn by `@wishalia/ui/Icon.svelte`): plain strokes on a 24 × 24 grid,
 in the colour of the text, so that they follow every theme and mode. A pencil edits, a heart marks
 received, a box archives, a bin deletes (in the danger colour), two turning arrows reload, an eye
-previews, three linked dots share, a cog opens settings, a cross closes. An icon alone always
+previews, three linked dots share, a cog opens settings, a cross closes. Books on a shelf mark a
+series, lines with an arrow put wishes into it, an arrow leaving its box takes a volume out, four
+apart squares undo it. An icon alone always
 carries its words as its accessible name and in a tip shown on hover and keyboard focus, which
 Escape hides (WCAG 1.4.13). A state is shown by an icon and a colour, never by colour alone.
 

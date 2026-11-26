@@ -1,6 +1,6 @@
 import { type Database, schema } from "@wishalia/db";
 import { matchesSearch, MAX_SEARCH_RESULTS, searchWords } from "@wishalia/domain";
-import { and, count, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, isNull, ne } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
@@ -52,7 +52,12 @@ export const homeRoutes: FastifyPluginAsync<{ auth: Auth; db: Database; images: 
       )
       .leftJoin(
         schema.wishes,
-        and(eq(schema.wishes.listId, schema.wishLists.id), eq(schema.wishes.status, "open")),
+        // A series counts by its volumes (docs/series.md)
+        and(
+          eq(schema.wishes.listId, schema.wishLists.id),
+          eq(schema.wishes.status, "open"),
+          ne(schema.wishes.kind, "series"),
+        ),
       )
       .where(and(eq(schema.wishLists.visibility, "public"), isNull(schema.wishLists.archivedAt)))
       .groupBy(schema.wishLists.id, schema.users.displayName, schema.shareLinks.openToken)
