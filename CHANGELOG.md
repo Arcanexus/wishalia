@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.6] - 2026-11-26
+
 ### Added
 
 - Any gift that has a price can be shared: on the guests' page, « Je l'offre ou je participe »
@@ -37,7 +39,6 @@ All notable changes to this project are documented here. The format follows
   contribution (anti-spoil). See [Live updates](docs/live-updates.md).
 - The worker writes the title and the price as soon as the page is read, then fetches the images:
   migration 0012 adds `enrichment_step` to the items.
-
 - Every list and every wish can be archived and restored, or deleted for good. A wish has a box
   (« Archiver ») and a bin (« Supprimer », after a dialog that says it cannot be undone); archived
   and received wishes come back with the arrow. Archived lists wait on the home page under « Listes
@@ -61,9 +62,6 @@ All notable changes to this project are documented here. The format follows
 ### Fixed
 
 - An event's link no longer shows the wishes of an archived list.
-
-### Fixed
-
 - The list page stopped looking again after its first check while items were being completed:
   their title, price and image only showed after a manual reload.
 
