@@ -114,9 +114,10 @@ spec:
                   name: {{ $.Values.existingSecret }}
                   key: {{ $key }}
             {{- end }}
-          # /health reads the metadata database: on a slow volume (NFS) it can take more than the
-          # default second, so it only decides whether Garage gets traffic. Restarting is left to
-          # whether its S3 port still accepts connections.
+          # /health answers from memory, but on a slow volume (NFS) a burst of writes can stall
+          # the whole of Garage for more than ten seconds. With one Garage, taking it out of the
+          # Service makes every image fail, so readiness waits two minutes of failures before it
+          # does. Restarting is left to whether its S3 port still accepts connections.
           startupProbe:
             httpGet: { path: /health, port: admin }
             periodSeconds: 5
@@ -131,7 +132,7 @@ spec:
             httpGet: { path: /health, port: admin }
             periodSeconds: 10
             timeoutSeconds: 10
-            failureThreshold: 3
+            failureThreshold: 12
           resources:
             {{- toYaml $garage.resources | nindent 12 }}
           volumeMounts:

@@ -326,4 +326,81 @@ describe("the images of an item", () => {
     expect(seen.image).toEqual(item.image);
     expect(JSON.stringify(view.json())).not.toContain("wishes/");
   });
+
+  it("offers a series every image of its volumes, and shows the one chosen (docs/series.md)", async () => {
+    const list = (await as(owner, "POST", "/manage/lists", { name: "Mangas" })).body.id as string;
+    const volume = async (input: string) =>
+      (await as(owner, "POST", "/manage/items", { input, listId: list })).body.id as string;
+    const t2 = await volume("One Piece T2");
+    const t1 = await volume("One Piece T1");
+    const series = await as(owner, "POST", `/manage/lists/${list}/series`, { itemIds: [t2, t1] });
+    expect(series.status).toBe(201);
+    const seriesId = series.body.id as string;
+    const pictures = await t.db
+      .insert(schema.wishImages)
+      .values(
+        [
+          [t2, 0],
+          [t1, 0],
+          [t1, 1],
+        ].map(([wishId, position]) => ({
+          wishId: wishId as string,
+          source: "page" as const,
+          key: `wishes/${wishId}/page-${position}`,
+          contentType: "image/jpeg",
+          bytes: 1000,
+          width: 600,
+          height: 600,
+          position: position as number,
+        })),
+      )
+      .returning();
+    const lamp = await newItem();
+    const [elsewhere] = await t.db
+      .insert(schema.wishImages)
+      .values({
+        wishId: lamp,
+        source: "page",
+        key: `wishes/${lamp}/page`,
+        contentType: "image/jpeg",
+        bytes: 1,
+      })
+      .returning();
+
+    // Volume by volume, in their reading order, each image with the volume it comes from
+    const listed = (await as(owner, "GET", `/manage/items/${seriesId}/images`)).body;
+    expect(
+      listed.images.map((image: { id: string; volume: { id: string; title: string } | null }) => [
+        image.id,
+        image.volume?.title,
+      ]),
+    ).toEqual([
+      [pictures[1]?.id, "One Piece T1"],
+      [pictures[2]?.id, "One Piece T1"],
+      [pictures[0]?.id, "One Piece T2"],
+    ]);
+    expect(JSON.stringify(listed)).not.toContain(`/${lamp}/`);
+    // A wish of its own lists its images without a volume
+    expect((await as(owner, "GET", `/manage/items/${t1}/images`)).body.images[0].volume).toBeNull();
+
+    // The series shows a volume's image, framed as its own, to the owner and to the guests
+    const chosen = await as(owner, "PATCH", `/manage/items/${seriesId}/image`, {
+      imageId: pictures[2]?.id,
+      crop: { x: 0, y: 0, width: 0.5, height: 0.5 },
+    });
+    expect(chosen.status).toBe(200);
+    expect(chosen.body.image.small).toBeTruthy();
+    expect(chosen.body.image.gallery).toEqual([]);
+    const shown = (await as(owner, "GET", `/manage/lists/${list}/items`)).body.find(
+      (item: { id: string }) => item.id === seriesId,
+    );
+    expect(shown.image.small).toBe(chosen.body.image.small);
+    // Never an image of another wish, nor a volume's for a wish that is not a series
+    expect(
+      (await as(owner, "PATCH", `/manage/items/${seriesId}/image`, { imageId: elsewhere?.id })).status,
+    ).toBe(400);
+    expect((await as(owner, "PATCH", `/manage/items/${t2}/image`, { imageId: pictures[1]?.id })).status).toBe(
+      400,
+    );
+  });
 });

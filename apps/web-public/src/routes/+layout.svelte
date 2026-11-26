@@ -3,6 +3,7 @@
 
   import { page } from "$app/state";
   import { commonMessages } from "@wishalia/i18n/messages/common";
+  import Footer from "@wishalia/ui/Footer.svelte";
   import { provideI18n } from "@wishalia/ui/i18n.ts";
 
   let { data, children } = $props();
@@ -12,3 +13,4 @@
 
 <a class="skip-link" href="#contenu">{commonMessages(i18n.locale).skipLink}</a>
 {@render children()}
+<Footer version={data.version} help={data.help} />

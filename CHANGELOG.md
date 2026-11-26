@@ -6,20 +6,47 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The changes made on a list (delete, received, archived, reopened, reordered, a volume moved)
+  show at once and are saved in the background, one after the other: moving to another page does
+  not stop them, a lost network or a server away makes them wait and go again by themselves, and
+  they are kept on the device for the next visit. An icon in the header says when changes are on
+  their way or waiting (tap it to try again now), and a message says when one could not be saved.
+- At the foot of every page, on both frontends: « Aide : le guide d'utilisation » (« Help: the user
+  guide »), which opens the new user guide of the wiki in the page's language
+  ([User guide](docs/user-guide.md), [Guide d'utilisation](docs/guide-utilisateur.md)), and the
+  version that runs. `config.helpUrl` (`HELP_URL`) leads the help link to a server's own page.
+- Changing a series' image offers every image of its volumes, volume by volume, each named after
+  its volume (« T30, image 2 »); the one chosen shows on the series' card, for the guests too. API:
+  `volume` on each image of `GET /manage/items/:id/images`.
+
 ### Fixed
 
 - Reordering a list no longer jumps back: moves made quickly in a row (arrows tapped several times,
-  a second drag while the first is saving) are saved one after the other with the latest order, and
-  the page keeps showing that order until it is saved. The arrows send the order on screen, so two
-  taps no longer overwrite each other on the server. A list changed meanwhile is loaded again and the
-  order saved on top of it, instead of showing an old order.
-- Deleting a wish takes it off the page at once (it comes back with an error if the server refuses),
-  instead of leaving it until the whole list is loaded again.
+  a second drag while the first is saving) go one after the other with the latest order, and the
+  page keeps showing that order until it is saved. The arrows send the order on screen, so two taps
+  no longer overwrite each other on the server. An order a moment behind (a wish added or deleted
+  on the way) is merged instead of refused (`PUT /manage/lists/:id/order`).
+- Deleting a wish takes it off the page at once, instead of leaving it until the list loaded again.
+- The built-in Garage stays in its Service through a short stall: on a slow volume (NFS) a burst
+  of uploads or deletions could hold `/health` past its ten seconds and take Garage out for a
+  while, so images failed to load. Readiness now waits twelve failures (two minutes) instead of
+  three.
+- Dragging a wish by its handle moves it as many places up or down as wanted in one go: it used to
+  stop after one place, as the card moved under the finger or the pointer.
+- Adding a volume to a series no longer folds its card: it unfolds to show the new volume, and a
+  series unfolded by hand stays so as the page reloads.
 
 ### Changed
 
 - The image files of a deleted wish or list are removed in the background, after the answer; the
   worker's periodic cleanup removes any file left behind.
+
+### Removed
+
+- The guests' sentence « Ce que vous offrez reste secret pour …, jusqu'après l'occasion. », at the
+  bottom of their page and of the owner's preview.
 
 ## [0.0.9] - 2026-11-26
 

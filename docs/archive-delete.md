@@ -67,8 +67,10 @@ notice); the item's link, notes, images and place in the events go. Nothing show
 ## Right away, the files after
 
 Once « Supprimer définitivement » is confirmed, the dialog closes and the wish leaves the page at
-once, without waiting for the server (the keyboard goes to the list's heading). Should the server
-refuse, the wish comes back with an error. On the server, the deletion is one transaction: the rows
+once, without waiting for the server (the keyboard goes to the list's heading); the deletion is
+saved in the background and goes again by itself if the network or the server is away
+([Management app](management-app.md), « Saved in the background »). Should the server refuse it,
+the wish comes back with a message. On the server, the deletion is one transaction: the rows
 are marked, the gifts cancelled and the guests' notice written together, so the anti-spoil rules
 hold at every moment. The image files are removed **after** the answer, in the background: the
 person never waits for the bucket or the volume. A file that could not be removed then (the bucket

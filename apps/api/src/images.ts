@@ -7,7 +7,7 @@ import {
   type ImgproxySettings,
   type Storage,
 } from "@wishalia/storage";
-import { asc, inArray } from "drizzle-orm";
+import { asc, inArray, or } from "drizzle-orm";
 
 import type { Tx } from "./history.js";
 
@@ -48,13 +48,20 @@ export async function imagesOf(
   const found = await db
     .select({ id: schema.wishImages.id, wishId: schema.wishImages.wishId, key: schema.wishImages.key })
     .from(schema.wishImages)
-    .where(inArray(schema.wishImages.wishId, [...new Set(shown.map((row) => row.id))]))
+    .where(
+      or(
+        inArray(schema.wishImages.wishId, [...new Set(shown.map((row) => row.id))]),
+        // A series may show one of its volumes' images (docs/series.md)
+        inArray(schema.wishImages.id, [...new Set(shown.map((row) => row.imageId as string))]),
+      ),
+    )
     .orderBy(asc(schema.wishImages.position), asc(schema.wishImages.createdAt));
   const byWish = new Map<string, typeof found>();
   for (const image of found) byWish.set(image.wishId, [...(byWish.get(image.wishId) ?? []), image]);
+  const byId = new Map(found.map((image) => [image.id, image]));
   for (const row of rows) {
     const own = byWish.get(row.id) ?? [];
-    const image = own.find((candidate) => candidate.id === row.imageId);
+    const image = row.imageId ? byId.get(row.imageId) : undefined;
     if (!image) {
       result.set(row.id, null);
       continue;

@@ -137,7 +137,7 @@ describe("lists", () => {
 
     // An order a moment behind (saved in the background): a closed or unknown item is left out,
     // an open one it does not name stays in front
-    expect((await order([b.id, done.id, a.id]))).toMatchObject({ status: 204 });
+    expect(await order([b.id, done.id, a.id])).toMatchObject({ status: 204 });
     expect(await titles()).toEqual(["Trois", "Deux", "Un", "Reçu"]);
     // Repeated or empty: not an order, nothing moves
     expect((await order([a.id, a.id, b.id])).status).toBe(400);

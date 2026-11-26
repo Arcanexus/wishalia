@@ -14,6 +14,7 @@
 <p align="center">
   <a href="https://arcanexus.github.io/wishalia/"><strong>Website</strong></a> ·
   <a href="https://github.com/Arcanexus/wishalia/wiki"><strong>Documentation</strong></a> ·
+  <a href="https://github.com/Arcanexus/wishalia/wiki/User-guide"><strong>User guide</strong></a> ·
   <a href="https://github.com/Arcanexus/wishalia/releases"><strong>Releases</strong></a>
 </p>
 
@@ -79,7 +80,8 @@ docker compose up -d
 pnpm dev
 ```
 
-See the [quick start](docs/quick-start.md), the [installation on Kubernetes](docs/installation.md),
+New to Wishalia? The [user guide](docs/user-guide.md) ([guide d'utilisation](docs/guide-utilisateur.md)
+en français) explains it to the whole family. Then see the [quick start](docs/quick-start.md), the [installation on Kubernetes](docs/installation.md),
 the [architecture](docs/architecture.md), the [data model](docs/data-model.md),
 [authentication](docs/authentication.md), the [management app](docs/management-app.md),
 [installing the app on a phone](docs/install-app.md), [languages](docs/i18n.md), the

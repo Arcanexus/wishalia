@@ -261,7 +261,7 @@ describe("createOutbox", () => {
   });
 
   it("goes round once more for a change made while the page loads again", async () => {
-    let outboxRef: ReturnType<typeof createOutbox> | undefined;
+    const ref: { outbox?: ReturnType<typeof createOutbox> } = {};
     let reloads = 0;
     const sent: string[] = [];
     const outbox = createOutbox({
@@ -271,11 +271,11 @@ describe("createOutbox", () => {
       },
       reload: async () => {
         reloads += 1;
-        if (reloads === 1) outboxRef?.add(change({ itemId: "late" }));
+        if (reloads === 1) ref.outbox?.add(change({ itemId: "late" }));
       },
       onState: () => undefined,
     });
-    outboxRef = outbox;
+    ref.outbox = outbox;
     outbox.add(change({ itemId: "first" }));
     await flush();
     await outbox.idle();

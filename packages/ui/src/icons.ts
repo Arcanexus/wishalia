@@ -74,6 +74,12 @@ export const ICONS = {
   cloudUp: ["M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5a4 4 0 0 1-1 8.5", "M12 20v-8", "M9 15l3-3 3 3"],
   /** Changes waiting: no network, or the server does not answer. */
   cloudOff: ["M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5a4 4 0 0 1-1 8.5H7z", "M3 3l18 18"],
+  /** Help: a question mark in a circle (the user guide, at the foot of the pages). */
+  help: [
+    "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z",
+    "M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6",
+    "M12 17h.01",
+  ],
 } as const;
 
 export type IconName = keyof typeof ICONS;

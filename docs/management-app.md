@@ -49,6 +49,20 @@ signed in ([Public view](public-view.md)).
 
 ![The display menu: mode, theme and language](images/app-display-menu.png)
 
+## The foot of the pages
+
+Every page of the app, the sign-in page included, ends with two things, on both frontends:
+
+- **« Aide : le guide d'utilisation »**, with a question mark, opens the [user guide](user-guide.md)
+  of the wiki in a new tab, in the page's language ([Guide d'utilisation](guide-utilisateur.md) in
+  French). A server can lead it to its own help page with `config.helpUrl` (`HELP_URL`, see
+  [Configuration](configuration.md)).
+- **« Version 0.0.9 »**: the version that runs, to give when reporting a problem. It is the release
+  of the image (`APP_VERSION`, set from the tag), or the version the app was built from for an
+  image of a branch or a development run.
+
+![The foot of a page: the help link and the version](images/app-footer.png)
+
 ## Saved as you go
 
 No setting has a « Enregistrer » button: the name, the theme or the mode of the account, a list's
@@ -67,6 +81,31 @@ each form keeps an « Enregistrer » button.
 
 Deliberate actions keep their button: adding an item, creating a list, a link, a token or a passkey,
 lifting a secret, archiving and deleting.
+
+## Saved in the background
+
+The changes made on a list show at once and are saved behind, so the app never makes anyone wait
+and every page stays free to use: deleting a wish (once confirmed), « Reçu », « Archiver », putting
+it back on the list, reordering, moving a volume. They go to the server **one at a time, in the
+order they were made**, so two changes never overtake each other, and several moves in a row send
+only the latest order. Moving to another page does not stop them.
+
+When the network is lost or the server does not answer (a restart, a timeout), the changes wait and
+go again by themselves: after 1 second, then 2, 4… up to every 30 seconds, and at once when the
+network comes back or the tab is shown again. They are kept on the device (the browser's storage,
+only ids, a status, an order and a title), so closing the tab or reloading loses none of them: they
+go at the next visit. The tabs of one browser share them, and only one sends at a time. Signed out
+meanwhile, they wait for the next sign-in.
+
+The header says where they stand, by an icon left of the display menu, with its words on hover and
+to a screen reader: nothing once all is saved; a cloud with an arrow while changes go; a crossed-out
+cloud while they wait, which tries again at once when tapped. When the server refuses a change (the
+wish was deleted on another device), a message at the bottom of the page says which one, and the
+list shows what is saved. Without JavaScript, each button posts its form as before.
+
+![Changes waiting for the server: the crossed-out cloud and its words](images/app-sync-waiting.png)
+
+![A change the server refused, on a phone in dark mode](images/app-sync-refused.png)
 
 ## Lists and the quick add
 
@@ -114,15 +153,16 @@ change lands in the item's history. See [Archiving and deleting](archive-delete.
 ![The items of a list, each in the same grid](images/app-list-items.png)
 
 The open items can be put in any order, the one relatives see them in. Each card has a handle to
-drag with a mouse or a finger, and two arrows, « Monter » and « Descendre », that move the item one
-place in a single tap or from the keyboard (they also work without JavaScript). The new place shows
+drag with a mouse or a finger, as many places up or down as wanted in one go (the cards make room
+as it passes, and the page scrolls along near its edges), and two arrows, « Monter » and
+« Descendre », that move the item one place in a single tap or from the keyboard (they also work
+without JavaScript). The new place shows
 at once and a screen reader hears it (« « Lampe » est maintenant en position 2 sur 5. »); the
-keyboard stays on the moved item. Moves follow one another without waiting for the server: one save
-goes at a time, with the latest order on screen, and the page shows its own order until the last one
-is saved, so an answer never brings an item back to where it was a moment ago. When the list changed
-meanwhile (a wish added or deleted on the way, or on another device), the page loads it again and
-saves the order once more on top of it; only if that is refused too does it show the current order,
-and say so.
+keyboard stays on the moved item. Moves follow one another without waiting for the server (see
+« Saved in the background »): only the latest order is sent, and the page shows its own order until
+it is saved, so an answer never brings an item back to where it was a moment ago. An order a moment
+behind is merged, not refused: a wish deleted, received or archived meanwhile is left out, and one
+added meanwhile (on this device or another) stays at the top, where a new wish lands.
 
 ![Dragging an item to a new place, on a phone](images/app-reorder.png)
 

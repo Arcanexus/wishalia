@@ -170,9 +170,9 @@ export const app: AppMessages = {
     waitingTip: "They are kept on this device and will go by themselves. Tap to try again now.",
     signedOut: "Your session ended: your changes will be saved once you sign in again.",
     signIn: "Sign in again",
-    refused: (titles) =>
-      titles.length === 1 && titles[0]
-        ? `“${titles[0]}”: the change couldn't be saved. The list shows what is saved.`
+    refused: (title) =>
+      title
+        ? `“${title}”: the change couldn't be saved. The list shows what is saved.`
         : "Some changes couldn't be saved. The list shows what is saved.",
     dismiss: "Close this message",
   },
@@ -382,6 +382,10 @@ export const app: AppMessages = {
     choose: "Choose the image shown",
     yours: "Your image",
     nth: (n) => `Image ${n} from the page`,
+    volumes: "The volumes' images",
+    volumesHelp: "Every image of the series' volumes: tap the one the series' card shows.",
+    noVolumeImage: "No volume has an image yet. Add volumes with a link, or send your image.",
+    ofVolume: (volume, n) => (n > 1 ? `${volume}, image ${n}` : `${volume}`),
     show: "Show the chosen image",
     upload: "Send your image",
     file: "A photo or an image from your device",

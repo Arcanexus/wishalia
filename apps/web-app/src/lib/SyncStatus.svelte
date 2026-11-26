@@ -20,7 +20,8 @@
   const state = changes.state;
   // The ones still to send (the sent ones only wait for the page to load again)
   const count = $derived(state.changes.length);
-  const refusedTitles = $derived(state.refused.map((change) => change.title ?? ""));
+  // One refused: named; several: said together
+  const refusedTitle = $derived(state.refused.length === 1 ? (state.refused[0]?.title ?? "") : "");
 </script>
 
 <div class="sync">
@@ -50,7 +51,7 @@
 {#if state.refused.length > 0}
   <div class="refused" role="alert">
     <Icon name="warning" />
-    <p>{m.refused(refusedTitles)}</p>
+    <p>{m.refused(refusedTitle)}</p>
     <IconButton icon="close" label={m.dismiss} tip={m.dismiss} onclick={() => changes.dismiss()} />
   </div>
 {/if}

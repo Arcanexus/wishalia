@@ -99,6 +99,5 @@ export const view = {
     gaugeList: "Où en est la liste",
     gaugeEvent: "Où en est l'occasion",
     empty: "La liste est vide pour l'instant. Revenez un peu plus tard !",
-    secret: (owner: string) => `Ce que vous offrez reste secret pour ${owner}, jusqu'après l'occasion.`,
   },
 };

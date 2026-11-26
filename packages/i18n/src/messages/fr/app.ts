@@ -180,9 +180,9 @@ export const app = {
       "Elles sont gardées sur cet appareil et partiront d'elles-mêmes. Toucher pour réessayer tout de suite.",
     signedOut: "Session terminée : vos modifications partiront après la reconnexion.",
     signIn: "Se reconnecter",
-    refused: (titles: string[]) =>
-      titles.length === 1 && titles[0]
-        ? `« ${titles[0]} » : la modification n'a pas pu être enregistrée. La liste montre ce qui est enregistré.`
+    refused: (title: string) =>
+      title
+        ? `« ${title} » : la modification n'a pas pu être enregistrée. La liste montre ce qui est enregistré.`
         : "Des modifications n'ont pas pu être enregistrées. La liste montre ce qui est enregistré.",
     dismiss: "Fermer ce message",
   },
@@ -402,6 +402,10 @@ export const app = {
     choose: "Choisir l'image affichée",
     yours: "Votre image",
     nth: (n: number) => `Image ${n} de la page`,
+    volumes: "Les images des tomes",
+    volumesHelp: "Toutes les images des tomes de la série : touchez celle que la carte de la série affiche.",
+    noVolumeImage: "Aucun tome n'a encore d'image. Ajoutez des tomes avec un lien, ou envoyez votre image.",
+    ofVolume: (volume: string, n: number) => (n > 1 ? `${volume}, image ${n}` : `${volume}`),
     show: "Afficher l'image choisie",
     upload: "Envoyer votre image",
     file: "Une photo ou une image de votre appareil",
