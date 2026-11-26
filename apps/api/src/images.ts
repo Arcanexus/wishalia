@@ -1,5 +1,5 @@
 import { type Database, schema } from "@wishalia/db";
-import type { Crop } from "@wishalia/domain";
+import { type Crop, isListIcon, type ListIcon } from "@wishalia/domain";
 import {
   imagePath,
   imageSources,
@@ -71,4 +71,24 @@ export async function imagesOf(
 /** The same, for one item. */
 export async function imageOf(db: Database | Tx, images: Images | null, row: WithImage) {
   return (await imagesOf(db, images, [row])).get(row.id) ?? null;
+}
+
+/**
+ * The picture of a list, as every screen gets it (docs/list-pictures.md): the icon the owner chose
+ * (null: the default one) and, when they sent one, the signed paths of their image, which wins.
+ * A server without images shows the icon only.
+ */
+export interface ListPictureFields {
+  icon: ListIcon | null;
+  image: ImageSources | null;
+}
+
+export function listPictureOf(
+  images: Images | null,
+  row: { icon: string | null; imageKey: string | null },
+): ListPictureFields {
+  return {
+    icon: isListIcon(row.icon) ? row.icon : null,
+    image: images && row.imageKey ? imageSources(images.imgproxy, row.imageKey, null) : null,
+  };
 }

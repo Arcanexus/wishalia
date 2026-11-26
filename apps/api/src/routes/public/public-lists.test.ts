@@ -126,6 +126,8 @@ describe("the home page", () => {
         name: "Anniversaire de Léa",
         ownerName: expect.any(String),
         itemCount: 1,
+        icon: null,
+        image: null,
         path: expect.stringMatching(/^\/s\/[A-Za-z0-9_-]{43}$/),
       },
     ]);

@@ -5,6 +5,7 @@
   import { useI18n } from "@wishalia/ui/i18n.ts";
   import EventGauge from "@wishalia/ui/public/EventGauge.svelte";
   import ItemCard from "@wishalia/ui/public/ItemCard.svelte";
+  import ListBadge from "@wishalia/ui/ListBadge.svelte";
   import { gauge } from "@wishalia/ui/public/view.ts";
 
   import type { PageProps } from "./$types";
@@ -30,7 +31,10 @@
 </div>
 
 <div class="public">
-  <h1>{data.list.name}</h1>
+  <div class="title">
+    <ListBadge picture={data.list} size="medium" />
+    <h1>{data.list.name}</h1>
+  </div>
   <p class="muted lead">{v.wishesOf(data.me.displayName)}</p>
 
   {#if overall}
@@ -65,6 +69,16 @@
   }
   .public {
     max-width: 48rem;
+  }
+  .title {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+  .title h1 {
+    margin: 0;
+    overflow-wrap: anywhere;
   }
   .lead {
     margin-top: 0;

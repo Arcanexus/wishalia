@@ -179,6 +179,13 @@ export const wishLists = pgTable(
      * and anyone may take part through its open link.
      */
     visibility: listVisibility("visibility").notNull().default("private"),
+    /**
+     * The icon shown next to its name (docs/list-pictures.md), one of LIST_ICONS of
+     * @wishalia/domain; null shows the default one.
+     */
+    icon: text("icon"),
+    /** The image the owner sent instead, its key in the bucket or volume; it wins over the icon. */
+    imageKey: text("image_key"),
     createdAt: createdAt(),
     /** Archived: hidden from the guests and from the owner's lists, restorable. */
     archivedAt: timestamp("archived_at", { withTimezone: true }),

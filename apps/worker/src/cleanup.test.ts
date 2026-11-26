@@ -1,6 +1,7 @@
 import { schema, type Database } from "@wishalia/db";
 import { createTestDb } from "@wishalia/db/testing";
 import { memoryStorage, type Storage } from "@wishalia/storage";
+import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { cleanupSettingsFromEnv, startCleanup, sweepImages } from "./cleanup.js";
@@ -8,6 +9,7 @@ import { cleanupSettingsFromEnv, startCleanup, sweepImages } from "./cleanup.js"
 let db: Database;
 let close: () => Promise<void>;
 let wishId: string;
+let listId: string;
 
 /** The one row a query gives, or the test fails. */
 function one<T>(rows: T[]): T {
@@ -24,6 +26,7 @@ beforeAll(async () => {
   const list = one(
     await db.insert(schema.wishLists).values({ ownerId: user.id, name: "Mes envies" }).returning(),
   );
+  listId = list.id;
   wishId = one(await db.insert(schema.wishes).values({ listId: list.id, title: "Lampe" }).returning()).id;
 });
 afterAll(() => close());
@@ -54,6 +57,20 @@ describe("sweepImages", () => {
       `wishes/${wishId}/fresh`,
       `wishes/${wishId}/shown`,
     ]);
+  });
+
+  it("keeps the picture a list shows and removes the ones it no longer does", async () => {
+    const storage = memoryStorage();
+    storage.objects.set(`lists/${listId}/shown`, file(ago(100)));
+    storage.objects.set(`lists/${listId}/replaced`, file(ago(30)));
+    storage.objects.set(`lists/${listId}/fresh`, file(ago(2)));
+    await db
+      .update(schema.wishLists)
+      .set({ imageKey: `lists/${listId}/shown` })
+      .where(eq(schema.wishLists.id, listId));
+    const result = await sweepImages({ db, storage, graceMs: 24 * HOUR, now: () => clock });
+    expect(result).toEqual({ checked: 3, removed: 1, failed: 0 });
+    expect([...storage.objects.keys()].sort()).toEqual([`lists/${listId}/fresh`, `lists/${listId}/shown`]);
   });
 
   it("counts a removal that fails, for the next sweep, and stops when the worker stops", async () => {

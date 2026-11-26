@@ -1,14 +1,16 @@
-import { schema } from "@wishalia/db";
+import { type Database, schema } from "@wishalia/db";
+import { LIST_ICONS } from "@wishalia/domain";
 import { and, asc, count, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
 import { first, HttpError, notFound, parse, userId } from "../../http.js";
 import type { Tx } from "../../history.js";
-import { imagesOf } from "../../images.js";
+import { imagesOf, listPictureOf } from "../../images.js";
 import { deleteItems } from "../../removal.js";
 import { hashToken, newToken } from "../../tokens.js";
 import type { ListDeps } from "./index.js";
+import { listImageRoutes } from "./list-images.js";
 import { ownerItem, ownerList } from "./serialize.js";
 
 export const listInput = z.object({ name: z.string().trim().min(1).max(100) });
@@ -23,15 +25,20 @@ export const listPatch = z
     revealMode: z.enum(["received", "manual"]),
     /** Private: share links only. Public: the home page's search finds it, anyone may take part. */
     visibility: z.enum(["private", "public"]),
+    /**
+     * The icon shown next to its name (docs/list-pictures.md); null shows the default one.
+     * Choosing one removes the image the owner had sent.
+     */
+    icon: z.enum(LIST_ICONS).nullable(),
   })
   .partial()
   .strict();
-const idParams = z.object({ listId: z.uuid() });
+export const idParams = z.object({ listId: z.uuid() });
 /** `?archived=true` gives the archived lists, to restore or delete them. */
 const listsQuery = z.object({ archived: z.enum(["true", "false"]).optional() });
 
 /** A list of the owner that is not deleted: a deleted list answers 404 everywhere. */
-const ownedList = (listId: string, ownerId: string) =>
+export const ownedList = (listId: string, ownerId: string) =>
   and(
     eq(schema.wishLists.id, listId),
     eq(schema.wishLists.ownerId, ownerId),
@@ -84,27 +91,32 @@ async function setVisibility(
   });
 }
 
+/** List id → the address of its open link, for the public lists among them. */
+export async function openUrlsOf(db: Database, publicOrigin: string, listIds: string[]) {
+  const urls = new Map<string, string>();
+  if (listIds.length === 0) return urls;
+  const rows = await db
+    .select({ listId: schema.shareLinks.listId, token: schema.shareLinks.openToken })
+    .from(schema.shareLinks)
+    .where(
+      and(
+        inArray(schema.shareLinks.listId, listIds),
+        isNotNull(schema.shareLinks.openToken),
+        isNull(schema.shareLinks.revokedAt),
+      ),
+    );
+  for (const row of rows) {
+    if (row.listId && row.token)
+      urls.set(row.listId, new URL(`${SHARE_PATH}${row.token}`, publicOrigin).toString());
+  }
+  return urls;
+}
+
 export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, images, publicOrigin }) => {
-  /** List id → the address of its open link, for the public lists among them. */
-  const openUrls = async (listIds: string[]) => {
-    const urls = new Map<string, string>();
-    if (listIds.length === 0) return urls;
-    const rows = await db
-      .select({ listId: schema.shareLinks.listId, token: schema.shareLinks.openToken })
-      .from(schema.shareLinks)
-      .where(
-        and(
-          inArray(schema.shareLinks.listId, listIds),
-          isNotNull(schema.shareLinks.openToken),
-          isNull(schema.shareLinks.revokedAt),
-        ),
-      );
-    for (const row of rows) {
-      if (row.listId && row.token)
-        urls.set(row.listId, new URL(`${SHARE_PATH}${row.token}`, publicOrigin).toString());
-    }
-    return urls;
-  };
+  await app.register(listImageRoutes, { db, now, images, publicOrigin });
+  const picture = (row: { icon: string | null; imageKey: string | null }) => listPictureOf(images, row);
+
+  const openUrls = (listIds: string[]) => openUrlsOf(db, publicOrigin, listIds);
 
   /**
    * The owner's lists, in their order, with the number of open items; with `?archived=true`, the
@@ -133,7 +145,9 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
     const urls = await openUrls(
       rows.filter((row) => row.list.visibility === "public").map((row) => row.list.id),
     );
-    return rows.map((row) => ownerList(row.list, row.items, urls.get(row.list.id) ?? null));
+    return rows.map((row) =>
+      ownerList(row.list, row.items, urls.get(row.list.id) ?? null, picture(row.list)),
+    );
   });
 
   app.post("/lists", async (request, reply) => {
@@ -149,7 +163,7 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
         })
         .returning(),
     );
-    return reply.status(201).send(ownerList(list, 0, null));
+    return reply.status(201).send(ownerList(list, 0, null, picture(list)));
   });
 
   app.patch("/lists/:listId", async (request) => {
@@ -163,10 +177,21 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
         throw new HttpError(409, "secret_already_lifted");
       }
     }
+    let replaced: string | null = null;
     const list = await db.transaction(async (tx) => {
+      // An icon chosen takes the place of the image the owner had sent: its file goes
+      if (patch.icon !== undefined) {
+        const [before] = await tx
+          .select({ imageKey: schema.wishLists.imageKey })
+          .from(schema.wishLists)
+          .where(mine)
+          .for("update");
+        replaced = before?.imageKey ?? null;
+      }
       const [row] = await tx
         .update(schema.wishLists)
         .set({
+          ...(patch.icon !== undefined ? { icon: patch.icon, imageKey: null } : {}),
           ...(patch.name !== undefined ? { name: patch.name } : {}),
           ...(patch.position !== undefined ? { position: patch.position } : {}),
           ...(patch.archived !== undefined ? { archivedAt: patch.archived ? now() : null } : {}),
@@ -180,8 +205,9 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
       return row;
     });
     if (!list) throw notFound();
+    if (replaced && images) await images.storage.delete(replaced).catch(() => undefined);
     const urls = list.visibility === "public" ? await openUrls([list.id]) : new Map<string, string>();
-    return ownerList(list, 0, urls.get(list.id) ?? null);
+    return ownerList(list, 0, urls.get(list.id) ?? null, picture(list));
   });
 
   /**
@@ -225,9 +251,9 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
     if (!list) throw notFound();
     if (list.revealMode !== "manual") throw new HttpError(409, "reveal_on_received");
     const urls = list.visibility === "public" ? await openUrls([list.id]) : new Map<string, string>();
-    if (list.revealedAt) return ownerList(list, 0, urls.get(list.id) ?? null);
+    if (list.revealedAt) return ownerList(list, 0, urls.get(list.id) ?? null, picture(list));
     const row = first(await db.update(schema.wishLists).set({ revealedAt: now() }).where(mine).returning());
-    return ownerList(row, 0, urls.get(row.id) ?? null);
+    return ownerList(row, 0, urls.get(row.id) ?? null, picture(row));
   });
 
   /** The items of a list, open ones first in their order, then received and archived ones. */
@@ -262,15 +288,23 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
     const ownerId = userId(request);
     const at = now();
     const files = await db.transaction(async (tx) => {
+      const [before] = await tx
+        .select({ imageKey: schema.wishLists.imageKey })
+        .from(schema.wishLists)
+        .where(ownedList(listId, ownerId))
+        .for("update");
       const [list] = await tx
         .update(schema.wishLists)
         .set({
           deletedAt: at,
           archivedAt: sql`coalesce(${schema.wishLists.archivedAt}, ${at.toISOString()}::timestamptz)`,
+          imageKey: null,
         })
         .where(ownedList(listId, ownerId))
         .returning({ id: schema.wishLists.id });
       if (!list) throw notFound();
+      // Its own image goes with it (read before the row forgets it)
+      const listImage = before?.imageKey ?? null;
       await tx
         .update(schema.shareLinks)
         .set({ revokedAt: at })
@@ -279,13 +313,14 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
         .select({ id: schema.wishes.id })
         .from(schema.wishes)
         .where(and(eq(schema.wishes.listId, listId), isNull(schema.wishes.deletedAt)));
-      return deleteItems(
+      const itemFiles = await deleteItems(
         tx,
         items.map((item) => item.id),
         ownerId,
         at,
         { listId },
       );
+      return listImage ? [...itemFiles, listImage] : itemFiles;
     });
     if (images) await Promise.allSettled(files.map((key) => images.storage.delete(key)));
     return reply.code(204).send();

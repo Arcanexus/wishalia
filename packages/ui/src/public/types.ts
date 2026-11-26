@@ -94,8 +94,21 @@ export interface PublicView {
   viewer: Viewer;
   owner: { displayName: string };
   me: { displayName: string } | null;
-  list: { id: string; name: string; theme: "neutral" | "christmas" | null } | null;
+  list: {
+    id: string;
+    name: string;
+    theme: "neutral" | "christmas" | null;
+    /** Its picture (docs/list-pictures.md): the icon chosen (null: the default) or the owner's image. */
+    icon?: string | null;
+    image?: ListImage | null;
+  } | null;
   event: PublicEvent | null;
   events: PublicEvent[];
   items: PublicItem[];
+}
+
+/** The signed thumbnails of the image the owner sent for a list (squares of 192 and 480 px). */
+export interface ListImage {
+  small: string;
+  medium: string;
 }

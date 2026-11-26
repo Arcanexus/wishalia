@@ -4,6 +4,7 @@
   import { appMessages } from "@wishalia/i18n/messages/app";
   import { useI18n } from "@wishalia/ui/i18n.ts";
 
+  import ListPictureSetting from "./ListPictureSetting.svelte";
   import type { List } from "./types.ts";
 
   /** A list's settings, folded under its title until asked for. */
@@ -119,6 +120,8 @@
 
     <button type="submit">{m.save}</button>
   </form>
+
+  <ListPictureSetting {list} />
 
   {#if list.revealMode === "manual"}
     <section class="part" aria-labelledby="liste-secret">

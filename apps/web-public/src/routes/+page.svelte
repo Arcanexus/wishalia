@@ -5,6 +5,7 @@
 
   import { publicMessages } from "@wishalia/i18n/messages/public";
   import LanguageButtons from "@wishalia/ui/LanguageButtons.svelte";
+  import ListBadge from "@wishalia/ui/ListBadge.svelte";
   import Logo from "@wishalia/ui/Logo.svelte";
   import { useI18n } from "@wishalia/ui/i18n.ts";
   import ModeButton from "@wishalia/ui/ModeButton.svelte";
@@ -120,9 +121,12 @@
         <ul class="lists">
           {#each home.lists as list (list.path)}
             <li class="card list">
-              <div>
-                <h3>{list.name}</h3>
-                <p class="muted">{m.wishesOf(list.ownerName)} · {m.wishes(list.itemCount)}</p>
+              <div class="who">
+                <ListBadge picture={list} size="medium" />
+                <div>
+                  <h3>{list.name}</h3>
+                  <p class="muted">{m.wishesOf(list.ownerName)} · {m.wishes(list.itemCount)}</p>
+                </div>
               </div>
               <a
                 class="button"
@@ -251,6 +255,12 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem 1rem;
+  }
+  .who {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 0;
   }
   .list h3 {
     margin: 0 0 0.25rem;

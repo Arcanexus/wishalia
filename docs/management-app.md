@@ -6,6 +6,10 @@ only: the browser never reaches the API.
 
 ![The lists and the quick add](images/app-lists.png)
 
+Each list shows its picture next to its name, here and on its page: one of sixteen icons in the
+theme's colours, or an image the owner sent. The picture next to a list's title opens « Image de la
+liste », to change it ([Pictures of the lists](list-pictures.md)).
+
 ## Signing in
 
 `/connexion` offers three ways in, all without a password:
@@ -84,6 +88,7 @@ left out; the page says they have one under each item.
 « Réglages de la liste », folded under the list's title, holds:
 
 - its **name**;
+- its **picture**, « Changer l'image » ([Pictures of the lists](list-pictures.md));
 - **who can see it**: « Privée » (the default), seen only by the people you send a share link to,
   or « Publique », found from the [home page](public-view.md#the-home-page) by your name or the
   list's, where anyone may take part. A public list gets its own address, shown under the choice to

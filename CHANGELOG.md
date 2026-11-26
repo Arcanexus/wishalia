@@ -6,6 +6,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Each list shows a picture next to its name: one of sixteen icons drawn in the theme's colours
+  (gift, tree, bauble, snowflake, star, heart, cake, birth, wedding, home, books, games, music,
+  travel, sport, pets), or an image the owner sends (JPEG, PNG, WebP, GIF, AVIF or HEIC, 10 MB at
+  most, shown as a square). It shows on the lists, on the list's page, in the preview, on the
+  family's page and in the public search. The picture next to a list's title, or « Changer
+  l'image » in its settings, opens « Image de la liste ». API: `icon` in `PATCH /manage/lists/:id`,
+  `PUT` and `DELETE /manage/lists/:id/image`, `icon` and `image` on every list (also in v1,
+  `/public/view` and `/public/home`). Migration 0014 adds `wish_lists.icon` and `image_key`; the
+  worker's cleanup also sweeps `lists/`.
+
 ## [0.0.6] - 2026-11-26
 
 ### Added

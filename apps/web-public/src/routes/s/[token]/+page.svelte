@@ -9,6 +9,7 @@
   import { publicMessages } from "@wishalia/i18n/messages/public";
   import { viewMessages } from "@wishalia/i18n/messages/view";
   import LanguageButtons from "@wishalia/ui/LanguageButtons.svelte";
+  import ListBadge from "@wishalia/ui/ListBadge.svelte";
   import Logo from "@wishalia/ui/Logo.svelte";
   import { useI18n } from "@wishalia/ui/i18n.ts";
   import { followLive, holding } from "@wishalia/ui/live.ts";
@@ -97,7 +98,14 @@
 
 <main id="contenu" class="page">
   <p class="hello">{view.open ? v.welcome : v.hello(view.audience)}</p>
-  <h1 id="titre" tabindex="-1">{heading(view, i18n.locale)}</h1>
+  {#if view.list}
+    <div class="title">
+      <ListBadge picture={view.list} size="medium" />
+      <h1 id="titre" tabindex="-1">{heading(view, i18n.locale)}</h1>
+    </div>
+  {:else}
+    <h1 id="titre" tabindex="-1">{heading(view, i18n.locale)}</h1>
+  {/if}
   <p class="muted lead">
     {view.event ? v.wishesOfFor(owner, formatDay(view.event.date, i18n.locale)) : v.wishesOf(owner)}
   </p>
@@ -267,6 +275,16 @@
   .hello {
     font-weight: 600;
     margin: 0 0 0.25rem;
+  }
+  .title {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin: 0.25rem 0 0.5rem;
+  }
+  .title h1 {
+    margin: 0;
+    overflow-wrap: anywhere;
   }
   .lead {
     margin-top: 0;

@@ -1,18 +1,43 @@
 import { schema, type Database } from "@wishalia/db";
+import { LIST_IMAGE_PREFIX } from "@wishalia/domain";
 import type { CleanupMetrics } from "@wishalia/metrics";
 import type { Storage } from "@wishalia/storage";
 import { inArray } from "drizzle-orm";
 
 /**
- * The cleanup of the image files (docs/images.md). A file is unused when no wish_images row names
- * it: a write cut between the file and its row, a removal of the file that failed after its row
+ * The cleanup of the image files (docs/images.md). A file is unused when no row names it (a
+ * wish_images row for the items' images, the list's image_key for the lists' own pictures): a write cut between the file and its row, a removal of the file that failed after its row
  * was gone, a file left half written. Every image a person can still see or choose has its row,
  * so it is never touched. The grace period spares the files whose row is about to be written (an
  * upload, a page being read): a file is only removed once it is older than that.
  */
 
-/** Everything Wishalia writes lives under this prefix. */
+/** The items' images live under this prefix, the lists' own pictures under LIST_IMAGE_PREFIX. */
 export const IMAGE_PREFIX = "wishes/";
+
+/** Each prefix swept, and how to find which of its keys a row still names. */
+const SWEPT: { prefix: string; named: (db: Database, keys: string[]) => Promise<string[]> }[] = [
+  {
+    prefix: IMAGE_PREFIX,
+    named: async (db, keys) =>
+      (
+        await db
+          .select({ key: schema.wishImages.key })
+          .from(schema.wishImages)
+          .where(inArray(schema.wishImages.key, keys))
+      ).map((row) => row.key),
+  },
+  {
+    prefix: LIST_IMAGE_PREFIX,
+    named: async (db, keys) =>
+      (
+        await db
+          .select({ key: schema.wishLists.imageKey })
+          .from(schema.wishLists)
+          .where(inArray(schema.wishLists.imageKey, keys))
+      ).flatMap((row) => (row.key ? [row.key] : [])),
+  },
+];
 const HOUR_MS = 3_600_000;
 
 export interface CleanupSettings {
@@ -64,26 +89,24 @@ export async function sweepImages({
 }: SweepDeps): Promise<SweepResult> {
   const result: SweepResult = { checked: 0, removed: 0, failed: 0 };
   const before = now().getTime() - graceMs;
-  for await (const page of storage.list(IMAGE_PREFIX)) {
-    if (!isRunning()) break;
-    result.checked += page.length;
-    const old = page.filter((object) => object.modifiedAt.getTime() < before);
-    if (old.length === 0) continue;
-    const named = await db
-      .select({ key: schema.wishImages.key })
-      .from(schema.wishImages)
-      .where(
-        inArray(
-          schema.wishImages.key,
+  for (const { prefix, named } of SWEPT) {
+    for await (const page of storage.list(prefix)) {
+      if (!isRunning()) return result;
+      result.checked += page.length;
+      const old = page.filter((object) => object.modifiedAt.getTime() < before);
+      if (old.length === 0) continue;
+      const kept = new Set(
+        await named(
+          db,
           old.map((object) => object.key),
         ),
       );
-    const kept = new Set(named.map((row) => row.key));
-    const unused = old.filter((object) => !kept.has(object.key));
-    const removals = await Promise.allSettled(unused.map((object) => storage.delete(object.key)));
-    for (const removal of removals) {
-      if (removal.status === "fulfilled") result.removed += 1;
-      else result.failed += 1;
+      const unused = old.filter((object) => !kept.has(object.key));
+      const removals = await Promise.allSettled(unused.map((object) => storage.delete(object.key)));
+      for (const removal of removals) {
+        if (removal.status === "fulfilled") result.removed += 1;
+        else result.failed += 1;
+      }
     }
   }
   return result;
