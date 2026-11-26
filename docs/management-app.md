@@ -117,8 +117,12 @@ The open items can be put in any order, the one relatives see them in. Each card
 drag with a mouse or a finger, and two arrows, « Monter » and « Descendre », that move the item one
 place in a single tap or from the keyboard (they also work without JavaScript). The new place shows
 at once and a screen reader hears it (« « Lampe » est maintenant en position 2 sur 5. »); the
-keyboard stays on the moved item. When the list changed on another device meanwhile, nothing moves
-and the page says so, with the current order.
+keyboard stays on the moved item. Moves follow one another without waiting for the server: one save
+goes at a time, with the latest order on screen, and the page shows its own order until the last one
+is saved, so an answer never brings an item back to where it was a moment ago. When the list changed
+meanwhile (a wish added or deleted on the way, or on another device), the page loads it again and
+saves the order once more on top of it; only if that is refused too does it show the current order,
+and say so.
 
 ![Dragging an item to a new place, on a phone](images/app-reorder.png)
 

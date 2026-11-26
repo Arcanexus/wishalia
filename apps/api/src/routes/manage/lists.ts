@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { first, HttpError, notFound, parse, userId } from "../../http.js";
 import type { Tx } from "../../history.js";
-import { imagesOf, listPictureOf } from "../../images.js";
+import { imagesOf, listPictureOf, removeInBackground } from "../../images.js";
 import { deleteItems } from "../../removal.js";
 import { hashToken, newToken } from "../../tokens.js";
 import type { ListDeps } from "./index.js";
@@ -339,7 +339,8 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
       );
       return listImage ? [...itemFiles, listImage] : itemFiles;
     });
-    if (images) await Promise.allSettled(files.map((key) => images.storage.delete(key)));
+    // The files go after the answer: the person does not wait for the bucket
+    void removeInBackground(images, files, request.log);
     return reply.code(204).send();
   });
 };

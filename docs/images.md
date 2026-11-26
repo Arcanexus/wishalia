@@ -198,7 +198,8 @@ Now and then (every 6 hours by default) the worker looks over the volume or the 
 the files that no image names any more (and, under `lists/`, the lists' own pictures no list
 names any more, see [Pictures of the lists](list-pictures.md)): a write cut halfway (the worker or the API stopped between
 the file and its row), a removal that failed (the bucket was away when the owner changed their
-photo), a file left half written on the volume. The images an item shows, the photos the owner sent
+photo, or when a deleted wish's files were removed in the background, see
+[Archiving and deleting](archive-delete.md)), a file left half written on the volume. The images an item shows, the photos the owner sent
 and the page's images they can still choose all have their row: they are never touched. A file
 younger than a day is spared, so an upload being saved or a page being read is never hit.
 

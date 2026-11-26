@@ -61,7 +61,7 @@ server, not hidden in the page.
 | 📅 **Lists and events**  | Durable lists, recurring events, recurring wishes.                       |
 | 📚 **Series**            | The volumes of a series on one card, each reserved on its own.           |
 | 🎄 **A face per list**   | Sixteen icons in the theme's colours, or your own image.                 |
-| 🗃️ **Tidy up**           | Archive a list or a wish and restore it, or delete it for good.          |
+| 🗃️ **Tidy up**           | Archive a list or a wish and restore it, or delete it for good, at once. |
 | 👵 **For every age**     | Large touch targets, no password, an item added in under five seconds.   |
 | 💾 **Nothing to save**   | Every setting is saved as it changes: no « Save » button to forget.      |
 | 📱 **On the phone**      | Installs like an app; « Partager » from any shop adds a wish.            |

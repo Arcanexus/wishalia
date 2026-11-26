@@ -6,6 +6,21 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Reordering a list no longer jumps back: moves made quickly in a row (arrows tapped several times,
+  a second drag while the first is saving) are saved one after the other with the latest order, and
+  the page keeps showing that order until it is saved. The arrows send the order on screen, so two
+  taps no longer overwrite each other on the server. A list changed meanwhile is loaded again and the
+  order saved on top of it, instead of showing an old order.
+- Deleting a wish takes it off the page at once (it comes back with an error if the server refuses),
+  instead of leaving it until the whole list is loaded again.
+
+### Changed
+
+- The image files of a deleted wish or list are removed in the background, after the answer; the
+  worker's periodic cleanup removes any file left behind.
+
 ## [0.0.9] - 2026-11-26
 
 ### Added

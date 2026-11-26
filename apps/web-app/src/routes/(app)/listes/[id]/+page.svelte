@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { enhance } from "$app/forms";
+  import { SvelteSet } from "svelte/reactivity";
+  import { deserialize, enhance } from "$app/forms";
   import { invalidate } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
@@ -27,7 +28,7 @@
   import SeriesEditor from "#lib/SeriesEditor.svelte";
   import StageIcon from "@wishalia/ui/StageIcon.svelte";
   import IconButton from "#lib/IconButton.svelte";
-  import { dropIndex, moveId } from "#lib/reorder.ts";
+  import { createOrderQueue, dropIndex, moveId, shownOrder, type OrderAnswer } from "#lib/reorder.ts";
   import { itemStage } from "#lib/stage.ts";
   import type { Item } from "#lib/types.ts";
 
@@ -40,12 +41,23 @@
   const s = $derived(appMessages(i18n.locale).series);
 
   // The list's own wishes; the volumes of a series show inside its card (docs/series.md)
-  const own = $derived(data.items.filter((item) => !item.parentId));
+  // Deleted on this screen: gone at once, before the server has answered (optimistic)
+  const removing = new SvelteSet<string>();
+  const items = $derived(
+    data.items.filter((item) => !removing.has(item.id) && !removing.has(item.parentId ?? "")),
+  );
+  /** Off the screen at once; the keyboard goes to the list's heading, the bin it was on is gone. */
+  const remove = async (id: string) => {
+    removing.add(id);
+    await tick();
+    document.getElementById("envies-titre")?.focus();
+  };
+  const own = $derived(items.filter((item) => !item.parentId));
   const open = $derived(own.filter((item) => item.status === "open"));
   /** Series id → its volumes, in their order. */
   const volumesBy = $derived(
     Map.groupBy(
-      [...data.items].filter((item) => item.parentId).sort((a, b) => a.position - b.position),
+      [...items].filter((item) => item.parentId).sort((a, b) => a.position - b.position),
       (item) => item.parentId ?? "",
     ),
   );
@@ -77,7 +89,7 @@
         url: resolve("/(app)/listes/[id]/suivi", { id: data.list.id }),
         reload: () => invalidate("wishalia:list"),
         // Never under a dragged item or a wish being edited
-        canReload: () => !order && !dragging && !holding(),
+        canReload: () => !order && !dragging && !saving.busy && !holding(),
       }),
     );
     return () => follower.stop();
@@ -93,36 +105,79 @@
     if (changes.length > 0) heard = changes.map((change) => m.live[change.kind](change.title)).join(" ");
   });
 
-  // The order on screen while an item moves, before the server confirms it (optimistic)
+  // The order on screen while items move, until the server has it (optimistic): moves follow
+  // one another without waiting, and only the latest order is sent (docs/management-app.md)
   let order = $state<string[] | null>(null);
   let dragging = $state<string | null>(null);
   let moved = $state("");
+  let orderFailed = $state(false);
   let list = $state<HTMLUListElement>();
-  let orderForm = $state<HTMLFormElement>();
-  const shown = $derived(order ? order.flatMap((id) => byId.get(id) ?? []) : open);
+  const shown = $derived(
+    order
+      ? shownOrder(
+          order,
+          open.map((item) => item.id),
+        ).flatMap((id) => byId.get(id) ?? [])
+      : open,
+  );
 
   const place = (id: string, ids: string[]) => {
     const item = byId.get(id);
     moved = item ? m.place(item.title, ids.indexOf(id) + 1, ids.length) : "";
   };
 
-  /** After the server answered: its order is the truth, also when it refused (the list changed). */
-  const settle =
-    (focus?: { id: string; direction: string }) =>
-    async ({ update }: { update: (options?: { reset?: boolean }) => Promise<void> }) => {
-      await update({ reset: false });
+  /** Sends an order to the page's own action, without the form's reload: the queue reloads once. */
+  const sendOrder = async (ids: readonly string[]): Promise<OrderAnswer> => {
+    const body = new FormData();
+    for (const id of ids) body.append("itemIds", id);
+    const response = await fetch("?/order", {
+      method: "POST",
+      body,
+      headers: { accept: "application/json", "x-sveltekit-action": "true" },
+      cache: "no-store",
+    });
+    const result = deserialize(await response.text());
+    if (result.type === "success") return "saved";
+    if (result.type === "failure" && result.status === 409) return "changed";
+    return "failed";
+  };
+  const saving = createOrderQueue({
+    current: () => (order ? shown.map((item) => item.id) : null),
+    send: sendOrder,
+    reload: () => invalidate("wishalia:list"),
+    // The list is loaded again: its order is the truth, also when it refused
+    done: (answer) => {
+      if (dragging) return;
+      orderFailed = answer !== "saved";
       order = null;
-      if (!focus) return;
-      // A moved node loses the focus, and the arrow is gone at the top or the bottom: keep the
-      // keyboard on the item, on the arrow that still goes somewhere
-      await tick();
-      const li = list?.querySelector(`li[data-id="${focus.id}"]`);
-      const same = li?.querySelector<HTMLButtonElement>(`button[value="${focus.direction}"]`);
-      const other = li?.querySelector<HTMLButtonElement>(
-        `button[name="direction"]:not([value="${focus.direction}"])`,
-      );
-      (same && !same.disabled ? same : other)?.focus();
-    };
+    },
+  });
+
+  /** Moves an item to a place on screen at once, and saves the new order behind it. */
+  const reorder = (id: string, next: string[]) => {
+    orderFailed = false;
+    order = next;
+    place(id, next);
+    void saving.request();
+  };
+
+  /** One place up or down with the arrows: the keyboard stays on the item, on an arrow that still goes. */
+  const step = async (event: MouseEvent, id: string, direction: "up" | "down") => {
+    event.preventDefault();
+    const ids = shown.map((entry) => entry.id);
+    const from = ids.indexOf(id);
+    const next = moveId(ids, id, from + (direction === "up" ? -1 : 1));
+    if (next.join() === ids.join()) return;
+    reorder(id, next);
+    // A moved node can lose the focus, and the arrow is gone at the top or the bottom
+    await tick();
+    const li = list?.querySelector(`li[data-id="${id}"]`);
+    const same = li?.querySelector<HTMLButtonElement>(`button[value="${direction}"]`);
+    const other = li?.querySelector<HTMLButtonElement>(
+      `button[name="direction"]:not([value="${direction}"])`,
+    );
+    (same && !same.disabled ? same : other)?.focus();
+  };
 
   /** Drag by the handle, with a mouse, a pen or a finger; the arrows do the same in one tap. */
   function drag(event: PointerEvent, id: string) {
@@ -147,18 +202,17 @@
       if (move.clientY < 64) window.scrollBy(0, -16);
       else if (move.clientY > window.innerHeight - 64) window.scrollBy(0, 16);
     };
-    const drop = async (end: PointerEvent) => {
+    const drop = (end: PointerEvent) => {
       handle.removeEventListener("pointermove", follow);
       handle.removeEventListener("pointerup", drop);
       handle.removeEventListener("pointercancel", drop);
       dragging = null;
       if (end.type === "pointercancel" || !order || order.join() === before.join()) {
-        order = null;
+        // Nothing moved: back to the order on its way, if any, or to the server's
+        order = saving.busy ? before : null;
         return;
       }
-      place(id, order);
-      await tick();
-      orderForm?.requestSubmit();
+      reorder(id, order);
     };
     handle.addEventListener("pointermove", follow);
     handle.addEventListener("pointerup", drop);
@@ -335,16 +389,13 @@
 {/if}
 
 <section aria-labelledby="envies-titre">
-  <h2 id="envies-titre">{m.wishes(working.length)}</h2>
+  <h2 id="envies-titre" tabindex="-1">{m.wishes(working.length)}</h2>
   {#if open.length === 0}
     <p class="muted">{m.empty}</p>
   {:else}
-    {#if form?.move && "error" in form.move}
+    {#if orderFailed || (form?.move && "error" in form.move)}
       <p class="notice error" role="alert">{m.orderChanged}</p>
     {/if}
-    <form method="POST" action="?/order" bind:this={orderForm} use:enhance={() => settle()} hidden>
-      {#each order ?? [] as id (id)}<input type="hidden" name="itemIds" value={id} />{/each}
-    </form>
     <ul class="items" bind:this={list}>
       {#each shown as item, index (item.id)}
         {@const link = webLink(item)}
@@ -356,19 +407,8 @@
           data-id={item.id}
         >
           {#if shown.length > 1}
-            <form
-              method="POST"
-              action="?/move"
-              class="mover"
-              use:enhance={({ formData }) => {
-                const direction = String(formData.get("direction"));
-                const ids = shown.map((entry) => entry.id);
-                const next = moveId(ids, item.id, index + (direction === "up" ? -1 : 1));
-                order = next;
-                place(item.id, next);
-                return settle({ id: item.id, direction });
-              }}
-            >
+            <!-- Without JavaScript the arrows post the form; with it, they move at once -->
+            <form method="POST" action="?/move" class="mover">
               <input type="hidden" name="itemId" value={item.id} />
               <button
                 type="submit"
@@ -377,6 +417,7 @@
                 class="secondary"
                 disabled={index === 0}
                 aria-label={m.moveUp(item.title)}
+                onclick={(event) => step(event, item.id, "up")}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
               </button>
@@ -401,6 +442,7 @@
                 class="secondary"
                 disabled={index === shown.length - 1}
                 aria-label={m.moveDown(item.title)}
+                onclick={(event) => step(event, item.id, "down")}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
               </button>
@@ -479,6 +521,8 @@
                 help={[removal.itemHelp, removal.guests, removal.archiveInstead]}
                 action="?/deleteItem"
                 fields={{ itemId: item.id, title: item.title }}
+                onremove={() => remove(item.id)}
+                onfailed={() => removing.delete(item.id)}
               />
             </div>
             {#if editing === item.id}
@@ -527,6 +571,8 @@
               help={[item.kind === "series" ? removal.seriesHelp : removal.itemHelp, removal.guests]}
               action="?/deleteItem"
               fields={{ itemId: item.id, title: item.title }}
+              onremove={() => remove(item.id)}
+              onfailed={() => removing.delete(item.id)}
             />
           </div>
         </li>
@@ -596,6 +642,8 @@
       help={[removal.seriesHelp, removal.guests, removal.ungroupInstead]}
       action="?/deleteItem"
       fields={{ itemId: series.id, title: series.title }}
+      onremove={() => remove(series.id)}
+      onfailed={() => removing.delete(series.id)}
     />
   </div>
   {#if editing === series.id}
@@ -766,6 +814,8 @@
         help={[removal.itemHelp, removal.guests]}
         action="?/deleteItem"
         fields={{ itemId: volume.id, title: volume.title }}
+        onremove={() => remove(volume.id)}
+        onfailed={() => removing.delete(volume.id)}
       />
     </div>
     {#if editing === volume.id}

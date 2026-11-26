@@ -21,7 +21,7 @@ import { z } from "zod";
 import { type HistoryEntry, recordHistory, type Tx } from "../../history.js";
 import { first, HttpError, notFound, parse, userId } from "../../http.js";
 import type { ManageDeps } from "./index.js";
-import { imageOf } from "../../images.js";
+import { imageOf, removeInBackground } from "../../images.js";
 import { deleteItems } from "../../removal.js";
 import { itemSecret } from "../../secrets.js";
 import { itemImageRoutes } from "./item-images.js";
@@ -517,7 +517,8 @@ export const itemRoutes: FastifyPluginAsync<ManageDeps> = async (app, { db, now,
       const volumes = item.kind === "series" ? await volumesOf(tx, [itemId]) : [];
       return deleteItems(tx, [itemId, ...volumes.map((volume) => volume.id)], ownerId, now());
     });
-    if (images) await Promise.allSettled(files.map((key) => images.storage.delete(key)));
+    // The files go after the answer: the person does not wait for the bucket
+    void removeInBackground(images, files, request.log);
     return reply.code(204).send();
   });
 

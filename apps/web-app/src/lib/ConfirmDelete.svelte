@@ -18,6 +18,8 @@
     help,
     action,
     fields,
+    onremove,
+    onfailed,
   }: {
     /** The bin's accessible name, with what it deletes. */
     label: string;
@@ -28,6 +30,12 @@
     action: string;
     /** The hidden fields sent with the confirmation. */
     fields: Record<string, string>;
+    /**
+     * Given, the page takes what goes off the screen as soon as it is confirmed (optimistic), and
+     * puts it back with an error should the server refuse.
+     */
+    onremove?: () => void;
+    onfailed?: () => void;
   } = $props();
 
   const i18n = useI18n();
@@ -49,9 +57,15 @@
     {action}
     use:enhance={() => {
       busy = true;
-      return async ({ update }) => {
+      // Gone at once: the dialog closes and the page no longer waits for the server
+      if (onremove) {
+        dialog?.close();
+        onremove();
+      }
+      return async ({ result, update }) => {
         dialog?.close();
         busy = false;
+        if (result.type !== "success" && result.type !== "redirect") onfailed?.();
         await update();
       };
     }}
