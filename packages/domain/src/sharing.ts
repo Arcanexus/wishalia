@@ -1,4 +1,12 @@
-import { reservedUnits, type ContributionFunding, type WishFunding } from "./funding.js";
+import {
+  remainingToFund,
+  reservedUnits,
+  takesShares,
+  totalFunded,
+  type ContributionFunding,
+  type WishFunding,
+} from "./funding.js";
+import { cents } from "./money.js";
 
 /**
  * Share links and contributions (spec, sections 2.2 and 3): pure rules, called by the public API
@@ -19,14 +27,21 @@ export function isShareLinkActive(link: ShareLinkState, now: Date): boolean {
 export interface ContributionRequest {
   /** Null without an event: a repeatable item then counts the contributions without an event. */
   eventId: string | null;
-  /** Pool: the amount pledged, in cents. */
+  /** Pool, or a share of a unique gift that has a price: the amount pledged, in cents. */
   amountCents?: number | null;
-  /** Unique and quantity: the copies reserved. */
+  /** Unique and quantity: the copies reserved. Ignored when a unique gift gets an amount. */
   units?: number | null;
 }
 
 export type ContributionRefusal =
-  "item_closed" | "amount_required" | "units_required" | "already_reserved" | "not_enough_left";
+  | "item_closed"
+  | "amount_required"
+  | "units_required"
+  | "already_reserved"
+  | "already_shared"
+  | "not_enough_left"
+  | "amount_too_high"
+  | "shares_not_taken";
 
 export interface ContributableWish extends WishFunding {
   status: "open" | "received" | "archived";
@@ -36,6 +51,8 @@ export interface ContributableWish extends WishFunding {
  * Whether a contribution may be added to an item, given its active contributions, or why not.
  * - A pool takes any positive amount: overshoot is allowed (spec §2.1).
  * - A unique item takes one reservation; a repeatable one, one per event.
+ * - A unique gift with a price may instead be shared: amounts up to what is left of its price,
+ *   once nobody reserved it whole; and nobody reserves it whole once someone gave a share.
  * - A quantity item takes up to the copies left (per event when it is repeatable).
  * A received or archived item takes nothing.
  */
@@ -48,6 +65,14 @@ export function refuseContribution(
   if (wish.kind === "pool") {
     return request.amountCents && request.amountCents > 0 ? null : "amount_required";
   }
+  if (wish.kind === "unique" && request.amountCents !== undefined && request.amountCents !== null) {
+    if (!takesShares(wish)) return "shares_not_taken";
+    if (!Number.isInteger(request.amountCents) || request.amountCents <= 0) return "amount_required";
+    if (reservedUnits(contributions) > 0) return "already_reserved";
+    const left = remainingToFund(cents(wish.priceCents ?? 0), totalFunded(contributions));
+    if (left <= 0) return "already_reserved";
+    return request.amountCents > left ? "amount_too_high" : null;
+  }
   const units = request.units ?? (wish.kind === "unique" ? 1 : 0);
   if (!Number.isInteger(units) || units <= 0) return "units_required";
   const counted = wish.repeatable
@@ -56,7 +81,8 @@ export function refuseContribution(
   const taken = reservedUnits(counted);
   if (wish.kind === "unique") {
     if (units !== 1) return "units_required";
-    return taken > 0 ? "already_reserved" : null;
+    if (taken > 0) return "already_reserved";
+    return totalFunded(counted) > 0 ? "already_shared" : null;
   }
   const wanted = Math.max(1, wish.quantity ?? 1);
   return taken + units > wanted ? "not_enough_left" : null;

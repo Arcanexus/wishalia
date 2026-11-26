@@ -72,17 +72,22 @@ amount nor its message: those stay with their author (`mine`).
 
 ## Routes
 
-| Route                                      | Body                                                                                          | Answer                                                                   |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `GET /public/home?q=`                      | No share link                                                                                 | Who is signed in, and the public lists (see above).                      |
-| `GET /public/view`                         |                                                                                               | The list or the event, its events and its items, with `funding` or null. |
-| `POST /public/items/:itemId/contributions` | `eventId`?, `amountCents` (pool), `units`? (quantity), `guestName`?, `message`?, `anonymous`? | `201`, the contribution and its `withdrawKey`, given once.               |
-| `DELETE /public/contributions/:id`         | header `X-Withdraw-Key`, or the session of its author                                         | `204`. Withdrawing twice changes nothing; anyone else gets `404`.        |
+| Route                                      | Body                                                                                                                                 | Answer                                                                   |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `GET /public/home?q=`                      | No share link                                                                                                                        | Who is signed in, and the public lists (see above).                      |
+| `GET /public/view`                         |                                                                                                                                      | The list or the event, its events and its items, with `funding` or null. |
+| `POST /public/items/:itemId/contributions` | `eventId`?, `amountCents` (pool, or a share of a gift that has a price), `units`? (quantity), `guestName`?, `message`?, `anonymous`? | `201`, the contribution and its `withdrawKey`, given once.               |
+| `DELETE /public/contributions/:id`         | header `X-Withdraw-Key`, or the session of its author                                                                                | `204`. Withdrawing twice changes nothing; anyone else gets `404`.        |
 
 A contribution:
 
 - a pool takes any positive amount, beyond the target too (overshoot is allowed);
 - a unique item takes one reservation, a repeatable one one per event;
+- a unique item that has a price, given once, may instead take shares: `amountCents` up to what is
+  left of its price (`amount_too_high` beyond). It takes no share once reserved whole
+  (`already_reserved`), and no whole reservation once shared (`already_shared`); an amount on any
+  other unique item is refused (`shares_not_taken`). Its `funding` then also carries `totalCents`,
+  `remainingCents` and `byEvent`, as a pool's, measured against the price;
 - a quantity item takes `units` copies, up to what is left (per event when it is repeatable);
 - a guest without an account gives a name (`guestName`); with an account, their name is used;
 - on a list link, `eventId` is optional: one of the item's events, or none; on an event link, it is
@@ -98,9 +103,9 @@ notification of it.
 
 ## Errors
 
-| Status | `error`                                                                                                                  | When                                                    |
-| ------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
-| 400    | `invalid_request`                                                                                                        | A field is wrong or missing.                            |
-| 403    | `owner_cannot_contribute`                                                                                                | The owner tries to contribute to their own items.       |
-| 404    | `link_not_found`, `not_found`                                                                                            | No valid link, or an item or contribution out of reach. |
-| 409    | `item_closed`, `already_reserved`, `not_enough_left`, `amount_required`, `units_required`, `event_closed`, `list_closed` | See above: a secret is already lifted.                  |
+| Status | `error`                                                                                                                                                                           | When                                                    |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| 400    | `invalid_request`                                                                                                                                                                 | A field is wrong or missing.                            |
+| 403    | `owner_cannot_contribute`                                                                                                                                                         | The owner tries to contribute to their own items.       |
+| 404    | `link_not_found`, `not_found`                                                                                                                                                     | No valid link, or an item or contribution out of reach. |
+| 409    | `item_closed`, `already_reserved`, `already_shared`, `not_enough_left`, `amount_too_high`, `shares_not_taken`, `amount_required`, `units_required`, `event_closed`, `list_closed` | See above: a secret is already lifted.                  |

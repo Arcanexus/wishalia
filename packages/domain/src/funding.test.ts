@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  amountTarget,
   fundingByEvent,
   itemState,
   overshoot,
   progress,
   remainingToFund,
   reservedUnits,
+  takesShares,
   timesGiven,
   totalFunded,
   type ContributionFunding,
@@ -140,5 +142,36 @@ describe("timesGiven", () => {
         reserve("bday", 1, "withdrawn"),
       ]),
     ).toBe(2);
+  });
+});
+
+describe("a gift shared by amounts", () => {
+  const priced: WishFunding = { kind: "unique", repeatable: false, priceCents: cents(20000) };
+
+  it("is any unique gift with a price, given once", () => {
+    expect(takesShares(priced)).toBe(true);
+    expect(takesShares(unique)).toBe(false);
+    expect(takesShares({ ...priced, priceCents: cents(0) })).toBe(false);
+    expect(takesShares({ ...priced, repeatable: true })).toBe(false);
+    expect(takesShares({ ...pool, priceCents: cents(20000) })).toBe(false);
+  });
+  it("is measured against its price, as a pool is against its target", () => {
+    expect(amountTarget(priced)).toBe(20000);
+    expect(amountTarget(pool)).toBe(10000);
+    expect(amountTarget(unique)).toBeNull();
+    expect(amountTarget(quantity)).toBeNull();
+  });
+  it("fills up with the shares until they reach the price", () => {
+    expect(progress(priced, [])).toBe(0);
+    expect(progress(priced, [pledge("e1", 5000)])).toBe(0.25);
+    expect(itemState(priced, [pledge("e1", 5000), pledge("e2", 11000)])).toBe("almost");
+    expect(itemState(priced, [pledge("e1", 5000), pledge("e2", 15000)])).toBe("complete");
+    expect(itemState(priced, [pledge("e1", 5000, "withdrawn")])).toBe("free");
+  });
+  it("is complete when someone reserves it whole", () => {
+    expect(itemState(priced, [reserve("e1")])).toBe("complete");
+  });
+  it("ignores amounts on a gift without a price", () => {
+    expect(progress(unique, [pledge("e1", 5000)])).toBe(0);
   });
 });

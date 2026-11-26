@@ -51,8 +51,14 @@ The page greets the person the link was made for (« Bonjour Mamie ! »), then s
   each item the events it is picked for;
 - every item with its image, when the owner has one, which opens big with the item's other images
   ([Images](images.md#opening-the-images-big)), its price (or the pool's target), its notes, a link to the site it comes from
-  (opened in a new tab, only an `http(s)` address), and where it stands:
-  - a gift: « Libre. » or « Réservé par Paul. »;
+  (opened in a new tab, only an `http(s)` address), and where it stands. An icon next to the price
+  says it at a glance, with its words on hover and for a screen reader, and its own shape so that
+  colour is never alone: a gift (nobody takes care of it yet), a half disc (partly given), a check
+  (already given), a heart (received). A free item has no words: the gift icon says it. Then:
+  - a gift: « Réservé par Paul. »;
+  - a gift that has a price, shared by several: the same bar as a pool, up to its price, and « 20 €
+    réunis sur 49,90 € : il manque 29,90 €, avec Paul. », then « Offert ensemble, par Paul et
+    Jeanne. » once the price is reached;
   - several copies: one box per copy, filled when reserved, and « 1 sur 4 déjà réservé, par
     Jeanne. »;
   - a pool: a bar split by event (one colour per event, named under the bar when there are
@@ -64,7 +70,7 @@ The page greets the person the link was made for (« Bonjour Mamie ! »), then s
   - a received item: « Déjà reçu : merci ! ».
 
 Next to where an item stands, the givers' initials, stacked (« ? » for someone discreet). Above the items, where the
-event or the list stands: « 2 complets, 1 en cours, 0 libre », with a bar in the same colours.
+event or the list stands: « 2 complets, 1 en cours, 0 à offrir », with a bar in the same colours.
 Every drawing repeats what the words say, so nothing is told by colour alone, and the drawings are
 SVG attributes, never `style` attributes, which the page's CSP refuses.
 
@@ -95,10 +101,16 @@ it, the page stays in place and the focus goes back to the title.
 
 ## Giving
 
-Under every item still open, one button says what it does: « Je le réserve » for a gift,
-« J'en réserve » when several copies are left, « Je participe » for a pool. It opens a short form,
-in the page, that asks only what the gift needs:
+Under every item still open, one button says what it does: « Je le réserve » for a gift without a
+price, « Je l'offre ou je participe » for a gift that has one, « J'en réserve » when several copies
+are left, « Je participe » for a pool or a gift others already started to share. It opens a short
+form, in the page, that asks only what the gift needs:
 
+- for a gift that has a price: « Je l'offre en entier (35 €) » or « Je participe avec un montant »,
+  then the amount, up to what is left of the price. Once someone gave part of it, it can only be
+  completed by amounts (« Il manque 29,90 € pour l'offrir en entier. »); once someone reserved it
+  whole, it takes no share. Any gift with a price can be shared: the owner has nothing to switch on.
+  A gift for every occasion is reserved whole each time;
 - for a pool, the amount in euros (« 20 » or « 12,50 »), with what is still missing; giving more
   than the target is allowed;
 - for several copies, how many (up to what is left);
@@ -116,9 +128,14 @@ chip in again.
 
 ![Chipping in to a pool, on a phone](images/public-give.png)
 
+![Sharing a gift that has a price, on a phone](images/public-share.png)
+
+![The same, in English and in dark mode](images/public-share-dark.png)
+
 When the gift cannot be taken, the form stays open with what was typed and says why, in words: the
 item was reserved in the meantime (« Quelqu'un vient de le réserver. Regardez les autres envies ! »),
-fewer copies are left, the amount is missing, the name is missing, or the occasion is past.
+fewer copies are left, the amount is missing or more than what is left of the price, others already
+share the gift (it is then completed by amounts), the name is missing, or the occasion is past.
 
 ### Withdrawing
 

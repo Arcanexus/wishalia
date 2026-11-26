@@ -7,15 +7,24 @@ export const view = {
   /** « une personne discrète », « 3 personnes discrètes »: givers who stay anonymous. */
   discreet: (n: number) => (n === 1 ? "une personne discrète" : `${n} personnes discrètes`),
   receivedThanks: "Déjà reçu : merci !",
+  /**
+   * Where an item stands, told by the badge's icon and colour; these words are its accessible name
+   * only (spoken, or shown on hover), never written on the card.
+   */
+  status: {
+    free: "Personne ne s'en occupe encore",
+    progress: "En partie offert",
+    done: "Déjà offert",
+    received: "Déjà reçu",
+  },
   repeatGiven: (times: number) =>
     `Déjà offert ${times === 1 ? "une fois" : `${times} fois`}, et peut l'être encore.`,
-  repeatFree: "Libre, et peut être offert à chaque occasion.",
   reservedBy: (who: string) => `Réservé par ${who}.`,
   reserved: "Déjà réservé.",
-  free: "Libre.",
+  sharedBy: (who: string) => `Offert ensemble, par ${who}.`,
+  shared: "Offert ensemble.",
   allReservedBy: (who: string) => `Tout est réservé, par ${who}.`,
   allReserved: "Tout est réservé.",
-  noneReserved: (wanted: number) => `${wanted} à offrir, aucun réservé pour l'instant.`,
   someReserved: (taken: number, wanted: number, who: string) =>
     `${taken} sur ${wanted} déjà réservé${taken > 1 ? "s" : ""}${who ? `, par ${who}` : ""}.`,
   poolToStart: (target: string | null) =>
@@ -25,10 +34,18 @@ export const view = {
   poolOvershoot: (amount: string) => ` : objectif atteint, ${amount} en excédent`,
   poolMissing: (amount: string) => ` : il manque ${amount}`,
   poolWith: (who: string) => `, avec ${who}`,
-  giveLabel: { pool: "Je participe", several: "J'en réserve", one: "Je le réserve" },
+  giveLabel: {
+    pool: "Je participe",
+    several: "J'en réserve",
+    one: "Je le réserve",
+    share: "Je l'offre ou je participe",
+  },
   giveErrors: {
     already_reserved: "Quelqu'un vient de le réserver. Regardez les autres envies !",
     not_enough_left: "Il n'en reste plus autant : choisissez un nombre plus petit.",
+    already_shared: "D'autres participent déjà : complétez avec le montant de votre choix.",
+    amount_too_high: "C'est plus que ce qu'il manque : choisissez un montant plus petit.",
+    shares_not_taken: "Ce cadeau se réserve en entier.",
     amount_required: "Indiquez un montant, par exemple 20 ou 12,50.",
     units_required: "Indiquez combien vous en offrez.",
     name_required: "Indiquez votre prénom, pour que vos proches sachent qui s'en occupe.",
@@ -51,7 +68,7 @@ export const view = {
   noEvent: "Sans occasion",
   gaugeComplete: (n: number) => `${n} complet${n > 1 ? "s" : ""}`,
   gaugeInProgress: (n: number) => `${n} en cours`,
-  gaugeFree: (n: number) => `${n} libre${n > 1 ? "s" : ""}`,
+  gaugeFree: (n: number) => `${n} à offrir`,
   /** The legend of a pool's bar: « Noël : 40 € ». */
   segment: (label: string, amount: string) => `${label} : ${amount}`,
   kind: { quantity: "Plusieurs exemplaires", pool: "Cagnotte" },
