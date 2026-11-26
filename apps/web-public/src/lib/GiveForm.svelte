@@ -8,6 +8,7 @@
     formatEuros,
     giveLabel,
     giveError,
+    priceOf,
     sharing,
     takesShares,
     unitsLeft,
@@ -47,17 +48,20 @@
   let sending = $state(false);
   const id = $derived(`don-${item.id}`);
   const left = $derived(unitsLeft(item));
-  /** A gift with a price: given whole or shared, and only shared once others started. */
+  /**
+   * A gift given once, with or without a price: bought whole or shared, and only shared once others
+   * started. Without a price, the shares take any amount.
+   */
   const shares = $derived(takesShares(item));
   const started = $derived(sharing(item));
   const partChosen = $derived(failed?.way === "part");
-  const missing = $derived(item.funding?.remainingCents ?? item.priceCents ?? 0);
-  const submitLabel = $derived(shares && !started ? m.confirm : giveLabel(item, i18n.locale));
+  const price = $derived(priceOf(item));
+  const missing = $derived(price === null ? null : (item.funding?.remainingCents ?? price));
 </script>
 
 <details class="give" open={failed !== null} data-live-hold>
   <summary class="button secondary">
-    <span class="closed">{giveLabel(item, i18n.locale)}</span><span class="opened">{m.close}</span>
+    <span class="closed">{giveLabel(i18n.locale)}</span><span class="opened">{m.close}</span>
   </summary>
   <form
     method="POST"
@@ -125,7 +129,7 @@
       />
       <p id="{id}-montant-aide" class="muted help">
         {m.shareStarted}
-        {m.shareLeft(formatEuros(missing, i18n.locale))}
+        {#if missing}{m.shareLeft(formatEuros(missing, i18n.locale))}{/if}
       </p>
     {:else if shares}
       <fieldset>
@@ -133,7 +137,7 @@
         <label class="choice">
           <input type="radio" name="way" value="whole" checked={!partChosen} />
           <span>
-            <strong>{m.whole(formatEuros(item.priceCents ?? 0, i18n.locale))}</strong>
+            <strong>{m.whole(price === null ? null : formatEuros(price, i18n.locale))}</strong>
             <span class="muted">{m.wholeHelp}</span>
           </span>
         </label>
@@ -141,7 +145,7 @@
           <input type="radio" name="way" value="part" checked={partChosen} />
           <span>
             <strong>{m.part}</strong>
-            <span class="muted">{m.partHelp}</span>
+            <span class="muted">{price === null ? m.partHelpFree : m.partHelp}</span>
           </span>
         </label>
       </fieldset>
@@ -161,7 +165,7 @@
             : undefined}
         />
         <p id="{id}-montant-aide" class="muted help">
-          {m.upTo(formatEuros(missing, i18n.locale))}
+          {missing === null ? m.anyAmount : m.upTo(formatEuros(missing, i18n.locale))}
         </p>
       </div>
     {:else if item.kind === "quantity" && left > 1}
@@ -202,7 +206,7 @@
       </span>
     </label>
 
-    <button type="submit" disabled={sending}>{sending ? m.sending : submitLabel}</button>
+    <button type="submit" disabled={sending}>{sending ? m.sending : m.confirm}</button>
   </form>
 </details>
 

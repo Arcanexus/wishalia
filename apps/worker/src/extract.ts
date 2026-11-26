@@ -1,4 +1,4 @@
-import type { Found } from "@wishalia/domain";
+import { decodeEntities, type Found } from "@wishalia/domain";
 
 /**
  * What a product page says about itself (spec §5.3), in cascade: the JSON-LD `schema.org/Product`
@@ -8,18 +8,8 @@ import type { Found } from "@wishalia/domain";
  * links of its images (fetched and checked apart).
  */
 
-const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
-
-/** Decodes the HTML entities of an attribute or a <title>. */
-export function decodeEntities(text: string): string {
-  return text.replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi, (whole, name: string) => {
-    if (name[0] === "#") {
-      const code = name[1]?.toLowerCase() === "x" ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10);
-      return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
-    }
-    return ENTITIES[name.toLowerCase()] ?? whole;
-  });
-}
+/** Decodes the HTML entities of an attribute or a <title> (the shared table of @wishalia/domain). */
+export { decodeEntities };
 
 /** The attributes of one tag: <meta property="og:title" content="…"> → { property, content }. */
 function attributes(tag: string): Record<string, string> {

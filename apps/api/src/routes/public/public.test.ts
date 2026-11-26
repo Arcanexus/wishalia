@@ -243,7 +243,7 @@ describe("contributions through a list link", () => {
     expect(booksView.funding).toMatchObject({ state: "in_progress", reservedUnits: 2 });
   });
 
-  it("lets guests share a gift that has a price, up to its price, or one of them give it whole", async () => {
+  it("lets guests share a gift, up to its price when it has one, or one of them give it whole", async () => {
     const lamp = await item("Lampe", listId, { priceCents: 16000 });
     const plain = await item("Plaid", listId, { priceCents: 5000 });
     for (const id of [lamp, plain]) await manage(owner, "PUT", `/events/${christmas}/items/${id}`);
@@ -275,13 +275,26 @@ describe("contributions through a list link", () => {
     expect(lampView.funding).toMatchObject({ state: "complete", totalCents: 16000, remainingCents: 0 });
     expect((await give(lamp, { amountCents: 100 })).body).toEqual({ error: "already_reserved" });
 
-    // Given whole, it takes no share any more; without a price, it takes none at all
+    // Given whole, it takes no share any more
     expect((await give(plain, {})).status).toBe(201);
     expect((await give(plain, { amountCents: 100 })).body).toEqual({ error: "already_reserved" });
     expect((await give(lonely, { amountCents: 100 })).status).toBe(404);
+
+    // Without a price, the same: shared by any amount, and then partly given for good
     const noPrice = await item("Bougie", listId);
     await manage(owner, "PUT", `/events/${christmas}/items/${noPrice}`);
-    expect((await give(noPrice, { amountCents: 100 })).body).toEqual({ error: "shares_not_taken" });
+    expect((await give(noPrice, { amountCents: 2500 })).status).toBe(201);
+    expect((await give(noPrice, { amountCents: 90000 })).status).toBe(201);
+    expect((await give(noPrice, {})).body).toEqual({ error: "already_shared" });
+    const candle = (await guest(token, "GET", "/view")).body.items.find(
+      (entry: { id: string }) => entry.id === noPrice,
+    );
+    expect(candle.funding).toMatchObject({
+      state: "in_progress",
+      totalCents: 92500,
+      remainingCents: null,
+      reservedUnits: 0,
+    });
   });
 
   it("takes a contribution without an event: a list is not always tied to one", async () => {

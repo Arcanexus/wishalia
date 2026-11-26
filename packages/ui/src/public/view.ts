@@ -41,11 +41,14 @@ export function givers(funding: Funding, locale: Locale): string {
 }
 
 /**
- * Whether guests may share this gift by amounts, each giving part of its price (the API's rule:
- * `takesShares` in @wishalia/domain).
+ * Whether guests may share this gift by amounts, each giving part of it, with or without a price
+ * (the API's rule: `takesShares` in @wishalia/domain).
  */
-export const takesShares = (item: PublicItem): boolean =>
-  item.kind === "unique" && !item.repeatable && (item.priceCents ?? 0) > 0;
+export const takesShares = (item: PublicItem): boolean => item.kind === "unique" && !item.repeatable;
+
+/** A gift's price, when it has one: shares then go up to it. */
+export const priceOf = (item: PublicItem): number | null =>
+  item.priceCents && item.priceCents > 0 ? item.priceCents : null;
 
 /** What guests already gave by amounts on a shared gift. */
 const sharedCents = (item: PublicItem) => (takesShares(item) ? (item.funding?.totalCents ?? 0) : 0);
@@ -66,7 +69,8 @@ export function standing(item: PublicItem, locale: Locale): string | null {
       if (item.repeatable) return funding.timesGiven ? m.repeatGiven(funding.timesGiven) : null;
       if (sharing(item)) {
         if (funding.state === "complete") return who ? m.sharedBy(who) : m.shared;
-        const reached = m.poolReached(f.money(sharedCents(item)), f.money(item.priceCents ?? 0));
+        const price = priceOf(item);
+        const reached = m.poolReached(f.money(sharedCents(item)), price === null ? null : f.money(price));
         const missing = funding.remainingCents ? m.poolMissing(f.money(funding.remainingCents)) : "";
         return `${reached}${missing}${who ? m.poolWith(who) : ""}.`;
       }
@@ -132,13 +136,8 @@ export function canGive(item: PublicItem, view: { viewer: string; event: PublicE
   return item.kind === "pool" || unitsLeft(item) > 0;
 }
 
-/** The button that opens the form, and sends it. */
-export function giveLabel(item: PublicItem, locale: Locale): string {
-  const labels = viewMessages(locale).giveLabel;
-  if (item.kind === "pool" || sharing(item)) return labels.pool;
-  if (takesShares(item)) return labels.share;
-  return item.kind === "quantity" && unitsLeft(item) > 1 ? labels.several : labels.one;
-}
+/** The button that opens the form: the same on every item, whatever it is (its form asks the rest). */
+export const giveLabel = (locale: Locale): string => viewMessages(locale).giveLabel;
 
 /** What went wrong, in plain words. */
 export const giveError = (code: string, locale: Locale) => {
@@ -189,6 +188,8 @@ export function poolBar(item: PublicItem, events: readonly PublicEvent[], locale
   const m = viewMessages(locale);
   const funding = item.funding;
   if (!funding || !(item.kind === "pool" || sharing(item))) return null;
+  // A gift shared without a price has nothing to measure against: a full bar would read « given »
+  if (item.kind !== "pool" && priceOf(item) === null) return null;
   const total = funding.totalCents ?? 0;
   const target = (item.kind === "pool" ? item.targetCents : item.priceCents) ?? 0;
   const scale = Math.max(target, total);

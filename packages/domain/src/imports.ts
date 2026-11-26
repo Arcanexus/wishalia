@@ -1,3 +1,4 @@
+import { decodeEntities } from "./entities.js";
 import { MAX_FOUND_CENTS } from "./enrichment.js";
 import { cleanUrl, MAX_TITLE_LENGTH, parseQuickAdd, placeholderTitle } from "./items.js";
 
@@ -504,19 +505,6 @@ export function wishlistrAddress(input: string): string {
     throw new ImportError("invalid_address");
   }
   return `https://www.wishlistr.com/${encodeURIComponent(user)}/`;
-}
-
-const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
-
-/** Decodes the HTML entities of a text or an attribute. */
-export function decodeEntities(text: string): string {
-  return text.replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi, (whole, name: string) => {
-    if (name[0] === "#") {
-      const code = name[1]?.toLowerCase() === "x" ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10);
-      return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
-    }
-    return ENTITIES[name.toLowerCase()] ?? whole;
-  });
 }
 
 /** The text of a piece of HTML: every tag dropped (<br> becomes a new line), entities decoded. */

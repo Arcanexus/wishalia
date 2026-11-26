@@ -1,4 +1,5 @@
 import {
+  amountTarget,
   remainingToFund,
   reservedUnits,
   takesShares,
@@ -6,7 +7,6 @@ import {
   type ContributionFunding,
   type WishFunding,
 } from "./funding.js";
-import { cents } from "./money.js";
 
 /**
  * Share links and contributions (spec, sections 2.2 and 3): pure rules, called by the public API
@@ -27,7 +27,7 @@ export function isShareLinkActive(link: ShareLinkState, now: Date): boolean {
 export interface ContributionRequest {
   /** Null without an event: a repeatable item then counts the contributions without an event. */
   eventId: string | null;
-  /** Pool, or a share of a unique gift that has a price: the amount pledged, in cents. */
+  /** Pool, or a share of a unique gift: the amount pledged, in cents. */
   amountCents?: number | null;
   /** Unique and quantity: the copies reserved. Ignored when a unique gift gets an amount. */
   units?: number | null;
@@ -51,8 +51,9 @@ export interface ContributableWish extends WishFunding {
  * Whether a contribution may be added to an item, given its active contributions, or why not.
  * - A pool takes any positive amount: overshoot is allowed (spec §2.1).
  * - A unique item takes one reservation; a repeatable one, one per event.
- * - A unique gift with a price may instead be shared: amounts up to what is left of its price,
- *   once nobody reserved it whole; and nobody reserves it whole once someone gave a share.
+ * - A unique gift given once may instead be shared, once nobody reserved it whole: amounts up to
+ *   what is left of its price, or any amount when it has none; and nobody reserves it whole once
+ *   someone gave a share.
  * - A quantity item takes up to the copies left (per event when it is repeatable).
  * A received or archived item takes nothing.
  */
@@ -69,7 +70,9 @@ export function refuseContribution(
     if (!takesShares(wish)) return "shares_not_taken";
     if (!Number.isInteger(request.amountCents) || request.amountCents <= 0) return "amount_required";
     if (reservedUnits(contributions) > 0) return "already_reserved";
-    const left = remainingToFund(cents(wish.priceCents ?? 0), totalFunded(contributions));
+    const price = amountTarget(wish);
+    if (price === null) return null;
+    const left = remainingToFund(price, totalFunded(contributions));
     if (left <= 0) return "already_reserved";
     return request.amountCents > left ? "amount_too_high" : null;
   }

@@ -3,6 +3,7 @@
   import type { Snippet } from "svelte";
 
   import Gallery from "../Gallery.svelte";
+  import Icon from "../Icon.svelte";
   import { useI18n } from "../i18n.ts";
   import StageIcon from "../StageIcon.svelte";
   import Copies from "./Copies.svelte";
@@ -38,7 +39,8 @@
   const site = (url: string) => URL.parse(url)?.hostname.replace(/^www\./, "") ?? url;
 </script>
 
-<li class="card item" class:complete class:pictured={item.image}>
+<!-- Every card keeps its square, with or without an image: titles and buttons line up from card to card -->
+<li class="card item" class:complete>
   {#if item.image}
     <!-- The link that opens it big carries the words: the thumbnail itself is decorative -->
     <Gallery title={item.title} image={item.image}>
@@ -52,6 +54,8 @@
         decoding="async"
       />
     </Gallery>
+  {:else}
+    <span class="picture empty" aria-hidden="true"><Icon name="image" /></span>
   {/if}
   <div class="content">
     <div class="head">
@@ -141,7 +145,7 @@
     align-items: center;
     gap: 0.5rem;
   }
-  .pictured {
+  .item {
     display: grid;
     grid-template-columns: 5.5rem minmax(0, 1fr);
     gap: 0 1rem;
@@ -155,8 +159,17 @@
     border-radius: 12px;
     background: var(--surface-2, var(--border));
   }
+  /* No image: an empty frame, the same as in the management app */
+  .empty {
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    background: transparent;
+    border: 2px dashed var(--border);
+    color: var(--text-2);
+  }
   @media (min-width: 40rem) {
-    .pictured {
+    .item {
       grid-template-columns: 8rem minmax(0, 1fr);
     }
   }

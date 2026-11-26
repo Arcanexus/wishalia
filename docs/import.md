@@ -27,7 +27,8 @@ anyone with its address.
 Paste the address of the list, the one Wishlistr's « Share list » gives (for example
 `https://www.wishlistr.com/alex/`). The list must be visible without an account. Wishalia reads that
 page once, and takes for each item its title, its comment (as the notes, « Priority: … » included)
-and the shop's link. The list's title becomes the name proposed for the new list. Wishlistr has no
+and the shop's link, with every HTML entity of the page decoded (« liste &agrave; jour » becomes
+« liste à jour »). The list's title becomes the name proposed for the new list. Wishlistr has no
 price field; the worker completes the price and the image from each link afterwards, like for any
 added item ([Completing items from their link](enrichment.md)).
 

@@ -40,7 +40,7 @@ server, not hidden in the page.
 > screens (signing in, passkeys, lists with their icon or image, quick add, editing, reordering, archiving and deleting lists
 > and items, a list's preview, events, sharing, settings, all saved as they change, with icons and
 > header menus), and the family sees a shared list or event in the public view, where
-> they reserve a gift, share any gift that has a price by giving part of it, chip in to a pool, and withdraw. The public host's home page welcomes visitors, signs them in,
+> they reserve a gift, share any gift by giving part of it (up to its price, when it has one), chip in to a pool, and withdraw. The public host's home page welcomes visitors, signs them in,
 > and finds the lists their owners made public. The worker completes the items added with a link (title,
 > price, images; Amazon included), each step showing up live on the owner's and the guests' pages with no reload, and reads them again on demand, keeping what the owner typed, and the owner can choose, send and frame the image of each item (on a volume or in S3, through imgproxy);
 > a click opens an item's images big, to go through them with the arrows, the keyboard or a swipe.

@@ -37,12 +37,8 @@ export const view = {
   poolOvershoot: (amount: string) => ` : objectif atteint, ${amount} en excédent`,
   poolMissing: (amount: string) => ` : il manque ${amount}`,
   poolWith: (who: string) => `, avec ${who}`,
-  giveLabel: {
-    pool: "Je participe",
-    several: "J'en réserve",
-    one: "Je le réserve",
-    share: "Je l'offre ou je participe",
-  },
+  /** The one button of every item a guest can still give: its form then asks what that item needs. */
+  giveLabel: "Acheter / Participer",
   giveErrors: {
     already_reserved: "Quelqu'un vient de le réserver. Regardez les autres envies !",
     not_enough_left: "Il n'en reste plus autant : choisissez un nombre plus petit.",

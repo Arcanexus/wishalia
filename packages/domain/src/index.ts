@@ -26,6 +26,7 @@ export {
   remainingToFund,
   reservedUnits,
   takesShares,
+  UNPRICED_SHARED_PROGRESS,
   timesGiven,
   totalFunded,
   type ContributionFunding,
@@ -98,12 +99,12 @@ export {
   normalizeSearch,
   searchWords,
 } from "./directory.js";
+export { decodeEntities } from "./entities.js";
 export {
   cleanText,
   collect,
   columnKey,
   csvDelimiter,
-  decodeEntities,
   fieldOfColumn,
   FILE_IMPORTERS,
   htmlText,

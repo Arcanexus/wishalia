@@ -90,10 +90,14 @@ export const publicSite = {
     amountLeft: (left: string) => `Il manque ${left}. Vous pouvez donner plus ou moins.`,
     amountFree: "Le montant que vous voulez, même au-delà de l'objectif.",
     way: "Comment l'offrez-vous ?",
-    whole: (price: string) => `Je l'offre en entier (${price})`,
+    /** With its price when it has one. */
+    whole: (price: string | null) => (price ? `Je l'achète en entier (${price})` : "Je l'achète en entier"),
     wholeHelp: "Vous vous occupez de tout le cadeau.",
     part: "Je participe avec un montant",
     partHelp: "D'autres proches pourront compléter jusqu'au prix.",
+    /** A gift without a price: the shares take any amount. */
+    partHelpFree: "D'autres proches pourront compléter.",
+    anyAmount: "Le montant de votre choix.",
     shareLeft: (left: string) => `Il manque ${left} pour l'offrir en entier.`,
     upTo: (price: string) => `Le montant de votre choix, jusqu'à ${price}.`,
     shareStarted: "D'autres participent déjà : complétez avec le montant de votre choix.",

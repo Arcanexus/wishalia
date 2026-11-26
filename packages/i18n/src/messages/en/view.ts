@@ -27,12 +27,7 @@ export const view: ViewMessages = {
   poolOvershoot: (amount) => `: goal reached, ${amount} over`,
   poolMissing: (amount) => `: ${amount} to go`,
   poolWith: (who) => `, with ${who}`,
-  giveLabel: {
-    pool: "I'll chip in",
-    several: "I'll reserve some",
-    one: "I'll reserve it",
-    share: "I'll give it or chip in",
-  },
+  giveLabel: "Buy / Chip in",
   giveErrors: {
     already_reserved: "Someone has just reserved it. Have a look at the other wishes!",
     not_enough_left: "There aren't that many left: choose a smaller number.",
