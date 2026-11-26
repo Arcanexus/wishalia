@@ -40,6 +40,19 @@ export function givers(funding: Funding, locale: Locale): string {
   return joinNames(parts, locale);
 }
 
+/**
+ * Whether guests may share this gift by amounts, each giving part of its price (the API's rule:
+ * `takesShares` in @wishalia/domain).
+ */
+export const takesShares = (item: PublicItem): boolean =>
+  item.kind === "unique" && !item.repeatable && (item.priceCents ?? 0) > 0;
+
+/** What guests already gave by amounts on a shared gift. */
+const sharedCents = (item: PublicItem) => (takesShares(item) ? (item.funding?.totalCents ?? 0) : 0);
+
+/** Whether guests already started sharing this gift: then it can only be completed by amounts. */
+export const sharing = (item: PublicItem): boolean => sharedCents(item) > 0;
+
 /** The line that says where an item stands, for a guest. Null when nothing is to say. */
 export function standing(item: PublicItem, locale: Locale): string | null {
   const { m, f } = words(locale);
@@ -49,13 +62,21 @@ export function standing(item: PublicItem, locale: Locale): string | null {
   const who = givers(funding, locale);
   switch (item.kind) {
     case "unique":
-      if (item.repeatable) return funding.timesGiven ? m.repeatGiven(funding.timesGiven) : m.repeatFree;
-      return funding.state === "complete" ? (who ? m.reservedBy(who) : m.reserved) : m.free;
+      // Nobody gave yet: the badge says so (see `availability`), no words needed
+      if (item.repeatable) return funding.timesGiven ? m.repeatGiven(funding.timesGiven) : null;
+      if (sharing(item)) {
+        if (funding.state === "complete") return who ? m.sharedBy(who) : m.shared;
+        const reached = m.poolReached(f.money(sharedCents(item)), f.money(item.priceCents ?? 0));
+        const missing = funding.remainingCents ? m.poolMissing(f.money(funding.remainingCents)) : "";
+        return `${reached}${missing}${who ? m.poolWith(who) : ""}.`;
+      }
+      if (funding.state === "complete") return who ? m.reservedBy(who) : m.reserved;
+      return null;
     case "quantity": {
       const wanted = item.quantity ?? 1;
       const taken = funding.reservedUnits ?? 0;
       if (taken >= wanted) return who ? m.allReservedBy(who) : m.allReserved;
-      if (taken === 0) return wanted === 1 ? m.free : m.noneReserved(wanted);
+      if (taken === 0) return null;
       return m.someReserved(taken, wanted, who);
     }
     case "pool": {
@@ -72,6 +93,18 @@ export function standing(item: PublicItem, locale: Locale): string | null {
       return `${reached}${tail}${who ? m.poolWith(who) : ""}.`;
     }
   }
+}
+
+/** Where an item stands, as the card's badge draws it: an icon and a colour, with words for a screen reader. */
+export type Availability = "free" | "progress" | "done" | "received";
+
+/** Null when the guest may not see where it stands (the owner, a folded page): no badge then. */
+export function availability(item: PublicItem): Availability | null {
+  if (item.status === "received") return "received";
+  const state = item.funding?.state;
+  if (!state) return null;
+  if (state === "complete") return "done";
+  return state === "free" ? "free" : "progress";
 }
 
 /** The page's heading and what it is about. */
@@ -95,13 +128,15 @@ export function unitsLeft(item: PublicItem): number {
 export function canGive(item: PublicItem, view: { viewer: string; event: PublicEvent | null }): boolean {
   if (view.viewer === "owner" || item.status !== "open") return false;
   if (view.event && !view.event.open) return false;
+  if (sharing(item)) return item.funding?.state !== "complete";
   return item.kind === "pool" || unitsLeft(item) > 0;
 }
 
 /** The button that opens the form, and sends it. */
 export function giveLabel(item: PublicItem, locale: Locale): string {
   const labels = viewMessages(locale).giveLabel;
-  if (item.kind === "pool") return labels.pool;
+  if (item.kind === "pool" || sharing(item)) return labels.pool;
+  if (takesShares(item)) return labels.share;
   return item.kind === "quantity" && unitsLeft(item) > 1 ? labels.several : labels.one;
 }
 
@@ -147,14 +182,15 @@ export const TONES = 4;
 
 /**
  * A pool's bar (spec §4): one segment per event, on a scale of max(target, total), with a mark at
- * the target and the overshoot past it. Null when there is nothing to draw.
+ * the target and the overshoot past it. A gift shared by amounts gets the same bar, up to its price.
+ * Null when there is nothing to draw.
  */
 export function poolBar(item: PublicItem, events: readonly PublicEvent[], locale: Locale): PoolBar | null {
   const m = viewMessages(locale);
   const funding = item.funding;
-  if (item.kind !== "pool" || !funding) return null;
+  if (!funding || !(item.kind === "pool" || sharing(item))) return null;
   const total = funding.totalCents ?? 0;
-  const target = item.targetCents ?? 0;
+  const target = (item.kind === "pool" ? item.targetCents : item.priceCents) ?? 0;
   const scale = Math.max(target, total);
   if (scale <= 0) return null;
   const names = new Map(events.map((event) => [event.id, event.name]));

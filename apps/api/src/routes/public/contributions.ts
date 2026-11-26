@@ -98,23 +98,31 @@ export const contributionRoutes: FastifyPluginAsync<{
         })
         .from(schema.contributions)
         .where(and(eq(schema.contributions.wishId, wish.id), eq(schema.contributions.status, "active")));
-      const units =
-        locked.kind === "pool" ? undefined : (input.units ?? (locked.kind === "unique" ? 1 : undefined));
+      const funding = {
+        kind: locked.kind,
+        repeatable: locked.repeatable,
+        status: locked.status,
+        targetCents: locked.targetCents === null ? null : cents(locked.targetCents),
+        quantity: locked.quantity,
+        priceCents: locked.priceCents === null ? null : cents(locked.priceCents),
+      };
+      // An amount on a unique gift is a share of its price (refused when it takes none)
+      const byAmount =
+        locked.kind === "pool" || (locked.kind === "unique" && input.amountCents !== undefined);
+      const units = byAmount ? undefined : (input.units ?? (locked.kind === "unique" ? 1 : undefined));
       const refusal = refuseContribution(
-        {
-          kind: locked.kind,
-          repeatable: locked.repeatable,
-          status: locked.status,
-          targetCents: locked.targetCents === null ? null : cents(locked.targetCents),
-          quantity: locked.quantity,
-        },
+        funding,
         active.map((row) => ({
           eventId: row.eventId,
           status: "active" as const,
           amountCents: row.amountCents === null ? null : cents(row.amountCents),
           units: row.units,
         })),
-        { eventId: event?.id ?? null, amountCents: input.amountCents ?? null, units: units ?? null },
+        {
+          eventId: event?.id ?? null,
+          amountCents: byAmount ? (input.amountCents ?? null) : null,
+          units: units ?? null,
+        },
       );
       if (refusal) throw new HttpError(409, refusal);
 
@@ -127,8 +135,8 @@ export const contributionRoutes: FastifyPluginAsync<{
             contributorId: sessionUser?.id ?? null,
             guestName: sessionUser ? null : (input.guestName ?? null),
             shareLinkId: link.id,
-            amountCents: locked.kind === "pool" ? (input.amountCents ?? null) : null,
-            units: locked.kind === "pool" ? null : (units ?? null),
+            amountCents: byAmount ? (input.amountCents ?? null) : null,
+            units: byAmount ? null : (units ?? null),
             message: input.message || null,
             anonymous: input.anonymous,
             withdrawKeyHash: hashToken(withdrawKey),
@@ -139,7 +147,7 @@ export const contributionRoutes: FastifyPluginAsync<{
       await recordHistory(tx, [
         {
           wishId: wish.id,
-          type: locked.kind === "pool" ? "contribution_added" : "reserved",
+          type: byAmount ? "contribution_added" : "reserved",
           actorId: sessionUser?.id ?? null,
           payload: {
             contributionId: row.id,

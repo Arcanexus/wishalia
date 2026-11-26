@@ -84,3 +84,46 @@ describe("refuseContribution without an event", () => {
     expect(refuseContribution(repeatable, none, { eventId: null })).toBe("already_reserved");
   });
 });
+
+describe("refuseContribution on a gift shared by amounts", () => {
+  const priced = wish({ priceCents: cents(20000) });
+  const share = (amount: number, status: "active" | "withdrawn" = "active") => ({
+    eventId: "e1",
+    status,
+    amountCents: cents(amount),
+  });
+
+  it("takes shares up to what is left of the price", () => {
+    expect(refuseContribution(priced, [], { eventId: "e1", amountCents: 5000 })).toBeNull();
+    expect(refuseContribution(priced, [share(15000)], { eventId: "e2", amountCents: 5000 })).toBeNull();
+    expect(refuseContribution(priced, [share(15000)], { eventId: "e1", amountCents: 5001 })).toBe(
+      "amount_too_high",
+    );
+    expect(refuseContribution(priced, [share(20000)], { eventId: "e1", amountCents: 1 })).toBe(
+      "already_reserved",
+    );
+    expect(
+      refuseContribution(priced, [share(20000, "withdrawn")], { eventId: "e1", amountCents: 1 }),
+    ).toBeNull();
+  });
+  it("refuses an empty or broken amount", () => {
+    expect(refuseContribution(priced, [], { eventId: "e1", amountCents: 0 })).toBe("amount_required");
+    expect(refuseContribution(priced, [], { eventId: "e1", amountCents: 1.5 })).toBe("amount_required");
+  });
+  it("takes no share once someone reserved it whole, and no whole reservation once shared", () => {
+    expect(refuseContribution(priced, [reservation("e1")], { eventId: "e1", amountCents: 100 })).toBe(
+      "already_reserved",
+    );
+    expect(refuseContribution(priced, [share(100)], { eventId: "e1" })).toBe("already_shared");
+    expect(refuseContribution(priced, [], { eventId: "e1" })).toBeNull();
+  });
+  it("takes no amount on a gift without a price, or given at every occasion", () => {
+    expect(refuseContribution(wish(), [], { eventId: "e1", amountCents: 100 })).toBe("shares_not_taken");
+    expect(
+      refuseContribution(wish({ priceCents: cents(100), repeatable: true }), [], {
+        eventId: "e1",
+        amountCents: 100,
+      }),
+    ).toBe("shares_not_taken");
+  });
+});

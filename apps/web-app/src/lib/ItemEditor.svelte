@@ -132,8 +132,10 @@
           inputmode="decimal"
           autocomplete="off"
           value={values.price}
+          aria-describedby="{id}-prix-aide"
           aria-invalid={invalid("invalid_price")}
         />
+        <p id="{id}-prix-aide" class="muted help">{m.priceHelp}</p>
       </div>
       {#if lists.length > 1}
         <div>
@@ -169,6 +171,10 @@
 </details>
 
 <style>
+  .help {
+    font-size: 0.95rem;
+    margin: 0.35rem 0 0;
+  }
   .edit {
     flex-basis: 100%;
   }
