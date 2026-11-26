@@ -33,7 +33,7 @@ Christmas), and chip in together for the same gift. Its core promise: **the owne
 sees who gave what**, until they lift the secret after the event. The rule is enforced on the
 server, not hidden in the page.
 
-> **Status:** latest release, [v0.0.8](https://github.com/Arcanexus/wishalia/releases/tag/v0.0.8): early, for trying at home. The four components build, test, ship as images and deploy with the Helm
+> **Status:** latest release, [v0.0.9](https://github.com/Arcanexus/wishalia/releases/tag/v0.0.9): early, for trying at home. The four components build, test, ship as images and deploy with the Helm
 > chart. The data model, the business rules (funding, anti-spoil), the sign-in (OIDC, passkeys,
 > magic links), the management API, the public view API (share links, contributions) and the REST
 > API v1 (personal access tokens, OpenAPI) are in place and tested. The management app has its

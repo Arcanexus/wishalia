@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.9] - 2026-11-26
+
 ### Added
 
 - A fourth kind of wish, « Une série » (« A series »): the volumes of a book, comic or manga series,
