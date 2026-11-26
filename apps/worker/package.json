@@ -1,6 +1,6 @@
 {
   "name": "@wishalia/worker",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "private": true,
   "type": "module",
   "description": "Background jobs: completing items from their link, their images included (queue in PostgreSQL), price tracking to come.",

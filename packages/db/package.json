@@ -1,6 +1,6 @@
 {
   "name": "@wishalia/db",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "private": true,
   "type": "module",
   "description": "Drizzle schema, migrations and the PostgreSQL client.",
