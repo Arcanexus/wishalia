@@ -22,8 +22,11 @@ All notable changes to this project are documented here. The format follows
   stop after one place, as the card moved under the finger or the pointer.
 - Adding a volume to a series no longer folds its card: it unfolds to show the new volume, and a
   series unfolded by hand stays so as the page reloads.
-- The guests' sentence about the surprise says what it means: « Alex ne voit pas qui offre quoi :
-  la surprise reste entière. » (« Alex can't see who gives what: the surprise stays whole. »)
+
+### Removed
+
+- The guests' sentence « Ce que vous offrez reste secret pour …, jusqu'après l'occasion. », at the
+  bottom of their page and of the owner's preview.
 
 ## [0.0.9] - 2026-11-26
 

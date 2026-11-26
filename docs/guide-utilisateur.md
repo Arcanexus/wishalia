@@ -15,8 +15,7 @@ Wishalia a deux côtés :
 
 Vous ne voyez **jamais** qui offre quoi, ni combien, avant de **lever le secret**, quelques jours
 après l'occasion (un anniversaire, Noël…). Vos proches, eux, voient ce qui est déjà pris, pour ne
-pas offrir deux fois la même chose. Sur leur page, une phrase le leur rappelle : « Alexandre ne voit
-pas qui offre quoi : la surprise reste entière. »
+pas offrir deux fois la même chose.
 
 ## Se connecter
 

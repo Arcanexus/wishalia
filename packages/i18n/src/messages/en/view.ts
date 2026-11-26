@@ -85,6 +85,5 @@ export const view: ViewMessages = {
     gaugeList: "How the list is doing",
     gaugeEvent: "How the occasion is doing",
     empty: "The list is empty for now. Come back a little later!",
-    secret: (owner) => `${owner} can't see who gives what: the surprise stays whole.`,
   },
 };

@@ -17,8 +17,7 @@ Wishalia has two sides:
 
 You **never** see who gives what, or how much, before you **lift the secret**, a few days after the
 occasion (a birthday, Christmas…). Your relatives do see what is already taken, so that nobody gives
-the same thing twice. On their page, a sentence reminds them: « Alex can't see who gives what: the
-surprise stays whole. »
+the same thing twice.
 
 ## Signing in
 
