@@ -17,6 +17,13 @@ All notable changes to this project are documented here. The format follows
 - An icon next to each item's price says where it stands at a glance: a gift (nobody takes care of
   it yet), a half disc (partly given), a check (already given), a heart (received), with its words
   on hover and for a screen reader.
+- An item's image opens big, in the page, on the owner's lists, in the preview and on the family's
+  page: the image shown, whole, then the item's other images (those found on the page of its link,
+  Amazon's gallery included), with arrow buttons and dots, the arrow keys, Home and End, or a swipe.
+  The cross, Escape or a click outside the frame closes it, and the focus goes back to the image. A
+  real modal dialog, named for a screen reader; nothing big is loaded before it opens. Every item's
+  `image` (management API, REST API v1 and the public view) now carries `gallery`, the signed paths
+  of its other images, whole (seven at most).
 - The pages follow the reading of links live, with no reload: the list page, the image page of an
   item and the guests' page. Each step has its own icon, its words next to it and the longer help
   on hover: a chain link in a turning ring for « Lecture du lien… », a picture for « Recherche des

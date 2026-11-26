@@ -67,7 +67,8 @@ never moved by a contribution, and how many are still being completed, never cac
 ([Live updates](live-updates.md)).
 
 An item carries `image`: signed paths of its picture in three sizes (`small`, `medium`, `large`),
-served by the frontends under `/img/`, or `null`; and `imageCrop`. The files' place (on the volume or
+served by the frontends under `/img/`, and `gallery`, the signed `large` paths of its other images
+(whole, in the page's order, seven at most), or `null`; and `imageCrop`. The files' place (on the volume or
 in the bucket) is never given. See [Images](images.md).
 
 The quick add takes what the person typed or shared: a URL, free text, or text with a URL in it.

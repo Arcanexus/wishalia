@@ -63,6 +63,8 @@ export interface ImageSources {
   small: string;
   medium: string;
   large: string;
+  /** The item's other images, whole: only on an item's image shown (opened big). */
+  gallery?: string[];
 }
 
 /** A frame, as fractions (0 to 1) of the image's width and height. */

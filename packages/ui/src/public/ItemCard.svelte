@@ -2,6 +2,7 @@
   import { viewMessages } from "@wishalia/i18n/messages/view";
   import type { Snippet } from "svelte";
 
+  import Gallery from "../Gallery.svelte";
   import { useI18n } from "../i18n.ts";
   import StageIcon from "../StageIcon.svelte";
   import Copies from "./Copies.svelte";
@@ -39,16 +40,18 @@
 
 <li class="card item" class:complete class:pictured={item.image}>
   {#if item.image}
-    <!-- Next to the item's name, which says what it is: decorative for a screen reader -->
-    <img
-      class="picture"
-      src={item.image.medium}
-      alt=""
-      width="480"
-      height="480"
-      loading="lazy"
-      decoding="async"
-    />
+    <!-- The link that opens it big carries the words: the thumbnail itself is decorative -->
+    <Gallery title={item.title} image={item.image}>
+      <img
+        class="picture"
+        src={item.image.medium}
+        alt=""
+        width="480"
+        height="480"
+        loading="lazy"
+        decoding="async"
+      />
+    </Gallery>
   {/if}
   <div class="content">
     <div class="head">

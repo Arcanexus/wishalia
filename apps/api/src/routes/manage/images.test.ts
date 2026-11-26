@@ -187,6 +187,42 @@ describe("the images of an item", () => {
     });
   });
 
+  it("gives the item's other images, whole, after the one shown, and none when it shows none", async () => {
+    const itemId = await newItem();
+    const proposals = await t.db
+      .insert(schema.wishImages)
+      .values(
+        [0, 1, 2].map((position) => ({
+          wishId: itemId,
+          source: "page" as const,
+          key: `wishes/${itemId}/gallery-${position}`,
+          contentType: "image/jpeg",
+          bytes: 1000,
+          width: 600,
+          height: 600,
+          position,
+        })),
+      )
+      .returning();
+    const [first, second, third] = proposals;
+    await as(owner, "PATCH", `/manage/items/${itemId}/image`, { imageId: second?.id });
+    await as(owner, "PATCH", `/manage/items/${itemId}/image`, {
+      crop: { x: 0, y: 0, width: 0.5, height: 0.5 },
+    });
+    const item = (await as(owner, "GET", `/manage/items/${itemId}`)).body;
+    const choices = (await as(owner, "GET", `/manage/items/${itemId}/images`)).body;
+    const large = (id: string | undefined) =>
+      choices.images.find((image: { id: string }) => image.id === id)?.sources.large;
+    // Whole and in the page's order, the one shown left out
+    expect(item.image.gallery).toEqual([large(first?.id), large(third?.id)]);
+    for (const path of item.image.gallery) expect(path).not.toContain("/c:");
+    const listed = (await as(owner, "GET", `/manage/lists/${item.listId}/items`)).body;
+    expect(listed.find((entry: { id: string }) => entry.id === itemId).image.gallery).toHaveLength(2);
+
+    await as(owner, "PATCH", `/manage/items/${itemId}/image`, { imageId: null });
+    expect((await as(owner, "GET", `/manage/items/${itemId}`)).body.image).toBeNull();
+  });
+
   it("removes the image the owner sent, shows the page's again and reads the link anew", async () => {
     const created = await as(owner, "POST", "/manage/items", { input: "https://shop.example.com/lampe" });
     const itemId = created.body.id as string;
