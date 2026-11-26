@@ -1,14 +1,26 @@
 /** Words both frontends share: the skip link, the header buttons, the error pages. */
 export const common = {
   skipLink: "Aller au contenu",
-  mode: {
-    names: { device: "comme l'appareil", light: "clair", dark: "sombre" },
-    current: (name: string) => `Affichage ${name}`,
-    switch: (name: string, next: string) => `Affichage ${name}. Passer en affichage ${next}`,
-  },
   language: {
     /** Before the buttons of the other languages, each named in its own language. */
     label: "Langue",
+  },
+  /** The display menu of the header: mode, theme and language (docs/branding.md). */
+  display: {
+    label: "Affichage, thème et langue",
+    mode: "Affichage",
+    modes: { device: "Comme l'appareil", light: "Clair", dark: "Sombre" },
+    theme: "Thème",
+    themes: { auto: "Automatique", neutral: "Neutre", christmas: "Noël" },
+    language: "Langue",
+  },
+  /** The account menu of the header, and the sign-in icon when nobody is signed in. */
+  account: {
+    menu: (name: string) => `Mon compte, ${name}`,
+    settings: "Réglages du compte",
+    lists: "Mes listes",
+    signIn: "Se connecter",
+    signOut: "Se déconnecter",
   },
   error: {
     title: { notFound: "Introuvable", other: "Erreur" },

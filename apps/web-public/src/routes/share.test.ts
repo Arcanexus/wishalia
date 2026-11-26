@@ -193,6 +193,15 @@ describe("/preferences", () => {
     }
   });
 
+  it("takes the mode or the theme the display menu names", async () => {
+    const dark = post("/", "light", { mode: "device" });
+    await expect(preferences(dark.input)).rejects.toMatchObject({ status: 303 });
+    expect(dark.set).toHaveBeenCalledWith("wishalia.mode", "device", expect.anything());
+    const christmas = post("/", "light", { theme: "christmas" });
+    await expect(preferences(christmas.input)).rejects.toMatchObject({ status: 303 });
+    expect(christmas.set).toHaveBeenCalledWith("wishalia.theme", "christmas", expect.anything());
+  });
+
   it("keeps another language on the device, and leaves the mode alone", async () => {
     const { set, input } = post(`/s/${TOKEN}`, "light", { langue: "en" });
     await expect(preferences(input)).rejects.toMatchObject({ status: 303, location: `/s/${TOKEN}` });

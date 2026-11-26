@@ -47,3 +47,19 @@ export function parseModeChoice(value: unknown): ModeChoice {
 export function nextMode(mode: ModeChoice): ModeChoice {
   return MODE_CHOICES[(MODE_CHOICES.indexOf(mode) + 1) % MODE_CHOICES.length] ?? "device";
 }
+
+/** What a header menu asks /preferences to change: one mode, one theme, or the next mode. */
+export type DisplayChange = { mode: ModeChoice } | { theme: ThemeChoice };
+
+/**
+ * The display menu of the header names the mode or the theme it wants; an older page's single
+ * button names nothing and moves on to the next mode. Anything unknown is ignored, not trusted.
+ */
+export function displayChange(
+  current: ModeChoice,
+  fields: { mode?: unknown; theme?: unknown },
+): DisplayChange {
+  if (MODE_CHOICES.includes(fields.mode as ModeChoice)) return { mode: fields.mode as ModeChoice };
+  if (THEME_CHOICES.includes(fields.theme as ThemeChoice)) return { theme: fields.theme as ThemeChoice };
+  return { mode: nextMode(current) };
+}

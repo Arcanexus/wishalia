@@ -97,7 +97,15 @@
       </p>
     {/if}
     {#if proposals.length > 0 || mine}
-      <form method="POST" action="?/choose" use:enhance>
+      <!-- A tap on an image is the choice, saved at once; without JavaScript, a button -->
+      <form
+        method="POST"
+        action="?/choose"
+        onchange={(event) => event.currentTarget.requestSubmit()}
+        use:enhance={() =>
+          async ({ update }) =>
+            update({ reset: false })}
+      >
         <fieldset>
           <legend class="visually-hidden">{m.choose}</legend>
           <div class="choices">
@@ -127,7 +135,7 @@
             {/each}
           </div>
         </fieldset>
-        <button type="submit">{m.show}</button>
+        <noscript><button type="submit">{m.show}</button></noscript>
       </form>
     {/if}
   </section>
@@ -162,11 +170,14 @@
         accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/heic,image/heif"
         aria-describedby="image-aide"
         required
-        onchange={(event) => (chosenFile = event.currentTarget.files?.[0]?.name ?? "")}
+        onchange={(event) => {
+          chosenFile = event.currentTarget.files?.[0]?.name ?? "";
+          // The photo chosen is sent at once
+          if (chosenFile) event.currentTarget.form?.requestSubmit();
+        }}
       />
-      <button type="submit" disabled={sending}>
-        {sending ? m.sending : chosenFile ? m.sendFile(chosenFile) : m.send}
-      </button>
+      <p class="muted hint" role="status">{sending ? m.sending : ""}</p>
+      <noscript><button type="submit">{m.send}</button></noscript>
     </form>
     {#if mine}
       <form method="POST" action="?/forget" use:enhance class="forget">

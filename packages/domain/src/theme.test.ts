@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { nextMode, parseModeChoice, parseThemeChoice, resolveTheme } from "./theme.js";
+import { displayChange, nextMode, parseModeChoice, parseThemeChoice, resolveTheme } from "./theme.js";
 
 const june = new Date("2026-06-15T12:00:00Z");
 const december = new Date("2026-12-05T12:00:00Z");
@@ -35,5 +35,17 @@ describe("choices", () => {
     expect(nextMode("device")).toBe("light");
     expect(nextMode("light")).toBe("dark");
     expect(nextMode("dark")).toBe("device");
+  });
+});
+
+describe("displayChange", () => {
+  it("takes the mode or the theme the menu names", () => {
+    expect(displayChange("device", { mode: "dark" })).toEqual({ mode: "dark" });
+    expect(displayChange("device", { theme: "christmas" })).toEqual({ theme: "christmas" });
+  });
+
+  it("moves on to the next mode when nothing known is named", () => {
+    expect(displayChange("light", {})).toEqual({ mode: "dark" });
+    expect(displayChange("dark", { mode: "pink", theme: "neon" })).toEqual({ mode: "device" });
   });
 });

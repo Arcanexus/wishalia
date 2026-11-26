@@ -10,10 +10,6 @@
       "svelte": "./src/Logo.svelte",
       "default": "./src/Logo.svelte"
     },
-    "./ModeButton.svelte": {
-      "svelte": "./src/ModeButton.svelte",
-      "default": "./src/ModeButton.svelte"
-    },
     "./public/*.svelte": {
       "svelte": "./src/public/*.svelte",
       "default": "./src/public/*.svelte"
@@ -33,6 +29,23 @@
     "./StageIcon.svelte": {
       "svelte": "./src/StageIcon.svelte",
       "default": "./src/StageIcon.svelte"
+    },
+    "./Icon.svelte": {
+      "svelte": "./src/Icon.svelte",
+      "default": "./src/Icon.svelte"
+    },
+    "./Menu.svelte": {
+      "svelte": "./src/Menu.svelte",
+      "default": "./src/Menu.svelte"
+    },
+    "./DisplayMenu.svelte": {
+      "svelte": "./src/DisplayMenu.svelte",
+      "default": "./src/DisplayMenu.svelte"
+    },
+    "./icons.ts": "./src/icons.ts",
+    "./HeaderLink.svelte": {
+      "svelte": "./src/HeaderLink.svelte",
+      "default": "./src/HeaderLink.svelte"
     },
     "./ListBadge.svelte": {
       "svelte": "./src/ListBadge.svelte",

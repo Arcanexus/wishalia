@@ -8,12 +8,11 @@
 
   import { publicMessages } from "@wishalia/i18n/messages/public";
   import { viewMessages } from "@wishalia/i18n/messages/view";
-  import LanguageButtons from "@wishalia/ui/LanguageButtons.svelte";
-  import ListBadge from "@wishalia/ui/ListBadge.svelte";
   import Logo from "@wishalia/ui/Logo.svelte";
   import { useI18n } from "@wishalia/ui/i18n.ts";
   import { followLive, holding } from "@wishalia/ui/live.ts";
-  import ModeButton from "@wishalia/ui/ModeButton.svelte";
+  import DisplayMenu from "@wishalia/ui/DisplayMenu.svelte";
+  import ListBadge from "@wishalia/ui/ListBadge.svelte";
   import EventGauge from "@wishalia/ui/public/EventGauge.svelte";
   import ItemCard from "@wishalia/ui/public/ItemCard.svelte";
 
@@ -90,8 +89,7 @@
   <div class="bar">
     <span class="brand"><Logo size={36} ring={false} /><span>{data.appName}</span></span>
     <div class="tools">
-      <LanguageButtons returnPath={page.url.pathname} />
-      <ModeButton mode={data.mode} nextMode={data.nextMode} returnPath={page.url.pathname} />
+      <DisplayMenu mode={data.mode} theme={data.themeChoice} returnPath={page.url.pathname} />
     </div>
   </div>
 </header>

@@ -24,10 +24,49 @@ liste », to change it ([Pictures of the lists](list-pictures.md)).
   `auth.oidc.name`. See [Authentication](authentication.md).
 
 A page opened without a session leads to `/connexion`, then back to that page once signed in (only
-a path of the app: never another site). « Se déconnecter », always at the top right of the bar (a door and an arrow
-alone on a phone, with the same name for a screen reader), ends the session on the API.
+a path of the app: never another site). « Se déconnecter », in the account menu at the top right of
+the bar, ends the session on the API.
 
 ![Signing in](images/app-sign-in.png)
+
+## The header
+
+The bar keeps the logo and the three places of the app on the left (« Mes listes », « Événements »,
+« Partager »; under the bar on a phone), and two round icons at the top right:
+
+- **the display** (half a disc, a sun or a moon, after the mode in use): a small menu with the mode
+  (« Comme l'appareil », « Clair », « Sombre »), the theme (« Automatique », « Neutre », « Noël »)
+  and the language. The choice in use is ticked and pressed for a screen reader. Each choice is a
+  plain form to `/preferences`, kept with the account and on the device;
+- **the account** (the first letter of the person's name): their name and address, « Réglages du
+  compte » and « Se déconnecter ».
+
+The menus open with a click, a tap or Entrée, and close with Échap (back on the icon), a click
+elsewhere or the focus going away; they also open without JavaScript. Every icon says its words in a
+tip, on hover and keyboard focus, and to a screen reader. The guests' pages have the same display
+menu, and the public home page an icon to sign in (an arrow going in), or the account menu once
+signed in ([Public view](public-view.md)).
+
+![The display menu: mode, theme and language](images/app-display-menu.png)
+
+## Saved as you go
+
+No setting has a « Enregistrer » button: the name, the theme or the mode of the account, a list's
+settings, an item being edited, an event's settings, the name of a passkey, a list's icon, the image
+chosen for an item and its framing are saved as they change. A typed field waits for a short pause
+(0.8 s), a choice (a radio, a box, a list) goes at once, and leaving a field or pressing Entrée sends
+what is left. A line under the form says « Enregistrement… », then « Enregistré » with a tick, to a
+screen reader too.
+
+Nothing typed is lost: when the server refuses a change (an empty name, a wrong price), the field is
+marked, the line says what to fix in plain words, and what was typed stays; when the network is
+lost, the line says so with « Réessayer ». One save goes at a time, and what changes meanwhile goes
+right after it; the page reloading after a save never overwrites a field being typed in. A change to
+the theme, the mode or the language reloads the page, which the server draws. Without JavaScript,
+each form keeps an « Enregistrer » button.
+
+Deliberate actions keep their button: adding an item, creating a list, a link, a token or a passkey,
+lifting a secret, archiving and deleting.
 
 ## Lists and the quick add
 
@@ -54,14 +93,25 @@ pasted with one wish per line. The page shows what it found, every wish ticked, 
 unticks what they leave out, then picks a list (a new one, named after the source's list, or one of
 theirs) and confirms. The list page then says how many came in. See [Importing a list](import.md).
 
-A list page shows its items, newest first, with what kind of gift they are, their price and the site
-of their link. Each item can be marked **received** (« Je l'ai reçu », with a tick), **archived**
-(the box) or **deleted** (the bin, after a dialog); received and archived items wait under « Reçues
-et archivées », where the arrow coming back puts them back in the list. Every change lands in the
-item's history. See [Archiving and deleting](archive-delete.md).
-The reload button (two turning arrows, « Recharger » in its tip) reads an item's link again (a new price, a better photo), and « Recharger les liens », next
-to the eye button, does it for the whole list; what the person typed or sent stays
-([Reading a link again](enrichment.md#reading-a-link-again)).
+A list page shows its items, newest first. Every card has the same grid: the arrows to reorder it,
+a square for its image, its name with what kind of gift it is, its price and the site of its link,
+then its icons, always in the same order and lined up from one card to the next. An item without an
+image keeps its square, an empty frame, so that nothing moves; while its link is read, the square
+breathes. The icons, each with its words in a tip:
+
+- a **heart**, « Je l'ai reçu »: the item is received;
+- a **pencil**, « Modifier »: the item opens in place, under its card;
+- two **turning arrows**, « Recharger », for an item with a link: its link is read again (a new
+  price, a better photo), and « Recharger les liens », next to the title, does it for the whole list;
+  what the person typed or sent stays ([Reading a link again](enrichment.md#reading-a-link-again));
+- a **box**, « Archiver », and a **bin**, « Supprimer » (after a dialog).
+
+Over the image's corner, a small pencil leads to the item's images (a « + » on an empty frame), as
+the count of images sits over the other corner. Received and archived items wait under « Reçues et
+archivées », with a heart or a box, where the arrow coming back puts them back in the list. Every
+change lands in the item's history. See [Archiving and deleting](archive-delete.md).
+
+![The items of a list, each in the same grid](images/app-list-items.png)
 
 The open items can be put in any order, the one relatives see them in. Each card has a handle to
 drag with a mouse or a finger, and two arrows, « Monter » and « Descendre », that move the item one
@@ -85,7 +135,8 @@ left out; the page says they have one under each item.
 
 ### A list's settings
 
-« Réglages de la liste », folded under the list's title, holds:
+« Réglages de la liste », the cog next to the list's title, opens under it (its link, `?reglages`,
+opens it without JavaScript too). Saved as they change, it holds:
 
 - its **name**;
 - its **picture**, « Changer l'image » ([Pictures of the lists](list-pictures.md));
@@ -101,17 +152,17 @@ left out; the page says they have one under each item.
   (each item's secret lifts once it is received, the default) or « Quand je le décide » (the whole
   list at once). The choice is frozen once the secret is lifted;
 - in « Quand je le décide » mode, « Lever le secret de la liste », behind a box to tick: final;
-- « Archiver la liste », behind a box to tick: the list leaves the lists, and its share links show
-  nothing any more. The app goes back to the lists and says so; the list waits under « Listes
-  archivées » on the home page, to restore or delete it;
-- « Supprimer la liste », behind a box to tick: the list and its items go for good
-  ([Archiving and deleting](archive-delete.md)).
+- « Archiver ou supprimer »: the box archives the list, which leaves the lists, and its share links
+  show nothing any more; the app goes back to the lists and says so, and the list waits under
+  « Listes archivées » on the home page, to restore or delete it. The bin deletes the list and its
+  items for good, after a dialog ([Archiving and deleting](archive-delete.md)).
 
 ![A list's settings, on a phone](images/app-list-settings.png)
 
 ### Editing an item
 
-« Modifier » opens the item in place, under its card: its name, what kind of gift it is, its price,
+The pencil, « Modifier », opens the item in place, under its card (its link, `?modifier=<id>`,
+does it without JavaScript), and the cross folds it back. Every field is saved as it changes: its name, what kind of gift it is, its price,
 its list, its link and notes for the family. The kind is a choice of three, each with a line that
 says what it means:
 
@@ -123,17 +174,18 @@ says what it means:
 
 Only the fields of the kind chosen show, by CSS, so the form works the same without JavaScript.
 Amounts are typed as the person writes them (« 24 », « 12,50 »). A link is cleaned like in the quick
-add, and anything that is not an `http(s)` address is refused. When something is wrong, the form
-stays open with what was typed and says what to fix. Moving an item to another list takes it off
+add, and anything that is not an `http(s)` address is refused. When something is wrong, the field
+keeps what was typed and the line under the form says what to fix. Moving an item to another list takes it off
 the page, and the page says so. The API writes the history: `updated`, `price_changed`, `moved`.
 
 ![Editing an item into a pool, on a phone](images/app-edit-item.png)
 
 ## Images
 
-Each item has an **Image** button. Its page shows the image the family sees, lets the owner frame it
-in a square (drag, tap, arrow keys or a slider), choose another of the images found on the page of
-the link, or send their own photo, up to 10 MB. A click on an item's thumbnail opens its images
+The small pencil over an item's image (a « + » on an empty frame) opens its page. It shows the image
+the family sees, lets the owner frame it in a square (drag, tap, arrow keys or a slider), choose
+another of the images found on the page of the link, or send their own photo, up to 10 MB: the
+framing, the image chosen and the photo sent are saved at once. A click on an item's thumbnail opens its images
 big, in the page, to go from one to the next and close with the cross, Échap or a click outside. See
 [Images](images.md) for the details.
 
@@ -154,7 +206,8 @@ An event's page shows:
   « Lever le secret » button, behind a checkbox that confirms the choice, which is final.
 - **The event's items**, which can be removed, and below them the open items of every list, to add
   in one tap. An item stays in its list: the event only selects it.
-- **Its settings**, folded away. Once the secret is lifted, the date and the delay no longer change.
+- **Its settings**, folded away and saved as they change. Once the secret is lifted, the date and the
+  delay no longer change.
 
 ![A Christmas event: its secret, its items, and the items to add](images/app-event-christmas.png)
 
@@ -189,12 +242,14 @@ folded at the bottom.
 ## Settings
 
 « Réglages » (`/reglages`) holds what follows the person on every device, stored with their
-account (`PATCH /manage/me`):
+account (`PATCH /manage/me`), saved as they change; « Réglages du compte », in the account menu,
+leads there:
 
 - the first name or nickname their family sees;
 - the **theme**: `Automatique` (Christmas in December and for Christmas lists, neutral otherwise),
   `Neutre` or `Noël`;
-- **light or dark**: as the device, light or dark. The header button changes the same setting;
+- **light or dark**: as the device, light or dark. The header's display menu changes the same
+  settings;
 - the **language** (« Langue », « Language »): `Automatique` (the browser's), `Français` or
   `English` ([Languages](i18n.md)). A new language reloads the page.
 
@@ -205,7 +260,7 @@ button for the other language.
 The **passkeys** (« Clés d'accès ») are listed with their name, the day they were added and whether
 the phone or computer's password manager syncs them on all its devices. « Ajouter une clé d'accès »
 creates one on this device, under the name typed or one guessed from the device (« iPhone »,
-« Mac »...); each can be renamed or deleted. Adding a passkey needs a sign-in of less than a day: an
+« Mac »...); each can be renamed (the pencil, saved as typed) or deleted (the bin). Adding a passkey needs a sign-in of less than a day: an
 older session is asked to sign in again, and comes back to the settings. A device that already holds
 a passkey of the account is told so. Passkeys need JavaScript; without it, or in a browser without
 them, the page says so and the link by e-mail remains.
@@ -218,14 +273,15 @@ See [Install the app](install-app.md).
 When the REST API v1 is on (`hosts.api`), the page also manages the **API tokens**: a name, a
 lifetime of 1 to 365 days (90 by default) and an optional read-only mode. A new token is shown once,
 with « Copier le jeton »; the list shows each one's first characters, its end and when it was last
-used, and « Révoquer » ends it for good. See [REST API v1](rest-api.md).
+used, and « Révoquer » (the bin) ends it for good. See [REST API v1](rest-api.md).
 
 ![The settings](images/app-settings.png)
 
 ## Themes and accessibility
 
-- The header button switches between the device's mode, light and dark. The choice is kept with the
-  account and on the device (`wishalia.mode` cookie), and applied by the server, so the page never
+- The header's display menu chooses the device's mode, light or dark, and the theme. The choice is
+  kept with the account and on the device (`wishalia.mode`, `wishalia.theme` cookies), and applied
+  by the server, so the page never
   flashes in the wrong colours. A theme forced by a list (`theme` of the list) colours its page, in each
   person's mode. See [Branding](branding.md).
 - Every page passes axe (WCAG 2.2 AA) in light and dark, on a phone and a computer: contrast of

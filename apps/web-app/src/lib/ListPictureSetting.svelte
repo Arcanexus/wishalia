@@ -15,7 +15,7 @@
 </script>
 
 <section class="part" aria-labelledby="liste-image-titre">
-  <h2 id="liste-image-titre">{m.heading}</h2>
+  <h3 id="liste-image-titre">{m.heading}</h3>
   <p>{m.help}</p>
   <div class="picture">
     <ListBadge picture={list} size="small" />
@@ -29,7 +29,7 @@
     margin-top: 1.25rem;
     padding-top: 0.5rem;
   }
-  h2 {
+  h3 {
     font-size: 1.1rem;
     margin: 0.5rem 0;
   }

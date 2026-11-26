@@ -5,11 +5,17 @@
   import { appMessages } from "@wishalia/i18n/messages/app";
   import { useI18n } from "@wishalia/ui/i18n.ts";
   import Logo from "@wishalia/ui/Logo.svelte";
-  import ModeButton from "@wishalia/ui/ModeButton.svelte";
+  import { commonMessages } from "@wishalia/i18n/messages/common";
+  import DisplayMenu from "@wishalia/ui/DisplayMenu.svelte";
+  import Icon from "@wishalia/ui/Icon.svelte";
+  import Menu from "@wishalia/ui/Menu.svelte";
 
   let { data, children } = $props();
   const i18n = useI18n();
   const m = $derived(appMessages(i18n.locale));
+  const account = $derived(commonMessages(i18n.locale).account);
+  /** The first letter of the person's name, in the account's round icon. */
+  const initial = $derived(data.me.displayName.trim().charAt(0).toLocaleUpperCase(i18n.locale) || undefined);
 
   const section = $derived(
     page.url.pathname.startsWith("/evenements")
@@ -36,23 +42,26 @@
       <a href={resolve("/(app)/partage")} aria-current={section === "share" ? "page" : undefined}>
         {m.nav.share}
       </a>
-      <a href={resolve("/(app)/reglages")} aria-current={section === "settings" ? "page" : undefined}>
-        {m.nav.settings}
-      </a>
     </nav>
+    <!-- At the top right: the display, then the account (docs/management-app.md, « Header ») -->
     <div class="tools">
-      <ModeButton mode={data.mode} nextMode={data.nextMode} returnPath={page.url.pathname} />
-      <form method="POST" action="/deconnexion">
-        <button type="submit" class="secondary logout">
-          <!-- A door and an arrow going out: alone on a phone, where the words would push it down -->
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
-            <path d="M15 8l4 4-4 4" />
-            <path d="M19 12H9" />
-          </svg>
-          <span class="word">{m.nav.signOut}</span>
-        </button>
-      </form>
+      <DisplayMenu mode={data.mode} theme={data.me.theme} returnPath={page.url.pathname + page.url.search} />
+      <Menu icon="user" label={account.menu(data.me.displayName)} {initial}>
+        <p class="menu-who">
+          <strong>{data.me.displayName}</strong>
+          <span class="muted">{data.me.email}</span>
+        </p>
+        <a
+          class="menu-item"
+          href={resolve("/(app)/reglages")}
+          aria-current={section === "settings" ? "page" : undefined}
+        >
+          <Icon name="settings" />{account.settings}
+        </a>
+        <form method="POST" action="/deconnexion">
+          <button type="submit" class="menu-item"><Icon name="signOut" />{account.signOut}</button>
+        </form>
+      </Menu>
     </div>
   </div>
 </header>
@@ -95,7 +104,7 @@
     flex-wrap: wrap;
     gap: 0 0.25rem;
   }
-  @media (min-width: 62rem) {
+  @media (min-width: 44rem) {
     nav {
       order: 0;
       flex-basis: auto;
@@ -121,33 +130,9 @@
   }
   .tools {
     display: flex;
+    align-items: center;
     gap: 0.5rem;
     margin-left: auto;
-  }
-  .logout svg {
-    width: 1.3rem;
-    height: 1.3rem;
-    flex: none;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  @media (max-width: 30rem) {
-    .logout {
-      width: 48px;
-      padding: 0;
-    }
-    /* Still the button's name for a screen reader */
-    .logout .word {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
-    }
   }
   .page {
     max-width: 52rem;

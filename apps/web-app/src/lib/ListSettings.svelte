@@ -1,16 +1,27 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import { enhance } from "$app/forms";
+  import { invalidate } from "$app/navigation";
 
   import { appMessages } from "@wishalia/i18n/messages/app";
   import { useI18n } from "@wishalia/ui/i18n.ts";
 
+  import { autosave, type SaveState } from "./autosave.ts";
+  import ConfirmDelete from "./ConfirmDelete.svelte";
+  import IconButton from "./IconButton.svelte";
   import ListPictureSetting from "./ListPictureSetting.svelte";
+  import SaveStatus from "./SaveStatus.svelte";
   import type { List } from "./types.ts";
 
-  /** A list's settings, folded under its title until asked for. */
+  /**
+   * A list's settings, under its title once the cog asked for them. Name, visibility, theme and
+   * the secret's rule are saved as they change (docs/management-app.md, « Saved as you go »);
+   * lifting the secret, archiving and deleting stay deliberate.
+   */
   let {
     list,
     form,
+    open = $bindable(false),
   }: {
     list: List;
     form: {
@@ -19,176 +30,193 @@
       archive?: { error?: string };
       remove?: { error?: string; itemId?: string; title?: string };
     } | null;
+    open?: boolean;
   } = $props();
 
   const i18n = useI18n();
   const m = $derived(appMessages(i18n.locale).listSettings);
+  const removal = $derived(appMessages(i18n.locale).removal);
   const message = (code: string | undefined) => (code ? (m.errors[code] ?? m.failed) : null);
   // An item's deletion that failed says so next to the items, not here
   const listRemovalFailed = $derived(form?.remove?.error === "confirm");
   const failed = $derived(
     Boolean(form?.settings?.error || form?.reveal?.error || form?.archive?.error || listRemovalFailed),
   );
+  $effect(() => {
+    if (failed) open = true;
+  });
   const theme = $derived(list.theme ?? "none");
+  // The name as it starts: a reload after a save never overwrites what is being typed
+  const name = untrack(() => form?.settings?.name ?? list.name);
+  let saveState = $state<SaveState>(untrack(() => (form?.settings?.error ? "error" : "idle")));
+  let error = $state<string | null>(untrack(() => form?.settings?.error ?? null));
+  let settingsForm = $state<HTMLFormElement>();
 </script>
 
-<details class="settings card" open={failed}>
-  <summary>{m.title}</summary>
+{#if open}
+  <section class="settings card" id="reglages-liste" aria-labelledby="reglages-liste-titre" data-live-hold>
+    <div class="top">
+      <h2 id="reglages-liste-titre">{m.title}</h2>
+      <IconButton icon="close" label={m.close} tip={m.close} onclick={() => (open = false)} />
+    </div>
 
-  <form
-    method="POST"
-    action="?/settings"
-    use:enhance={({ formData }) => {
-      const themeChanged = formData.get("theme") !== theme;
-      return async ({ result, update }) => {
-        // The theme lives on <html>, drawn by the server: a new one needs a fresh page
-        if (result.type === "success" && themeChanged) {
-          window.location.reload();
-          return;
-        }
-        await update({ reset: false });
-      };
-    }}
-  >
-    {#if message(form?.settings?.error)}
-      <p class="notice error" role="alert">{message(form?.settings?.error)}</p>
-    {/if}
-    <label for="liste-nom">{m.name}</label>
-    <input
-      id="liste-nom"
-      name="name"
-      required
-      maxlength="100"
-      value={form?.settings?.name ?? list.name}
-      aria-invalid={form?.settings?.error === "invalid_name" ? "true" : undefined}
-    />
+    <form
+      method="POST"
+      action="?/settings"
+      bind:this={settingsForm}
+      use:autosave={{
+        onState: (state) => (saveState = state),
+        onResult: async (result) => {
+          if (result.type === "success") {
+            error = null;
+            // The theme lives on <html>, drawn by the server: a new one needs a fresh page
+            if (settingsForm && new FormData(settingsForm).get("theme") !== theme) {
+              window.location.reload();
+              return true;
+            }
+            await invalidate("wishalia:list");
+            return true;
+          }
+          error =
+            result.type === "failure"
+              ? String((result.data?.settings as { error?: string } | undefined)?.error ?? "")
+              : "";
+          return false;
+        },
+      }}
+    >
+      <label for="liste-nom">{m.name}</label>
+      <input
+        id="liste-nom"
+        name="name"
+        required
+        maxlength="100"
+        value={name}
+        aria-invalid={error === "invalid_name" ? "true" : undefined}
+      />
 
-    <fieldset>
-      <legend>{m.visibility}</legend>
-      <label class="choice">
-        <input type="radio" name="visibility" value="private" checked={list.visibility === "private"} />
-        <span>
-          <strong>{m.private.name}</strong>
-          <span class="muted">{m.private.help}</span>
-        </span>
-      </label>
-      <label class="choice">
-        <input type="radio" name="visibility" value="public" checked={list.visibility === "public"} />
-        <span>
-          <strong>{m.public.name}</strong>
-          <span class="muted">{m.public.help}</span>
-        </span>
-      </label>
-      {#if list.visibility === "public" && list.openUrl}
-        <label for="liste-adresse" class="address-label">{m.address}</label>
-        <input id="liste-adresse" class="address" readonly value={list.openUrl} />
-        <p class="muted help">{m.addressHelp}</p>
-      {/if}
-    </fieldset>
-
-    <fieldset>
-      <legend>{m.theme}</legend>
-      <p class="muted help">{m.themeHelp}</p>
-      {#each ["none", "neutral", "christmas"] as const as value (value)}
+      <fieldset>
+        <legend>{m.visibility}</legend>
         <label class="choice">
-          <input type="radio" name="theme" {value} checked={theme === value} />
+          <input type="radio" name="visibility" value="private" checked={list.visibility === "private"} />
           <span>
-            <strong>{m.themes[value].name}</strong><span class="muted">{m.themes[value].help}</span>
+            <strong>{m.private.name}</strong>
+            <span class="muted">{m.private.help}</span>
           </span>
         </label>
-      {/each}
-    </fieldset>
+        <label class="choice">
+          <input type="radio" name="visibility" value="public" checked={list.visibility === "public"} />
+          <span>
+            <strong>{m.public.name}</strong>
+            <span class="muted">{m.public.help}</span>
+          </span>
+        </label>
+        {#if list.visibility === "public" && list.openUrl}
+          <label for="liste-adresse" class="address-label">{m.address}</label>
+          <input id="liste-adresse" class="address" readonly value={list.openUrl} />
+          <p class="muted help">{m.addressHelp}</p>
+        {/if}
+      </fieldset>
 
-    <fieldset disabled={list.secretLifted}>
-      <legend>{m.reveal}</legend>
-      <p class="muted help">{m.revealHelp}</p>
-      <label class="choice">
-        <input type="radio" name="revealMode" value="received" checked={list.revealMode === "received"} />
-        <span>
-          <strong>{m.revealReceived.name}</strong>
-          <span class="muted">{m.revealReceived.help}</span>
-        </span>
-      </label>
-      <label class="choice">
-        <input type="radio" name="revealMode" value="manual" checked={list.revealMode === "manual"} />
-        <span>
-          <strong>{m.revealManual.name}</strong>
-          <span class="muted">{m.revealManual.help}</span>
-        </span>
-      </label>
-    </fieldset>
-
-    <button type="submit">{m.save}</button>
-  </form>
-
-  <ListPictureSetting {list} />
-
-  {#if list.revealMode === "manual"}
-    <section class="part" aria-labelledby="liste-secret">
-      <h2 id="liste-secret">{m.secret}</h2>
-      {#if list.secretLifted}
-        <p>{m.lifted}</p>
-      {:else}
-        <p>{m.liftHelp}</p>
-        <form method="POST" action="?/reveal" use:enhance>
-          {#if message(form?.reveal?.error)}
-            <p class="notice error" role="alert">{message(form?.reveal?.error)}</p>
-          {/if}
+      <fieldset>
+        <legend>{m.theme}</legend>
+        <p class="muted help">{m.themeHelp}</p>
+        {#each ["none", "neutral", "christmas"] as const as value (value)}
           <label class="choice">
-            <input type="checkbox" name="confirm" value="oui" required />
-            <span>{m.liftConfirm}</span>
+            <input type="radio" name="theme" {value} checked={theme === value} />
+            <span>
+              <strong>{m.themes[value].name}</strong><span class="muted">{m.themes[value].help}</span>
+            </span>
           </label>
-          <button type="submit" class="accent">{m.lift}</button>
+        {/each}
+      </fieldset>
+
+      <fieldset disabled={list.secretLifted}>
+        <legend>{m.reveal}</legend>
+        <p class="muted help">{m.revealHelp}</p>
+        <label class="choice">
+          <input type="radio" name="revealMode" value="received" checked={list.revealMode === "received"} />
+          <span>
+            <strong>{m.revealReceived.name}</strong>
+            <span class="muted">{m.revealReceived.help}</span>
+          </span>
+        </label>
+        <label class="choice">
+          <input type="radio" name="revealMode" value="manual" checked={list.revealMode === "manual"} />
+          <span>
+            <strong>{m.revealManual.name}</strong>
+            <span class="muted">{m.revealManual.help}</span>
+          </span>
+        </label>
+      </fieldset>
+
+      <SaveStatus state={saveState} error={error ? message(error) : null} />
+    </form>
+
+    <ListPictureSetting {list} />
+
+    {#if list.revealMode === "manual"}
+      <section class="part" aria-labelledby="liste-secret">
+        <h3 id="liste-secret">{m.secret}</h3>
+        {#if list.secretLifted}
+          <p>{m.lifted}</p>
+        {:else}
+          <p>{m.liftHelp}</p>
+          <form method="POST" action="?/reveal" use:enhance>
+            {#if message(form?.reveal?.error)}
+              <p class="notice error" role="alert">{message(form?.reveal?.error)}</p>
+            {/if}
+            <label class="choice">
+              <input type="checkbox" name="confirm" value="oui" required />
+              <span>{m.liftConfirm}</span>
+            </label>
+            <button type="submit" class="accent">{m.lift}</button>
+          </form>
+        {/if}
+      </section>
+    {/if}
+
+    <!-- Archive (it comes back from « Listes archivées ») and delete (a dialog asks first) -->
+    <section class="part ends" aria-labelledby="liste-fin">
+      <h3 id="liste-fin">{m.ends}</h3>
+      {#if message(form?.archive?.error) || listRemovalFailed}
+        <p class="notice error" role="alert">{message(form?.archive?.error ?? "confirm")}</p>
+      {/if}
+      <div class="end">
+        <form method="POST" action="?/archive" use:enhance>
+          <input type="hidden" name="confirm" value="oui" />
+          <IconButton icon="archive" label={m.archiveLabel(list.name)} tip={m.archive} />
         </form>
-      {/if}
+        <p class="muted">{m.archiveHelp}</p>
+      </div>
+      <div class="end">
+        <ConfirmDelete
+          label={m.deleteLabel(list.name)}
+          tip={m.delete}
+          title={removal.listTitle(list.name)}
+          help={[removal.listHelp, removal.guests]}
+          action="?/deleteList"
+          fields={{}}
+        />
+        <p class="muted">{m.deleteHelp}</p>
+      </div>
     </section>
-  {/if}
-
-  <section class="part" aria-labelledby="liste-archiver">
-    <h2 id="liste-archiver">{m.archive}</h2>
-    <p>{m.archiveHelp}</p>
-    <form method="POST" action="?/archive" use:enhance>
-      {#if message(form?.archive?.error)}
-        <p class="notice error" role="alert">{message(form?.archive?.error)}</p>
-      {/if}
-      <label class="choice">
-        <input type="checkbox" name="confirm" value="oui" required />
-        <span>{m.archiveConfirm(list.name)}</span>
-      </label>
-      <button type="submit" class="secondary">{m.archive}</button>
-    </form>
   </section>
-
-  <section class="part" aria-labelledby="liste-supprimer">
-    <h2 id="liste-supprimer">{m.delete}</h2>
-    <p>{m.deleteHelp}</p>
-    <form method="POST" action="?/deleteList" use:enhance>
-      {#if listRemovalFailed}
-        <p class="notice error" role="alert">{message("confirm")}</p>
-      {/if}
-      <label class="choice">
-        <input type="checkbox" name="confirm" value="oui" required />
-        <span>{m.deleteConfirm(list.name)}</span>
-      </label>
-      <button type="submit" class="danger">{m.delete}</button>
-    </form>
-  </section>
-</details>
+{/if}
 
 <style>
-  .danger {
-    background: var(--danger);
-    color: var(--surface);
-  }
   .settings {
     margin: 0 0 1.5rem;
   }
-  summary {
-    min-height: 48px;
+  .top {
     display: flex;
     align-items: center;
-    cursor: pointer;
-    font-weight: 600;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .top h2 {
+    margin: 0;
+    font-size: 1.25rem;
   }
   form {
     margin-top: 0.75rem;
@@ -245,8 +273,17 @@
     margin-top: 1.25rem;
     padding-top: 0.5rem;
   }
-  h2 {
+  h3 {
     font-size: 1.1rem;
     margin: 0.5rem 0;
+  }
+  .end {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.75rem;
+  }
+  .end p {
+    margin: 0;
   }
 </style>

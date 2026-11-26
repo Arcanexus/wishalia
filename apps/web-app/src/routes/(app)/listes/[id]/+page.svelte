@@ -6,13 +6,14 @@
   import { page } from "$app/state";
   import { appMessages } from "@wishalia/i18n/messages/app";
   import { isLive, liveChanges, type LiveItem } from "@wishalia/domain";
-  import Gallery from "@wishalia/ui/Gallery.svelte";
+  import Icon from "@wishalia/ui/Icon.svelte";
   import { useI18n } from "@wishalia/ui/i18n.ts";
   import { followLive, holding } from "@wishalia/ui/live.ts";
 
   import ConfirmDelete from "#lib/ConfirmDelete.svelte";
   import Gifts from "#lib/Gifts.svelte";
   import ItemEditor from "#lib/ItemEditor.svelte";
+  import ItemThumb from "#lib/ItemThumb.svelte";
   import ListPictureLink from "#lib/ListPictureLink.svelte";
   import ListSettings from "#lib/ListSettings.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
@@ -176,6 +177,20 @@
     stage: stage(item),
     image: item.image?.small ?? null,
   });
+  // The item being edited and the list's settings, open under the pencil and the cog. Their links
+  // (?modifier=…, ?reglages) open them before the page's JavaScript has loaded, or after a refusal
+  let editing = $state<string | null>(untrack(() => page.url.searchParams.get("modifier")));
+  let settingsOpen = $state(untrack(() => page.url.searchParams.has("reglages")));
+  $effect(() => {
+    if (form?.edit && "error" in form.edit) editing = form.edit.itemId;
+  });
+  const toggleEdit = async (id: string) => {
+    editing = editing === id ? null : id;
+    if (editing) {
+      await tick();
+      document.getElementById(`edit-${id}-titre`)?.focus();
+    }
+  };
   const host = (url: string) => URL.parse(url)?.hostname.replace(/^www\./, "") ?? url;
 </script>
 
@@ -183,8 +198,11 @@
   <title>{data.list.name} · {data.appName}</title>
 </svelte:head>
 
-<p class="back"><a href={resolve("/(app)")}>{m.back}</a></p>
+<p class="back">
+  <a href={resolve("/(app)")}><Icon name="chevronLeft" size="1.2rem" />{m.back}</a>
+</p>
 <div class="heading">
+  <!-- The list's own picture in front of its name, a pencil over it to change it -->
   <div class="title">
     <ListPictureLink
       picture={data.list}
@@ -212,6 +230,15 @@
       tip={m.share.tip}
       href="{resolve('/(app)/partage')}?liste={data.list.id}"
     />
+    <IconButton
+      icon="settings"
+      label={m.settings.label}
+      tip={m.settings.tip}
+      href="?reglages"
+      expanded={settingsOpen}
+      controls="reglages-liste"
+      onclick={() => (settingsOpen = !settingsOpen)}
+    />
   </div>
 </div>
 
@@ -231,7 +258,7 @@
   </p>
 {/if}
 
-<ListSettings list={data.list} {form} />
+<ListSettings list={data.list} {form} bind:open={settingsOpen} />
 
 <QuickAdd listName={data.list.name} result={form?.add ?? null} />
 
@@ -243,8 +270,6 @@
     {moved}
   {:else if form?.move && "title" in form.move}
     {m.place(form.move.title, form.move.position, form.move.count)}
-  {:else if form?.settings && "saved" in form.settings}
-    {m.settingsSaved}
   {:else if form?.reveal && "lifted" in form.reveal}
     {m.secretLifted}
   {:else if form?.refresh && "itemId" in form.refresh && "title" in form.refresh}
@@ -276,7 +301,12 @@
     <ul class="items" bind:this={list}>
       {#each shown as item, index (item.id)}
         {@const link = webLink(item)}
-        <li class="card item sortable" class:dragging={dragging === item.id} data-id={item.id}>
+        <li
+          class="card item"
+          class:dragging={dragging === item.id}
+          class:sortable={shown.length > 1}
+          data-id={item.id}
+        >
           {#if shown.length > 1}
             <form
               method="POST"
@@ -328,95 +358,84 @@
               </button>
             </form>
           {/if}
-          {#if !item.image && images && item.enrichment === "pending"}
-            <!-- Its image may come with the link: a place kept for it, that breathes while it waits -->
-            <span class="thumb waiting" aria-hidden="true"></span>
-          {:else if item.image}
-            <!-- The link that opens it big carries the words: the thumbnail itself is decorative -->
-            <Gallery title={item.title} image={item.image}>
-              <img
-                class="thumb"
-                src={item.image.small}
-                alt=""
-                width="192"
-                height="192"
-                loading="lazy"
-                decoding="async"
-              />
-            </Gallery>
-          {/if}
-          <div class="body">
-            <div class="text">
-              <h3>{item.title}</h3>
-              <p class="muted meta">
-                {#if kindLine(item)}<span class="kind">{kindLine(item)}</span>{/if}
-                {#if item.priceCents !== null}<span>{i18n.fmt.money(item.priceCents)}</span>{/if}
-                {#if link}
-                  <a href={link} rel="noopener noreferrer external" target="_blank">
-                    {host(link)}<span class="visually-hidden">{m.newTab}</span>
-                  </a>
-                {/if}
-              </p>
-              {#if item.notes}<p class="notes">{item.notes}</p>{/if}
-              {#if isLive(stage(item))}
-                {@const findingImages = stage(item) === "images"}
-                {@const help = findingImages ? m.findingImagesWhat : m.readingWhat(images)}
-                <!-- An icon that says the step, its words next to it, the longer help on hover -->
-                <p class="completing" title={help}>
-                  <StageIcon stage={findingImages ? "images" : "reading"} />
-                  <span class="reading">{findingImages ? m.findingImages : m.reading}</span>
-                  <span class="visually-hidden">{help}</span>
-                </p>
-              {:else if item.enrichment === "failed"}
-                <p class="completing">
-                  <StageIcon stage="failed" />
-                  <span class="reading failed">{m.unreadable}</span>
-                </p>
-                <p class="muted help">{m.unreadableHelp}</p>
-              {/if}
-              {#if data.gifts[item.id]?.length}<Gifts gifts={data.gifts[item.id] ?? []} none="" />{/if}
-            </div>
-            <div class="actions">
-              {#if images}
-                <a
-                  class="button secondary"
-                  href={resolve("/(app)/listes/[id]/image/[itemId]", { id: data.list.id, itemId: item.id })}
-                  aria-label={m.imageOf(item.title)}
-                >
-                  {m.image}
+          <ItemThumb {item} listId={data.list.id} {images} />
+          <div class="text">
+            <h3>{item.title}</h3>
+            <p class="muted meta">
+              {#if kindLine(item)}<span class="kind">{kindLine(item)}</span>{/if}
+              {#if item.priceCents !== null}<span class="price">{i18n.fmt.money(item.priceCents)}</span>{/if}
+              {#if link}
+                <a class="site" href={link} rel="noopener noreferrer external" target="_blank">
+                  {host(link)}<Icon name="external" size="1rem" /><span class="visually-hidden">
+                    {m.newTab}
+                  </span>
                 </a>
               {/if}
-              {#if link && item.enrichment !== "pending"}
-                <form method="POST" action="?/refresh" use:enhance={reread}>
-                  <input type="hidden" name="itemId" value={item.id} />
-                  <IconButton icon="reload" label={m.refresh.label(item.title)} tip={m.refresh.tip} />
-                </form>
-              {/if}
-              <form method="POST" action="?/status" use:enhance>
-                <input type="hidden" name="itemId" value={item.id} />
-                <button type="submit" name="status" value="received" aria-label={m.receivedLabel(item.title)}>
-                  <svg class="check" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M5 12.5l4.5 4.5L19 7.5" />
-                  </svg>
-                  {m.received}
-                </button>
-              </form>
-              <form method="POST" action="?/status" use:enhance>
-                <input type="hidden" name="itemId" value={item.id} />
-                <input type="hidden" name="status" value="archived" />
-                <IconButton icon="archive" label={m.archiveLabel(item.title)} tip={m.archiveTip} />
-              </form>
-              <ConfirmDelete
-                label={m.deleteLabel(item.title)}
-                tip={m.deleteTip}
-                title={removal.itemTitle(item.title)}
-                help={[removal.itemHelp, removal.guests, removal.archiveInstead]}
-                action="?/deleteItem"
-                fields={{ itemId: item.id, title: item.title }}
-              />
-            </div>
-            <ItemEditor {item} lists={data.lists} failed={failedEdit(item)} />
+            </p>
+            {#if item.notes}<p class="notes">{item.notes}</p>{/if}
+            {#if isLive(stage(item))}
+              {@const findingImages = stage(item) === "images"}
+              {@const help = findingImages ? m.findingImagesWhat : m.readingWhat(images)}
+              <!-- An icon that says the step, its words next to it, the longer help on hover -->
+              <p class="completing" title={help}>
+                <StageIcon stage={findingImages ? "images" : "reading"} />
+                <span class="reading">{findingImages ? m.findingImages : m.reading}</span>
+                <span class="visually-hidden">{help}</span>
+              </p>
+            {:else if item.enrichment === "failed"}
+              <p class="completing">
+                <StageIcon stage="failed" />
+                <span class="reading failed">{m.unreadable}</span>
+              </p>
+              <p class="muted help">{m.unreadableHelp}</p>
+            {/if}
+            {#if data.gifts[item.id]?.length}<Gifts gifts={data.gifts[item.id] ?? []} none="" />{/if}
           </div>
+          <!-- The same icons, in the same order, on every card; « reload », only for a link, comes
+               first so that the others stay lined up from one card to the next -->
+          <div class="tools">
+            {#if link && item.enrichment !== "pending"}
+              <form method="POST" action="?/refresh" use:enhance={reread}>
+                <input type="hidden" name="itemId" value={item.id} />
+                <IconButton icon="reload" label={m.refresh.label(item.title)} tip={m.refresh.tip} />
+              </form>
+            {/if}
+            <form method="POST" action="?/status" use:enhance>
+              <input type="hidden" name="itemId" value={item.id} />
+              <input type="hidden" name="status" value="received" />
+              <IconButton icon="heart" label={m.receivedLabel(item.title)} tip={m.received} />
+            </form>
+            <IconButton
+              icon="pencil"
+              label={m.edit.label(item.title)}
+              tip={m.edit.tip}
+              href="?modifier={item.id}"
+              expanded={editing === item.id}
+              controls="edit-{item.id}"
+              onclick={() => toggleEdit(item.id)}
+            />
+            <form method="POST" action="?/status" use:enhance>
+              <input type="hidden" name="itemId" value={item.id} />
+              <input type="hidden" name="status" value="archived" />
+              <IconButton icon="archive" label={m.archiveLabel(item.title)} tip={m.archiveTip} />
+            </form>
+            <ConfirmDelete
+              label={m.deleteLabel(item.title)}
+              tip={m.deleteTip}
+              title={removal.itemTitle(item.title)}
+              help={[removal.itemHelp, removal.guests, removal.archiveInstead]}
+              action="?/deleteItem"
+              fields={{ itemId: item.id, title: item.title }}
+            />
+          </div>
+          {#if editing === item.id}
+            <ItemEditor
+              {item}
+              lists={data.lists}
+              failed={failedEdit(item)}
+              onclose={() => toggleEdit(item.id)}
+            />
+          {/if}
         </li>
       {/each}
     </ul>
@@ -429,14 +448,18 @@
     <ul class="items">
       {#each closed as item (item.id)}
         <li class="card item">
+          <ItemThumb {item} listId={data.list.id} {images} small />
           <div class="text">
             <h3>{item.title}</h3>
-            <p class="muted meta">{item.status === "received" ? m.receivedState : m.archivedState}</p>
+            <p class="muted meta state">
+              <Icon name={item.status === "received" ? "heart" : "archive"} size="1rem" />
+              {item.status === "received" ? m.receivedState : m.archivedState}
+            </p>
             {#if data.gifts[item.id]}
               <Gifts gifts={data.gifts[item.id] ?? []} none={m.noGiftOutside} />
             {/if}
           </div>
-          <div class="actions">
+          <div class="tools">
             <form method="POST" action="?/status" use:enhance>
               <input type="hidden" name="itemId" value={item.id} />
               <input type="hidden" name="status" value="open" />
@@ -458,6 +481,20 @@
 {/if}
 
 <style>
+  .back {
+    margin: 0 0 0.5rem;
+  }
+  .back a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 44px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .back a:hover {
+    text-decoration: underline;
+  }
   .heading {
     display: flex;
     flex-wrap: wrap;
@@ -469,20 +506,18 @@
   .title {
     display: flex;
     align-items: center;
-    gap: 0.9rem;
+    gap: 0.75rem;
     min-width: 0;
   }
   .heading h1 {
     margin: 0;
     overflow-wrap: anywhere;
   }
-  .actions {
+  .actions,
+  .tools {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-  }
-  .back {
-    margin: 0 0 0.5rem;
   }
   .items {
     list-style: none;
@@ -491,37 +526,66 @@
     display: grid;
     gap: 0.75rem;
   }
+  /* One grid for every card: the square of the image, the words, the icons; the arrows in front
+     when the list can be reordered, the editor under them all */
   .item {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "thumb text"
+      "tools tools"
+      "editor editor";
+    align-items: start;
+    gap: 0.75rem 1rem;
+    padding: 1rem;
   }
-  .sortable {
-    flex-wrap: nowrap;
-    align-items: flex-start;
+  .item.sortable {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "mover thumb text"
+      "mover tools tools"
+      "editor editor editor";
   }
-  .body {
-    flex: 1;
+  .tools {
+    grid-area: tools;
+    justify-content: flex-end;
+  }
+  @media (min-width: 40rem) {
+    .item {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-areas:
+        "thumb text tools"
+        "editor editor editor";
+      padding: 1.25rem;
+    }
+    .item.sortable {
+      grid-template-columns: auto auto minmax(0, 1fr) auto;
+      grid-template-areas:
+        "mover thumb text tools"
+        "editor editor editor editor";
+    }
+    .item {
+      align-items: center;
+    }
+    .tools {
+      flex-wrap: nowrap;
+    }
+  }
+  .text {
+    grid-area: text;
     min-width: 0;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
+    align-self: center;
   }
   .mover {
-    flex: none;
+    grid-area: mover;
     margin-left: -0.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.25rem;
-    align-self: flex-start;
   }
   .mover button {
-    min-height: 2.5rem;
+    min-height: 2.25rem;
     width: 2.75rem;
     padding: 0;
     display: grid;
@@ -529,16 +593,6 @@
   }
   .mover button:disabled {
     visibility: hidden;
-  }
-  .check {
-    width: 1.3rem;
-    height: 1.3rem;
-    flex: none;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 3;
-    stroke-linecap: round;
-    stroke-linejoin: round;
   }
   .mover svg {
     width: 1.4rem;
@@ -553,7 +607,7 @@
     display: grid;
     place-items: center;
     width: 2.75rem;
-    height: 2.75rem;
+    height: 2.25rem;
     border-radius: 8px;
     color: var(--text-2);
     cursor: grab;
@@ -576,24 +630,6 @@
   .dragging .grip {
     cursor: grabbing;
   }
-  .thumb {
-    flex: none;
-    width: 4.5rem;
-    height: 4.5rem;
-    object-fit: cover;
-    border-radius: 10px;
-    background: var(--border);
-  }
-  @media (min-width: 40rem) {
-    .thumb {
-      width: 6rem;
-      height: 6rem;
-    }
-  }
-  .text {
-    flex: 1 1 14rem;
-    min-width: 0;
-  }
   h3 {
     font-size: 1.15rem;
     margin: 0;
@@ -602,12 +638,27 @@
   .meta {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 0.25rem 1rem;
     margin: 0.25rem 0 0;
   }
   .kind {
     color: var(--text);
     font-weight: 600;
+  }
+  .price {
+    color: var(--text);
+    font-weight: 700;
+  }
+  .site {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .state {
+    gap: 0.4rem;
   }
   .completing {
     display: flex;
@@ -630,30 +681,9 @@
     margin: 0.25rem 0 0;
     font-size: 0.95rem;
   }
-  .waiting {
-    display: block;
-    border: 2px dashed var(--progress);
-    background: transparent;
-    animation: breathe 1.4s ease-in-out infinite;
-  }
-  @keyframes breathe {
-    50% {
-      opacity: 0.35;
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .waiting {
-      animation: none;
-    }
-  }
   .notes {
     margin: 0.5rem 0 0;
     white-space: pre-line;
-  }
-  .actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
   }
   .closed {
     margin-top: 2rem;
@@ -667,5 +697,10 @@
   }
   .closed .items {
     margin-top: 0.75rem;
+  }
+  .closed .item {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "thumb text tools";
+    align-items: center;
   }
 </style>

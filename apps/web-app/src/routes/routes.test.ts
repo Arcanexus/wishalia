@@ -24,7 +24,7 @@ const run = (handler: unknown, event: unknown) =>
   outcome(() => (handler as (event: unknown) => unknown)(event));
 
 describe("the root layout", () => {
-  it("gives the app's name and the mode the header button switches to", async () => {
+  it("gives the app's name and the display choices the header menu shows", async () => {
     vi.stubEnv("APP_NAME", "Les envies");
     const { event } = fakeEvent();
     event.locals.mode = "light";
@@ -32,7 +32,7 @@ describe("the root layout", () => {
       appName: "Les envies",
       locale: "fr",
       mode: "light",
-      nextMode: "dark",
+      themeChoice: "auto",
     });
   });
 });
@@ -62,6 +62,19 @@ describe("/preferences", () => {
     expect((await run(preferences, event)).thrown).toMatchObject({ status: 303, location: "/reglages" });
     expect(setCookies).toEqual([expect.objectContaining({ name: "wishalia.locale", value: "en" })]);
     expect(api.calls).toEqual([expect.objectContaining({ body: { locale: "en" } })]);
+  });
+
+  it("takes the mode or the theme the display menu names, with the account too", async () => {
+    const api = fakeApi({ "PATCH /manage/me": () => json({}) });
+    const dark = fakeEvent({ form: { retour: "/", mode: "dark" }, cookie: "s=1" });
+    await run(preferences, dark.event);
+    expect(dark.setCookies).toEqual([expect.objectContaining({ name: "wishalia.mode", value: "dark" })]);
+    const christmas = fakeEvent({ form: { retour: "/", theme: "christmas" }, cookie: "s=1" });
+    await run(preferences, christmas.event);
+    expect(christmas.setCookies).toEqual([
+      expect.objectContaining({ name: "wishalia.theme", value: "christmas" }),
+    ]);
+    expect(api.calls.map((call) => call.body)).toEqual([{ mode: "dark" }, { theme: "christmas" }]);
   });
 
   it("keeps the choice on the device when the API cannot be reached", async () => {
@@ -203,7 +216,6 @@ describe("the app pages", () => {
       me,
       locale: "fr",
       mode: "dark",
-      nextMode: "device",
     });
     // The account's settings win, and the device follows them
     expect(signedIn.event.locals).toMatchObject({ themeChoice: "christmas", mode: "dark" });

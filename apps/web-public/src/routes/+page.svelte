@@ -4,11 +4,14 @@
   import { page } from "$app/state";
 
   import { publicMessages } from "@wishalia/i18n/messages/public";
-  import LanguageButtons from "@wishalia/ui/LanguageButtons.svelte";
+  import { commonMessages } from "@wishalia/i18n/messages/common";
+  import DisplayMenu from "@wishalia/ui/DisplayMenu.svelte";
+  import HeaderLink from "@wishalia/ui/HeaderLink.svelte";
+  import Icon from "@wishalia/ui/Icon.svelte";
   import ListBadge from "@wishalia/ui/ListBadge.svelte";
   import Logo from "@wishalia/ui/Logo.svelte";
+  import Menu from "@wishalia/ui/Menu.svelte";
   import { useI18n } from "@wishalia/ui/i18n.ts";
-  import ModeButton from "@wishalia/ui/ModeButton.svelte";
 
   import type { PageProps } from "./$types";
 
@@ -17,6 +20,7 @@
   const searched = $derived(data.searched !== "");
   const i18n = useI18n();
   const m = $derived(publicMessages(i18n.locale).home);
+  const account = $derived(commonMessages(i18n.locale).account);
 </script>
 
 <svelte:head>
@@ -31,12 +35,28 @@
   <div class="bar">
     <span class="brand"><Logo size={36} ring={false} /><span>{data.appName}</span></span>
     <div class="tools">
-      <LanguageButtons returnPath={page.url.pathname} />
-      <ModeButton mode={data.mode} nextMode={data.nextMode} returnPath={page.url.pathname} />
+      <DisplayMenu
+        mode={data.mode}
+        theme={data.themeChoice}
+        returnPath={page.url.pathname + page.url.search}
+      />
       {#if home.me && data.appUrl}
-        <a class="button secondary" href={data.appUrl} rel="external">{m.myLists}</a>
+        {@const name = home.me.displayName}
+        <Menu
+          icon="user"
+          label={account.menu(name)}
+          initial={name.trim().charAt(0).toLocaleUpperCase(i18n.locale)}
+        >
+          <p class="menu-who"><strong>{name}</strong></p>
+          <!-- eslint-disable svelte/no-navigation-without-resolve -->
+          <a class="menu-item" href={data.appUrl} rel="external"><Icon name="list" />{account.lists}</a>
+          <a class="menu-item" href="{data.appUrl}reglages" rel="external">
+            <Icon name="settings" />{account.settings}
+          </a>
+          <!-- eslint-enable svelte/no-navigation-without-resolve -->
+        </Menu>
       {:else if data.signInUrl}
-        <a class="button secondary" href={data.signInUrl} rel="external">{m.signIn}</a>
+        <HeaderLink icon="signIn" label={account.signIn} href={data.signInUrl} />
       {/if}
     </div>
   </div>
@@ -172,10 +192,6 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-  }
-  .tools .button {
-    white-space: nowrap;
-    padding: 0 0.9rem;
   }
   .page {
     max-width: 60rem;

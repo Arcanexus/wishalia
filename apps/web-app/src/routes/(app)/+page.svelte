@@ -5,8 +5,9 @@
 
   import { appMessages } from "@wishalia/i18n/messages/app";
   import { useI18n } from "@wishalia/ui/i18n.ts";
-  import ListBadge from "@wishalia/ui/ListBadge.svelte";
   import ConfirmDelete from "#lib/ConfirmDelete.svelte";
+  import Icon from "@wishalia/ui/Icon.svelte";
+  import ListBadge from "@wishalia/ui/ListBadge.svelte";
   import IconButton from "#lib/IconButton.svelte";
   import QuickAdd from "#lib/QuickAdd.svelte";
 
@@ -55,6 +56,7 @@
               <span class="name">{list.name}</span>
               <span class="muted">{m.count(list.itemCount)}</span>
             </span>
+            <span class="go" aria-hidden="true"><Icon name="chevronRight" /></span>
           </a>
         </li>
       {/each}
@@ -72,7 +74,7 @@
         placeholder={m.newListPlaceholder}
         value={form?.createList?.name ?? ""}
       />
-      <button type="submit">{m.create}</button>
+      <button type="submit"><Icon name="plus" />{m.create}</button>
     </div>
     {#if form?.createList?.error}
       <p class="notice error" role="alert">{m.invalidName}</p>
@@ -92,12 +94,10 @@
     <ul class="rows">
       {#each data.archived as list (list.id)}
         <li class="card row-item">
-          <div class="who">
-            <ListBadge picture={list} size="small" />
-            <div class="text">
-              <span class="name">{list.name}</span>
-              <span class="muted">{m.count(list.itemCount)}</span>
-            </div>
+          <ListBadge picture={list} size="small" />
+          <div class="text">
+            <span class="name">{list.name}</span>
+            <span class="muted">{m.count(list.itemCount)}</span>
           </div>
           <div class="buttons">
             <form method="POST" action="?/restoreList" use:enhance>
@@ -128,23 +128,26 @@
     gap: 0.75rem;
     grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
   }
+  /* A card per list: its picture, its name and count, an arrow; every card the same height */
   .list {
     display: flex;
     align-items: center;
     gap: 0.9rem;
     height: 100%;
-    min-height: 5rem;
+    min-height: 5.5rem;
+    padding: 1rem;
     color: var(--text);
     text-decoration: none;
   }
-  .who {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    min-width: 0;
-  }
   .list:hover {
     border-color: var(--action);
+  }
+  .list:hover .name {
+    text-decoration: underline;
+  }
+  .go {
+    margin-left: auto;
+    color: var(--text-2);
   }
   .name {
     overflow-wrap: anywhere;
@@ -185,16 +188,17 @@
   }
   .row-item {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
+    gap: 0.9rem;
+    padding: 1rem;
   }
   .text {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.15rem;
     min-width: 0;
+    flex: 1;
+    overflow-wrap: anywhere;
   }
   .buttons {
     display: flex;

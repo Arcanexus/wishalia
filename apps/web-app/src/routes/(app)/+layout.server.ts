@@ -1,5 +1,3 @@
-import { nextMode } from "@wishalia/domain";
-
 import { apiJson } from "#lib/server/api.ts";
 import {
   LOCALE_COOKIE,
@@ -30,5 +28,5 @@ export const load: LayoutServerLoad = async (event) => {
   event.locals.mode = me.mode;
   event.locals.localeChoice = me.locale;
   event.locals.locale = pageLocale(me.locale, event.request.headers.get("accept-language"));
-  return { me, locale: event.locals.locale, mode: me.mode, nextMode: nextMode(me.mode) };
+  return { me, locale: event.locals.locale, mode: me.mode };
 };

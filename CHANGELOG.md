@@ -17,6 +17,27 @@ All notable changes to this project are documented here. The format follows
   `PUT` and `DELETE /manage/lists/:id/image`, `icon` and `image` on every list (also in v1,
   `/public/view` and `/public/home`). Migration 0014 adds `wish_lists.icon` and `image_key`; the
   worker's cleanup also sweeps `lists/`.
+- Settings save as they change, with no « Enregistrer » button: the account's name, theme, mode and
+  language, a list's settings, an item being edited, an event's settings, a passkey's name, a list's
+  icon, the image chosen for an item and its framing. Typing waits for a short pause, a choice goes
+  at once, and a discreet line says « Enregistrement… », « Enregistré », or what to fix, with
+  « Réessayer »; nothing typed is lost, and a form keeps its button without JavaScript.
+- The header has two menus at the top right, as icons: the display (mode, theme and language) and
+  the account (its settings, signing out). The public home page has an icon to sign in, or the
+  account menu once signed in; the guests' page has the display menu. `/preferences` takes the
+  `mode` or the `theme` the menu names.
+
+### Changed
+
+- The items of a list share one grid: the arrows, a square for the image (kept empty, as a frame,
+  for an item without one), the words, then icons always in the same order and lined up: a heart
+  (« Je l'ai reçu »), a pencil (« Modifier »), the reload arrows, a box, a bin. A small pencil over
+  the image's corner leads to its images, as the count of images sits over the other corner.
+- A list's settings open from a cog next to its title; archiving and deleting the list are a box
+  and a bin there (deleting asks in a dialog). The list cards on the home page have an arrow and
+  line up.
+- The header's « Réglages » and « Se déconnecter » moved into the account menu; the mode button and
+  the language buttons into the display menu.
 
 ## [0.0.6] - 2026-11-26
 

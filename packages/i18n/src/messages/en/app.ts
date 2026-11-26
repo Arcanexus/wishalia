@@ -6,8 +6,6 @@ export const app: AppMessages = {
     lists: "My lists",
     events: "Events",
     share: "Share",
-    settings: "Settings",
-    signOut: "Sign out",
   },
   error: {
     notFound: "Page not found",
@@ -88,7 +86,7 @@ export const app: AppMessages = {
     failed: "The add didn't go through. Try again in a moment.",
   },
   list: {
-    back: "← My lists",
+    back: "My lists",
     refreshAll: { label: "Reload the list's links", tip: "Reload the links" },
     preview: { label: "Preview: the list as your family sees it", tip: "Preview" },
     share: { label: "Share this list", tip: "Share this list" },
@@ -104,7 +102,8 @@ export const app: AppMessages = {
         : `${queued === 1 ? "1 wish will be reloaded from its link" : `${queued} wishes will be reloaded from their links, one after the other`}.`,
     refreshKeeps:
       "The title and the price follow the page as long as you haven't changed them; what you typed or sent yourself is kept.",
-    settingsSaved: "List settings saved.",
+    settings: { label: "List settings", tip: "List settings" },
+    edit: { label: (title) => `Edit “${title}”`, tip: "Edit" },
     secretLifted: "The list's secret is lifted.",
     refreshAsked: (title) => `Reload of “${title}” asked for.`,
     saved: (title, moved) => `“${title}” is saved${moved ? " and has moved to another list" : ""}.`,
@@ -135,9 +134,9 @@ export const app: AppMessages = {
     },
     unreadable: "Unreadable link",
     unreadableHelp:
-      "The page couldn't be read: try again with the “Reload” button (the arrows), or complete the wish with “Edit”.",
-    image: "Image",
-    imageOf: (title) => `Image of “${title}”`,
+      "The page couldn't be read: try again with the “Reload” button (the arrows), or complete the wish with the “Edit” pencil.",
+    imageEdit: { label: (title) => `Change the images of “${title}”`, tip: "Change the images" },
+    imageAdd: { label: (title) => `Add an image to “${title}”`, tip: "Add an image" },
     refresh: { label: (title) => `Reload the link of “${title}”`, tip: "Reload" },
     received: "I got it",
     receivedLabel: (title) => `I got it: “${title}”`,
@@ -161,8 +160,16 @@ export const app: AppMessages = {
     what: (what) => `: ${what}`,
     quote: (message) => `“${message}”`,
   },
+  autosave: {
+    saving: "Saving…",
+    saved: "Saved",
+    failed: "Not saved yet: the server did not answer. Your changes are kept here.",
+    refused: "Not saved: fix what is pointed out above.",
+    retry: "Try again",
+    save: "Save",
+  },
   editor: {
-    edit: "Edit",
+    close: "Close",
     editLabel: (title) => `Edit “${title}”`,
     errors: {
       invalid_title: "Give the wish a name.",
@@ -194,11 +201,13 @@ export const app: AppMessages = {
     list: "List",
     link: "Link (optional)",
     notes: "Notes for your family (optional)",
-    saving: "Saving…",
-    save: "Save",
   },
   listSettings: {
     title: "List settings",
+    close: "Close the settings",
+    ends: "Archive or delete",
+    archiveLabel: (name) => `Archive “${name}”`,
+    deleteLabel: (name) => `Delete “${name}” for good`,
     errors: {
       invalid_name: "Give the list a name, 100 characters at most.",
       secret_already_lifted: "The secret is lifted: it never closes again.",
@@ -234,7 +243,6 @@ export const app: AppMessages = {
       name: "When I decide",
       help: "You lift the secret of the whole list at once, whenever you like.",
     },
-    save: "Save",
     secret: "The secret",
     lifted: "This list's secret is lifted.",
     liftHelp: "Once lifted, you see who gave you what outside the events. This choice is final.",
@@ -242,11 +250,9 @@ export const app: AppMessages = {
     lift: "Lift the list's secret",
     archive: "Archive the list",
     archiveHelp: "The list disappears from your lists, and its share links no longer show anything.",
-    archiveConfirm: (name) => `I want to archive “${name}”`,
     delete: "Delete the list",
     deleteHelp:
       "The list and all its wishes go, with their images, and its share links no longer open. This is for good. If someone in your family meant to give something, their share link tells them.",
-    deleteConfirm: (name) => `I want to delete “${name}” and its wishes, for good`,
   },
   removal: {
     itemTitle: (title) => `Delete “${title}”?`,
@@ -319,7 +325,6 @@ export const app: AppMessages = {
     file: "A photo or an image from your device",
     fileHelp: "JPEG, PNG, WebP, GIF, AVIF or HEIC, 10 MB at most. On a phone, you can also take a photo.",
     sending: "Sending…",
-    sendFile: (name) => `Send “${name}”`,
     send: "Send the image",
     forgetWithLink:
       "Your image is deleted, and the wish takes back the image of the link's page: the app reads the page again.",
@@ -364,7 +369,6 @@ export const app: AppMessages = {
     file: "A photo, a drawing or a logo from your device",
     fileHelp: "JPEG, PNG, WebP, GIF, AVIF or HEIC, 10 MB at most. It shows as a square: its centre is kept.",
     sending: "Sending…",
-    sendFile: (name: string) => `Send “${name}”`,
     send: "Send the image",
     forget: "Remove your image",
     forgetHelp: "Your image is erased, and the chosen icon shows again.",
@@ -392,6 +396,7 @@ export const app: AppMessages = {
     size: (percent) => `Frame size: ${percent}%`,
     saving: "Saving…",
     save: "Save the framing",
+    saved: "Framing saved",
     whole: "Keep the whole image",
     loading: "Loading the image…",
   },
@@ -454,7 +459,6 @@ export const app: AppMessages = {
     add: "Add",
     addLabel: (title) => `Add “${title}” to the event`,
     settings: "Event settings",
-    save: "Save",
   },
   share: {
     title: "Share",
@@ -519,8 +523,6 @@ export const app: AppMessages = {
     language: "Language",
     languageAuto: { name: "Automatic", help: "Your browser's language, when the app speaks it." },
     invalidName: "Write a first name or a nickname, 80 characters at most.",
-    saved: "Saved.",
-    save: "Save",
     passkeys: "Passkeys",
     passkeysHelp:
       "A passkey signs you in with the fingerprint, face or PIN of your phone or computer: no password, no waiting for an email. The email link always stays possible.",
@@ -532,7 +534,6 @@ export const app: AppMessages = {
     rename: "Rename",
     renameLabel: (name) => `Rename the passkey “${name}”`,
     newName: "New name",
-    saveName: "Save the name",
     delete: "Delete",
     deleteLabel: (name) => `Delete the passkey “${name}”`,
     noPasskey: "No passkeys yet.",

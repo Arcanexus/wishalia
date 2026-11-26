@@ -2,13 +2,23 @@ import type { CommonMessages } from "../common.js";
 
 export const common: CommonMessages = {
   skipLink: "Skip to content",
-  mode: {
-    names: { device: "as the device", light: "light", dark: "dark" },
-    current: (name) => `Display: ${name}`,
-    switch: (name, next) => `Display: ${name}. Switch to ${next}`,
-  },
   language: {
     label: "Language",
+  },
+  display: {
+    label: "Display, theme and language",
+    mode: "Display",
+    modes: { device: "As the device", light: "Light", dark: "Dark" },
+    theme: "Theme",
+    themes: { auto: "Automatic", neutral: "Neutral", christmas: "Christmas" },
+    language: "Language",
+  },
+  account: {
+    menu: (name) => `My account, ${name}`,
+    settings: "Account settings",
+    lists: "My lists",
+    signIn: "Sign in",
+    signOut: "Sign out",
   },
   error: {
     title: { notFound: "Not found", other: "Error" },

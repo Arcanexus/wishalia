@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
 
   import { enhance } from "$app/forms";
   import { invalidateAll } from "$app/navigation";
@@ -9,7 +9,12 @@
   import { appMessages } from "@wishalia/i18n/messages/app";
   import { useI18n } from "@wishalia/ui/i18n.ts";
 
+  import Icon from "@wishalia/ui/Icon.svelte";
+
+  import { autosave, type SaveState } from "#lib/autosave.ts";
+  import IconButton from "#lib/IconButton.svelte";
   import InstallApp from "#lib/InstallApp.svelte";
+  import SaveStatus from "#lib/SaveStatus.svelte";
   import { addPasskey, deviceName, passkeysSupported, type PasskeyOutcome } from "#lib/passkey.ts";
 
   import type { PageProps } from "./$types";
@@ -21,6 +26,23 @@
   const day = (iso: string) => i18n.fmt.date(iso);
   const activeTokens = $derived(data.tokens.filter((token) => token.active));
   let copied = $state(false);
+
+  // Saved as it changes (docs/management-app.md, « Saved as you go »). The name starts once: a
+  // reload after a save never overwrites what is being typed
+  const startName = untrack(() => data.me.displayName);
+  let displayState = $state<SaveState>("idle");
+  let displayError = $state<string | null>(null);
+  let displayForm = $state<HTMLFormElement>();
+  /** The theme, the mode and the language are drawn on <html> by the server: a fresh page. */
+  const drawnByServer = (form: HTMLFormElement) => {
+    const now = new FormData(form);
+    return (
+      now.get("theme") !== data.me.theme ||
+      now.get("mode") !== data.me.mode ||
+      now.get("locale") !== data.me.locale
+    );
+  };
+  let renameState = $state<Record<string, SaveState>>({});
 
   /** null until the page runs in the browser: passkeys need JavaScript. */
   let supported = $state<boolean | null>(null);
@@ -56,16 +78,19 @@
   <form
     method="POST"
     action="?/display"
-    use:enhance={({ formData }) => {
-      const languageChanged = formData.get("locale") !== data.me.locale;
-      return async ({ result, update }) => {
-        // The language is on <html lang>, written by the server: a new one needs a fresh page
-        if (result.type === "success" && languageChanged) {
-          window.location.reload();
-          return;
+    bind:this={displayForm}
+    use:autosave={{
+      onState: (state) => (displayState = state),
+      onResult: async (result) => {
+        if (result.type === "success") {
+          displayError = null;
+          if (displayForm && drawnByServer(displayForm)) window.location.reload();
+          else await invalidateAll();
+          return true;
         }
-        await update({ reset: false });
-      };
+        displayError = result.type === "failure" ? m.invalidName : null;
+        return false;
+      },
     }}
   >
     <label for="nom">{m.name}</label>
@@ -75,8 +100,9 @@
       required
       maxlength="80"
       autocomplete="given-name"
-      value={data.me.displayName}
+      value={startName}
       aria-describedby="nom-aide"
+      aria-invalid={displayError ? "true" : undefined}
     />
     <p id="nom-aide" class="muted help">{m.nameHelp}</p>
 
@@ -119,10 +145,7 @@
     {#if form?.display && "error" in form.display}
       <p class="notice error" role="alert">{m.invalidName}</p>
     {/if}
-    <div role="status">
-      {#if form?.display && "saved" in form.display}<p class="notice">{m.saved}</p>{/if}
-    </div>
-    <button type="submit">{m.save}</button>
+    <SaveStatus state={displayState} error={displayError} />
   </form>
 </section>
 
@@ -147,26 +170,34 @@
           </div>
           <div class="row-actions">
             <details>
-              <summary class="button secondary" aria-label={m.renameLabel(name)}>{m.rename}</summary>
+              <summary class="button secondary" aria-label={m.renameLabel(name)} title={m.rename}>
+                <Icon name="pencil" />
+              </summary>
               <form
                 method="POST"
                 action="?/renamePasskey"
-                use:enhance={() =>
-                  async ({ update }) =>
-                    update({ reset: false })}
+                use:autosave={{
+                  onState: (state) => (renameState[passkey.id] = state),
+                  onResult: async (result) => {
+                    if (result.type !== "success") return false;
+                    await invalidateAll();
+                    return true;
+                  },
+                }}
               >
                 <input type="hidden" name="id" value={passkey.id} />
                 <label for="cle-{passkey.id}">{m.newName}</label>
                 <input id="cle-{passkey.id}" name="name" required maxlength="60" value={passkey.name ?? ""} />
-                <button type="submit">{m.saveName}</button>
+                <SaveStatus
+                  state={renameState[passkey.id] ?? "idle"}
+                  error={renameState[passkey.id] === "error" ? m.passkeyInvalidName : null}
+                />
               </form>
             </details>
             <form method="POST" action="?/deletePasskey" use:enhance>
               <input type="hidden" name="id" value={passkey.id} />
               <input type="hidden" name="name" value={name} />
-              <button type="submit" class="secondary" aria-label={m.deleteLabel(name)}>
-                {m.delete}
-              </button>
+              <IconButton icon="trash" label={m.deleteLabel(name)} tip={m.delete} danger />
             </form>
           </div>
         </li>
@@ -250,7 +281,7 @@
             copied = true;
           }}
         >
-          {copied ? m.copied : m.copy}
+          <Icon name={copied ? "check" : "copy"} />{copied ? m.copied : m.copy}
         </button>
       </div>
     {/if}
@@ -269,9 +300,7 @@
             </div>
             <form method="POST" action="?/revokeToken" use:enhance>
               <input type="hidden" name="id" value={token.id} />
-              <button type="submit" class="secondary" aria-label={m.revokeLabel(token.name)}>
-                {m.revoke}
-              </button>
+              <IconButton icon="trash" label={m.revokeLabel(token.name)} tip={m.revoke} danger />
             </form>
           </li>
         {/each}
@@ -434,8 +463,9 @@
   details form {
     margin-top: 0.75rem;
   }
-  details form button {
-    margin-top: 0.75rem;
+  details summary.button {
+    width: 48px;
+    padding: 0;
   }
   .new-token {
     border-top: 1px solid var(--border);
