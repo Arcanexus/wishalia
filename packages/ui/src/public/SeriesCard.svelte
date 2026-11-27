@@ -1,6 +1,6 @@
 <script lang="ts">
   import { viewMessages } from "@wishalia/i18n/messages/view";
-  import { volumeLabel } from "@wishalia/domain";
+  import { volumeLabel, volumeNumber } from "@wishalia/domain";
   import type { Snippet } from "svelte";
 
   import Gallery from "../Gallery.svelte";
@@ -41,6 +41,14 @@
   // Its own image, or the first volume's: the square is never empty when a volume has one
   const image = $derived(series.image ?? volumes.find((entry) => entry.image)?.image ?? null);
   const headingId = $derived(`serie-${series.id}`);
+  /**
+   * A volume's name on its tile, the same from tile to tile: « Tome 33 », from the number in its
+   * title; without a number, its title without the series' name in front.
+   */
+  const short = (title: string) => {
+    const n = volumeNumber(title);
+    return n ? m.series.volume(n) : volumeLabel(title, series.title);
+  };
 </script>
 
 <li class="card item series" class:complete aria-labelledby={headingId}>
@@ -90,7 +98,7 @@
       </summary>
       <ul class="volumes" aria-label={m.series.listLabel(series.title)}>
         {#each volumes as entry (entry.id)}
-          <ItemCard item={entry} {events} {scope} tile label={volumeLabel(entry.title, series.title)}>
+          <ItemCard item={entry} {events} {scope} tile label={short(entry.title)}>
             {@render volume?.(entry)}
           </ItemCard>
         {/each}

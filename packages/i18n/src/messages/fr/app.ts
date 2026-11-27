@@ -340,6 +340,7 @@ export const app = {
   },
   /** Series (docs/series.md): one card, its volumes inside it. */
   series: {
+    volume: (n: string) => `Tome ${n}`,
     kind: "Série",
     volumes: (n: number) => (n === 0 ? "Aucun tome" : `${n} tome${n > 1 ? "s" : ""}`),
     total: (amount: string) => `${amount} en tout`,

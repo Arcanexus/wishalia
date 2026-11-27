@@ -175,6 +175,7 @@ export {
   seriesPriceCents,
   seriesTitleOf,
   volumeLabel,
+  volumeNumber,
   type Groupable,
   type GroupRefusal,
 } from "./series.js";

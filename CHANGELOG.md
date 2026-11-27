@@ -48,6 +48,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- A series' tiles no longer cut their names letter by letter: each volume is named « Tome 33 » from
+  the number in its title (its whole title on hover), on its own line, with the price and the badge
+  under it, the shop's name alone (« fnac.com ») and the button at the foot of every tile.
 - Reordering a list no longer jumps back: moves made quickly in a row (arrows tapped several times,
   a second drag while the first is saving) go one after the other with the latest order, and the
   page keeps showing that order until it is saved. The arrows send the order on screen, so two taps

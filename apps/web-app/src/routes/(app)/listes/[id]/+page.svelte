@@ -12,6 +12,7 @@
     liveChanges,
     seriesPriceCents,
     volumeLabel,
+    volumeNumber,
     type LiveItem,
   } from "@wishalia/domain";
   import Icon from "@wishalia/ui/Icon.svelte";
@@ -388,6 +389,11 @@
   const unfolded = new SvelteSet<string>();
   const fold = (id: string, open: boolean) => (open ? unfolded.add(id) : unfolded.delete(id));
   /** A wish whose name starts like the series': ticked in advance. */
+  /** A volume's name on its tile, the same from tile to tile: « Tome 33 », or its title without the series' name. */
+  const tileName = (volume: Item, series: Item) => {
+    const n = volumeNumber(volume.title);
+    return n ? s.volume(n) : volumeLabel(volume.title, series.title);
+  };
   const belongs = (item: Item, series: Item) => volumeLabel(item.title, series.title) !== item.title;
   $effect(() => {
     if (form?.edit && "error" in form.edit) editing = form.edit.itemId;
@@ -946,10 +952,10 @@
 {#snippet volumeTile(volume: Item, series: Item)}
   {@const link = webLink(volume)}
   {@const isOpen = volume.status === "open"}
-  {@const label = volumeLabel(volume.title, series.title)}
+  {@const label = tileName(volume, series)}
   <li class="tile" class:done={!isOpen} data-id={volume.id}>
     <ItemThumb item={volume} listId={data.list.id} images={images && isOpen} tile />
-    <h4>{label}</h4>
+    <h4 title={label === volume.title ? undefined : volume.title}>{label}</h4>
     <p class="muted meta tile-meta">
       {#if !isOpen}
         <span class="with-icon">
@@ -1047,7 +1053,7 @@
   {#if wanted.length > 1}
     <ol class="tiles order wide" aria-label={s.volumes(wanted.length)}>
       {#each wanted as volume, place (volume.id)}
-        {@const label = volumeLabel(volume.title, series.title)}
+        {@const label = tileName(volume, series)}
         <li class="tile" data-id={volume.id}>
           <ItemThumb item={volume} listId={data.list.id} images={false} tile />
           <h4>{label}</h4>
@@ -1483,7 +1489,8 @@
   h4 {
     font-size: 1.05rem;
     margin: 0;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    hyphens: auto;
   }
   .add-volume {
     display: flex;
