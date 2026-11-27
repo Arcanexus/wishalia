@@ -15,6 +15,7 @@
 
   import { changes } from "#lib/changes.svelte.ts";
   import SyncStatus from "#lib/SyncStatus.svelte";
+  import UndoToast from "#lib/UndoToast.svelte";
 
   let { data, children } = $props();
   // The changes kept from an earlier visit go as soon as the app is open (#lib/outbox.ts)
@@ -96,6 +97,8 @@
 <main id="contenu" class="page">
   {@render children()}
 </main>
+<!-- « Annuler » after a deletion, on every page of the app (#lib/undo.ts) -->
+<UndoToast />
 
 <style>
   .top {

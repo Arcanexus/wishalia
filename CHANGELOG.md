@@ -28,6 +28,9 @@ All notable changes to this project are documented here. The format follows
 - Several copies: « × 4 » with the copies' icon on the guests' cards, the turning arrows beside
   « À chaque occasion », and « − » « + » around the number, in the owner's editor and in the
   guests' form (instead of a list to pick from).
+- Deleting a wish, a series or a volume no longer asks first: it leaves the screen at once, and
+  « Annuler » brings it back for eight seconds (the time stops while the message is pointed at or
+  focused), before anything is sent or any guest is told. A list's deletion keeps its dialog.
 - Filters on the guests' page: « À offrir », an occasion, « Prix » (the cheapest first) and « Mes
   cadeaux », with how many wishes show. Never for the owner nor on a folded page.
 - The changes made on a list (delete, received, archived, reopened, reordered, a volume moved)

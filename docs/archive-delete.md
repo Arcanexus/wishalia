@@ -20,18 +20,24 @@ it are the ones who are told, on their own link.
 On a list page, each item has its buttons as icons, with their words on hover and on keyboard focus:
 
 - the box, « Archiver »: the item goes under « Reçues et archivées »;
-- the bin, « Supprimer », in the colour of danger: it opens a dialog that says what goes, that it
-  cannot be undone, and that relatives who meant to give it are told on their link. « Annuler »
-  comes first and has the focus; Escape closes the dialog too. « Supprimer définitivement » deletes.
+- the bin, « Supprimer », in the colour of danger (in the card's « ⋯ » menu): the wish leaves the
+  screen at once, with no dialog, and a message at the foot of the screen says « Envie supprimée :
+  « Lampe ». » with **« Annuler »** for eight seconds. « Annuler » brings it back as it was: nothing
+  was sent, and no guest was told. The time stops while the message is pointed at or has the focus
+  (WCAG 2.2.1); a new deletion, leaving the page or hiding the tab sends the one waiting. Once the
+  time is up, the deletion goes to the server like any change saved in the background, and is final:
+  relatives who meant to give it are told on their link. A series and a volume are deleted the same
+  way.
 
 Under « Reçues et archivées », the arrow coming back (« Remettre dans la liste ») restores an item,
 and the bin deletes it the same way.
 
-![A wish's buttons and the dialog before deleting it](images/app-delete-item.png)
+![A wish just deleted, with « Annuler », on a phone](images/app-undo.png)
 
 A list is archived from its settings (« Archiver la liste », behind a box to tick). It then waits on
 the home page under « Listes archivées », folded, with the arrow to restore it (with its items,
-settings and share links, as it was) and the bin to delete it. « Supprimer la liste », at the end
+settings and share links, as it was) and the bin to delete it. A list's bin keeps its dialog, which
+says what goes and that it cannot be undone, « Annuler » first with the focus. « Supprimer la liste », at the end
 of the list's settings, deletes it directly, behind a box to tick.
 
 ![The archived lists on the home page](images/app-archived-lists.png)

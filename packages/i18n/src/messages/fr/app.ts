@@ -390,6 +390,13 @@ export const app = {
     seriesHelp:
       "La série et tous ses tomes disparaissent de la liste, des événements et des liens de partage, avec leurs images. C'est définitif : ils ne pourront pas être restaurés.",
     ungroupInstead: "Pour garder les tomes comme des envies à part, défaites plutôt la série.",
+    undo: {
+      label: "Suppression",
+      done: (title: string) => `Envie supprimée : « ${title} ».`,
+      undo: "Annuler",
+      undoLabel: (title: string) => `Annuler la suppression de « ${title} »`,
+      back: (title: string) => `« ${title} » est de retour dans la liste.`,
+    },
     cancel: "Annuler",
     confirm: "Supprimer définitivement",
     failed: "La suppression n'a pas abouti. Réessayez dans un instant.",

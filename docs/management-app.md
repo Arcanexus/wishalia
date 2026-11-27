@@ -159,7 +159,8 @@ icons stay in sight, each with its words in a tip, and the others wait in a menu
 - **three small rings**, « Plus d'actions »: a menu with « Recharger » for an item with a link (its
   link is read again, a new price, a better photo; what the person typed or sent stays, see
   [Reading a link again](enrichment.md#reading-a-link-again)), « Archiver », and « Supprimer », in
-  the danger colour, after a dialog. « Recharger les liens », next to the title, reads the whole
+  the danger colour, with « Annuler » for a few seconds after
+  ([Archiving and deleting](archive-delete.md)). « Recharger les liens », next to the title, reads the whole
   list again.
 
 Past three wishes, a **search** field (a magnifier) sits beside the list's title: it keeps the cards

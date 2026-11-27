@@ -96,8 +96,9 @@ tome a son prix, son lien, son image, et vos proches les offrent un par un.
 
 Le **cœur** dit qu'une envie a été reçue. Le menu **« ⋯ »** de la carte rassemble le reste : relire
 son lien, l'archiver, la supprimer. La **boîte** archive une envie ou une liste : elle quitte
-la vue des proches et revient quand vous voulez. La **poubelle** la supprime pour de bon ; vos
-proches qui avaient prévu de l'offrir sont prévenus.
+la vue des proches et revient quand vous voulez. La **poubelle** la supprime : un message
+« Annuler » reste quelques secondes en bas de l'écran, pour la faire revenir si vous vous êtes
+trompé. Ensuite, c'est pour de bon, et vos proches qui avaient prévu de l'offrir sont prévenus.
 
 ## Les occasions
 

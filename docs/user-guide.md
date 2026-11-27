@@ -92,8 +92,9 @@ its price, its link, its image, and your relatives give them one by one.
 
 The **heart** says a wish was received. The card's **« ⋯ »** menu holds the rest: read its link
 again, archive it, delete it. The **box** archives a wish or a list: it leaves the guests'
-view and comes back whenever you want. The **bin** deletes it for good; the relatives who had planned
-to give it are told.
+view and comes back whenever you want. The **bin** deletes it: an « Undo » message stays a few seconds at the
+foot of the screen, to bring it back if you slipped. After that it is for good, and the relatives who
+had planned to give it are told.
 
 ## Occasions
 

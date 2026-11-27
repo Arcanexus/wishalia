@@ -367,6 +367,13 @@ export const app: AppMessages = {
     seriesHelp:
       "The series and all its volumes leave the list, the events and the share links, with their images. This is final: they cannot be restored.",
     ungroupInstead: "To keep the volumes as wishes of their own, undo the series instead.",
+    undo: {
+      label: "Deletion",
+      done: (title) => `Wish deleted: “${title}”.`,
+      undo: "Undo",
+      undoLabel: (title) => `Undo deleting “${title}”`,
+      back: (title) => `“${title}” is back in the list.`,
+    },
     cancel: "Cancel",
     confirm: "Delete for good",
     failed: "The deletion didn't go through. Try again in a moment.",

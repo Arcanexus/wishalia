@@ -22,6 +22,7 @@
     fields,
     onconfirm,
     item = false,
+    undoable = false,
   }: {
     /** The bin's accessible name, with what it deletes. */
     label: string;
@@ -39,7 +40,16 @@
     onconfirm?: () => void;
     /** Drawn as a row of a « ⋯ » menu (the bin and its words), not as an icon alone. */
     item?: boolean;
+    /**
+     * With `onconfirm`: no dialog, the bin deletes at once and the page offers « Annuler » for a
+     * few seconds (#lib/undo.ts). The dialog stays for a deletion that cannot wait (a list).
+     */
+    undoable?: boolean;
   } = $props();
+  const ask = () => {
+    if (undoable && onconfirm) onconfirm();
+    else dialog?.showModal();
+  };
 
   const i18n = useI18n();
   const m = $derived(appMessages(i18n.locale).removal);
@@ -58,61 +68,63 @@
     type="button"
     class="menu-item danger-item"
     aria-label={label}
-    aria-haspopup="dialog"
-    onclick={() => dialog?.showModal()}
+    aria-haspopup={undoable ? undefined : "dialog"}
+    onclick={ask}
   >
     <Icon name="trash" />{tip}
   </button>
 {:else}
-  <IconButton icon="trash" {label} {tip} danger opens="dialog" onclick={() => dialog?.showModal()} />
+  <IconButton icon="trash" {label} {tip} danger opens={undoable ? undefined : "dialog"} onclick={ask} />
 {/if}
 
 <!-- On the page's body: a menu that folds back never hides it -->
-<dialog
-  bind:this={dialog}
-  use:onBody
-  class="confirm"
-  aria-labelledby="{id}-titre"
-  aria-describedby="{id}-aide"
->
-  <h2 id="{id}-titre">{title}</h2>
-  <div id="{id}-aide">
-    {#each help as paragraph (paragraph)}<p>{paragraph}</p>{/each}
-  </div>
-  <form
-    method="POST"
-    {action}
-    use:enhance={({ cancel }) => {
-      if (onconfirm) {
-        // Gone at once: the dialog closes and the page saves it behind
-        cancel();
-        dialog?.close();
-        onconfirm();
-        return;
-      }
-      busy = true;
-      return async ({ update }) => {
-        dialog?.close();
-        busy = false;
-        await update();
-      };
-    }}
+{#if !undoable}
+  <dialog
+    bind:this={dialog}
+    use:onBody
+    class="confirm"
+    aria-labelledby="{id}-titre"
+    aria-describedby="{id}-aide"
   >
-    {#each Object.entries(fields) as [name, value] (name)}<input type="hidden" {name} {value} />{/each}
-    <input type="hidden" name="confirm" value="oui" />
-    <div class="buttons">
-      <button type="button" class="secondary" onclick={() => dialog?.close()}>{m.cancel}</button>
-      <button type="submit" class="danger" disabled={busy}>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 7h16" /><path d="M10 11v6M14 11v6" /><path d="M6 7l1 13h10l1-13" /><path
-            d="M9 7V4h6v3"
-          />
-        </svg>
-        {m.confirm}
-      </button>
+    <h2 id="{id}-titre">{title}</h2>
+    <div id="{id}-aide">
+      {#each help as paragraph (paragraph)}<p>{paragraph}</p>{/each}
     </div>
-  </form>
-</dialog>
+    <form
+      method="POST"
+      {action}
+      use:enhance={({ cancel }) => {
+        if (onconfirm) {
+          // Gone at once: the dialog closes and the page saves it behind
+          cancel();
+          dialog?.close();
+          onconfirm();
+          return;
+        }
+        busy = true;
+        return async ({ update }) => {
+          dialog?.close();
+          busy = false;
+          await update();
+        };
+      }}
+    >
+      {#each Object.entries(fields) as [name, value] (name)}<input type="hidden" {name} {value} />{/each}
+      <input type="hidden" name="confirm" value="oui" />
+      <div class="buttons">
+        <button type="button" class="secondary" onclick={() => dialog?.close()}>{m.cancel}</button>
+        <button type="submit" class="danger" disabled={busy}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16" /><path d="M10 11v6M14 11v6" /><path d="M6 7l1 13h10l1-13" /><path
+              d="M9 7V4h6v3"
+            />
+          </svg>
+          {m.confirm}
+        </button>
+      </div>
+    </form>
+  </dialog>
+{/if}
 
 <style>
   .confirm {

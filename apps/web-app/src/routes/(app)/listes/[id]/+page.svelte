@@ -20,6 +20,7 @@
   import { followLive, holding } from "@wishalia/ui/live.ts";
 
   import ConfirmDelete from "#lib/ConfirmDelete.svelte";
+  import { deletions } from "#lib/undo.svelte.ts";
   import Gifts from "#lib/Gifts.svelte";
   import ItemEditor from "#lib/ItemEditor.svelte";
   import ItemThumb from "#lib/ItemThumb.svelte";
@@ -47,8 +48,14 @@
   // result at once, before the server has them (docs/management-app.md, « Saved in the background »)
   const path = $derived(resolve("/(app)/listes/[id]", { id: data.list.id }));
   const mine = $derived(changes.state.changes.filter((change) => change.listId === data.list.id));
+  // A deletion held back for « Annuler » (#lib/undo.ts) is off the screen too
   const deleting = $derived(
-    new Set(mine.flatMap((change) => (change.kind === "delete" && change.itemId ? [change.itemId] : []))),
+    new Set([
+      ...mine.flatMap((change) => (change.kind === "delete" && change.itemId ? [change.itemId] : [])),
+      ...(deletions.state.held?.change.listId === data.list.id && deletions.state.held.change.itemId
+        ? [deletions.state.held.change.itemId]
+        : []),
+    ]),
   );
   /** Item id → the status it is getting (the latest change wins). */
   const statusOf = $derived(
@@ -67,9 +74,12 @@
         return status ? { ...item, status: status as Item["status"] } : item;
       }),
   );
-  /** Off the screen at once; the keyboard goes to the list's heading, the bin it was on is gone. */
+  /**
+   * Off the screen at once, with « Annuler » for a few seconds before it is sent (#lib/undo.ts);
+   * the keyboard goes to the list's heading, the bin it was on is gone.
+   */
   const remove = async (item: Item) => {
-    changes.add({
+    deletions.hold({
       kind: "delete",
       path,
       action: "deleteItem",
@@ -82,7 +92,6 @@
       itemId: item.id,
       title: item.title,
     });
-    moved = m.deleted(item.title);
     await tick();
     document.getElementById("envies-titre")?.focus();
   };
@@ -707,6 +716,7 @@
                   help={[removal.itemHelp, removal.guests, removal.archiveInstead]}
                   action="?/deleteItem"
                   fields={{ itemId: item.id, title: item.title }}
+                  undoable
                   onconfirm={() => remove(item)}
                 />
               </Menu>
@@ -757,6 +767,7 @@
               help={[item.kind === "series" ? removal.seriesHelp : removal.itemHelp, removal.guests]}
               action="?/deleteItem"
               fields={{ itemId: item.id, title: item.title }}
+              undoable
               onconfirm={() => remove(item)}
             />
           </div>
@@ -839,6 +850,7 @@
         help={[removal.seriesHelp, removal.guests, removal.ungroupInstead]}
         action="?/deleteItem"
         fields={{ itemId: series.id, title: series.title }}
+        undoable
         onconfirm={() => remove(series)}
       />
     </Menu>
@@ -1019,6 +1031,7 @@
           help={[removal.itemHelp, removal.guests]}
           action="?/deleteItem"
           fields={{ itemId: volume.id, title: volume.title }}
+          undoable
           onconfirm={() => remove(volume)}
         />
       </Menu>
