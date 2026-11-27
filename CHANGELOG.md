@@ -50,6 +50,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Amazon: a Kindle book's link now gets its price (the plain `kindle-price`, or the price of the
+  format the link shows among the book's formats), and a free « 0,00 € » (Kindle Unlimited, Prime
+  Reading) is no longer taken as the price.
 - A series' volumes no longer cut their names letter by letter: each volume is named « Tome 33 » from
   the number in its title (its whole title on hover), and the shop shows by its name alone
   (« fnac.com »).

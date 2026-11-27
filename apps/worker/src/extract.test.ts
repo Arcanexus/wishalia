@@ -96,6 +96,33 @@ describe("extract, on Amazon", () => {
     expect(extract(range)).toMatchObject({ priceCents: 1999 });
   });
 
+  it("reads a Kindle book's price, never a free reading's « 0,00 € »", () => {
+    const kindle = `<div id="dp"><span id="productTitle">Dragon Ball Perfect Edition - Tome 34</span>
+      <div id="buybox"><span id="kindle-price" class="a-size-medium a-color-price">  6,99&nbsp;€ </span></div></div>`;
+    expect(extract(kindle)).toEqual({
+      title: "Dragon Ball Perfect Edition - Tome 34",
+      priceCents: 699,
+      currency: "EUR",
+    });
+    const unlimited = `<div id="dp"><div id="corePrice_feature_div"><span class="a-price aok-align-center">
+      <span class="a-offscreen">0,00 €</span><span class="a-price-whole">0<span class="a-price-decimal">,</span></span>
+      <span class="a-price-fraction">00</span></span></div>
+      <span id="kindle-price" class="a-color-price">6,99 €</span></div>`;
+    expect(extract(unlimited)).toMatchObject({ priceCents: 699, currency: "EUR" });
+  });
+
+  it("reads the price of the format shown, among a book's formats", () => {
+    const formats = `<div id="dp"><div id="tmmSwatches">
+      <div id="tmm-grid-swatch-PAPERBACK" class="swatchElement unselected"><span class="slot-price">
+        <span aria-label="10,95 €" class="a-size-base">10,95 €</span></span></div>
+      <div class="swatchElement selected" id="tmm-grid-swatch-KINDLE"><span class="slot-title">Kindle</span>
+        <span class="slot-price"><span aria-label="6,99 €" class="a-size-base a-color-price">6,99 €</span></span></div>
+      </div><div id="price">Lecture gratuite</div></div>`;
+    expect(extract(formats)).toMatchObject({ priceCents: 699, currency: "EUR" });
+    const free = formats.replaceAll("6,99 €", "0,00 €");
+    expect(extract(free)).toMatchObject({ priceCents: null });
+  });
+
   it("leaves a page that only looks like Amazon alone", () => {
     expect(extract(`<div class="a-offscreen">12 €</div>`)).toMatchObject({ priceCents: null });
   });
