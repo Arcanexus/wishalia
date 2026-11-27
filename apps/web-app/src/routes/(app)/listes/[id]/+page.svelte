@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { enhance } from "$app/forms";
+  import { enhance, type SubmitFunction } from "$app/forms";
   import { invalidate } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
@@ -28,7 +28,8 @@
   import SeriesEditor from "#lib/SeriesEditor.svelte";
   import StageIcon from "@wishalia/ui/StageIcon.svelte";
   import IconButton from "#lib/IconButton.svelte";
-  import { dropIndex, moveId } from "#lib/reorder.ts";
+  import { changes } from "#lib/changes.svelte.ts";
+  import { dropIndex, moveId, shownOrder } from "#lib/reorder.ts";
   import { itemStage } from "#lib/stage.ts";
   import type { Item } from "#lib/types.ts";
 
@@ -41,12 +42,94 @@
   const s = $derived(appMessages(i18n.locale).series);
 
   // The list's own wishes; the volumes of a series show inside its card (docs/series.md)
-  const own = $derived(data.items.filter((item) => !item.parentId));
+  // The changes made here and saved in the background (#lib/outbox.ts): the page shows their
+  // result at once, before the server has them (docs/management-app.md, « Saved in the background »)
+  const path = $derived(resolve("/(app)/listes/[id]", { id: data.list.id }));
+  const mine = $derived(changes.state.changes.filter((change) => change.listId === data.list.id));
+  const deleting = $derived(
+    new Set(mine.flatMap((change) => (change.kind === "delete" && change.itemId ? [change.itemId] : []))),
+  );
+  /** Item id → the status it is getting (the latest change wins). */
+  const statusOf = $derived(
+    new Map(
+      mine.flatMap((change) =>
+        change.kind === "status" && change.itemId && change.status ? [[change.itemId, change.status]] : [],
+      ),
+    ),
+  );
+  const saved = $derived(mine.findLast((change) => change.kind === "order")?.order ?? null);
+  const items = $derived(
+    data.items
+      .filter((item) => !deleting.has(item.id) && !deleting.has(item.parentId ?? ""))
+      .map((item) => {
+        const status = statusOf.get(item.id);
+        return status ? { ...item, status: status as Item["status"] } : item;
+      }),
+  );
+  /** Off the screen at once; the keyboard goes to the list's heading, the bin it was on is gone. */
+  const remove = async (item: Item) => {
+    changes.add({
+      kind: "delete",
+      path,
+      action: "deleteItem",
+      fields: [
+        ["itemId", item.id],
+        ["title", item.title],
+        ["confirm", "oui"],
+      ],
+      listId: data.list.id,
+      itemId: item.id,
+      title: item.title,
+    });
+    moved = m.deleted(item.title);
+    await tick();
+    document.getElementById("envies-titre")?.focus();
+  };
+  /** Received, archived or open again: at once on screen, saved behind (the form without JavaScript). */
+  const setStatus =
+    (item: Item, status: Item["status"]): SubmitFunction =>
+    ({ cancel }) => {
+      cancel();
+      changes.add({
+        kind: "status",
+        key: `status:${item.id}`,
+        path,
+        action: "status",
+        fields: [
+          ["itemId", item.id],
+          ["status", status],
+        ],
+        listId: data.list.id,
+        itemId: item.id,
+        title: item.title,
+        status,
+      });
+      moved = m.statusChanged(item.title, status);
+    };
+  /** A volume one place up or down: in turn with the other changes, so two taps never race. */
+  const moveVolume =
+    (volume: Item): SubmitFunction =>
+    ({ cancel, formData }) => {
+      cancel();
+      changes.add({
+        kind: "moveVolume",
+        path,
+        action: "moveVolume",
+        fields: [
+          ["itemId", volume.id],
+          ["direction", String(formData.get("direction"))],
+        ],
+        listId: data.list.id,
+        itemId: volume.id,
+        title: volume.title,
+      });
+    };
+  const own = $derived(items.filter((item) => !item.parentId));
   const open = $derived(own.filter((item) => item.status === "open"));
   /** Series id → its volumes, in their order. */
   const volumesBy = $derived(
     Map.groupBy(
-      [...data.items].filter((item) => item.parentId).sort((a, b) => a.position - b.position),
+      [...items].filter((item) => item.parentId).sort((a, b) => a.position - b.position),
       (item) => item.parentId ?? "",
     ),
   );
@@ -78,7 +161,7 @@
         url: resolve("/(app)/listes/[id]/suivi", { id: data.list.id }),
         reload: () => invalidate("wishalia:list"),
         // Never under a dragged item or a wish being edited
-        canReload: () => !order && !dragging && !holding(),
+        canReload: () => !order && !dragging && changes.state.changes.length === 0 && !holding(),
       }),
     );
     return () => follower.stop();
@@ -94,36 +177,59 @@
     if (changes.length > 0) heard = changes.map((change) => m.live[change.kind](change.title)).join(" ");
   });
 
-  // The order on screen while an item moves, before the server confirms it (optimistic)
+  // The order on screen while an item is dragged, then the one waiting to be saved (optimistic):
+  // moves follow one another without waiting, and only the latest order is sent
   let order = $state<string[] | null>(null);
   let dragging = $state<string | null>(null);
   let moved = $state("");
   let list = $state<HTMLUListElement>();
-  let orderForm = $state<HTMLFormElement>();
-  const shown = $derived(order ? order.flatMap((id) => byId.get(id) ?? []) : open);
+  const shown = $derived.by(() => {
+    const planned = order ?? saved;
+    return planned
+      ? shownOrder(
+          planned,
+          open.map((item) => item.id),
+        ).flatMap((id) => byId.get(id) ?? [])
+      : open;
+  });
 
   const place = (id: string, ids: string[]) => {
     const item = byId.get(id);
     moved = item ? m.place(item.title, ids.indexOf(id) + 1, ids.length) : "";
   };
 
-  /** After the server answered: its order is the truth, also when it refused (the list changed). */
-  const settle =
-    (focus?: { id: string; direction: string }) =>
-    async ({ update }: { update: (options?: { reset?: boolean }) => Promise<void> }) => {
-      await update({ reset: false });
-      order = null;
-      if (!focus) return;
-      // A moved node loses the focus, and the arrow is gone at the top or the bottom: keep the
-      // keyboard on the item, on the arrow that still goes somewhere
-      await tick();
-      const li = list?.querySelector(`li[data-id="${focus.id}"]`);
-      const same = li?.querySelector<HTMLButtonElement>(`button[value="${focus.direction}"]`);
-      const other = li?.querySelector<HTMLButtonElement>(
-        `button[name="direction"]:not([value="${focus.direction}"])`,
-      );
-      (same && !same.disabled ? same : other)?.focus();
-    };
+  /** Moves an item to a place on screen at once, and saves the new order behind it. */
+  const reorder = (id: string, next: string[]) => {
+    place(id, next);
+    changes.add({
+      kind: "order",
+      key: `order:${data.list.id}`,
+      path,
+      action: "order",
+      fields: next.map((itemId) => ["itemIds", itemId]),
+      listId: data.list.id,
+      order: next,
+    });
+    order = null;
+  };
+
+  /** One place up or down with the arrows: the keyboard stays on the item, on an arrow that still goes. */
+  const step = async (event: MouseEvent, id: string, direction: "up" | "down") => {
+    event.preventDefault();
+    const ids = shown.map((entry) => entry.id);
+    const from = ids.indexOf(id);
+    const next = moveId(ids, id, from + (direction === "up" ? -1 : 1));
+    if (next.join() === ids.join()) return;
+    reorder(id, next);
+    // A moved node can lose the focus, and the arrow is gone at the top or the bottom
+    await tick();
+    const li = list?.querySelector(`li[data-id="${id}"]`);
+    const same = li?.querySelector<HTMLButtonElement>(`button[value="${direction}"]`);
+    const other = li?.querySelector<HTMLButtonElement>(
+      `button[name="direction"]:not([value="${direction}"])`,
+    );
+    (same && !same.disabled ? same : other)?.focus();
+  };
 
   /**
    * Drag by the handle, with a mouse, a pen or a finger, as many places up or down as wanted in
@@ -152,19 +258,18 @@
       if (move.clientY < 64) window.scrollBy(0, -16);
       else if (move.clientY > window.innerHeight - 64) window.scrollBy(0, 16);
     };
-    const drop = async (end: PointerEvent) => {
+    const drop = (end: PointerEvent) => {
       if (end.pointerId !== pointer) return;
       window.removeEventListener("pointermove", follow);
       window.removeEventListener("pointerup", drop);
       window.removeEventListener("pointercancel", drop);
       dragging = null;
       if (end.type === "pointercancel" || !order || order.join() === before.join()) {
+        // Nothing moved: back to the order on its way, if any, or to the server's
         order = null;
         return;
       }
-      place(id, order);
-      await tick();
-      orderForm?.requestSubmit();
+      reorder(id, order);
     };
     window.addEventListener("pointermove", follow);
     window.addEventListener("pointerup", drop);
@@ -344,16 +449,13 @@
 {/if}
 
 <section aria-labelledby="envies-titre">
-  <h2 id="envies-titre">{m.wishes(working.length)}</h2>
+  <h2 id="envies-titre" tabindex="-1">{m.wishes(working.length)}</h2>
   {#if open.length === 0}
     <p class="muted">{m.empty}</p>
   {:else}
     {#if form?.move && "error" in form.move}
       <p class="notice error" role="alert">{m.orderChanged}</p>
     {/if}
-    <form method="POST" action="?/order" bind:this={orderForm} use:enhance={() => settle()} hidden>
-      {#each order ?? [] as id (id)}<input type="hidden" name="itemIds" value={id} />{/each}
-    </form>
     <ul class="items" bind:this={list}>
       {#each shown as item, index (item.id)}
         {@const link = webLink(item)}
@@ -365,19 +467,8 @@
           data-id={item.id}
         >
           {#if shown.length > 1}
-            <form
-              method="POST"
-              action="?/move"
-              class="mover"
-              use:enhance={({ formData }) => {
-                const direction = String(formData.get("direction"));
-                const ids = shown.map((entry) => entry.id);
-                const next = moveId(ids, item.id, index + (direction === "up" ? -1 : 1));
-                order = next;
-                place(item.id, next);
-                return settle({ id: item.id, direction });
-              }}
-            >
+            <!-- Without JavaScript the arrows post the form; with it, they move at once -->
+            <form method="POST" action="?/move" class="mover">
               <input type="hidden" name="itemId" value={item.id} />
               <button
                 type="submit"
@@ -386,6 +477,7 @@
                 class="secondary"
                 disabled={index === 0}
                 aria-label={m.moveUp(item.title)}
+                onclick={(event) => step(event, item.id, "up")}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
               </button>
@@ -410,6 +502,7 @@
                 class="secondary"
                 disabled={index === shown.length - 1}
                 aria-label={m.moveDown(item.title)}
+                onclick={(event) => step(event, item.id, "down")}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
               </button>
@@ -462,7 +555,7 @@
                   <IconButton icon="reload" label={m.refresh.label(item.title)} tip={m.refresh.tip} />
                 </form>
               {/if}
-              <form method="POST" action="?/status" use:enhance>
+              <form method="POST" action="?/status" use:enhance={setStatus(item, "received")}>
                 <input type="hidden" name="itemId" value={item.id} />
                 <input type="hidden" name="status" value="received" />
                 <IconButton icon="heart" label={m.receivedLabel(item.title)} tip={m.received} />
@@ -476,7 +569,7 @@
                 controls="edit-{item.id}"
                 onclick={() => toggleEdit(item.id)}
               />
-              <form method="POST" action="?/status" use:enhance>
+              <form method="POST" action="?/status" use:enhance={setStatus(item, "archived")}>
                 <input type="hidden" name="itemId" value={item.id} />
                 <input type="hidden" name="status" value="archived" />
                 <IconButton icon="archive" label={m.archiveLabel(item.title)} tip={m.archiveTip} />
@@ -488,6 +581,7 @@
                 help={[removal.itemHelp, removal.guests, removal.archiveInstead]}
                 action="?/deleteItem"
                 fields={{ itemId: item.id, title: item.title }}
+                onconfirm={() => remove(item)}
               />
             </div>
             {#if editing === item.id}
@@ -524,7 +618,7 @@
             {/if}
           </div>
           <div class="tools">
-            <form method="POST" action="?/status" use:enhance>
+            <form method="POST" action="?/status" use:enhance={setStatus(item, "open")}>
               <input type="hidden" name="itemId" value={item.id} />
               <input type="hidden" name="status" value="open" />
               <IconButton icon="restore" label={m.reopenLabel(item.title)} tip={m.reopen} />
@@ -536,6 +630,7 @@
               help={[item.kind === "series" ? removal.seriesHelp : removal.itemHelp, removal.guests]}
               action="?/deleteItem"
               fields={{ itemId: item.id, title: item.title }}
+              onconfirm={() => remove(item)}
             />
           </div>
         </li>
@@ -588,7 +683,7 @@
       controls="ranger-{series.id}"
       onclick={() => (gathering = gathering === series.id ? null : series.id)}
     />
-    <form method="POST" action="?/status" use:enhance>
+    <form method="POST" action="?/status" use:enhance={setStatus(series, "archived")}>
       <input type="hidden" name="itemId" value={series.id} />
       <input type="hidden" name="status" value="archived" />
       <IconButton icon="archive" label={m.archiveLabel(series.title)} tip={m.archiveTip} />
@@ -605,6 +700,7 @@
       help={[removal.seriesHelp, removal.guests, removal.ungroupInstead]}
       action="?/deleteItem"
       fields={{ itemId: series.id, title: series.title }}
+      onconfirm={() => remove(series)}
     />
   </div>
   {#if editing === series.id}
@@ -692,7 +788,7 @@
   {@const label = volumeLabel(volume.title, series.title)}
   <li class="volume" class:sortable={isOpen && wanted.length > 1} class:done={!isOpen} data-id={volume.id}>
     {#if isOpen && wanted.length > 1}
-      <form method="POST" action="?/moveVolume" class="mover" use:enhance>
+      <form method="POST" action="?/moveVolume" class="mover" use:enhance={moveVolume(volume)}>
         <input type="hidden" name="itemId" value={volume.id} />
         <button
           type="submit"
@@ -756,7 +852,7 @@
             <IconButton icon="reload" label={m.refresh.label(volume.title)} tip={m.refresh.tip} />
           </form>
         {/if}
-        <form method="POST" action="?/status" use:enhance>
+        <form method="POST" action="?/status" use:enhance={setStatus(volume, "received")}>
           <input type="hidden" name="itemId" value={volume.id} />
           <input type="hidden" name="status" value="received" />
           <IconButton icon="heart" label={m.receivedLabel(volume.title)} tip={m.received} />
@@ -771,7 +867,7 @@
           onclick={() => toggleEdit(volume.id)}
         />
       {:else}
-        <form method="POST" action="?/status" use:enhance>
+        <form method="POST" action="?/status" use:enhance={setStatus(volume, "open")}>
           <input type="hidden" name="itemId" value={volume.id} />
           <input type="hidden" name="status" value="open" />
           <IconButton icon="restore" label={m.reopenLabel(volume.title)} tip={m.reopen} />
@@ -788,6 +884,7 @@
         help={[removal.itemHelp, removal.guests]}
         action="?/deleteItem"
         fields={{ itemId: volume.id, title: volume.title }}
+        onconfirm={() => remove(volume)}
       />
     </div>
     {#if editing === volume.id}

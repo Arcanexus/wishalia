@@ -18,6 +18,7 @@
     help,
     action,
     fields,
+    onconfirm,
   }: {
     /** The bin's accessible name, with what it deletes. */
     label: string;
@@ -28,6 +29,11 @@
     action: string;
     /** The hidden fields sent with the confirmation. */
     fields: Record<string, string>;
+    /**
+     * Given, the page takes the deletion over once it is confirmed: it shows it at once and saves
+     * it in the background (#lib/changes.svelte.ts). Without JavaScript, the form posts as usual.
+     */
+    onconfirm?: () => void;
   } = $props();
 
   const i18n = useI18n();
@@ -47,7 +53,14 @@
   <form
     method="POST"
     {action}
-    use:enhance={() => {
+    use:enhance={({ cancel }) => {
+      if (onconfirm) {
+        // Gone at once: the dialog closes and the page saves it behind
+        cancel();
+        dialog?.close();
+        onconfirm();
+        return;
+      }
       busy = true;
       return async ({ update }) => {
         dialog?.close();

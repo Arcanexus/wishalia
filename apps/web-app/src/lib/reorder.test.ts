@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { dropIndex, moveId } from "./reorder.ts";
+import { dropIndex, moveId, shownOrder } from "./reorder.ts";
 
 describe("reorder", () => {
   it("moves an id, within the list's bounds", () => {
@@ -15,5 +15,13 @@ describe("reorder", () => {
     expect(dropIndex([100, 200, 300], 50)).toBe(0);
     expect(dropIndex([100, 200, 300], 250)).toBe(2);
     expect(dropIndex([100, 200, 300], 900)).toBe(3);
+  });
+});
+
+describe("shownOrder", () => {
+  it("keeps the order on its way, new items in front, gone ones out", () => {
+    expect(shownOrder(["c", "a", "b"], ["a", "b", "c"])).toEqual(["c", "a", "b"]);
+    expect(shownOrder(["c", "a", "b"], ["n", "a", "b", "c"])).toEqual(["n", "c", "a", "b"]);
+    expect(shownOrder(["c", "a", "b"], ["a", "c"])).toEqual(["c", "a"]);
   });
 });

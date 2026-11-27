@@ -70,6 +70,10 @@ export const ICONS = {
   ungroup: ["M4 4h6v6H4z", "M14 4h6v6h-6z", "M4 14h6v6H4z", "M14 14h6v6h-6z"],
   /** Put wishes of the list into a series. */
   gather: ["M4 6h9M4 12h9M4 18h9", "M17 9l3 3-3 3", "M13 12h7"],
+  /** Changes on their way to the server (docs/management-app.md, « Saved in the background »). */
+  cloudUp: ["M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5a4 4 0 0 1-1 8.5", "M12 20v-8", "M9 15l3-3 3 3"],
+  /** Changes waiting: no network, or the server does not answer. */
+  cloudOff: ["M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5a4 4 0 0 1-1 8.5H7z", "M3 3l18 18"],
   /** Help: a question mark in a circle (the user guide, at the foot of the pages). */
   help: [
     "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z",

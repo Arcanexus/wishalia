@@ -2,7 +2,7 @@ import { schema } from "@wishalia/db";
 import { memoryStorage } from "@wishalia/storage";
 import { eq } from "drizzle-orm";
 import type { InjectOptions } from "fastify";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { createTestApp, OWNER_EMAIL, signIn, type TestApp } from "../test/app.js";
 
@@ -185,7 +185,8 @@ describe("deleting an item", () => {
     });
     expect(row?.deletedAt).toEqual(clock);
     expect(await t.db.select().from(schema.wishImages).where(eq(schema.wishImages.wishId, lamp))).toEqual([]);
-    expect(storage.objects.has("wishes/lamp.webp")).toBe(false);
+    // Removed in the background, after the answer
+    await vi.waitFor(() => expect(storage.objects.has("wishes/lamp.webp")).toBe(false));
     // The history keeps its entries and gets one more
     expect((await typesOf(lamp)).map((entry) => entry.type)).toEqual([
       "created",

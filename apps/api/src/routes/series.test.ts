@@ -186,9 +186,16 @@ describe("series (docs/series.md)", () => {
     expect((await manage(owner, "PUT", `/lists/${listId}/order`, { itemIds: [lamp, seriesId] })).status).toBe(
       204,
     );
+    // Volumes named in the list's order are left out: they keep their place in their series
     expect(
       (await manage(owner, "PUT", `/lists/${listId}/order`, { itemIds: [lamp, ...volumes] })).status,
-    ).toBe(409);
+    ).toBe(204);
+    const after = await items(listId);
+    expect(after.filter((row) => row.parentId === seriesId).map((row) => row.id)).toEqual(reversed);
+    expect(after.filter((row) => !row.parentId && row.status === "open").map((row) => row.id)).toEqual([
+      seriesId,
+      lamp,
+    ]);
   });
 
   it("shows the guests the series and each volume, given one by one", async () => {

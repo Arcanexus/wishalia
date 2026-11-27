@@ -12,3 +12,15 @@ export function moveId(ids: readonly string[], id: string, to: number): string[]
 export function dropIndex(middles: readonly number[], y: number): number {
   return middles.filter((middle) => middle < y).length;
 }
+
+/**
+ * The ids in the order on screen: the order being saved, with the items it does not know yet (a
+ * wish just added, on this device or another) in front, where a new wish lands, and without the
+ * ones that left meanwhile (deleted, received, archived).
+ */
+export function shownOrder(order: readonly string[], ids: readonly string[]): string[] {
+  const known = new Set(ids);
+  const kept = order.filter((id) => known.has(id));
+  const planned = new Set(kept);
+  return [...ids.filter((id) => !planned.has(id)), ...kept];
+}

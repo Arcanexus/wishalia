@@ -2,7 +2,7 @@ import { schema } from "@wishalia/db";
 import { memoryStorage } from "@wishalia/storage";
 import { eq } from "drizzle-orm";
 import type { InjectOptions } from "fastify";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { createTestApp, OWNER_EMAIL, signIn, type TestApp } from "../../test/app.js";
 
@@ -219,7 +219,8 @@ describe("the image of a list", () => {
     await upload(listId, png(400, 400));
     const key = await keyOf(listId);
     expect((await as(owner, "DELETE", `/lists/${listId}`)).status).toBe(204);
-    expect(storage.objects.has(key ?? "")).toBe(false);
+    // Removed in the background, after the answer
+    await vi.waitFor(() => expect(storage.objects.has(key ?? "")).toBe(false));
     expect(await keyOf(listId)).toBeNull();
   });
 

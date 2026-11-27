@@ -1,12 +1,12 @@
 import { type Database, schema } from "@wishalia/db";
-import { LIST_ICONS } from "@wishalia/domain";
+import { LIST_ICONS, mergedOrder } from "@wishalia/domain";
 import { and, asc, count, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
 import { first, HttpError, notFound, parse, userId } from "../../http.js";
 import type { Tx } from "../../history.js";
-import { imagesOf, listPictureOf } from "../../images.js";
+import { imagesOf, listPictureOf, removeInBackground } from "../../images.js";
 import { deleteItems } from "../../removal.js";
 import { hashToken, newToken } from "../../tokens.js";
 import type { ListDeps } from "./index.js";
@@ -219,9 +219,10 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
 
   /**
    * Puts the list's open items in a new order (drag and drop); a series moves as one, its volumes
-   * keep their own order (PUT /items/:id/order). The order must name every open item
-   * once: when the list changed meanwhile (another device), it answers 409 and nothing moves. No
-   * history: the order says nothing about a gift.
+   * keep their own order (PUT /items/:id/order). The app saves in the background, so the order may
+   * be a moment behind (docs/management-app.md, « Order »): an id that is no longer an open item
+   * of the list is left out, an open item it does not name stays in front (mergedOrder). An id
+   * given twice is refused (400). No history: the order says nothing about a gift.
    */
   app.put("/lists/:listId/order", async (request, reply) => {
     const { listId } = parse(idParams, request.params);
@@ -240,14 +241,16 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
             eq(schema.wishes.listId, listId),
             eq(schema.wishes.status, "open"),
             isNull(schema.wishes.parentId),
+            isNull(schema.wishes.deletedAt),
           ),
-        );
-      const ids = new Set(open.map((row) => row.id));
-      const given = new Set(itemIds);
-      if (given.size !== itemIds.length || given.size !== ids.size || !itemIds.every((id) => ids.has(id))) {
-        throw new HttpError(409, "order_changed");
-      }
-      for (const [position, id] of itemIds.entries()) {
+        )
+        .orderBy(asc(schema.wishes.position), asc(schema.wishes.createdAt));
+      const order = mergedOrder(
+        itemIds,
+        open.map((row) => row.id),
+      );
+      if (!order) throw new HttpError(400, "invalid_request");
+      for (const [position, id] of order.entries()) {
         await tx.update(schema.wishes).set({ position }).where(eq(schema.wishes.id, id));
       }
     });
@@ -339,7 +342,8 @@ export const listRoutes: FastifyPluginAsync<ListDeps> = async (app, { db, now, i
       );
       return listImage ? [...itemFiles, listImage] : itemFiles;
     });
-    if (images) await Promise.allSettled(files.map((key) => images.storage.delete(key)));
+    // The files go after the answer: the person does not wait for the bucket
+    void removeInBackground(images, files, request.log);
     return reply.code(204).send();
   });
 };

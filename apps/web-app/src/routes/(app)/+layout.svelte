@@ -9,8 +9,14 @@
   import DisplayMenu from "@wishalia/ui/DisplayMenu.svelte";
   import Icon from "@wishalia/ui/Icon.svelte";
   import Menu from "@wishalia/ui/Menu.svelte";
+  import { onMount } from "svelte";
+
+  import { changes } from "#lib/changes.svelte.ts";
+  import SyncStatus from "#lib/SyncStatus.svelte";
 
   let { data, children } = $props();
+  // The changes kept from an earlier visit go as soon as the app is open (#lib/outbox.ts)
+  onMount(() => void changes.start());
   const i18n = useI18n();
   const m = $derived(appMessages(i18n.locale));
   const account = $derived(commonMessages(i18n.locale).account);
@@ -45,6 +51,7 @@
     </nav>
     <!-- At the top right: the display, then the account (docs/management-app.md, « Header ») -->
     <div class="tools">
+      <SyncStatus />
       <DisplayMenu mode={data.mode} theme={data.me.theme} returnPath={page.url.pathname + page.url.search} />
       <Menu icon="user" label={account.menu(data.me.displayName)} {initial}>
         <p class="menu-who">

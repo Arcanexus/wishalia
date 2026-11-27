@@ -64,6 +64,19 @@ entry, and each gift it cancels a sealed `contribution_withdrawn` entry with `re
 So the rows of a deleted item and list stay, marked `deleted_at`, with their title (for the guests'
 notice); the item's link, notes, images and place in the events go. Nothing shows them again.
 
+## Right away, the files after
+
+Once « Supprimer définitivement » is confirmed, the dialog closes and the wish leaves the page at
+once, without waiting for the server (the keyboard goes to the list's heading); the deletion is
+saved in the background and goes again by itself if the network or the server is away
+([Management app](management-app.md), « Saved in the background »). Should the server refuse it,
+the wish comes back with a message. On the server, the deletion is one transaction: the rows
+are marked, the gifts cancelled and the guests' notice written together, so the anti-spoil rules
+hold at every moment. The image files are removed **after** the answer, in the background: the
+person never waits for the bucket or the volume. A file that could not be removed then (the bucket
+did not answer, the server stopped) names no image any more, so the worker's periodic cleanup
+removes it a little later ([Images](images.md), « Unused files »).
+
 ## API
 
 | Route                                    | What                                                                                       |

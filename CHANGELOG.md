@@ -8,6 +8,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- The changes made on a list (delete, received, archived, reopened, reordered, a volume moved)
+  show at once and are saved in the background, one after the other: moving to another page does
+  not stop them, a lost network or a server away makes them wait and go again by themselves, and
+  they are kept on the device for the next visit. An icon in the header says when changes are on
+  their way or waiting (tap it to try again now), and a message says when one could not be saved.
 - At the foot of every page, on both frontends: « Aide : le guide d'utilisation » (« Help: the user
   guide »), which opens the new user guide of the wiki in the page's language
   ([User guide](docs/user-guide.md), [Guide d'utilisation](docs/guide-utilisateur.md)), and the
@@ -18,6 +23,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Reordering a list no longer jumps back: moves made quickly in a row (arrows tapped several times,
+  a second drag while the first is saving) go one after the other with the latest order, and the
+  page keeps showing that order until it is saved. The arrows send the order on screen, so two taps
+  no longer overwrite each other on the server. An order a moment behind (a wish added or deleted
+  on the way) is merged instead of refused (`PUT /manage/lists/:id/order`).
+- Deleting a wish takes it off the page at once, instead of leaving it until the list loaded again.
 - The built-in Garage stays in its Service through a short stall: on a slow volume (NFS) a burst
   of uploads or deletions could hold `/health` past its ten seconds and take Garage out for a
   while, so images failed to load. Readiness now waits twelve failures (two minutes) instead of
@@ -26,6 +37,11 @@ All notable changes to this project are documented here. The format follows
   stop after one place, as the card moved under the finger or the pointer.
 - Adding a volume to a series no longer folds its card: it unfolds to show the new volume, and a
   series unfolded by hand stays so as the page reloads.
+
+### Changed
+
+- The image files of a deleted wish or list are removed in the background, after the answer; the
+  worker's periodic cleanup removes any file left behind.
 
 ### Removed
 

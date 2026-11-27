@@ -16,6 +16,7 @@
     opens,
     expanded,
     controls,
+    below = false,
   }: {
     icon: IconName;
     label: string;
@@ -33,6 +34,8 @@
     /** It shows or hides a part of the page (aria-expanded), the one whose id is `controls`. */
     expanded?: boolean | undefined;
     controls?: string | undefined;
+    /** The tip under the button, not over it: for a button in the header, at the top of the page. */
+    below?: boolean;
   } = $props();
   let hidden = $state(false);
   const hide = (event: KeyboardEvent) => {
@@ -41,7 +44,7 @@
   const show = () => (hidden = false);
 </script>
 
-<span class="wrap" class:hidden>
+<span class="wrap" class:hidden class:below>
   {#if href}
     <!-- The caller resolves the address -->
     <!-- eslint-disable svelte/no-navigation-without-resolve -->
@@ -124,6 +127,13 @@
     white-space: nowrap;
     visibility: hidden;
     pointer-events: none;
+  }
+  .below .tip {
+    top: calc(100% + 6px);
+    bottom: auto;
+    width: max-content;
+    max-width: min(20rem, calc(100vw - 2rem));
+    white-space: normal;
   }
   .wrap:hover .tip,
   .wrap:has(:focus-visible) .tip {

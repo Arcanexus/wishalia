@@ -82,6 +82,31 @@ each form keeps an « Enregistrer » button.
 Deliberate actions keep their button: adding an item, creating a list, a link, a token or a passkey,
 lifting a secret, archiving and deleting.
 
+## Saved in the background
+
+The changes made on a list show at once and are saved behind, so the app never makes anyone wait
+and every page stays free to use: deleting a wish (once confirmed), « Reçu », « Archiver », putting
+it back on the list, reordering, moving a volume. They go to the server **one at a time, in the
+order they were made**, so two changes never overtake each other, and several moves in a row send
+only the latest order. Moving to another page does not stop them.
+
+When the network is lost or the server does not answer (a restart, a timeout), the changes wait and
+go again by themselves: after 1 second, then 2, 4… up to every 30 seconds, and at once when the
+network comes back or the tab is shown again. They are kept on the device (the browser's storage,
+only ids, a status, an order and a title), so closing the tab or reloading loses none of them: they
+go at the next visit. The tabs of one browser share them, and only one sends at a time. Signed out
+meanwhile, they wait for the next sign-in.
+
+The header says where they stand, by an icon left of the display menu, with its words on hover and
+to a screen reader: nothing once all is saved; a cloud with an arrow while changes go; a crossed-out
+cloud while they wait, which tries again at once when tapped. When the server refuses a change (the
+wish was deleted on another device), a message at the bottom of the page says which one, and the
+list shows what is saved. Without JavaScript, each button posts its form as before.
+
+![Changes waiting for the server: the crossed-out cloud and its words](images/app-sync-waiting.png)
+
+![A change the server refused, on a phone in dark mode](images/app-sync-refused.png)
+
 ## Lists and the quick add
 
 The home page greets the person, then offers the **quick add**: one field for a link or a few words.
@@ -133,8 +158,11 @@ as it passes, and the page scrolls along near its edges), and two arrows, « Mon
 « Descendre », that move the item one place in a single tap or from the keyboard (they also work
 without JavaScript). The new place shows
 at once and a screen reader hears it (« « Lampe » est maintenant en position 2 sur 5. »); the
-keyboard stays on the moved item. When the list changed on another device meanwhile, nothing moves
-and the page says so, with the current order.
+keyboard stays on the moved item. Moves follow one another without waiting for the server (see
+« Saved in the background »): only the latest order is sent, and the page shows its own order until
+it is saved, so an answer never brings an item back to where it was a moment ago. An order a moment
+behind is merged, not refused: a wish deleted, received or archived meanwhile is left out, and one
+added meanwhile (on this device or another) stays at the top, where a new wish lands.
 
 ![Dragging an item to a new place, on a phone](images/app-reorder.png)
 

@@ -160,6 +160,22 @@ export const app: AppMessages = {
     what: (what) => `: ${what}`,
     quote: (message) => `“${message}”`,
   },
+  sync: {
+    saving: (count) => (count > 1 ? `Saving ${count} changes…` : "Saving a change…"),
+    savingTip: "You can carry on: your changes are saved in the background.",
+    waiting: (count) =>
+      count > 1
+        ? `${count} changes waiting: no network, or the server can't be reached.`
+        : "A change waiting: no network, or the server can't be reached.",
+    waitingTip: "They are kept on this device and will go by themselves. Tap to try again now.",
+    signedOut: "Your session ended: your changes will be saved once you sign in again.",
+    signIn: "Sign in again",
+    refused: (title) =>
+      title
+        ? `“${title}”: the change couldn't be saved. The list shows what is saved.`
+        : "Some changes couldn't be saved. The list shows what is saved.",
+    dismiss: "Close this message",
+  },
   autosave: {
     saving: "Saving…",
     saved: "Saved",

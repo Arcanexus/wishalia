@@ -99,3 +99,27 @@ export function listPictureOf(
     image: images && row.imageKey ? imageSources(images.imgproxy, row.imageKey, null) : null,
   };
 }
+
+/**
+ * Removes deleted files in the background, once the answer is on its way (docs/archive-delete.md):
+ * a deletion is done for the person as soon as its transaction is, the bucket or the volume can
+ * take its time. Best effort: a file left behind (the server stopped, the bucket did not answer)
+ * names no row any more, so the worker's periodic cleanup removes it (docs/images.md). Resolves
+ * once every file was tried, for the tests; never rejects.
+ */
+export function removeInBackground(
+  images: Images | null,
+  keys: readonly string[],
+  log?: { warn: (details: object, message: string) => void },
+): Promise<void> {
+  if (!images || keys.length === 0) return Promise.resolve();
+  return new Promise<void>((done) => {
+    setImmediate(() => {
+      void Promise.allSettled(keys.map((key) => images.storage.delete(key))).then((results) => {
+        const failed = results.filter((result) => result.status === "rejected").length;
+        if (failed > 0) log?.warn({ failed }, "files left for the periodic cleanup");
+        done();
+      });
+    });
+  });
+}

@@ -135,16 +135,14 @@ describe("lists", () => {
     expect(await titles()).toEqual(["Un", "Trois", "Deux", "Reçu"]);
     expect(await history(owner, a.id)).toHaveLength(1);
 
-    // Missing, repeated, foreign or closed items: the list changed meanwhile, nothing moves
-    for (const ids of [
-      [a.id, b.id],
-      [a.id, a.id, b.id],
-      [a.id, b.id, c.id, done.id],
-    ]) {
-      expect(await order(ids)).toMatchObject({ status: 409, body: { error: "order_changed" } });
-    }
-    expect(await titles()).toEqual(["Un", "Trois", "Deux", "Reçu"]);
+    // An order a moment behind (saved in the background): a closed or unknown item is left out,
+    // an open one it does not name stays in front
+    expect(await order([b.id, done.id, a.id])).toMatchObject({ status: 204 });
+    expect(await titles()).toEqual(["Trois", "Deux", "Un", "Reçu"]);
+    // Repeated or empty: not an order, nothing moves
+    expect((await order([a.id, a.id, b.id])).status).toBe(400);
     expect((await order([])).status).toBe(400);
+    expect(await titles()).toEqual(["Trois", "Deux", "Un", "Reçu"]);
     expect((await as(other, "PUT", `/lists/${list.id}/order`, { itemIds: [a.id, b.id, c.id] })).status).toBe(
       404,
     );
