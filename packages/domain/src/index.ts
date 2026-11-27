@@ -179,3 +179,4 @@ export {
   type GroupRefusal,
 } from "./series.js";
 export { mergedOrder } from "./order.js";
+export { readScanned, spacedIsbn, validEan13, type Scanned } from "./barcode.js";

@@ -5,6 +5,7 @@
   import { applyAction } from "$app/forms";
   import { invalidate } from "$app/navigation";
   import { appMessages } from "@wishalia/i18n/messages/app";
+  import Icon from "@wishalia/ui/Icon.svelte";
   import { useI18n } from "@wishalia/ui/i18n.ts";
 
   import { autosave, type SaveState } from "./autosave.ts";
@@ -56,6 +57,14 @@
   let form = $state<HTMLFormElement>();
   const invalid = (code: string) => (error === code ? "true" : undefined);
   const headingId = $derived(`${id}-titre-editeur`);
+  let count = $state<HTMLInputElement>();
+  /** One copy more or less, from 1 to 1,000; saved like a typed number. */
+  const step = (by: number) => {
+    if (!count) return;
+    const now = Number.parseInt(count.value, 10);
+    count.value = String(Math.min(1000, Math.max(1, (Number.isFinite(now) ? now : 1) + by)));
+    count.dispatchEvent(new Event("input", { bubbles: true }));
+  };
   // The guide, for the « ? » next to a setting
   const help = $derived(String(page.data.help ?? ""));
 </script>
@@ -136,14 +145,34 @@
     <!-- Shown by CSS for the kind chosen, so that it works without JavaScript too -->
     <div class="for-quantity">
       <label for="{id}-nombre">{m.howMany}</label>
-      <input
-        id="{id}-nombre"
-        name="quantity"
-        inputmode="numeric"
-        autocomplete="off"
-        value={values.quantity}
-        aria-invalid={invalid("invalid_quantity")}
-      />
+      <!-- − and + around the number, for a finger; the number can be typed too -->
+      <div class="stepper">
+        <button
+          type="button"
+          class="secondary"
+          aria-label={m.fewer}
+          title={m.fewer}
+          aria-controls="{id}-nombre"
+          onclick={() => step(-1)}><Icon name="minus" /></button
+        >
+        <input
+          bind:this={count}
+          id="{id}-nombre"
+          name="quantity"
+          inputmode="numeric"
+          autocomplete="off"
+          value={values.quantity}
+          aria-invalid={invalid("invalid_quantity")}
+        />
+        <button
+          type="button"
+          class="secondary"
+          aria-label={m.more}
+          title={m.more}
+          aria-controls="{id}-nombre"
+          onclick={() => step(1)}><Icon name="plus" /></button
+        >
+      </div>
     </div>
     <div class="for-pool">
       <label for="{id}-objectif">{m.target}</label>
@@ -215,6 +244,25 @@
 </section>
 
 <style>
+  .stepper {
+    display: flex;
+    align-items: stretch;
+    gap: 0.4rem;
+    max-width: 14rem;
+  }
+  .stepper input {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.15rem;
+  }
+  .stepper button {
+    width: 48px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+  }
   .help {
     font-size: 0.95rem;
     margin: 0.35rem 0 0;

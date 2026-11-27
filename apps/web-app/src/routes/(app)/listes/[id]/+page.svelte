@@ -107,24 +107,46 @@
       });
       moved = m.statusChanged(item.title, status);
     };
-  /** A volume one place up or down: in turn with the other changes, so two taps never race. */
+  /**
+   * A volume one place up or down: in turn with the other changes, so two taps never race. The
+   * series' new order goes with it, for the screen to show it at once (docs/series.md).
+   */
   const moveVolume =
-    (volume: Item): SubmitFunction =>
+    (volume: Item, wanted: Item[]): SubmitFunction =>
     ({ cancel, formData }) => {
       cancel();
+      const direction = String(formData.get("direction"));
+      const ids = wanted.map((entry) => entry.id);
+      const next = moveId(ids, volume.id, ids.indexOf(volume.id) + (direction === "up" ? -1 : 1));
+      if (next.join() === ids.join()) return;
       changes.add({
         kind: "moveVolume",
         path,
         action: "moveVolume",
         fields: [
           ["itemId", volume.id],
-          ["direction", String(formData.get("direction"))],
+          ["direction", direction],
         ],
         listId: data.list.id,
         itemId: volume.id,
         title: volume.title,
+        order: next,
       });
+      moved = m.place(volume.title, next.indexOf(volume.id) + 1, next.length);
     };
+  /** A series' open volumes, in the order on its way to the server when there is one. */
+  const plannedVolumes = (wanted: Item[]) => {
+    const ids = new Set(wanted.map((volume) => volume.id));
+    const planned = mine.findLast(
+      (change) => change.kind === "moveVolume" && change.order?.some((id) => ids.has(id)),
+    )?.order;
+    if (!planned) return wanted;
+    const byVolume = new Map(wanted.map((volume) => [volume.id, volume]));
+    return shownOrder(
+      planned,
+      wanted.map((volume) => volume.id),
+    ).flatMap((id) => byVolume.get(id) ?? []);
+  };
   const own = $derived(items.filter((item) => !item.parentId));
   const open = $derived(own.filter((item) => item.status === "open"));
   /** Series id → its volumes, in their order. */
@@ -600,6 +622,7 @@
               small
             />
             <div class="text"><h3>{item.title}</h3></div>
+            {#if item.kind === "series"}{@render volumeOrder(item)}{/if}
           {:else if item.kind === "series"}
             {@render seriesCard(item)}
           {:else}
@@ -846,21 +869,31 @@
     </form>
   {/if}
   <!-- Folded by default; open once unfolded, while one of its volumes is being edited, and after
-       a volume is added to it, to show it -->
+       a volume is added to it, to show it. The volumes are tiles, the open ones first -->
   {#if volumes.length === 0}
     <p class="muted wide">{s.empty}</p>
   {:else}
+    {@const tiles = [...plannedVolumes(wanted), ...volumes.filter((volume) => volume.status !== "open")]}
+    {@const edited = volumes.find((volume) => volume.id === editing)}
     <details
       class="fold wide"
-      open={unfolded.has(series.id) || volumes.some((volume) => volume.id === editing)}
+      open={unfolded.has(series.id) || edited !== undefined}
       ontoggle={(event) => fold(series.id, event.currentTarget.open)}
     >
       <summary><Icon name="chevronRight" size="1.2rem" />{s.volumes(volumes.length)}</summary>
-      <ol class="volumes" aria-label={appMessages(i18n.locale).series.volumes(volumes.length)}>
-        {#each volumes as volume (volume.id)}
-          {@render volumeRow(volume, series, wanted)}
+      <ol class="tiles" aria-label={s.volumes(volumes.length)}>
+        {#each tiles as volume (volume.id)}
+          {@render volumeTile(volume, series)}
         {/each}
       </ol>
+      {#if edited}
+        <ItemEditor
+          item={edited}
+          lists={data.lists}
+          failed={failedEdit(edited)}
+          onclose={() => toggleEdit(edited.id)}
+        />
+      {/if}
     </details>
   {/if}
   <!-- Adding a volume stays at hand, folded or not -->
@@ -893,82 +926,38 @@
   </div>
 {/snippet}
 
-{#snippet volumeRow(volume: Item, series: Item, wanted: Item[])}
+{#snippet volumeTile(volume: Item, series: Item)}
   {@const link = webLink(volume)}
   {@const isOpen = volume.status === "open"}
-  {@const place = wanted.indexOf(volume)}
   {@const label = volumeLabel(volume.title, series.title)}
-  <li class="volume" class:sortable={isOpen && wanted.length > 1} class:done={!isOpen} data-id={volume.id}>
-    {#if isOpen && wanted.length > 1}
-      <form method="POST" action="?/moveVolume" class="mover" use:enhance={moveVolume(volume)}>
-        <input type="hidden" name="itemId" value={volume.id} />
-        <button
-          type="submit"
-          name="direction"
-          value="up"
-          class="secondary"
-          disabled={place === 0}
-          aria-label={s.moveUp(label)}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
-        </button>
-        <button
-          type="submit"
-          name="direction"
-          value="down"
-          class="secondary"
-          disabled={place === wanted.length - 1}
-          aria-label={s.moveDown(label)}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-        </button>
-      </form>
-    {/if}
-    <ItemThumb item={volume} listId={data.list.id} images={images && isOpen} volume />
-    <div class="text">
-      <h4>{label}</h4>
-      <p class="muted meta">
-        {#if !isOpen}
-          <span class="with-icon">
-            <Icon name={volume.status === "received" ? "heart" : "archive"} size="1rem" />
-            {volume.status === "received" ? m.receivedState : m.archivedState}
-          </span>
-        {/if}
-        {#if kindLine(volume)}<span class="kind">{kindLine(volume)}</span>{/if}
-        {#if volume.priceCents !== null}<span class="price">{i18n.fmt.money(volume.priceCents)}</span>{/if}
-        {#if link}
-          <a class="site" href={link} rel="noopener noreferrer external" target="_blank">
-            {host(link)}<Icon name="external" size="1rem" /><span class="visually-hidden">{m.newTab}</span>
-          </a>
-        {/if}
-      </p>
-      {#if isOpen && isLive(stage(volume))}
-        {@const findingImages = stage(volume) === "images"}
-        <p class="completing" title={findingImages ? m.findingImagesWhat : m.readingWhat(images)}>
-          <StageIcon stage={findingImages ? "images" : "reading"} />
-          <span class="reading">{findingImages ? m.findingImages : m.reading}</span>
-        </p>
-      {:else if isOpen && volume.enrichment === "failed"}
-        <p class="completing">
-          <StageIcon stage="failed" />
-          <span class="reading failed">{m.unreadable}</span>
-        </p>
+  <li class="tile" class:done={!isOpen} data-id={volume.id}>
+    <ItemThumb item={volume} listId={data.list.id} images={images && isOpen} tile />
+    <h4>{label}</h4>
+    <p class="muted meta tile-meta">
+      {#if !isOpen}
+        <span class="with-icon">
+          <Icon name={volume.status === "received" ? "heart" : "archive"} size="1rem" />
+          {volume.status === "received" ? m.receivedState : m.archivedState}
+        </span>
+      {:else if volume.priceCents !== null}
+        <span class="price">{i18n.fmt.money(volume.priceCents)}</span>
       {/if}
-      {#if data.gifts[volume.id]?.length}<Gifts gifts={data.gifts[volume.id] ?? []} none="" />{/if}
-    </div>
-    <div class="tools">
+    </p>
+    {#if isOpen && isLive(stage(volume))}
+      {@const findingImages = stage(volume) === "images"}
+      <p class="completing" title={findingImages ? m.findingImagesWhat : m.readingWhat(images)}>
+        <StageIcon stage={findingImages ? "images" : "reading"} />
+        <span class="reading">{findingImages ? m.findingImages : m.reading}</span>
+      </p>
+    {:else if isOpen && volume.enrichment === "failed"}
+      <p class="completing">
+        <StageIcon stage="failed" />
+        <span class="reading failed">{m.unreadable}</span>
+      </p>
+    {/if}
+    {#if data.gifts[volume.id]?.length}<Gifts gifts={data.gifts[volume.id] ?? []} none="" />{/if}
+    <div class="tile-tools">
       {#if isOpen}
-        {#if link && volume.enrichment !== "pending"}
-          <form method="POST" action="?/refresh" use:enhance={reread}>
-            <input type="hidden" name="itemId" value={volume.id} />
-            <IconButton icon="reload" label={m.refresh.label(volume.title)} tip={m.refresh.tip} />
-          </form>
-        {/if}
-        <form method="POST" action="?/status" use:enhance={setStatus(volume, "received")}>
-          <input type="hidden" name="itemId" value={volume.id} />
-          <input type="hidden" name="status" value="received" />
-          <IconButton icon="heart" label={m.receivedLabel(volume.title)} tip={m.received} />
-        </form>
         <IconButton
           icon="pencil"
           label={m.edit.label(volume.title)}
@@ -978,36 +967,99 @@
           controls="edit-{volume.id}"
           onclick={() => toggleEdit(volume.id)}
         />
-      {:else}
-        <form method="POST" action="?/status" use:enhance={setStatus(volume, "open")}>
-          <input type="hidden" name="itemId" value={volume.id} />
-          <input type="hidden" name="status" value="open" />
-          <IconButton icon="restore" label={m.reopenLabel(volume.title)} tip={m.reopen} />
-        </form>
       {/if}
-      <form method="POST" action="?/takeOut" use:enhance>
-        <input type="hidden" name="itemId" value={volume.id} />
-        <IconButton icon="takeOut" label={s.takeOut.label(volume.title)} tip={s.takeOut.tip} />
-      </form>
-      <ConfirmDelete
-        label={m.deleteLabel(volume.title)}
-        tip={m.deleteTip}
-        title={removal.itemTitle(volume.title)}
-        help={[removal.itemHelp, removal.guests]}
-        action="?/deleteItem"
-        fields={{ itemId: volume.id, title: volume.title }}
-        onconfirm={() => remove(volume)}
-      />
+      <Menu icon="more" label={m.more(volume.title)}>
+        {#if link}
+          <a class="menu-item" href={link} rel="noopener noreferrer external" target="_blank">
+            <Icon name="external" />{host(link)}<span class="visually-hidden">{m.newTab}</span>
+          </a>
+        {/if}
+        {#if isOpen}
+          <form method="POST" action="?/status" use:enhance={setStatus(volume, "received")}>
+            <input type="hidden" name="itemId" value={volume.id} />
+            <input type="hidden" name="status" value="received" />
+            <button type="submit" class="menu-item" aria-label={m.receivedLabel(volume.title)}>
+              <Icon name="heart" />{m.received}
+            </button>
+          </form>
+          {#if link && volume.enrichment !== "pending"}
+            <form method="POST" action="?/refresh" use:enhance={reread}>
+              <input type="hidden" name="itemId" value={volume.id} />
+              <button type="submit" class="menu-item" aria-label={m.refresh.label(volume.title)}>
+                <Icon name="reload" />{m.refresh.tip}
+              </button>
+            </form>
+          {/if}
+        {:else}
+          <form method="POST" action="?/status" use:enhance={setStatus(volume, "open")}>
+            <input type="hidden" name="itemId" value={volume.id} />
+            <input type="hidden" name="status" value="open" />
+            <button type="submit" class="menu-item" aria-label={m.reopenLabel(volume.title)}>
+              <Icon name="restore" />{m.reopen}
+            </button>
+          </form>
+        {/if}
+        <form method="POST" action="?/takeOut" use:enhance>
+          <input type="hidden" name="itemId" value={volume.id} />
+          <button type="submit" class="menu-item" aria-label={s.takeOut.label(volume.title)}>
+            <Icon name="takeOut" />{s.takeOut.tip}
+          </button>
+        </form>
+        <hr class="menu-separator" />
+        <ConfirmDelete
+          item
+          label={m.deleteLabel(volume.title)}
+          tip={m.deleteTip}
+          title={removal.itemTitle(volume.title)}
+          help={[removal.itemHelp, removal.guests]}
+          action="?/deleteItem"
+          fields={{ itemId: volume.id, title: volume.title }}
+          onconfirm={() => remove(volume)}
+        />
+      </Menu>
     </div>
-    {#if editing === volume.id}
-      <ItemEditor
-        item={volume}
-        lists={data.lists}
-        failed={failedEdit(volume)}
-        onclose={() => toggleEdit(volume.id)}
-      />
-    {/if}
   </li>
+{/snippet}
+
+<!-- Reordering a series: its open volumes in a row, each moved one place with its arrows -->
+{#snippet volumeOrder(series: Item)}
+  {@const wanted = plannedVolumes((volumesBy.get(series.id) ?? []).filter((volume) => volume.status === "open"))}
+  {#if wanted.length > 1}
+    <ol class="tiles order wide" aria-label={s.volumes(wanted.length)}>
+      {#each wanted as volume, place (volume.id)}
+        {@const label = volumeLabel(volume.title, series.title)}
+        <li class="tile" data-id={volume.id}>
+          <ItemThumb item={volume} listId={data.list.id} images={false} tile />
+          <h4>{label}</h4>
+          <form method="POST" action="?/moveVolume" class="side" use:enhance={moveVolume(volume, wanted)}>
+            <input type="hidden" name="itemId" value={volume.id} />
+            <button
+              type="submit"
+              name="direction"
+              value="up"
+              class="secondary"
+              disabled={place === 0}
+              aria-label={s.moveUp(label)}
+              title={s.moveUp(label)}
+            >
+              <Icon name="chevronLeft" />
+            </button>
+            <button
+              type="submit"
+              name="direction"
+              value="down"
+              class="secondary"
+              disabled={place === wanted.length - 1}
+              aria-label={s.moveDown(label)}
+              title={s.moveDown(label)}
+            >
+              <Icon name="chevronRight" />
+            </button>
+          </form>
+        </li>
+      {/each}
+    </ol>
+  {/if}
 {/snippet}
 
 <style>
@@ -1110,9 +1162,32 @@
   .found {
     margin: -0.5rem 0 0.75rem;
   }
-  /* Reordering: one short line per wish */
+  /* Reordering: one short line per wish, the handle in front, the arrows at the end */
   .item.ordering {
     padding: 0.5rem 1rem;
+  }
+  .item.ordering.sortable {
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas: "grip thumb text up down";
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+  }
+  .ordering .mover {
+    display: contents;
+  }
+  .ordering .grip {
+    grid-area: grip;
+    height: 44px;
+  }
+  .ordering .mover button {
+    min-height: 44px;
+    width: 44px;
+  }
+  .ordering .mover button[value="up"] {
+    grid-area: up;
+  }
+  .ordering .mover button[value="down"] {
+    grid-area: down;
   }
   .items {
     list-style: none;
@@ -1312,61 +1387,67 @@
       transition: none;
     }
   }
-  .volumes {
+  /* A series' volumes: tiles side by side, their square image, their name, their icons */
+  .tiles {
     list-style: none;
-    margin: 0;
+    margin: 0.5rem 0 0;
     padding: 0;
     display: grid;
-    border-top: 1px solid var(--border);
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    gap: 0.75rem;
   }
-  /* A volume: the same grid as a card, smaller, one line each */
-  .volume {
+  .tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+    padding: 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+  }
+  .tile.done {
+    opacity: 0.75;
+  }
+  .tile h4 {
+    font-size: 1rem;
+  }
+  .tile-meta {
+    margin: 0;
+    min-height: 1.5em;
+  }
+  .tile .completing {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+  .tile-tools,
+  .side {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: auto;
+    justify-content: flex-end;
+  }
+  .side {
+    justify-content: space-between;
+  }
+  .side button {
+    min-height: 44px;
+    width: 44px;
+    padding: 0;
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-      "thumb text"
-      "tools tools"
-      "editor editor";
-    align-items: center;
-    gap: 0.5rem 0.75rem;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid var(--border);
+    place-items: center;
   }
-  .volume.sortable {
-    grid-template-columns: auto auto minmax(0, 1fr);
-    grid-template-areas:
-      "mover thumb text"
-      "mover tools tools"
-      "editor editor editor";
+  .side button:disabled {
+    visibility: hidden;
   }
-  @media (min-width: 40rem) {
-    .volume {
-      grid-template-columns: auto minmax(0, 1fr) auto;
-      grid-template-areas:
-        "thumb text tools"
-        "editor editor editor";
-    }
-    .volume.sortable {
-      grid-template-columns: auto auto minmax(0, 1fr) auto;
-      grid-template-areas:
-        "mover thumb text tools"
-        "editor editor editor editor";
-    }
-  }
-  .volume .mover {
-    margin-left: 0;
-  }
-  .volume .mover button {
-    min-height: 2rem;
-    width: 2.5rem;
+  .tiles.order {
+    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+    margin-bottom: 0.25rem;
   }
   h4 {
     font-size: 1.05rem;
     margin: 0;
     overflow-wrap: anywhere;
-  }
-  .volume.done h4 {
-    color: var(--text-2);
   }
   .add-volume {
     display: flex;

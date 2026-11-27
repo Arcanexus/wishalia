@@ -4,6 +4,7 @@
 
   import { appMessages } from "@wishalia/i18n/messages/app";
   import { useI18n } from "@wishalia/ui/i18n.ts";
+  import BarcodeScan from "#lib/BarcodeScan.svelte";
   import type { AddResult } from "#lib/types.ts";
 
   let {
@@ -21,6 +22,14 @@
   let answer = $state<AddResult | null>(null);
   let next = 0;
   const shown = $derived(answer ?? result);
+
+  let field = $state<HTMLInputElement>();
+  /** A scanned book: its link goes in the field, and is added at once, like a typed one. */
+  const scanned = (input: string) => {
+    if (!field) return;
+    field.value = input;
+    field.form?.requestSubmit();
+  };
 
   const i18n = useI18n();
   const m = $derived(appMessages(i18n.locale).quickAdd);
@@ -49,6 +58,7 @@
     <label for="ajout">{m.label}</label>
     <div class="row">
       <input
+        bind:this={field}
         id="ajout"
         name="input"
         type="text"
@@ -59,6 +69,7 @@
         aria-describedby="ajout-aide"
         value={shown && "error" in shown ? shown.input : ""}
       />
+      <BarcodeScan onadd={scanned} />
       <button type="submit" class="accent">{m.submit}</button>
     </div>
     <p id="ajout-aide" class="muted help">

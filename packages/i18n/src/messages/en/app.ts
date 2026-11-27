@@ -85,6 +85,20 @@ export const app: AppMessages = {
     },
     failed: "The add didn't go through. Try again in a moment.",
   },
+  scan: {
+    label: "Scan a barcode with the camera",
+    tip: "Scan a barcode",
+    title: "Scan a barcode",
+    close: "Close",
+    aim: "Aim at the barcode of a book, a game…",
+    noCamera: "The camera is not available: allow it for this site, or write the wish's name.",
+    book: "A book",
+    bookHelp: "Its title and cover come from Open Library, as from a link.",
+    add: "Add",
+    other: "This is not a book",
+    otherHelp: "Other products have no free directory: write its name, or paste a shop's link.",
+    write: "Write its name",
+  },
   list: {
     back: "My lists",
     refreshAll: { label: "Reload the list's links", tip: "Reload the links" },
@@ -230,6 +244,8 @@ export const app: AppMessages = {
     seriesNow:
       "The wish becomes the first volume of a new series: you then add the other volumes, or wishes of the list.",
     howMany: "How many copies?",
+    fewer: "One copy fewer",
+    more: "One copy more",
     target: "Goal of the kitty, in euros (optional)",
     targetPlaceholder: "For example 320",
     repeatable: {

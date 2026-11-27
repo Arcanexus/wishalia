@@ -40,7 +40,7 @@ describe("hooks", () => {
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expect(response.headers.get("x-frame-options")).toBe("DENY");
     expect(response.headers.get("cross-origin-opener-policy")).toBe("same-origin");
-    expect(response.headers.get("permissions-policy")).toContain("camera=()");
+    expect(response.headers.get("permissions-policy")).toContain("camera=(self)");
   });
 
   it("records the route id, never the URL", async () => {

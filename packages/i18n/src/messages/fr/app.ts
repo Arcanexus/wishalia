@@ -88,6 +88,23 @@ export const app = {
     } as Record<string, string>,
     failed: "L'ajout n'a pas abouti. Réessayez dans un instant.",
   },
+  /** The barcode of the quick add (docs/management-app.md, « Scan a barcode »). */
+  scan: {
+    label: "Scanner un code-barres avec l'appareil photo",
+    tip: "Scanner un code-barres",
+    title: "Scanner un code-barres",
+    close: "Fermer",
+    aim: "Visez le code-barres d'un livre, d'un jeu…",
+    noCamera:
+      "L'appareil photo n'est pas disponible : autorisez-le pour ce site, ou écrivez le nom de l'envie.",
+    book: "Un livre",
+    bookHelp: "Son titre et sa couverture viennent d'Open Library, comme depuis un lien.",
+    add: "Ajouter",
+    other: "Ce n'est pas un livre",
+    otherHelp:
+      "Les autres produits n'ont pas d'annuaire libre : écrivez son nom, ou collez le lien d'une boutique.",
+    write: "Écrire son nom",
+  },
   list: {
     back: "Mes listes",
     refreshAll: { label: "Recharger les liens de la liste", tip: "Recharger les liens" },
@@ -242,6 +259,8 @@ export const app = {
     seriesNow:
       "L'envie devient le premier tome d'une nouvelle série : vous y ajoutez ensuite les autres tomes, ou des envies de la liste.",
     howMany: "Combien d'exemplaires ?",
+    fewer: "Un exemplaire de moins",
+    more: "Un exemplaire de plus",
     target: "Objectif de la cagnotte, en euros (facultatif)",
     targetPlaceholder: "Par exemple 320",
     repeatable: {
