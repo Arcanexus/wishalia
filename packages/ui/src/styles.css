@@ -142,6 +142,13 @@ html {
   font-size: 100%;
   -webkit-text-size-adjust: 100%;
 }
+/* The size the person chose in the display menu, on top of the browser's (docs/branding.md) */
+html[data-text="large"] {
+  font-size: 112.5%;
+}
+html[data-text="larger"] {
+  font-size: 125%;
+}
 
 body {
   margin: 0;

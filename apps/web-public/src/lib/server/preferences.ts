@@ -1,5 +1,12 @@
 import type { Cookies } from "@sveltejs/kit";
-import { parseModeChoice, parseThemeChoice, type ModeChoice, type ThemeChoice } from "@wishalia/domain";
+import {
+  parseModeChoice,
+  parseTextSize,
+  parseThemeChoice,
+  type ModeChoice,
+  type TextSize,
+  type ThemeChoice,
+} from "@wishalia/domain";
 import {
   defaultLocale,
   parseLocaleChoice,
@@ -15,6 +22,8 @@ import {
  */
 export const THEME_COOKIE = "wishalia.theme";
 export const MODE_COOKIE = "wishalia.mode";
+/** The size of the text, on this device only (docs/branding.md, « Text size »). */
+export const TEXT_COOKIE = "wishalia.text";
 /** The language the person chose (docs/i18n.md); without it, their browser's. */
 export const LOCALE_COOKIE = "wishalia.locale";
 const ONE_YEAR = 365 * 24 * 3600;
@@ -22,11 +31,13 @@ const ONE_YEAR = 365 * 24 * 3600;
 export function readPreferences(cookies: Cookies): {
   themeChoice: ThemeChoice;
   mode: ModeChoice;
+  textSize: TextSize;
   localeChoice: LocaleChoice;
 } {
   return {
     themeChoice: parseThemeChoice(cookies.get(THEME_COOKIE)),
     mode: parseModeChoice(cookies.get(MODE_COOKIE)),
+    textSize: parseTextSize(cookies.get(TEXT_COOKIE)),
     localeChoice: parseLocaleChoice(cookies.get(LOCALE_COOKIE)),
   };
 }

@@ -152,6 +152,19 @@ export const app: AppMessages = {
     noGiftOutside: "Nobody gave it outside the events.",
     reopen: "Put back in the list",
     reopenLabel: (title) => `Put “${title}” back in the list`,
+    more: (title) => `More actions for “${title}”`,
+    reorder: {
+      start: "Reorder",
+      label: "Reorder the wishes",
+      title: (n) => `Reorder (${n})`,
+      help: "Drag the wishes by their handle, or use the arrows.",
+      done: "Done",
+    },
+    search: {
+      label: "Search my wishes",
+      clear: "Clear the search",
+      found: (n, total) => (n === 0 ? "No wish matches." : `${n} wish${n > 1 ? "es" : ""} of ${total}.`),
+    },
   },
   gifts: {
     copies: (n) => `${n} copies`,
@@ -200,6 +213,10 @@ export const app: AppMessages = {
     failed: "Saving didn't go through. Try again in a moment.",
     name: "Name",
     kindLegend: "What kind of gift?",
+    kindTip: {
+      about: "the kinds of gift",
+      text: "A gift is given once, or by several people if it has a price. Several copies: each gives one or more. A pool takes any amount. A series holds volumes, given one by one.",
+    },
     unique: {
       name: "One gift",
       help: "One person reserves it, or several share it if it has a price.",
@@ -240,6 +257,10 @@ export const app: AppMessages = {
     failed: "The change didn't go through. Try again in a moment.",
     name: "Name",
     visibility: "Who can see the list?",
+    visibilityTip: {
+      about: "who can see the list",
+      text: "Private, only the people with your share link see it. Public, it is found by a search. Either way, you never see who gives what.",
+    },
     private: { name: "Private", help: "Only the people you send a share link to can see it." },
     public: {
       name: "Public",
@@ -256,6 +277,10 @@ export const app: AppMessages = {
       christmas: { name: "Christmas", help: "Fir, holly and gold." },
     },
     reveal: "Gifts given with no occasion",
+    revealTip: {
+      about: "when the surprise is lifted",
+      text: "You do not see who gives what before the moment you chose. Your guests do, so that nobody gives the same thing twice.",
+    },
     revealHelp:
       "A relative can give a wish from this list outside any event. When do you find out who gave it?",
     revealReceived: {
@@ -302,6 +327,7 @@ export const app: AppMessages = {
     ungroup: {
       label: (title) => `Undo the series “${title}”`,
       tip: "Undo the series (its volumes stay in the list)",
+      short: "Undo the series",
     },
     moveUp: (title) => `Move “${title}” up in the series`,
     moveDown: (title) => `Move “${title}” down in the series`,
@@ -540,6 +566,12 @@ export const app: AppMessages = {
     copy: "Copy the link",
     shareTitle: "My wishes",
     send: "Send…",
+    sendHelp: "« Send… » opens the phone's share menu: text message, chat, e-mail.",
+    qr: { label: "Show the QR code", tip: "QR code", hide: "Hide the QR code" },
+    qrTitle: (who) => `QR code of the link for ${who}`,
+    qrHelp: "To scan with a phone's camera. It won't be shown again either.",
+    print: { label: "Print the QR code", tip: "Print" },
+    download: { label: "Download the QR code", tip: "Download" },
     copiedSaid: "The link is copied.",
     new: "New link",
     errors: {

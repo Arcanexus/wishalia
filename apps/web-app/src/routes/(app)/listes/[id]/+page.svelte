@@ -15,6 +15,7 @@
     type LiveItem,
   } from "@wishalia/domain";
   import Icon from "@wishalia/ui/Icon.svelte";
+  import Menu from "@wishalia/ui/Menu.svelte";
   import { useI18n } from "@wishalia/ui/i18n.ts";
   import { followLive, holding } from "@wishalia/ui/live.ts";
 
@@ -192,6 +193,34 @@
         ).flatMap((id) => byId.get(id) ?? [])
       : open;
   });
+
+  // « Réorganiser »: the handle and the arrows of each card, and nothing else (?ordre, also
+  // without JavaScript). Out of it, the cards keep their few icons and a search
+  let ordering = $state(untrack(() => page.url.searchParams.has("ordre")));
+  let query = $state("");
+  let hydrated = $state(false);
+  $effect(() => {
+    hydrated = true;
+  });
+  const words = $derived(query.trim().toLocaleLowerCase(i18n.locale));
+  /** A wish found by its name, its notes, or the name of one of its volumes. */
+  const matches = (item: Item) =>
+    [item.title, item.notes ?? "", ...(volumesBy.get(item.id) ?? []).map((volume) => volume.title)].some(
+      (text) => text.toLocaleLowerCase(i18n.locale).includes(words),
+    );
+  const visible = $derived(ordering || !words ? shown : shown.filter(matches));
+  const startOrdering = async () => {
+    ordering = true;
+    query = "";
+    editing = null;
+    await tick();
+    document.getElementById("envies-titre")?.focus();
+  };
+  const stopOrdering = async () => {
+    ordering = false;
+    await tick();
+    document.getElementById("reorganiser")?.focus();
+  };
 
   const place = (id: string, ids: string[]) => {
     const item = byId.get(id);
@@ -449,7 +478,55 @@
 {/if}
 
 <section aria-labelledby="envies-titre">
-  <h2 id="envies-titre" tabindex="-1">{m.wishes(working.length)}</h2>
+  <div class="list-head" class:ordering>
+    <h2 id="envies-titre" tabindex="-1">
+      {ordering ? m.reorder.title(open.length) : m.wishes(working.length)}
+    </h2>
+    <!-- eslint-disable svelte/no-navigation-without-resolve -->
+    {#if ordering}
+      <p class="muted reorder-help">{m.reorder.help}</p>
+      <a
+        class="button done"
+        href={path}
+        onclick={(event) => {
+          event.preventDefault();
+          void stopOrdering();
+        }}><Icon name="check" />{m.reorder.done}</a
+      >
+    {:else}
+      {#if hydrated && open.length > 3}
+        <div class="search">
+          <label class="visually-hidden" for="chercher">{m.search.label}</label>
+          <Icon name="search" />
+          <input
+            id="chercher"
+            type="search"
+            enterkeyhint="search"
+            autocomplete="off"
+            placeholder={m.search.label}
+            bind:value={query}
+          />
+        </div>
+      {/if}
+      {#if open.length > 1}
+        <a
+          id="reorganiser"
+          class="button secondary reorder"
+          href="?ordre"
+          aria-label={m.reorder.label}
+          title={m.reorder.label}
+          onclick={(event) => {
+            event.preventDefault();
+            void startOrdering();
+          }}><Icon name="move" /><span class="words">{m.reorder.start}</span></a
+        >
+      {/if}
+    {/if}
+    <!-- eslint-enable svelte/no-navigation-without-resolve -->
+  </div>
+  {#if words && !ordering}
+    <p class="muted found" role="status">{m.search.found(visible.length, open.length)}</p>
+  {/if}
   {#if open.length === 0}
     <p class="muted">{m.empty}</p>
   {:else}
@@ -457,16 +534,17 @@
       <p class="notice error" role="alert">{m.orderChanged}</p>
     {/if}
     <ul class="items" bind:this={list}>
-      {#each shown as item, index (item.id)}
+      {#each visible as item, index (item.id)}
         {@const link = webLink(item)}
         <li
           class="card item"
           class:dragging={dragging === item.id}
-          class:sortable={shown.length > 1}
+          class:sortable={ordering && shown.length > 1}
+          class:ordering
           class:series={item.kind === "series"}
           data-id={item.id}
         >
-          {#if shown.length > 1}
+          {#if ordering && shown.length > 1}
             <!-- Without JavaScript the arrows post the form; with it, they move at once -->
             <form method="POST" action="?/move" class="mover">
               <input type="hidden" name="itemId" value={item.id} />
@@ -508,7 +586,21 @@
               </button>
             </form>
           {/if}
-          {#if item.kind === "series"}
+          {#if ordering}
+            <!-- Only what tells the wishes apart: the image and the name -->
+            <ItemThumb
+              item={item.kind === "series"
+                ? {
+                    ...item,
+                    image: item.image ?? volumesBy.get(item.id)?.find((volume) => volume.image)?.image ?? null,
+                  }
+                : item}
+              listId={data.list.id}
+              images={false}
+              small
+            />
+            <div class="text"><h3>{item.title}</h3></div>
+          {:else if item.kind === "series"}
             {@render seriesCard(item)}
           {:else}
             <ItemThumb {item} listId={data.list.id} {images} />
@@ -549,12 +641,6 @@
             <!-- The same icons, in the same order, on every card; « reload », only for a link, comes
                first so that the others stay lined up from one card to the next -->
             <div class="tools">
-              {#if link && item.enrichment !== "pending"}
-                <form method="POST" action="?/refresh" use:enhance={reread}>
-                  <input type="hidden" name="itemId" value={item.id} />
-                  <IconButton icon="reload" label={m.refresh.label(item.title)} tip={m.refresh.tip} />
-                </form>
-              {/if}
               <form method="POST" action="?/status" use:enhance={setStatus(item, "received")}>
                 <input type="hidden" name="itemId" value={item.id} />
                 <input type="hidden" name="status" value="received" />
@@ -569,20 +655,35 @@
                 controls="edit-{item.id}"
                 onclick={() => toggleEdit(item.id)}
               />
-              <form method="POST" action="?/status" use:enhance={setStatus(item, "archived")}>
-                <input type="hidden" name="itemId" value={item.id} />
-                <input type="hidden" name="status" value="archived" />
-                <IconButton icon="archive" label={m.archiveLabel(item.title)} tip={m.archiveTip} />
-              </form>
-              <ConfirmDelete
-                label={m.deleteLabel(item.title)}
-                tip={m.deleteTip}
-                title={removal.itemTitle(item.title)}
-                help={[removal.itemHelp, removal.guests, removal.archiveInstead]}
-                action="?/deleteItem"
-                fields={{ itemId: item.id, title: item.title }}
-                onconfirm={() => remove(item)}
-              />
+              <!-- The actions used less often, behind « ⋯ » -->
+              <Menu icon="more" label={m.more(item.title)}>
+                {#if link && item.enrichment !== "pending"}
+                  <form method="POST" action="?/refresh" use:enhance={reread}>
+                    <input type="hidden" name="itemId" value={item.id} />
+                    <button type="submit" class="menu-item" aria-label={m.refresh.label(item.title)}>
+                      <Icon name="reload" />{m.refresh.tip}
+                    </button>
+                  </form>
+                {/if}
+                <form method="POST" action="?/status" use:enhance={setStatus(item, "archived")}>
+                  <input type="hidden" name="itemId" value={item.id} />
+                  <input type="hidden" name="status" value="archived" />
+                  <button type="submit" class="menu-item" aria-label={m.archiveLabel(item.title)}>
+                    <Icon name="archive" />{m.archive}
+                  </button>
+                </form>
+                <hr class="menu-separator" />
+                <ConfirmDelete
+                  item
+                  label={m.deleteLabel(item.title)}
+                  tip={m.deleteTip}
+                  title={removal.itemTitle(item.title)}
+                  help={[removal.itemHelp, removal.guests, removal.archiveInstead]}
+                  action="?/deleteItem"
+                  fields={{ itemId: item.id, title: item.title }}
+                  onconfirm={() => remove(item)}
+                />
+              </Menu>
             </div>
             {#if editing === item.id}
               <ItemEditor
@@ -674,34 +775,45 @@
       controls="edit-{series.id}"
       onclick={() => toggleEdit(series.id)}
     />
-    <IconButton
-      icon="gather"
-      label={s.gather.label(series.title)}
-      tip={s.gather.tip}
-      href="?ranger={series.id}"
-      expanded={gathering === series.id}
-      controls="ranger-{series.id}"
-      onclick={() => (gathering = gathering === series.id ? null : series.id)}
-    />
-    <form method="POST" action="?/status" use:enhance={setStatus(series, "archived")}>
-      <input type="hidden" name="itemId" value={series.id} />
-      <input type="hidden" name="status" value="archived" />
-      <IconButton icon="archive" label={m.archiveLabel(series.title)} tip={m.archiveTip} />
-    </form>
-    <form method="POST" action="?/ungroup" use:enhance>
-      <input type="hidden" name="itemId" value={series.id} />
-      <input type="hidden" name="title" value={series.title} />
-      <IconButton icon="ungroup" label={s.ungroup.label(series.title)} tip={s.ungroup.tip} />
-    </form>
-    <ConfirmDelete
-      label={m.deleteLabel(series.title)}
-      tip={m.deleteTip}
-      title={removal.itemTitle(series.title)}
-      help={[removal.seriesHelp, removal.guests, removal.ungroupInstead]}
-      action="?/deleteItem"
-      fields={{ itemId: series.id, title: series.title }}
-      onconfirm={() => remove(series)}
-    />
+    <Menu icon="more" label={m.more(series.title)}>
+      <!-- eslint-disable svelte/no-navigation-without-resolve -->
+      <a
+        class="menu-item"
+        href="?ranger={series.id}"
+        aria-label={s.gather.label(series.title)}
+        aria-expanded={gathering === series.id}
+        onclick={(event) => {
+          event.preventDefault();
+          gathering = gathering === series.id ? null : series.id;
+        }}><Icon name="gather" />{s.gather.tip}</a
+      >
+      <!-- eslint-enable svelte/no-navigation-without-resolve -->
+      <form method="POST" action="?/ungroup" use:enhance>
+        <input type="hidden" name="itemId" value={series.id} />
+        <input type="hidden" name="title" value={series.title} />
+        <button type="submit" class="menu-item" aria-label={s.ungroup.label(series.title)}>
+          <Icon name="ungroup" />{s.ungroup.short}
+        </button>
+      </form>
+      <form method="POST" action="?/status" use:enhance={setStatus(series, "archived")}>
+        <input type="hidden" name="itemId" value={series.id} />
+        <input type="hidden" name="status" value="archived" />
+        <button type="submit" class="menu-item" aria-label={m.archiveLabel(series.title)}>
+          <Icon name="archive" />{m.archive}
+        </button>
+      </form>
+      <hr class="menu-separator" />
+      <ConfirmDelete
+        item
+        label={m.deleteLabel(series.title)}
+        tip={m.deleteTip}
+        title={removal.itemTitle(series.title)}
+        help={[removal.seriesHelp, removal.guests, removal.ungroupInstead]}
+        action="?/deleteItem"
+        fields={{ itemId: series.id, title: series.title }}
+        onconfirm={() => remove(series)}
+      />
+    </Menu>
   </div>
   {#if editing === series.id}
     <SeriesEditor
@@ -936,6 +1048,71 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+  }
+  /* The heading of the wishes, with the search and « Réorganiser » at its right */
+  .list-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin: 1.5rem 0 1rem;
+  }
+  .list-head h2 {
+    margin: 0;
+    margin-right: auto;
+  }
+  .list-head.ordering h2 {
+    margin-right: 0;
+  }
+  .reorder-help {
+    flex: 1 1 14rem;
+    margin: 0;
+  }
+  .search {
+    position: relative;
+    flex: 1 1 14rem;
+    max-width: 24rem;
+    display: flex;
+    align-items: center;
+  }
+  .search :global(.icon) {
+    position: absolute;
+    left: 0.75rem;
+    color: var(--text-2);
+    pointer-events: none;
+  }
+  .search input {
+    width: 100%;
+    padding-left: 2.6rem;
+  }
+  .reorder,
+  .done {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  /* On a phone, « Réorganiser » is its icon alone; its name stays for screen readers and the tip */
+  @media (max-width: 30rem) {
+    .reorder {
+      width: 48px;
+      padding: 0;
+      justify-content: center;
+    }
+    .reorder .words {
+      display: none;
+    }
+    .search {
+      order: 3;
+      flex-basis: 100%;
+      max-width: none;
+    }
+  }
+  .found {
+    margin: -0.5rem 0 0.75rem;
+  }
+  /* Reordering: one short line per wish */
+  .item.ordering {
+    padding: 0.5rem 1rem;
   }
   .items {
     list-style: none;

@@ -6,6 +6,7 @@
   import { publicMessages } from "@wishalia/i18n/messages/public";
   import { commonMessages } from "@wishalia/i18n/messages/common";
   import DisplayMenu from "@wishalia/ui/DisplayMenu.svelte";
+  import HelpMenu from "@wishalia/ui/HelpMenu.svelte";
   import HeaderLink from "@wishalia/ui/HeaderLink.svelte";
   import Icon from "@wishalia/ui/Icon.svelte";
   import ListBadge from "@wishalia/ui/ListBadge.svelte";
@@ -35,9 +36,11 @@
   <div class="bar">
     <span class="brand"><Logo size={36} ring={false} /><span>{data.appName}</span></span>
     <div class="tools">
+      <HelpMenu help={data.help} topics={["give", "display"]} />
       <DisplayMenu
         mode={data.mode}
         theme={data.themeChoice}
+        text={data.textSize}
         returnPath={page.url.pathname + page.url.search}
       />
       {#if home.me && data.appUrl}

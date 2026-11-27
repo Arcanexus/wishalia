@@ -12,6 +12,7 @@
   import { useI18n } from "@wishalia/ui/i18n.ts";
   import { followLive, holding } from "@wishalia/ui/live.ts";
   import DisplayMenu from "@wishalia/ui/DisplayMenu.svelte";
+  import HelpMenu from "@wishalia/ui/HelpMenu.svelte";
   import ListBadge from "@wishalia/ui/ListBadge.svelte";
   import EventGauge from "@wishalia/ui/public/EventGauge.svelte";
   import ItemCard from "@wishalia/ui/public/ItemCard.svelte";
@@ -101,7 +102,8 @@
   <div class="bar">
     <span class="brand"><Logo size={36} ring={false} /><span>{data.appName}</span></span>
     <div class="tools">
-      <DisplayMenu mode={data.mode} theme={data.themeChoice} returnPath={page.url.pathname} />
+      <HelpMenu help={data.help} topics={["give", "surprise", "display"]} />
+      <DisplayMenu mode={data.mode} theme={data.themeChoice} text={data.textSize} returnPath={page.url.pathname} />
     </div>
   </div>
 </header>

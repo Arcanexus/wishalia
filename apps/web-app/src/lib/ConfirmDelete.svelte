@@ -4,6 +4,8 @@
   import { appMessages } from "@wishalia/i18n/messages/app";
   import { useI18n } from "@wishalia/ui/i18n.ts";
 
+  import Icon from "@wishalia/ui/Icon.svelte";
+
   import IconButton from "./IconButton.svelte";
 
   /**
@@ -19,6 +21,7 @@
     action,
     fields,
     onconfirm,
+    item = false,
   }: {
     /** The bin's accessible name, with what it deletes. */
     label: string;
@@ -34,6 +37,8 @@
      * it in the background (#lib/changes.svelte.ts). Without JavaScript, the form posts as usual.
      */
     onconfirm?: () => void;
+    /** Drawn as a row of a « ⋯ » menu (the bin and its words), not as an icon alone. */
+    item?: boolean;
   } = $props();
 
   const i18n = useI18n();
@@ -41,11 +46,29 @@
   const id = $props.id();
   let dialog = $state<HTMLDialogElement>();
   let busy = $state(false);
+  /** Moves the dialog to the end of the page, out of a « ⋯ » menu that closes. */
+  const onBody = (node: HTMLDialogElement) => {
+    if (item) document.body.append(node);
+    return { destroy: () => node.remove() };
+  };
 </script>
 
-<IconButton icon="trash" {label} {tip} danger opens="dialog" onclick={() => dialog?.showModal()} />
+{#if item}
+  <button
+    type="button"
+    class="menu-item danger-item"
+    aria-label={label}
+    aria-haspopup="dialog"
+    onclick={() => dialog?.showModal()}
+  >
+    <Icon name="trash" />{tip}
+  </button>
+{:else}
+  <IconButton icon="trash" {label} {tip} danger opens="dialog" onclick={() => dialog?.showModal()} />
+{/if}
 
-<dialog bind:this={dialog} class="confirm" aria-labelledby="{id}-titre" aria-describedby="{id}-aide">
+<!-- On the page's body: a menu that folds back never hides it -->
+<dialog bind:this={dialog} use:onBody class="confirm" aria-labelledby="{id}-titre" aria-describedby="{id}-aide">
   <h2 id="{id}-titre">{title}</h2>
   <div id="{id}-aide">
     {#each help as paragraph (paragraph)}<p>{paragraph}</p>{/each}
@@ -110,6 +133,9 @@
     justify-content: flex-end;
     gap: 0.75rem;
     margin-top: 1.25rem;
+  }
+  .danger-item {
+    color: var(--danger) !important;
   }
   .danger {
     background: var(--danger);

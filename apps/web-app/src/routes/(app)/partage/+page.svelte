@@ -2,7 +2,10 @@
   import { enhance } from "$app/forms";
 
   import { appMessages } from "@wishalia/i18n/messages/app";
+  import Icon from "@wishalia/ui/Icon.svelte";
   import { useI18n } from "@wishalia/ui/i18n.ts";
+
+  import IconButton from "#lib/IconButton.svelte";
 
   import type { ShareLink } from "#lib/types.ts";
 
@@ -28,6 +31,16 @@
   }
 
   const createValues = $derived(form?.create ?? null);
+  let showQr = $state(false);
+  let hydrated = $state(false);
+  $effect(() => {
+    hydrated = true;
+  });
+  /** The QR code as a file to keep: the same drawing, as an SVG image. */
+  const qrFile = (qr: { size: number; path: string }) =>
+    `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${qr.size} ${qr.size}" width="${qr.size * 10}" height="${qr.size * 10}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path d="${qr.path}" fill="#000"/></svg>`,
+    )}`;
 </script>
 
 <svelte:head>
@@ -49,19 +62,62 @@
       value={form.created.url}
       onfocus={(event) => event.currentTarget.select()}
     />
-    <div class="actions">
-      <button type="button" class="accent" onclick={() => copy(form.created.url)}>
-        {copied ? m.copied : m.copy}
-      </button>
-      {#if canShare}
-        <button
-          type="button"
-          class="secondary"
-          onclick={() => navigator.share({ title: m.shareTitle, url: form.created.url }).catch(() => {})}
+    <div class="created-body">
+      <div class="created-link">
+        <div class="actions">
+          {#if canShare}
+            <button
+              type="button"
+              class="accent"
+              onclick={() => navigator.share({ title: m.shareTitle, url: form.created.url }).catch(() => {})}
+            >
+              <Icon name="send" />{m.send}
+            </button>
+          {/if}
+          <button
+            type="button"
+            class={canShare ? "secondary" : "accent"}
+            onclick={() => copy(form.created.url)}
+          >
+            <Icon name={copied ? "check" : "copy"} />{copied ? m.copied : m.copy}
+          </button>
+          <IconButton
+            icon="qr"
+            label={showQr ? m.qr.hide : m.qr.label}
+            tip={m.qr.tip}
+            expanded={showQr}
+            controls="qr-lien"
+            onclick={() => (showQr = !showQr)}
+          />
+        </div>
+        {#if canShare}<p class="muted help">{m.sendHelp}</p>{/if}
+      </div>
+      <!-- Open without JavaScript: the buttons that hide it need it -->
+      <figure class="qr" id="qr-lien" hidden={hydrated && !showQr}>
+        <svg
+          viewBox="0 0 {form.created.qr.size} {form.created.qr.size}"
+          role="img"
+          aria-label={m.qrTitle(form.created.audience)}
+          shape-rendering="crispEdges"
         >
-          {m.send}
-        </button>
-      {/if}
+          <rect width="100%" height="100%" fill="#fff" />
+          <path d={form.created.qr.path} fill="#000" />
+        </svg>
+        <figcaption>
+          <strong>{form.created.audience}</strong>
+          <span class="muted">{m.qrHelp}</span>
+          <span class="qr-tools">
+          <IconButton icon="print" label={m.print.label} tip={m.print.tip} onclick={() => window.print()} />
+          <IconButton
+            icon="download"
+            label={m.download.label}
+            tip={m.download.tip}
+            href={qrFile(form.created.qr)}
+            download="qr-{form.created.audience}.svg"
+          />
+          </span>
+        </figcaption>
+      </figure>
     </div>
     <p class="visually-hidden" aria-live="polite">{copied ? m.copiedSaid : ""}</p>
   </section>
@@ -193,6 +249,77 @@
   }
   .created input {
     font-size: 0.95rem;
+  }
+  .created-body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 1rem 1.5rem;
+  }
+  .created-link {
+    flex: 1 1 18rem;
+    min-width: 0;
+  }
+  .actions :global(.icon) {
+    margin-right: 0.4rem;
+  }
+  /* The code on white whatever the theme: a phone reads dark on light */
+  .qr {
+    flex: 0 1 16rem;
+    margin: 0.75rem 0 0;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #fff;
+    color: #1f2430;
+    text-align: center;
+  }
+  .qr[hidden] {
+    display: none;
+  }
+  .qr svg {
+    display: block;
+    width: 100%;
+    max-width: 14rem;
+    height: auto;
+    margin: 0 auto;
+  }
+  .qr figcaption {
+    display: grid;
+    gap: 0.2rem;
+    margin-top: 0.5rem;
+  }
+  .qr figcaption .muted {
+    color: #5b6170;
+    font-size: 0.9rem;
+  }
+  .qr-tools {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+  }
+  /* Printing the page prints the code alone, big, with the person's name */
+  @media print {
+    :global(body *) {
+      visibility: hidden;
+    }
+    .qr,
+    .qr :global(*) {
+      visibility: visible;
+    }
+    .qr {
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      border: 0;
+    }
+    .qr svg {
+      max-width: 12cm;
+    }
+    .qr-tools {
+      display: none;
+    }
   }
   .actions {
     display: flex;

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { page } from "$app/state";
+  import HelpTip from "@wishalia/ui/HelpTip.svelte";
   import { untrack } from "svelte";
   import { enhance } from "$app/forms";
   import { invalidate } from "$app/navigation";
@@ -51,6 +53,8 @@
   let saveState = $state<SaveState>(untrack(() => (form?.settings?.error ? "error" : "idle")));
   let error = $state<string | null>(untrack(() => form?.settings?.error ?? null));
   let settingsForm = $state<HTMLFormElement>();
+  // The guide, for the « ? » next to a setting
+  const help = $derived(String(page.data.help ?? ""));
 </script>
 
 {#if open}
@@ -96,7 +100,9 @@
       />
 
       <fieldset>
-        <legend>{m.visibility}</legend>
+        <legend>
+          {m.visibility}<HelpTip about={m.visibilityTip.about} text={m.visibilityTip.text} {help} topic="share" />
+        </legend>
         <label class="choice">
           <input type="radio" name="visibility" value="private" checked={list.visibility === "private"} />
           <span>
@@ -132,7 +138,9 @@
       </fieldset>
 
       <fieldset disabled={list.secretLifted}>
-        <legend>{m.reveal}</legend>
+        <legend>
+          {m.reveal}<HelpTip about={m.revealTip.about} text={m.revealTip.text} {help} topic="surprise" />
+        </legend>
         <p class="muted help">{m.revealHelp}</p>
         <label class="choice">
           <input type="radio" name="revealMode" value="received" checked={list.revealMode === "received"} />

@@ -6,6 +6,7 @@ export const load: LayoutServerLoad = ({ locals }) => ({
   appName: process.env.APP_NAME ?? "Wishalia",
   locale: locals.locale,
   mode: locals.mode,
+  textSize: locals.textSize,
   themeChoice: locals.themeChoice,
   // The foot of the pages (docs/user-guide.md): the version that runs, and where help is
   version: shownVersion(process.env.APP_VERSION, __WISHALIA_VERSION__),

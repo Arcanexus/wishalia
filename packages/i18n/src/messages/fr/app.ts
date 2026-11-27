@@ -158,6 +158,21 @@ export const app = {
     noGiftOutside: "Personne ne l'a offert en dehors des événements.",
     reopen: "Remettre dans la liste",
     reopenLabel: (title: string) => `Remettre « ${title} » dans la liste`,
+    /** The « ⋯ » of a card: the actions used less often. */
+    more: (title: string) => `Plus d'actions pour « ${title} »`,
+    reorder: {
+      start: "Réorganiser",
+      label: "Réorganiser les envies",
+      title: (n: number) => `Réorganiser (${n})`,
+      help: "Glissez les envies par la poignée, ou utilisez les flèches.",
+      done: "Terminé",
+    },
+    search: {
+      label: "Chercher dans mes envies",
+      clear: "Effacer la recherche",
+      found: (n: number, total: number) =>
+        n === 0 ? "Aucune envie ne correspond." : `${n} envie${n > 1 ? "s" : ""} sur ${total}.`,
+    },
   },
   gifts: {
     copies: (n: number) => `${n} exemplaires`,
@@ -210,6 +225,10 @@ export const app = {
     failed: "L'enregistrement n'a pas abouti. Réessayez dans un instant.",
     name: "Nom",
     kindLegend: "Quel genre de cadeau ?",
+    kindTip: {
+      about: "les genres de cadeau",
+      text: "Un cadeau s'offre une fois, ou à plusieurs s'il a un prix. Plusieurs exemplaires : chacun en offre un ou plus. Une cagnotte reçoit des montants libres. Une série regroupe des tomes, offerts un par un.",
+    },
     unique: {
       name: "Un cadeau",
       help: "Une personne le réserve, ou plusieurs se le partagent s'il a un prix.",
@@ -250,6 +269,10 @@ export const app = {
     failed: "Le changement n'a pas abouti. Réessayez dans un instant.",
     name: "Nom",
     visibility: "Qui peut voir la liste ?",
+    visibilityTip: {
+      about: "qui peut voir la liste",
+      text: "Privée, seuls ceux qui ont votre lien de partage la voient. Publique, on la trouve par une recherche. Dans les deux cas, vous ne voyez pas qui offre quoi.",
+    },
     private: {
       name: "Privée",
       help: "Seules les personnes à qui vous envoyez un lien de partage la voient.",
@@ -270,6 +293,10 @@ export const app = {
       christmas: { name: "Noël", help: "Sapin, houx et or." },
     },
     reveal: "Les cadeaux faits sans occasion",
+    revealTip: {
+      about: "quand la surprise est dévoilée",
+      text: "Vous ne voyez pas qui offre quoi avant le moment choisi. Vos invités, eux, le voient, pour ne pas offrir deux fois la même chose.",
+    },
     revealHelp:
       "Un proche peut offrir une envie de cette liste en dehors de tout événement. Quand découvrez-vous qui l'a offerte ?",
     revealReceived: {
@@ -318,6 +345,7 @@ export const app = {
     ungroup: {
       label: (title: string) => `Défaire la série « ${title} »`,
       tip: "Défaire la série (ses tomes restent dans la liste)",
+      short: "Défaire la série",
     },
     moveUp: (title: string) => `Monter « ${title} » dans la série`,
     moveDown: (title: string) => `Descendre « ${title} » dans la série`,
@@ -563,7 +591,13 @@ export const app = {
     copy: "Copier le lien",
     shareTitle: "Mes envies",
     send: "Envoyer…",
+    sendHelp: "« Envoyer… » ouvre le menu de partage du téléphone : SMS, messages, e-mail.",
     copiedSaid: "Le lien est copié.",
+    qr: { label: "Montrer le QR code", tip: "QR code", hide: "Cacher le QR code" },
+    qrTitle: (who: string) => `QR code du lien pour ${who}`,
+    qrHelp: "À scanner avec l'appareil photo d'un téléphone. Il ne sera plus affiché non plus.",
+    print: { label: "Imprimer le QR code", tip: "Imprimer" },
+    download: { label: "Télécharger le QR code", tip: "Télécharger" },
     new: "Nouveau lien",
     errors: {
       invalid_target: "Choisissez la liste ou l'événement à partager.",

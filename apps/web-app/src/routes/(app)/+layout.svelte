@@ -7,6 +7,8 @@
   import Logo from "@wishalia/ui/Logo.svelte";
   import { commonMessages } from "@wishalia/i18n/messages/common";
   import DisplayMenu from "@wishalia/ui/DisplayMenu.svelte";
+  import HelpMenu from "@wishalia/ui/HelpMenu.svelte";
+  import type { HelpTopic } from "@wishalia/ui/help.ts";
   import Icon from "@wishalia/ui/Icon.svelte";
   import Menu from "@wishalia/ui/Menu.svelte";
   import { onMount } from "svelte";
@@ -32,6 +34,18 @@
           ? "settings"
           : "lists",
   );
+  // The parts of the guide the page is about, in the help menu
+  const topics = $derived<HelpTopic[]>(
+    section === "events"
+      ? ["occasions", "surprise"]
+      : section === "share"
+        ? ["share", "surprise"]
+        : section === "settings"
+          ? ["display"]
+          : page.url.pathname.startsWith("/listes/")
+            ? ["add", "order", "share", "surprise"]
+            : ["add", "share", "surprise"],
+  );
 </script>
 
 <header class="top">
@@ -52,7 +66,13 @@
     <!-- At the top right: the display, then the account (docs/management-app.md, « Header ») -->
     <div class="tools">
       <SyncStatus />
-      <DisplayMenu mode={data.mode} theme={data.me.theme} returnPath={page.url.pathname + page.url.search} />
+      <HelpMenu help={data.help} {topics} />
+      <DisplayMenu
+        mode={data.mode}
+        theme={data.me.theme}
+        text={data.textSize}
+        returnPath={page.url.pathname + page.url.search}
+      />
       <Menu icon="user" label={account.menu(data.me.displayName)} {initial}>
         <p class="menu-who">
           <strong>{data.me.displayName}</strong>

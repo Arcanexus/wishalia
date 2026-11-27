@@ -1,5 +1,5 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
-import type { ModeChoice, ThemeChoice, ThemeName } from "@wishalia/domain";
+import type { ModeChoice, TextSize, ThemeChoice, ThemeName } from "@wishalia/domain";
 import type { Locale, LocaleChoice } from "@wishalia/i18n";
 
 declare global {
@@ -10,6 +10,7 @@ declare global {
       /** The person's own choices, from their preference cookies. */
       themeChoice: ThemeChoice;
       mode: ModeChoice;
+      textSize: TextSize;
       localeChoice: LocaleChoice;
       /** The language of the page (docs/i18n.md), resolved from the choice and the browser. */
       locale: Locale;

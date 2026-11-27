@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { page } from "$app/state";
+  import HelpTip from "@wishalia/ui/HelpTip.svelte";
   import { untrack } from "svelte";
   import { applyAction } from "$app/forms";
   import { invalidate } from "$app/navigation";
@@ -54,6 +56,8 @@
   let form = $state<HTMLFormElement>();
   const invalid = (code: string) => (error === code ? "true" : undefined);
   const headingId = $derived(`${id}-titre-editeur`);
+  // The guide, for the « ? » next to a setting
+  const help = $derived(String(page.data.help ?? ""));
 </script>
 
 <section class="edit" {id} aria-labelledby={headingId} data-live-hold>
@@ -98,7 +102,9 @@
     />
 
     <fieldset class="kinds">
-      <legend>{m.kindLegend}</legend>
+      <legend>
+        {m.kindLegend}<HelpTip about={m.kindTip.about} text={m.kindTip.text} {help} topic="add" />
+      </legend>
       <label class="choice">
         <input type="radio" name="kind" value="unique" checked={values.kind === "unique"} />
         <span><strong>{m.unique.name}</strong><span class="muted">{m.unique.help}</span></span>
