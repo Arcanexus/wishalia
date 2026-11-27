@@ -1,6 +1,6 @@
 {
   "name": "@wishalia/storage",
-  "version": "0.0.9",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "The images of the items: S3 bucket, format sniffing and signed imgproxy paths.",

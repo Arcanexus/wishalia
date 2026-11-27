@@ -1,6 +1,6 @@
 {
   "name": "wishalia",
-  "version": "0.0.9",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "Self-hosted wishlists with events, shared gifts and a strict anti-spoil rule.",
