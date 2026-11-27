@@ -159,6 +159,16 @@ function after(html: string, id: string): string | null {
   return at < 0 ? null : html.slice(at, at + 6000);
 }
 
+/** A price written as text with its currency (« 6,99 € »), in cents, unless it is free. */
+function shownAmount(
+  text: string | null | undefined,
+): { priceCents: number; currency: string | null } | null {
+  const shown = text ? textOf(text) : "";
+  const currency = currencyOf(shown);
+  const cents = currency ? priceToCents(firstAmount(shown)) : null;
+  return cents ? { priceCents: cents, currency } : null;
+}
+
 /**
  * Amazon (every country) writes no JSON-LD and no price tag: the price is in the page, in a hidden
  * text for screen readers (`a-offscreen`), split in whole and fraction, or in hidden fields.
@@ -178,7 +188,8 @@ function fromAmazon(html: string): Found {
     const whole = block.match(/class\s*=\s*["'][^"']*\ba-price-whole\b[^"']*["'][^>]*>([^<]*\d[^<]*)/i);
     const shown = offscreen?.[1] ? textOf(offscreen[1]) : "";
     const shownCents = priceToCents(firstAmount(shown));
-    if (shownCents !== null && (!whole || (offscreen?.index ?? 0) < (whole.index ?? 0))) {
+    // A free price (« 0,00 € » with Kindle Unlimited or Prime Reading) is no price to offer
+    if (shownCents && (!whole || (offscreen?.index ?? 0) < (whole.index ?? 0))) {
       return { ...found, priceCents: shownCents, currency: currencyOf(shown) };
     }
     if (whole?.[1]) {
@@ -186,8 +197,22 @@ function fromAmazon(html: string): Found {
         block.match(/class\s*=\s*["'][^"']*\ba-price-fraction\b[^"']*["'][^>]*>(\d+)/i)?.[1] ?? "00";
       const symbol = block.match(/class\s*=\s*["'][^"']*\ba-price-symbol\b[^"']*["'][^>]*>([^<]+)/i)?.[1];
       const cents = priceToCents(`${decodeEntities(whole[1]).replace(/\D/g, "")}.${fraction}`);
-      if (cents !== null) return { ...found, priceCents: cents, currency: currencyOf(symbol) };
+      if (cents) return { ...found, priceCents: cents, currency: currencyOf(symbol) };
     }
+    // A plain price, as a Kindle book's (`<span id="kindle-price">6,99 €</span>`)
+    const plain = shownAmount(zone.match(/^[^>]*>([^<]*)</)?.[1]);
+    if (plain) return { ...found, ...plain };
+  }
+  // The format shown, among a book's formats (Kindle, broché, relié): its price
+  const swatch = html.match(
+    /<[a-z]+\b(?=[^>]*\bid\s*=\s*["']tmm-grid-swatch-[\w-]+["'])(?=[^>]*\bclass\s*=\s*["'][^"']*\bselected\b)[^>]*>/i,
+  );
+  if (swatch?.index !== undefined) {
+    const slot = html
+      .slice(swatch.index, swatch.index + 3000)
+      .match(/class\s*=\s*["'][^"']*\bslot-price\b[^"']*["'][^>]*>([\s\S]*?)<\/span>\s*<\/span>/i)?.[1];
+    const price = shownAmount(slot && textOf(slot));
+    if (price) return { ...found, ...price };
   }
   // The hidden fields of the "add to cart" form, then the data of the variants' selector
   for (const match of html.matchAll(/<input\b[^>]*>/gi)) {

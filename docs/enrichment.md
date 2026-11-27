@@ -35,10 +35,14 @@ product's title (`#productTitle`) and the price to pay as the page shows it, in 
 1. in the price block (`corePriceDisplay_desktop_feature_div`, `corePrice_feature_div`,
    `apex_desktop` and the older `priceblock_*`), the price to pay (`priceToPay`), from its hidden
    text for screen readers (`a-offscreen`) or from its whole and fraction parts; the struck-out
-   « Prix conseillé » after it is never taken;
-2. the hidden fields of the « Ajouter au panier » form (`attach-base-product-price`,
+   « Prix conseillé » after it is never taken. A Kindle book's price (`kindle-price`) is read as
+   written; a free price (« 0,00 € » with Kindle Unlimited or Prime Reading) is never taken, since
+   it is no price to offer;
+2. for a book, the price of the format the link shows (Kindle, broché, relié), among its formats
+   (`tmm-grid-swatch-*`, the one marked `selected`);
+3. the hidden fields of the « Ajouter au panier » form (`attach-base-product-price`,
    `customerVisiblePrice`);
-3. the data of the variants' selector (`twister-plus-price-data-price`, `priceAmount`).
+4. the data of the variants' selector (`twister-plus-price-data-price`, `priceAmount`).
 
 The currency comes with the price (`€`, `EUR`): an amazon.com price in dollars is left out, like
 any price that is not in euros. A range (« 19,99 € - 29,99 € ») gives its lowest price.
