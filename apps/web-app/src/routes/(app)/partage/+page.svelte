@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { enhance } from "$app/forms";
 
   import { appMessages } from "@wishalia/i18n/messages/app";
@@ -33,9 +34,7 @@
   const createValues = $derived(form?.create ?? null);
   let showQr = $state(false);
   let hydrated = $state(false);
-  $effect(() => {
-    hydrated = true;
-  });
+  onMount(() => (hydrated = true));
   /** The QR code as a file to keep: the same drawing, as an SVG image. */
   const qrFile = (qr: { size: number; path: string }) =>
     `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
@@ -107,14 +106,14 @@
           <strong>{form.created.audience}</strong>
           <span class="muted">{m.qrHelp}</span>
           <span class="qr-tools">
-          <IconButton icon="print" label={m.print.label} tip={m.print.tip} onclick={() => window.print()} />
-          <IconButton
-            icon="download"
-            label={m.download.label}
-            tip={m.download.tip}
-            href={qrFile(form.created.qr)}
-            download="qr-{form.created.audience}.svg"
-          />
+            <IconButton icon="print" label={m.print.label} tip={m.print.tip} onclick={() => window.print()} />
+            <IconButton
+              icon="download"
+              label={m.download.label}
+              tip={m.download.tip}
+              href={qrFile(form.created.qr)}
+              download="qr-{form.created.audience}.svg"
+            />
           </span>
         </figcaption>
       </figure>

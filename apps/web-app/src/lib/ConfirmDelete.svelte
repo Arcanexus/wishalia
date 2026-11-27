@@ -68,7 +68,13 @@
 {/if}
 
 <!-- On the page's body: a menu that folds back never hides it -->
-<dialog bind:this={dialog} use:onBody class="confirm" aria-labelledby="{id}-titre" aria-describedby="{id}-aide">
+<dialog
+  bind:this={dialog}
+  use:onBody
+  class="confirm"
+  aria-labelledby="{id}-titre"
+  aria-describedby="{id}-aide"
+>
   <h2 id="{id}-titre">{title}</h2>
   <div id="{id}-aide">
     {#each help as paragraph (paragraph)}<p>{paragraph}</p>{/each}

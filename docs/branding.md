@@ -49,14 +49,18 @@ in the colour of the text, so that they follow every theme and mode. A pencil ed
 received, a box archives, a bin deletes (in the danger colour), two turning arrows reload, an eye
 previews, three linked dots share, a cog opens settings, a cross closes. Books on a shelf mark a
 series, lines with an arrow put wishes into it, an arrow leaving its box takes a volume out, four
-apart squares undo it. An icon alone always
+apart squares undo it. Three small rings (« ⋯ ») open a card's menu of the less used actions, a
+question mark the help, a magnifier the search, bars of a barcode the camera scan, a square of
+squares the QR code, a paper plane « Envoyer… », two stacked squares several copies (« × 4 »), a
+calendar an occasion, lines of falling length with an arrow the sort by price. An icon alone always
 carries its words as its accessible name and in a tip shown on hover and keyboard focus, which
 Escape hides (WCAG 1.4.13). A state is shown by an icon and a colour, never by colour alone.
 
 ## Header
 
 The bar has the logo and the app's places on the left, and round icons at the top right: the
-**display menu** (mode, theme, language), then the **account menu** (the first letter of the
+**help menu** (a question mark: the user guide, then the topics of the page), the **display menu**
+(mode, theme, language, text size), then the **account menu** (the first letter of the
 person's name: their settings and signing out) or, signed out, an arrow going in to sign in. See
 [Management app](management-app.md#the-header).
 
@@ -66,6 +70,11 @@ Two themes, each in light and dark. **Neutral** is the default, all year round a
 (birthday, birth…). **Christmas** replaces it for a list tied to a Christmas event, or in December.
 The app follows the device setting (`prefers-color-scheme`); the display menu of the header forces
 light or dark, or a theme, and the choice is remembered.
+
+The **text size** of the display menu (three « A » of growing size: normal, large, larger) sets the
+root font size to 100 %, 112.5 % or 125 % (`data-text` on `<html>`, from the `wishalia.text` cookie,
+set by the server so that nothing jumps). Every size is in `rem`, so the whole page grows, and the
+layouts reflow up to 400 % zoom (WCAG 1.4.4, 1.4.10). It is kept on the device only.
 
 ### Theme settings
 

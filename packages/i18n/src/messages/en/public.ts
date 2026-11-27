@@ -76,8 +76,21 @@ export const publicSite: PublicMessages = {
       dismissLabel: (title) => `Got it for “${title}”`,
     },
     unfolded: "The gifts are shown.",
+    filters: {
+      label: "Filter the wishes",
+      toGive: "To give",
+      byPrice: "Price",
+      byPriceTip: "The cheapest first",
+      mine: "My gifts",
+      shown: (n, total) =>
+        n === total
+          ? `${total} wish${total > 1 ? "es" : ""}`
+          : `${n} of ${total} wish${total > 1 ? "es" : ""}`,
+      none: "No wish matches: tap a filter to remove it.",
+    },
   },
   give: {
+    short: "Give",
     close: "Close",
     event: "For which occasion?",
     amount: "Your share, in euros",
@@ -96,6 +109,11 @@ export const publicSite: PublicMessages = {
     shareStarted: "Others are already chipping in: add the amount you like.",
     confirm: "Confirm",
     units: "How many are you giving?",
+    fewer: "One fewer",
+    more: "One more",
+    unitsLeft: (n) => `${n} left.`,
+    allLabel: (n, price) => `Give the ${n} remaining volumes${price ? ` · ${price}` : ""}`,
+    allHelp: "You buy them all, each one whole.",
     name: "Your first name",
     nameHelp: "So your family knows who is taking care of it.",
     message: (owner) => `A note for ${owner} (optional)`,

@@ -5,7 +5,7 @@
    * on a computer with a camera); elsewhere the button never shows. The picture never leaves the
    * device: the browser reads the code, and the camera stops as soon as it has one.
    */
-  import { onDestroy } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { readScanned, spacedIsbn, type Scanned } from "@wishalia/domain";
   import { appMessages } from "@wishalia/i18n/messages/app";
   import Icon from "@wishalia/ui/Icon.svelte";
@@ -26,7 +26,7 @@
   const Barcode = (globalThis as { BarcodeDetector?: DetectorClass }).BarcodeDetector;
   // Known once the page runs in the browser: the server renders it without the button
   let available = $state(false);
-  $effect(() => {
+  onMount(() => {
     available = !!Barcode && !!globalThis.navigator?.mediaDevices?.getUserMedia;
   });
   let dialog = $state<HTMLDialogElement>();
@@ -48,7 +48,10 @@
     failed = false;
     dialog?.showModal();
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false,
+      });
       if (!video || !Barcode) return stop();
       video.srcObject = stream;
       await video.play();
@@ -88,13 +91,7 @@
 {#if available}
   <IconButton icon="barcode" label={m.label} tip={m.tip} opens="dialog" onclick={() => void open()} />
 
-  <dialog
-    bind:this={dialog}
-    class="scan"
-    aria-labelledby="{id}-titre"
-    onclose={stop}
-    oncancel={stop}
-  >
+  <dialog bind:this={dialog} class="scan" aria-labelledby="{id}-titre" onclose={stop} oncancel={stop}>
     <div class="top">
       <h2 id="{id}-titre">{m.title}</h2>
       <IconButton icon="close" label={m.close} tip={m.close} onclick={close} />
@@ -117,7 +114,6 @@
       </div>
     {:else}
       <div class="camera">
-        <!-- svelte-ignore a11y_media_has_caption -->
         <video bind:this={video} playsinline muted></video>
         <span class="frame" aria-hidden="true"></span>
       </div>

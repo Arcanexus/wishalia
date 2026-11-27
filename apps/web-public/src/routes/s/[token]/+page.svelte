@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { untrack } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { enhance } from "$app/forms";
   import { invalidate } from "$app/navigation";
   import { page } from "$app/state";
@@ -8,6 +8,7 @@
 
   import { publicMessages } from "@wishalia/i18n/messages/public";
   import { viewMessages } from "@wishalia/i18n/messages/view";
+  import Icon from "@wishalia/ui/Icon.svelte";
   import Logo from "@wishalia/ui/Logo.svelte";
   import { useI18n } from "@wishalia/ui/i18n.ts";
   import { followLive, holding } from "@wishalia/ui/live.ts";
@@ -22,9 +23,15 @@
   import GiveForm from "#lib/GiveForm.svelte";
   import {
     canGive,
+    cardPrice,
     cardsOf,
+    filterCards,
+    NO_FILTER,
+    type CardFilter,
     gauge,
     formatDay,
+    formatEuros,
+    givableTogether,
     heading,
     myGiftLine,
     volumesOf,
@@ -50,6 +57,30 @@
           const event = eventsById.get(id);
           return event?.open ? [event] : [];
         });
+  // The chips above the cards (docs/public-view.md): never for the owner nor on a folded page, where
+  // where the gifts stand must stay hidden; with JavaScript only, the cards all show without it
+  let hydrated = $state(false);
+  onMount(() => (hydrated = true));
+  const f = $derived(m.filters);
+  let filter = $state<CardFilter>({ ...NO_FILTER });
+  const cards = $derived(cardsOf(view.items));
+  const mineIds = $derived(new Set(data.mine.map((gift) => gift.itemId)));
+  const filtering = $derived(hydrated && view.viewer !== "owner" && !data.folded && cards.length > 3);
+  const tagged = (eventId: string) =>
+    cards.filter((item) =>
+      [item, ...(volumes.get(item.id) ?? [])].some((one) => one.eventIds.includes(eventId)),
+    ).length;
+  /** An occasion's chip, when it leaves out some wishes and keeps some. */
+  const chipEvents = $derived(
+    view.scope === "list"
+      ? openEvents.filter((event) => tagged(event.id) > 0 && tagged(event.id) < cards.length)
+      : [],
+  );
+  const priced = $derived(
+    cards.filter((item) => cardPrice(item, volumes.get(item.id) ?? []) !== null).length > 1,
+  );
+  const shown = $derived(filtering ? filterCards(cards, volumes, filter, mineIds) : cards);
+  const filtered = $derived(filter.toGive || filter.eventId !== null || filter.mine || filter.byPrice);
   const overall = $derived(view.viewer === "owner" || data.folded ? null : gauge(view.items));
   // « 24 décembre », « 24 December »: the year goes without saying for the next occasions
   const shortDay = $derived(
@@ -103,7 +134,12 @@
     <span class="brand"><Logo size={36} ring={false} /><span>{data.appName}</span></span>
     <div class="tools">
       <HelpMenu help={data.help} topics={["give", "surprise", "display"]} />
-      <DisplayMenu mode={data.mode} theme={data.themeChoice} text={data.textSize} returnPath={page.url.pathname} />
+      <DisplayMenu
+        mode={data.mode}
+        theme={data.themeChoice}
+        text={data.textSize}
+        returnPath={page.url.pathname}
+      />
     </div>
   </div>
 </header>
@@ -200,8 +236,55 @@
   {#if view.items.length === 0}
     <p class="card empty">{v.empty}</p>
   {:else}
+    {#if filtering}
+      <div class="chips" role="group" aria-label={f.label}>
+        <button
+          type="button"
+          class="chip"
+          aria-pressed={filter.toGive}
+          onclick={() => (filter.toGive = !filter.toGive)}
+        >
+          <Icon name="gift" />{f.toGive}
+        </button>
+        {#each chipEvents as event (event.id)}
+          <button
+            type="button"
+            class="chip"
+            aria-pressed={filter.eventId === event.id}
+            onclick={() => (filter.eventId = filter.eventId === event.id ? null : event.id)}
+          >
+            <Icon name="calendar" />{event.name}
+          </button>
+        {/each}
+        {#if priced}
+          <button
+            type="button"
+            class="chip"
+            aria-pressed={filter.byPrice}
+            title={f.byPriceTip}
+            onclick={() => (filter.byPrice = !filter.byPrice)}
+          >
+            <Icon name="sort" />{f.byPrice}
+          </button>
+        {/if}
+        {#if mineIds.size > 0}
+          <button
+            type="button"
+            class="chip"
+            aria-pressed={filter.mine}
+            onclick={() => (filter.mine = !filter.mine)}
+          >
+            <Icon name="heart" />{f.mine}
+          </button>
+        {/if}
+      </div>
+      <p class="muted shown" role="status">{filtered ? f.shown(shown.length, cards.length) : ""}</p>
+    {/if}
+    {#if shown.length === 0}
+      <p class="card empty">{f.none}</p>
+    {/if}
     <ul class="items">
-      {#each cardsOf(view.items) as item (item.id)}
+      {#each shown as item (item.id)}
         {#if item.kind === "series"}
           <!-- One card for the series, each volume inside it given on its own (docs/series.md) -->
           <SeriesCard
@@ -210,6 +293,7 @@
             events={view.events}
             scope={view.scope}
             volume={giving}
+            all={givingAll}
           />
         {:else}
           <ItemCard {item} events={view.events} scope={view.scope}>{@render giving(item)}</ItemCard>
@@ -223,6 +307,37 @@
     {#if form?.given}{m.given}{:else if form?.withdrawn}{m.withdrawn}{:else if form?.unfolded}{m.unfolded}{/if}
   </div>
 </main>
+
+{#snippet givingAll(series: PublicItem)}
+  <!-- « Offrir les N tomes restants »: each free volume bought whole, in one form (docs/series.md) -->
+  {@const free = givableTogether(volumes.get(series.id) ?? [], view)}
+  {#if form?.given?.itemId === series.id}
+    <p class="notice thanks">{m.thanks(owner)}</p>
+  {/if}
+  {#if !data.folded && free.length > 0}
+    {@const prices = free.flatMap((volume) => volume.priceCents ?? [])}
+    <GiveForm
+      item={series}
+      events={giftEvents(series.eventIds)}
+      {owner}
+      needsName={view.me === null}
+      guestName={data.guestName}
+      failed={form?.give && form.give.itemId === series.id ? form.give : null}
+      all={{
+        ids: free.map((volume) => volume.id),
+        label: publicMessages(i18n.locale).give.allLabel(
+          free.length,
+          prices.length === free.length
+            ? formatEuros(
+                prices.reduce((a, b) => a + b, 0),
+                i18n.locale,
+              )
+            : null,
+        ),
+      }}
+    />
+  {/if}
+{/snippet}
 
 {#snippet giving(item: PublicItem)}
   {#each data.mine.filter((gift) => gift.itemId === item.id) as gift (gift.id)}
@@ -257,6 +372,7 @@
       needsName={view.me === null}
       guestName={data.guestName}
       failed={form?.give && form.give.itemId === item.id ? form.give : null}
+      short={Boolean(item.parentId)}
     />
   {/if}
 {/snippet}
@@ -389,5 +505,35 @@
   }
   .empty {
     margin: 1.5rem 0;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1.25rem 0 0;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 2.75rem;
+    padding: 0 0.9rem;
+    border-radius: 999px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 600;
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--action);
+    border-color: var(--action);
+    color: var(--on-action);
+  }
+  .shown {
+    margin: 0.5rem 0 0;
+    min-height: 1.5em;
+  }
+  .shown + .items {
+    margin-top: 0.75rem;
   }
 </style>

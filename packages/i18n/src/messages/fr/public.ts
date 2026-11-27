@@ -81,8 +81,20 @@ export const publicSite = {
       dismissLabel: (title: string) => `Compris pour « ${title} »`,
     },
     unfolded: "Les cadeaux sont affichés.",
+    /** The chips above the cards (docs/public-view.md). */
+    filters: {
+      label: "Filtrer les envies",
+      toGive: "À offrir",
+      byPrice: "Prix",
+      byPriceTip: "Les moins chères d'abord",
+      mine: "Mes cadeaux",
+      shown: (n: number, total: number) =>
+        n === total ? `${total} envie${total > 1 ? "s" : ""}` : `${n} envie${n > 1 ? "s" : ""} sur ${total}`,
+      none: "Aucune envie ne correspond : touchez un filtre pour l'enlever.",
+    },
   },
   give: {
+    short: "Offrir",
     close: "Fermer",
     event: "Pour quelle occasion ?",
     amount: "Votre participation, en euros",
@@ -103,6 +115,13 @@ export const publicSite = {
     shareStarted: "D'autres participent déjà : complétez avec le montant de votre choix.",
     confirm: "Valider",
     units: "Combien en offrez-vous ?",
+    fewer: "Un de moins",
+    more: "Un de plus",
+    unitsLeft: (n: number) => `Il en reste ${n}.`,
+    /** « Offrir les 3 tomes restants · 26,85 € ». */
+    allLabel: (n: number, price: string | null) =>
+      `Offrir les ${n} tomes restants${price ? ` · ${price}` : ""}`,
+    allHelp: "Vous les achetez tous, chacun en entier.",
     name: "Votre prénom",
     nameHelp: "Pour que vos proches sachent qui s'en occupe.",
     message: (owner: string) => `Un mot pour ${owner} (facultatif)`,

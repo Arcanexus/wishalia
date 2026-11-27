@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   /**
    * A « ? » next to a setting that needs a word more (docs/user-guide.md): it shows a short help in
    * a bubble, with a link to the part of the guide about it. A button that opens and closes the
@@ -32,9 +33,7 @@
   let root = $state<HTMLSpanElement>();
   // Without JavaScript the bubble shows under its setting, open
   let ready = $state(false);
-  $effect(() => {
-    ready = true;
-  });
+  onMount(() => (ready = true));
 
   $effect(() => {
     if (!open) return;

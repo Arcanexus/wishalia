@@ -49,7 +49,10 @@ The API is internal: only the two frontends reach it, server side, and a Network
   token never leaks to another site. Not `no-referrer` on the frontends: browsers would then send
   `Origin: null` with a plain form, which the CSRF check refuses.
 - `X-Content-Type-Options`, `X-Frame-Options`, `Cross-Origin-Opener-Policy`, a `Permissions-Policy`
-  that turns off the camera, microphone, location and payment.
+  that turns off the microphone, location and payment, and the camera everywhere but in the
+  management app's own pages (`camera=(self)`), for the barcode scan of the quick add: the browser
+  asks the person first, the image never leaves the device (the browser's `BarcodeDetector` reads
+  it), and only the number read is used. The guests' frontend keeps the camera off.
 - Cookies: the session shared between the two hosts is `__Secure-` (a `__Host-` cookie cannot be
   shared), `__Host-` is kept for host-only cookies such as CSRF.
 - Sign-in: no password anywhere; OIDC, passkeys and single-use magic links (stored hashed), on

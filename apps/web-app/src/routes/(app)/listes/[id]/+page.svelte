@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick, untrack } from "svelte";
+  import { onMount, tick, untrack } from "svelte";
   import { enhance, type SubmitFunction } from "$app/forms";
   import { invalidate } from "$app/navigation";
   import { resolve } from "$app/paths";
@@ -221,9 +221,7 @@
   let ordering = $state(untrack(() => page.url.searchParams.has("ordre")));
   let query = $state("");
   let hydrated = $state(false);
-  $effect(() => {
-    hydrated = true;
-  });
+  onMount(() => (hydrated = true));
   const words = $derived(query.trim().toLocaleLowerCase(i18n.locale));
   /** A wish found by its name, its notes, or the name of one of its volumes. */
   const matches = (item: Item) =>
@@ -513,8 +511,10 @@
         onclick={(event) => {
           event.preventDefault();
           void stopOrdering();
-        }}><Icon name="check" />{m.reorder.done}</a
+        }}
       >
+        <Icon name="check" />{m.reorder.done}
+      </a>
     {:else}
       {#if hydrated && open.length > 3}
         <div class="search">
@@ -540,8 +540,10 @@
           onclick={(event) => {
             event.preventDefault();
             void startOrdering();
-          }}><Icon name="move" /><span class="words">{m.reorder.start}</span></a
+          }}
         >
+          <Icon name="move" /><span class="words">{m.reorder.start}</span>
+        </a>
       {/if}
     {/if}
     <!-- eslint-enable svelte/no-navigation-without-resolve -->
@@ -614,7 +616,8 @@
               item={item.kind === "series"
                 ? {
                     ...item,
-                    image: item.image ?? volumesBy.get(item.id)?.find((volume) => volume.image)?.image ?? null,
+                    image:
+                      item.image ?? volumesBy.get(item.id)?.find((volume) => volume.image)?.image ?? null,
                   }
                 : item}
               listId={data.list.id}
@@ -808,8 +811,10 @@
         onclick={(event) => {
           event.preventDefault();
           gathering = gathering === series.id ? null : series.id;
-        }}><Icon name="gather" />{s.gather.tip}</a
+        }}
       >
+        <Icon name="gather" />{s.gather.tip}
+      </a>
       <!-- eslint-enable svelte/no-navigation-without-resolve -->
       <form method="POST" action="?/ungroup" use:enhance>
         <input type="hidden" name="itemId" value={series.id} />
@@ -1023,7 +1028,9 @@
 
 <!-- Reordering a series: its open volumes in a row, each moved one place with its arrows -->
 {#snippet volumeOrder(series: Item)}
-  {@const wanted = plannedVolumes((volumesBy.get(series.id) ?? []).filter((volume) => volume.status === "open"))}
+  {@const wanted = plannedVolumes(
+    (volumesBy.get(series.id) ?? []).filter((volume) => volume.status === "open"),
+  )}
   {#if wanted.length > 1}
     <ol class="tiles order wide" aria-label={s.volumes(wanted.length)}>
       {#each wanted as volume, place (volume.id)}
@@ -1188,6 +1195,22 @@
   }
   .ordering .mover button[value="down"] {
     grid-area: down;
+  }
+  /* On a phone, the name keeps its room: tighter gaps, a smaller square, words cut by hyphens only */
+  @media (max-width: 30rem) {
+    .item.ordering.sortable {
+      gap: 0.4rem 0.5rem;
+      padding: 0.5rem 0.6rem;
+    }
+    .item.ordering :global(.thumb.small) {
+      width: 2.75rem;
+      height: 2.75rem;
+    }
+    .item.ordering h3 {
+      font-size: 1.05rem;
+      overflow-wrap: break-word;
+      hyphens: auto;
+    }
   }
   .items {
     list-style: none;
@@ -1441,7 +1464,7 @@
     visibility: hidden;
   }
   .tiles.order {
-    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(6.25rem, 1fr));
     margin-bottom: 0.25rem;
   }
   h4 {

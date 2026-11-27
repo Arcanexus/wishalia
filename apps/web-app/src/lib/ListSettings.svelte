@@ -101,7 +101,12 @@
 
       <fieldset>
         <legend>
-          {m.visibility}<HelpTip about={m.visibilityTip.about} text={m.visibilityTip.text} {help} topic="share" />
+          {m.visibility}<HelpTip
+            about={m.visibilityTip.about}
+            text={m.visibilityTip.text}
+            {help}
+            topic="share"
+          />
         </legend>
         <label class="choice">
           <input type="radio" name="visibility" value="private" checked={list.visibility === "private"} />

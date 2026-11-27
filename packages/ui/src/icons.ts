@@ -81,7 +81,11 @@ export const ICONS = {
     "M12 17h.01",
   ],
   /** More actions: three dots, the « ⋯ » of a card. */
-  more: ["M5 11a1 1 0 1 0 0 2 1 1 0 1 0 0-2z", "M12 11a1 1 0 1 0 0 2 1 1 0 1 0 0-2z", "M19 11a1 1 0 1 0 0 2 1 1 0 1 0 0-2z"],
+  more: [
+    "M5 11a1 1 0 1 0 0 2 1 1 0 1 0 0-2z",
+    "M12 11a1 1 0 1 0 0 2 1 1 0 1 0 0-2z",
+    "M19 11a1 1 0 1 0 0 2 1 1 0 1 0 0-2z",
+  ],
   /** Put the wishes in order: arrows to the four sides. */
   move: ["M12 3v18M3 12h18", "M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"],
   search: ["M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z", "M20 20l-4-4"],

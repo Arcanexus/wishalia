@@ -12,7 +12,7 @@ import {
   writeUnfolded,
 } from "#lib/server/gifts.ts";
 import type { MyGift, PublicView } from "@wishalia/ui/public/types.ts";
-import { sortForGuests } from "@wishalia/ui/public/view.ts";
+import { MAX_GIVEN_TOGETHER, sortForGuests } from "@wishalia/ui/public/view.ts";
 
 import type { Actions, PageServerLoad } from "./$types";
 
@@ -88,12 +88,18 @@ export const actions: Actions = {
     return { unfolded: true };
   },
 
-  /** A reservation or a pledge, through the link: the API checks what is left and the secrets. */
+  /**
+   * A reservation or a pledge, through the link: the API checks what is left and the secrets. A
+   * series' volumes may come together (`seriesId` and one `itemId` each): each is bought whole, in
+   * turn, and a refusal stops there, the ones before it kept.
+   */
   give: async (event) => {
     const { token } = event.params;
     if (!isWellFormedToken(token)) error(404, "link_not_found");
     const form = await event.request.formData();
-    const itemId = String(form.get("itemId") ?? "");
+    const itemIds = form.getAll("itemId").map(String);
+    const seriesId = String(form.get("seriesId") ?? "");
+    const itemId = seriesId || (itemIds[0] ?? "");
     const eventId = String(form.get("eventId") ?? "");
     // A gift with a price: given whole, or shared by amounts (« part »)
     const way = String(form.get("way") ?? "");
@@ -105,7 +111,16 @@ export const actions: Actions = {
     const anonymous = form.get("anonymous") === "on";
     const values = { itemId, way, amount: typed, units: unitsText, guestName, message, anonymous };
 
-    if (!UUID.test(itemId) || (eventId && !UUID.test(eventId))) {
+    const together = seriesId !== "";
+    if (
+      itemIds.length === 0 ||
+      itemIds.length > MAX_GIVEN_TOGETHER ||
+      (!together && itemIds.length > 1) ||
+      (together && (!UUID.test(seriesId) || way !== "whole")) ||
+      !itemIds.every((id) => UUID.test(id)) ||
+      new Set(itemIds).size !== itemIds.length ||
+      (eventId && !UUID.test(eventId))
+    ) {
       return fail(400, { give: { ...values, error: "invalid_request" } });
     }
     if (guestName.length > 60 || message.length > 500) {
@@ -128,54 +143,56 @@ export const actions: Actions = {
       }
     }
 
-    const response = await publicFetch(event, token, `/public/items/${itemId}/contributions`, {
-      method: "POST",
-      body: {
-        ...(eventId ? { eventId } : {}),
-        ...(amountCents !== undefined ? { amountCents } : {}),
-        ...(units !== undefined ? { units } : {}),
-        ...(guestName ? { guestName } : {}),
-        ...(message ? { message } : {}),
-        anonymous,
-      },
-    });
-    if (response.status === 404 && (await codeOf(response.clone())) === "link_not_found") {
-      error(404, "link_not_found");
-    }
-    if (!response.ok) {
-      const code = await codeOf(response);
-      // Without an account, the API needs a name
-      const named = code === "invalid_request" && !guestName ? "name_required" : code;
-      return fail(response.status, { give: { ...values, error: named } });
-    }
-    const created = (await response.json()) as {
-      contribution: {
-        id: string;
-        itemId: string;
-        eventId: string | null;
-        amountCents: number | null;
-        units: number | null;
-      };
-      withdrawKey: string;
-    };
     const secure = event.url.protocol === "https:";
-    const { contribution } = created;
-    writeGifts(
-      event.cookies,
-      token,
-      [
-        ...readGifts(event.cookies),
-        {
-          id: contribution.id,
-          itemId: contribution.itemId,
-          eventId: contribution.eventId,
-          amountCents: contribution.amountCents,
-          units: contribution.units,
-          key: created.withdrawKey,
+    for (const id of itemIds) {
+      const response = await publicFetch(event, token, `/public/items/${id}/contributions`, {
+        method: "POST",
+        body: {
+          ...(eventId ? { eventId } : {}),
+          ...(amountCents !== undefined ? { amountCents } : {}),
+          ...(units !== undefined ? { units } : {}),
+          ...(guestName ? { guestName } : {}),
+          ...(message ? { message } : {}),
+          anonymous,
         },
-      ],
-      secure,
-    );
+      });
+      if (response.status === 404 && (await codeOf(response.clone())) === "link_not_found") {
+        error(404, "link_not_found");
+      }
+      if (!response.ok) {
+        const code = await codeOf(response);
+        // Without an account, the API needs a name
+        const named = code === "invalid_request" && !guestName ? "name_required" : code;
+        return fail(response.status, { give: { ...values, error: named } });
+      }
+      const created = (await response.json()) as {
+        contribution: {
+          id: string;
+          itemId: string;
+          eventId: string | null;
+          amountCents: number | null;
+          units: number | null;
+        };
+        withdrawKey: string;
+      };
+      const { contribution } = created;
+      writeGifts(
+        event.cookies,
+        token,
+        [
+          ...readGifts(event.cookies),
+          {
+            id: contribution.id,
+            itemId: contribution.itemId,
+            eventId: contribution.eventId,
+            amountCents: contribution.amountCents,
+            units: contribution.units,
+            key: created.withdrawKey,
+          },
+        ],
+        secure,
+      );
+    }
     if (guestName) writeGuestName(event.cookies, guestName, secure);
     return { given: { itemId } };
   },

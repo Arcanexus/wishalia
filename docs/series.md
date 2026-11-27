@@ -37,6 +37,7 @@ it comes back whole when the volume leaves the series.
 
 | Icon                           | What it does                                                                                                            |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| Three small rings (series)     | The series' menu: « Ranger des envies dans la série », « Défaire la série », archive and delete.                        |
 | Pencil (on the series)         | The series' name, its notes for the family (the edition, the publisher), its list: a series moves with all its volumes. |
 | Lines with an arrow            | « Ranger des envies dans la série ».                                                                                    |
 | Box                            | Archive the series: it and its volumes leave the guests' view, until it is restored.                                    |
@@ -47,6 +48,12 @@ it comes back whole when the volume leaves the series.
 | Arrow leaving a box (volume)   | « Sortir de la série »: the volume becomes a wish of its own, first in the list.                                        |
 
 ![A series on a phone, in dark mode](images/app-series-dark.png)
+
+The volumes are **tiles**, as many to a row as fit: the volume's square, its short name (« T30 »),
+its price, and two icons, its pencil and its menu « ⋯ » (its site, received or reopen, read the link
+again, take it out of the series, delete it). The volume being edited opens under the tiles. In
+« Réorganiser », the series' row shows its volumes as small tiles with « ‹ » and « › » to move one
+place, shown at once and saved in the background.
 
 The volumes fold under « 5 tomes »: a chevron unfolds them, and they stay open while one of them is
 being edited. The field that adds a volume stays under the card, folded or not; adding a volume
@@ -66,11 +73,17 @@ counts the volumes one by one, never the series.
 
 The guests see one card too: the series' name and notes, « Série », and one box per volume, filled
 once it is given, like a gift wanted in several copies (a screen reader hears « 3 tomes sur 5
-encore à offrir »; past 24 volumes, these words show instead). The volumes fold under « 5 tomes »;
-unfolded, every volume has its square, its
-price, its link, its badge (to give, partly given, given, received) and the same « Acheter /
-Participer » button as every wish: a volume with a price can be bought whole or shared, like any
-gift (see [Public view](public-view.md#giving)). The series itself takes no gift.
+encore à offrir »; past 24 volumes, these words show instead). The volumes show as **tiles** under
+« 5 tomes », open for a series of ten volumes or fewer, folded beyond: every tile has its square,
+its short name, its price, its badge (to give, partly given, given, received) and « Offrir », the
+same form as every wish: a volume with a price can be bought whole or shared, like any gift (see
+[Public view](public-view.md#giving)). The tile whose form is open takes the whole row. The series
+itself takes no gift.
+
+Under the tiles, **« Offrir les 3 tomes restants · 26,85 € »** buys every volume still free at once
+(from two to twenty: a guest without an account keeps the keys of their last thirty gifts on the
+device), each one whole, with the same occasion, name and word; a volume taken meanwhile stops it
+there, the ones before it kept, and the form says why.
 
 A series is complete once every volume is: it then goes down the list, as a complete gift does. In
 the owner's own view and in the preview, nothing says who gave what (anti-spoil, see

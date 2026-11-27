@@ -51,7 +51,13 @@ describe("the share page", () => {
       form: { target: `event:${EVENT}`, audience: " Mamie ", expires: "2027-01-31" },
     });
     expect((await run(actions.create, event)).value).toEqual({
-      created: { id: LINK, audience: "Mamie", url: "https://wishalia.test/s/t" },
+      created: {
+        id: LINK,
+        audience: "Mamie",
+        url: "https://wishalia.test/s/t",
+        // The QR code of the address, drawn on the server (#lib/server/qr.ts)
+        qr: { size: 29, path: expect.stringMatching(/^M2 2h1v1h-1z/) },
+      },
     });
     expect(api.calls[0]?.body).toEqual({
       scope: "event",

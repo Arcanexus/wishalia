@@ -41,8 +41,10 @@ server, not hidden in the page.
 > screens (signing in, passkeys, lists with their icon or image, quick add, editing, reordering, series of volumes
 > (one card for a manga or book series, each volume given on its own), archiving and deleting lists
 > and items, a list's preview, events, sharing, settings, all saved as they change, with icons and
-> header menus), and the family sees a shared list or event in the public view, where
-> they reserve a gift, share any gift by giving part of it (up to its price, when it has one), chip in to a pool, and withdraw. The public host's home page welcomes visitors, signs them in,
+> header menus, a help menu, a text size, a « ⋯ » menu on the cards, a reorder mode, a search, a
+> barcode scan and a QR code for each link), and the family sees a shared list or event in the public view, where
+> they reserve a gift, share any gift by giving part of it (up to its price, when it has one), chip in to a pool, and withdraw, with chips to keep what is still to give, one occasion, the cheapest first or their
+> own gifts. The public host's home page welcomes visitors, signs them in,
 > and finds the lists their owners made public. The worker completes the items added with a link (title,
 > price, images; Amazon included), each step showing up live on the owner's and the guests' pages with no reload, and reads them again on demand, keeping what the owner typed, and the owner can choose, send and frame the image of each item (on a volume or in S3, through imgproxy);
 > a click opens an item's images big, to go through them with the arrows, the keyboard or a swipe.
@@ -54,23 +56,23 @@ server, not hidden in the page.
   <img src="docs/images/app-lists.png" alt="The management app: a greeting, the quick add field and two lists" width="640">
 </p>
 
-|                          |                                                                          |
-| ------------------------ | ------------------------------------------------------------------------ |
-| 🤫 **Nothing spoiled**   | No amount, name or progress shown to the owner, link previews included.  |
-| 🎁 **Gifts together**    | Several contributions per item, across events, overshoot allowed.        |
-| 🔎 **Private or public** | Private lists by link only; public ones found from the home page.        |
-| 📅 **Lists and events**  | Durable lists, recurring events, recurring wishes.                       |
-| 📚 **Series**            | The volumes of a series on one card, each reserved on its own.           |
-| 🎄 **A face per list**   | Sixteen icons in the theme's colours, or your own image.                 |
-| 🗃️ **Tidy up**           | Archive a list or a wish and restore it, or delete it for good, at once. |
-| 👵 **For every age**     | Large touch targets, no password, an item added in under five seconds.   |
-| 💾 **Nothing to save**   | Every setting is saved as it changes: no « Save » button to forget.      |
-| 📱 **On the phone**      | Installs like an app; « Partager » from any shop adds a wish.            |
-| 📥 **Bring your lists**  | Import from Wishlistr, a CSV or JSON export, or a pasted list.           |
-| 🌍 **Your language**     | French and English, chosen by the browser or in the settings.            |
-| ⚡ **Light**             | Little JavaScript, quick on a modest phone.                              |
-| 🏠 **Self-hosted**       | Four images, one Helm chart (PostgreSQL included, or yours), a REST API. |
-| 📈 **Observable**        | Prometheus metrics and a ServiceMonitor, with nothing that spoils.       |
+|                          |                                                                              |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| 🤫 **Nothing spoiled**   | No amount, name or progress shown to the owner, link previews included.      |
+| 🎁 **Gifts together**    | Several contributions per item, across events, overshoot allowed.            |
+| 🔎 **Private or public** | Private lists by link only; public ones found from the home page.            |
+| 📅 **Lists and events**  | Durable lists, recurring events, recurring wishes.                           |
+| 📚 **Series**            | The volumes of a series on one card, each reserved on its own.               |
+| 🎄 **A face per list**   | Sixteen icons in the theme's colours, or your own image.                     |
+| 🗃️ **Tidy up**           | Archive a list or a wish and restore it, or delete it for good, at once.     |
+| 👵 **For every age**     | Large touch targets, bigger text on demand, help on every page, no password. |
+| 💾 **Nothing to save**   | Every setting is saved as it changes: no « Save » button to forget.          |
+| 📱 **On the phone**      | Installs like an app; « Partager » from any shop adds a wish.                |
+| 📥 **Bring your lists**  | Import from Wishlistr, a CSV or JSON export, or a pasted list.               |
+| 🌍 **Your language**     | French and English, chosen by the browser or in the settings.                |
+| ⚡ **Light**             | Little JavaScript, quick on a modest phone.                                  |
+| 🏠 **Self-hosted**       | Four images, one Helm chart (PostgreSQL included, or yours), a REST API.     |
+| 📈 **Observable**        | Prometheus metrics and a ServiceMonitor, with nothing that spoils.           |
 
 ## Quick start
 

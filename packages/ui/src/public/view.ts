@@ -299,3 +299,80 @@ export function initials(name: string | null, locale: Locale = "fr"): string {
       .join("") || "?"
   );
 }
+
+/** The chips above a guest's cards (docs/public-view.md): each one narrows or sorts what shows. */
+export interface CardFilter {
+  /** Only what still waits for a gift. */
+  toGive: boolean;
+  /** Only the wishes for this occasion (a list link: the open events). */
+  eventId: string | null;
+  /** The cheapest first; those without a price last. */
+  byPrice: boolean;
+  /** Only the wishes the person gives to. */
+  mine: boolean;
+}
+
+export const NO_FILTER: CardFilter = { toGive: false, eventId: null, byPrice: false, mine: false };
+
+/** Whether a card still waits for a gift: a series, while one of its volumes does. */
+export function stillToGive(item: PublicItem, volumes: readonly PublicItem[] = []): boolean {
+  if (item.kind === "series") {
+    const left = seriesLeft(volumes);
+    return left ? left.left > 0 : volumes.some((volume) => volume.status === "open");
+  }
+  return item.status === "open" && item.funding?.state !== "complete";
+}
+
+/** What a card costs, to sort by: a series, what its volumes still to give cost together. */
+export function cardPrice(item: PublicItem, volumes: readonly PublicItem[] = []): number | null {
+  if (item.kind === "series") {
+    const prices = volumes.filter((volume) => stillToGive(volume)).flatMap((volume) => priceOf(volume) ?? []);
+    return prices.length > 0 ? prices.reduce((a, b) => a + b, 0) : null;
+  }
+  return item.kind === "pool" ? (item.targetCents ?? null) : priceOf(item);
+}
+
+/**
+ * The cards a guest asked to see, in the order asked. Never called for the owner: where gifts stand
+ * is theirs to ignore. `mine` holds the ids of the items the person gives to.
+ */
+export function filterCards(
+  cards: readonly PublicItem[],
+  volumes: ReadonlyMap<string, PublicItem[]>,
+  filter: CardFilter,
+  mine: ReadonlySet<string>,
+): PublicItem[] {
+  const inside = (item: PublicItem) => volumes.get(item.id) ?? [];
+  const kept = cards.filter((item) => {
+    const all = [item, ...inside(item)];
+    if (filter.toGive && !stillToGive(item, inside(item))) return false;
+    if (filter.eventId && !all.some((one) => one.eventIds.includes(filter.eventId ?? ""))) return false;
+    return !(filter.mine && !all.some((one) => mine.has(one.id)));
+  });
+  if (!filter.byPrice) return kept;
+  const price = (item: PublicItem) => cardPrice(item, inside(item)) ?? Number.POSITIVE_INFINITY;
+  return kept
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => price(a.item) - price(b.item) || a.index - b.index)
+    .map(({ item }) => item);
+}
+
+/**
+ * The most volumes given in one go: this device keeps the keys to take back the last 30 gifts of a
+ * guest without an account, so a bigger batch would lose some.
+ */
+export const MAX_GIVEN_TOGETHER = 20;
+
+/**
+ * A series' volumes a guest can buy all at once (« Offrir les N tomes restants »): still free,
+ * never started by amounts. Empty unless there are at least two, and not too many.
+ */
+export function givableTogether(
+  volumes: readonly PublicItem[],
+  view: { viewer: string; event: PublicEvent | null },
+): PublicItem[] {
+  const free = volumes.filter(
+    (volume) => canGive(volume, view) && volume.kind === "unique" && !volume.repeatable && !sharing(volume),
+  );
+  return free.length >= 2 && free.length <= MAX_GIVEN_TOGETHER ? free : [];
+}

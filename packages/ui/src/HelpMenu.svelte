@@ -30,14 +30,21 @@
   <p class="menu-heading">{m.label}</p>
   <a class="menu-item" href={help} target="_blank" rel="noopener noreferrer">
     <Icon name="help" />{m.guide}<span class="mark"><Icon name="external" size="1.2rem" /></span><span
-      class="visually-hidden">{m.newTab}</span
+      class="visually-hidden"
     >
+      {m.newTab}
+    </span>
   </a>
   {#if topics.length > 0}
     <hr class="menu-separator" />
     <p class="menu-heading">{m.here}</p>
     {#each topics as topic (topic)}
-      <a class="menu-item" href={topicUrl(help, m.topics[topic].heading)} target="_blank" rel="noopener noreferrer">
+      <a
+        class="menu-item"
+        href={topicUrl(help, m.topics[topic].heading)}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         <Icon name={ICONS[topic]} />{m.topics[topic].label}<span class="visually-hidden">{m.newTab}</span>
       </a>
     {/each}

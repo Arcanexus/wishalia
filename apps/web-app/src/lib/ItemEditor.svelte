@@ -153,8 +153,10 @@
           aria-label={m.fewer}
           title={m.fewer}
           aria-controls="{id}-nombre"
-          onclick={() => step(-1)}><Icon name="minus" /></button
+          onclick={() => step(-1)}
         >
+          <Icon name="minus" />
+        </button>
         <input
           bind:this={count}
           id="{id}-nombre"
@@ -170,8 +172,10 @@
           aria-label={m.more}
           title={m.more}
           aria-controls="{id}-nombre"
-          onclick={() => step(1)}><Icon name="plus" /></button
+          onclick={() => step(1)}
         >
+          <Icon name="plus" />
+        </button>
       </div>
     </div>
     <div class="for-pool">
