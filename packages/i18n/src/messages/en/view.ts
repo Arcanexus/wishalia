@@ -68,6 +68,7 @@ export const view: ViewMessages = {
         : left === total
           ? `${total === 1 ? "The volume is" : `The ${total} volumes are`} waiting for a gift.`
           : `${left} volume${left > 1 ? "s" : ""} of ${total} still to give.`,
+    volume: (n) => `Vol. ${n}`,
     listLabel: (title) => `The volumes of “${title}”`,
   },
   wanted: (n) => `${n} wanted`,

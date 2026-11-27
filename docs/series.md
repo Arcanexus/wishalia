@@ -49,7 +49,8 @@ it comes back whole when the volume leaves the series.
 
 ![A series on a phone, in dark mode](images/app-series-dark.png)
 
-The volumes are **tiles**, as many to a row as fit: the volume's square, its short name (« T30 »),
+The volumes are **tiles**, as many to a row as fit: the volume's square, its short name (« Tome 30 »,
+from the number in its title),
 its price, and two icons, its pencil and its menu « ⋯ » (its site, received or reopen, read the link
 again, take it out of the series, delete it). The volume being edited opens under the tiles. In
 « Réorganiser », the series' row shows its volumes as small tiles with « ‹ » and « › » to move one
@@ -75,7 +76,9 @@ The guests see one card too: the series' name and notes, « Série », and one b
 once it is given, like a gift wanted in several copies (a screen reader hears « 3 tomes sur 5
 encore à offrir »; past 24 volumes, these words show instead). The volumes show as **tiles** under
 « 5 tomes », open for a series of ten volumes or fewer, folded beyond: every tile has its square,
-its short name, its price, its badge (to give, partly given, given, received) and « Offrir », the
+its short name (« Tome 33 », from the number in its title, whatever else the title says; its whole
+title on hover), its price and its badge on the line under it, the shop's name with the arrow that
+leaves (« fnac.com »), its badge (to give, partly given, given, received) and « Offrir », the
 same form as every wish: a volume with a price can be bought whole or shared, like any gift (see
 [Public view](public-view.md#giving)). The tile whose form is open takes the whole row. The series
 itself takes no gift.

@@ -82,6 +82,8 @@ export const view = {
           ? `${total === 1 ? "Le tome attend" : `Les ${total} tomes attendent`} un cadeau.`
           : `${left} tome${left > 1 ? "s" : ""} sur ${total} encore à offrir.`,
     listLabel: (title: string) => `Les tomes de « ${title} »`,
+    /** A volume's short name on its tile, from the number in its title. */
+    volume: (n: string) => `Tome ${n}`,
   },
   wanted: (n: number) => `${n} souhaités`,
   everyOccasion: "À chaque occasion",

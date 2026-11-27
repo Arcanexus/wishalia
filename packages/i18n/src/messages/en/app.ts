@@ -319,6 +319,7 @@ export const app: AppMessages = {
       "The list and all its wishes go, with their images, and its share links no longer open. This is for good. If someone in your family meant to give something, their share link tells them.",
   },
   series: {
+    volume: (n) => `Vol. ${n}`,
     kind: "Series",
     volumes: (n) => (n === 0 ? "No volume" : `${n} volume${n > 1 ? "s" : ""}`),
     total: (amount) => `${amount} in all`,

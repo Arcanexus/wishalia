@@ -81,6 +81,20 @@ export function volumeLabel(title: string, seriesTitle: string): string {
   return label || title;
 }
 
+/** A volume's number in its title: « T30 », « Tome 33 », « Vol. 2 », « n°4 », « #5 », or a lone « 30 » at its end. */
+const NUMBERED = /(?:^|[^\p{L}\d])(?:t|tome|vol\.?|volume|n°|no\.?|#)\s*(\d{1,4})(?!\d)/giu;
+const TRAILING_NUMBER = /(?:^|\s)(\d{1,4})\s*$/u;
+
+/**
+ * The number of a volume, read from its title, for a short name on its tile (« Tome 33 ») when
+ * its title says more than the series' name and its number (« Dragon Ball - Le Défi Tome 33 :
+ * Dragon Ball perfect edition - Tome 33 »). The last one written wins; null when there is none.
+ */
+export function volumeNumber(title: string): string | null {
+  const found = [...title.matchAll(NUMBERED)].at(-1)?.[1] ?? TRAILING_NUMBER.exec(title)?.[1] ?? null;
+  return found === null ? null : String(Number(found));
+}
+
 const collator = new Intl.Collator("fr", { numeric: true, sensitivity: "base" });
 
 /** Volumes in their reading order, by their names: « T2 » before « T10 ». A stable sort. */

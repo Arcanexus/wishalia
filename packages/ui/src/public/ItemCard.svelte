@@ -76,7 +76,9 @@
   {/if}
   <div class="content">
     <div class="head">
-      {#if nested}<h3>{label}</h3>{:else}<h2>{item.title}</h2>{/if}
+      {#if nested}<h3 title={label === item.title ? undefined : item.title}>{label}</h3>{:else}<h2>
+          {item.title}
+        </h2>{/if}
       <span class="aside">
         {#if item.kind === "pool" && item.targetCents}
           <span class="price">{i18n.fmt.money(item.targetCents)}</span>
@@ -137,10 +139,23 @@
     {/if}
     {#if webLink(item.url)}
       {@const link = webLink(item.url) ?? ""}
-      <p>
-        <a href={link} rel="noopener noreferrer nofollow external" target="_blank">
-          {m.seeOn(site(link))}<span class="visually-hidden">{m.newTab}</span>
-        </a>
+      <p class:site={tile}>
+        {#if tile}
+          <!-- A tile is narrow: the site's name alone, with the arrow that leaves; the words for a screen reader -->
+          <a
+            href={link}
+            rel="noopener noreferrer nofollow external"
+            target="_blank"
+            aria-label={`${m.seeOn(site(link))}${m.newTab}`}
+            title={m.seeOn(site(link))}
+          >
+            <Icon name="external" size="1rem" /><span>{site(link)}</span>
+          </a>
+        {:else}
+          <a href={link} rel="noopener noreferrer nofollow external" target="_blank">
+            {m.seeOn(site(link))}<span class="visually-hidden">{m.newTab}</span>
+          </a>
+        {/if}
       </p>
     {/if}
     {#if scope === "list" && item.eventIds.length > 0 && !nested}
@@ -324,21 +339,61 @@
   .nested h3 {
     font-size: 1.15rem;
   }
-  /* A tile of a series' grid: the square on top, the words under it */
+  /* A tile of a series' grid: the square on top, the words under it, the button at the foot */
   .nested.tile {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    align-items: stretch;
     gap: 0.5rem;
     margin: 0;
     padding: 0.6rem;
     border: 1px solid var(--border);
     border-radius: 12px;
   }
+  .tile .content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  /* The name on its own line, whole words only; the price and the badge under it */
   .tile .head {
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: 0.25rem;
   }
   .tile h3 {
     font-size: 1.05rem;
     line-height: 1.5rem;
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: auto;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+  .tile .aside {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .site a {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-height: 2.75rem;
+    min-width: 0;
+  }
+  .site span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* What a guest can do goes to the foot of the tile, at the same height from tile to tile */
+  .tile .content > :global(:last-child) {
+    margin-top: auto;
+  }
+  .tile .content > :global(.give) {
+    padding-top: 0.25rem;
   }
   /* Its form open, it takes the whole row and its square goes back beside the words */
   .nested.tile:has(:global(details[open])) {

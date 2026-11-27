@@ -2,7 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { refuseContribution } from "./sharing.js";
 import { progress } from "./funding.js";
-import { inReadingOrder, refuseVolume, seriesPriceCents, seriesTitleOf, volumeLabel } from "./series.js";
+import {
+  inReadingOrder,
+  refuseVolume,
+  seriesPriceCents,
+  seriesTitleOf,
+  volumeLabel,
+  volumeNumber,
+} from "./series.js";
 
 const dragonBall = [30, 31, 32, 33, 34].map((n) => `Dragon Ball Perfect Edition T${n}`);
 
@@ -100,5 +107,23 @@ describe("a series itself", () => {
   it("takes no contribution and is never funded", () => {
     expect(refuseContribution(series, [], { eventId: null, units: 1 })).toBe("series_by_volume");
     expect(progress(series, [])).toBe(0);
+  });
+});
+
+describe("volumeNumber", () => {
+  it("reads the volume's number, the last one written", () => {
+    expect(volumeNumber("Dragon Ball - Le Défi Tome 33 : Dragon Ball perfect edition - Tome 33")).toBe("33");
+    expect(volumeNumber("Tome 31: Perfect Edition")).toBe("31");
+    expect(volumeNumber("Dragon Ball Perfect Edition T30")).toBe("30");
+    expect(volumeNumber("One Piece Vol. 2")).toBe("2");
+    expect(volumeNumber("Astérix n°04")).toBe("4");
+    expect(volumeNumber("Naruto #5 édition collector")).toBe("5");
+    expect(volumeNumber("Les Schtroumpfs 12")).toBe("12");
+  });
+
+  it("finds none in a title without a number, nor in a word that only looks like one", () => {
+    expect(volumeNumber("Livre de cuisine")).toBeNull();
+    expect(volumeNumber("Atome 3000 pièces neuves")).toBeNull();
+    expect(volumeNumber("")).toBeNull();
   });
 });
