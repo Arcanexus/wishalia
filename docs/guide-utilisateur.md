@@ -85,8 +85,9 @@ tome a son prix, son lien, son image, et vos proches les offrent un par un.
   envies dans la série » pour y mettre les envies qui en font partie.
 - Pour ajouter un tome : le champ en bas de la carte (un lien ou quelques mots). La carte reste
   ouverte et montre le nouveau tome.
-- Les tomes s'affichent en **vignettes**, côte à côte ; le chevron les replie sous « 5 tomes ».
-  Le crayon d'une vignette modifie le tome, son menu « ⋯ » le sort de la série ou le supprime.
+- Les tomes s'affichent en **liste**, une ligne par tome ; le chevron les replie sous « 5 tomes ».
+  Le crayon d'une ligne modifie le tome, son menu « ⋯ » change ses images, le sort de la série ou le
+  supprime.
 - L'image de la série se choisit parmi **toutes les images de ses tomes**, ou parmi une photo que
   vous envoyez.
 

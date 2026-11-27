@@ -29,7 +29,7 @@
     small?: boolean;
     /** The square of a volume inside its series' card (docs/series.md), with its pencil. */
     volume?: boolean;
-    /** The square of a volume's tile: as wide as its tile. */
+    /** The small square of a volume's line in its series. */
     tile?: boolean;
   } = $props();
 
@@ -92,9 +92,14 @@
     }
   }
   .thumb.tile {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1;
+    width: 3rem;
+    height: 3rem;
+  }
+  @media (max-width: 30rem) {
+    .thumb.tile {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
   }
   .thumb.small {
     width: 3.5rem;

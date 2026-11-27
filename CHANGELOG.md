@@ -22,8 +22,10 @@ All notable changes to this project are documented here. The format follows
   camera for its own pages (`camera=(self)`).
 - Sharing: « Envoyer… » opens the phone's share menu, and every new link has a QR code, drawn on
   the server, to print or save as an SVG image.
-- Series: the volumes show as tiles, for the owner (pencil and « ⋯ » menu on each, small tiles with
-  « ‹ » « › » in the reorder mode) and for the guests (« Offrir » on each tile). Guests can buy every
+- Series: the volumes show as a compact list, one line per volume (small image, « Tome 33 », shop,
+  price), for the owner (pencil and « ⋯ » menu on each line, « ˄ » « ˅ » in the reorder mode) and for
+  the guests (« Offrir » at the end of the line, or « ✓ Jeanne » once given; « 2 sur 5 offerts » and
+  « 26,85 € restants » on the series' card). Guests can buy every
   free volume at once: « Offrir les 3 tomes restants · 26,85 € » (two to twenty volumes).
 - Several copies: « × 4 » with the copies' icon on the guests' cards, the turning arrows beside
   « À chaque occasion », and « − » « + » around the number, in the owner's editor and in the
@@ -48,9 +50,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
-- A series' tiles no longer cut their names letter by letter: each volume is named « Tome 33 » from
-  the number in its title (its whole title on hover), on its own line, with the price and the badge
-  under it, the shop's name alone (« fnac.com ») and the button at the foot of every tile.
+- A series' volumes no longer cut their names letter by letter: each volume is named « Tome 33 » from
+  the number in its title (its whole title on hover), and the shop shows by its name alone
+  (« fnac.com »).
 - Reordering a list no longer jumps back: moves made quickly in a row (arrows tapped several times,
   a second drag while the first is saving) go one after the other with the latest order, and the
   page keeps showing that order until it is saved. The arrows send the order on screen, so two taps

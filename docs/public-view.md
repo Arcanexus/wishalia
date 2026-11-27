@@ -128,7 +128,7 @@ stand is not theirs to see.
 
 A series of volumes (a manga, a comic, a collection) is one card: its name, « Série », one box per
 volume filled once it is given (as for several copies), and its volumes folded under « 5 tomes »,
-each a tile with its own square, price, badge and « Offrir » button. Each volume is given on its
+one line each with its small image, price and « Offrir » button (or who gives it). Each volume is given on its
 own, like any gift, or all those left at once with « Offrir les N tomes restants » (see
 [Series](series.md#for-the-guests)).
 
