@@ -892,7 +892,7 @@
     </form>
   {/if}
   <!-- Folded by default; open once unfolded, while one of its volumes is being edited, and after
-       a volume is added to it, to show it. The volumes are tiles, the open ones first -->
+       a volume is added to it, to show it. The volumes are lines, the open ones first -->
   {#if volumes.length === 0}
     <p class="muted wide">{s.empty}</p>
   {:else}
@@ -954,7 +954,8 @@
   {@const isOpen = volume.status === "open"}
   {@const label = tileName(volume, series)}
   <li class="tile" class:done={!isOpen} data-id={volume.id}>
-    <ItemThumb item={volume} listId={data.list.id} images={images && isOpen} tile />
+    <!-- Too small for a badge: its images are changed from its ⋯ menu -->
+    <ItemThumb item={volume} listId={data.list.id} images={false} tile />
     <h4 title={label === volume.title ? undefined : volume.title}>{label}</h4>
     <p class="muted meta tile-meta">
       {#if !isOpen}
@@ -995,6 +996,16 @@
         {#if link}
           <a class="menu-item" href={link} rel="noopener noreferrer external" target="_blank">
             <Icon name="external" />{host(link)}<span class="visually-hidden">{m.newTab}</span>
+          </a>
+        {/if}
+        {#if isOpen && images}
+          {@const words = volume.image ? m.imageEdit : m.imageAdd}
+          <a
+            class="menu-item"
+            href={resolve("/(app)/listes/[id]/image/[itemId]", { id: data.list.id, itemId: volume.id })}
+            aria-label={words.label(volume.title)}
+          >
+            <Icon name={volume.image ? "image" : "plus"} />{words.tip}
           </a>
         {/if}
         {#if isOpen}
@@ -1045,7 +1056,7 @@
   </li>
 {/snippet}
 
-<!-- Reordering a series: its open volumes in a row, each moved one place with its arrows -->
+<!-- Reordering a series: its open volumes one per line, each moved one place with its arrows -->
 {#snippet volumeOrder(series: Item)}
   {@const wanted = plannedVolumes(
     (volumesBy.get(series.id) ?? []).filter((volume) => volume.status === "open"),
@@ -1068,7 +1079,7 @@
               aria-label={s.moveUp(label)}
               title={s.moveUp(label)}
             >
-              <Icon name="chevronLeft" />
+              <Icon name="up" />
             </button>
             <button
               type="submit"
@@ -1079,7 +1090,7 @@
               aria-label={s.moveDown(label)}
               title={s.moveDown(label)}
             >
-              <Icon name="chevronRight" />
+              <Icon name="down" />
             </button>
           </form>
         </li>
@@ -1429,48 +1440,65 @@
       transition: none;
     }
   }
-  /* A series' volumes: tiles side by side, their square image, their name, their icons */
+  /* A series' volumes, one line each as for the guests (docs/series.md): the small image, the name,
+     the price, the icons; what only takes room when it is there (reading, gifts) goes under the name */
   .tiles {
     list-style: none;
     margin: 0.5rem 0 0;
     padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
-    gap: 0.75rem;
-  }
-  .tile {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    min-width: 0;
-    padding: 0.6rem;
     border: 1px solid var(--border);
     border-radius: 12px;
-    background: var(--surface);
+  }
+  .tiles > li + li {
+    border-top: 1px solid var(--border);
+  }
+  .tile {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    min-width: 0;
+    min-height: 4rem;
+    padding: 0.5rem 0.75rem;
   }
   .tile.done {
     opacity: 0.75;
   }
-  .tile h4 {
-    font-size: 1rem;
-  }
-  .tile-meta {
+  .tile > :global(*) {
+    grid-column: 2 / -1;
     margin: 0;
-    min-height: 1.5em;
+  }
+  .tile > :global(.thumb) {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: start;
+  }
+  .tile > h4 {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 1.05rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tile > .tile-meta {
+    grid-column: 3;
+    grid-row: 1;
+    margin: 0;
+  }
+  .tile > .tile-tools,
+  .tile > .side {
+    grid-column: 4;
+    grid-row: 1;
   }
   .tile .completing {
-    margin: 0;
     font-size: 0.9rem;
   }
   .tile-tools,
   .side {
     display: flex;
     gap: 0.4rem;
-    margin-top: auto;
     justify-content: flex-end;
-  }
-  .side {
-    justify-content: space-between;
   }
   .side button {
     min-height: 44px;
@@ -1483,8 +1511,29 @@
     visibility: hidden;
   }
   .tiles.order {
-    grid-template-columns: repeat(auto-fill, minmax(6.25rem, 1fr));
     margin-bottom: 0.25rem;
+  }
+  /* Reordering: one row, the name beside its arrows */
+  .tiles.order .tile > :global(.thumb),
+  .tiles.order .tile > .side {
+    grid-row: 1;
+  }
+  /* A phone: the price under the name */
+  @media (max-width: 30rem) {
+    .tile {
+      grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+      gap: 0.25rem 0.5rem;
+      padding: 0.4rem 0.5rem;
+    }
+    .tile > .tile-meta {
+      grid-column: 2;
+      grid-row: 2;
+    }
+    .tile > .tile-tools,
+    .tile > .side {
+      grid-column: 3;
+      grid-row: 1 / span 2;
+    }
   }
   h4 {
     font-size: 1.05rem;

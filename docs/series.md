@@ -49,12 +49,12 @@ it comes back whole when the volume leaves the series.
 
 ![A series on a phone, in dark mode](images/app-series-dark.png)
 
-The volumes are **tiles**, as many to a row as fit: the volume's square, its short name (« Tome 30 »,
-from the number in its title),
-its price, and two icons, its pencil and its menu « ⋯ » (its site, received or reopen, read the link
-again, take it out of the series, delete it). The volume being edited opens under the tiles. In
-« Réorganiser », the series' row shows its volumes as small tiles with « ‹ » and « › » to move one
-place, shown at once and saved in the background.
+The volumes are a **list, one line each**: the volume's small image, its short name (« Tome 30 »,
+from the number in its title; its whole title on hover), its price, and two icons, its pencil and its
+menu « ⋯ » (its images, its site, received or reopen, read the link again, take it out of the
+series, delete it). On a phone the price goes under the name. The volume being edited opens under
+the list. In « Réorganiser », the series' row shows its volumes one per line with « ˄ » and « ˅ » to
+move one place, shown at once and saved in the background.
 
 The volumes fold under « 5 tomes »: a chevron unfolds them, and they stay open while one of them is
 being edited. The field that adds a volume stays under the card, folded or not; adding a volume
@@ -72,18 +72,19 @@ counts the volumes one by one, never the series.
 
 ![A series in the guests' view, on a phone in dark mode](images/public-series-dark.png)
 
-The guests see one card too: the series' name and notes, « Série », and one box per volume, filled
-once it is given, like a gift wanted in several copies (a screen reader hears « 3 tomes sur 5
-encore à offrir »; past 24 volumes, these words show instead). The volumes show as **tiles** under
-« 5 tomes », open for a series of ten volumes or fewer, folded beyond: every tile has its square,
-its short name (« Tome 33 », from the number in its title, whatever else the title says; its whole
-title on hover), its price and its badge on the line under it, the shop's name with the arrow that
-leaves (« fnac.com »), its badge (to give, partly given, given, received) and « Offrir », the
-same form as every wish: a volume with a price can be bought whole or shared, like any gift (see
-[Public view](public-view.md#giving)). The tile whose form is open takes the whole row. The series
-itself takes no gift.
+The guests see one card too: the series' name and notes, « Série », what the volumes still to give
+cost together (« 26,85 € restants »), and one box per volume, filled once it is given, like a gift
+wanted in several copies, with « 2 sur 5 offerts » beside them (past 24 volumes, « 3 tomes sur 5
+encore à offrir » shows instead). The volumes are a **compact list** under « 5 tomes », open for a
+series of ten volumes or fewer, folded beyond, one line per volume: its small image, its short name
+(« Tome 33 », from the number in its title, whatever else the title says; its whole title on hover),
+the shop with the arrow that leaves (« fnac.com »; the arrow alone on a phone), its price (under the
+name on a phone), and at the end of the line « Offrir », or a check and who gives it (« ✓ Jeanne »)
+once given. « Offrir » opens the same form as every wish: a volume with a price can be bought whole
+or shared, like any gift (see [Public view](public-view.md#giving)). The open form, my own gift and
+its « Retirer » take the line under the volume's name. The series itself takes no gift.
 
-Under the tiles, **« Offrir les 3 tomes restants · 26,85 € »** buys every volume still free at once
+Under the list, **« Offrir les 3 tomes restants · 26,85 € »** buys every volume still free at once
 (from two to twenty: a guest without an account keeps the keys of their last thirty gifts on the
 device), each one whole, with the same occasion, name and word; a volume taken meanwhile stops it
 there, the ones before it kept, and the form says why.

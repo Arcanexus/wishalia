@@ -84,6 +84,8 @@ export const view = {
     listLabel: (title: string) => `Les tomes de « ${title} »`,
     /** A volume's short name on its tile, from the number in its title. */
     volume: (n: string) => `Tome ${n}`,
+    leftPrice: (amount: string) => `${amount} restants`,
+    given: (given: number, total: number) => `${given} sur ${total} offert${given > 1 ? "s" : ""}`,
   },
   wanted: (n: number) => `${n} souhaités`,
   everyOccasion: "À chaque occasion",

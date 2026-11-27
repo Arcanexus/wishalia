@@ -21,7 +21,6 @@
     events,
     scope,
     label = null,
-    tile = false,
     children,
   }: {
     item: PublicItem;
@@ -29,8 +28,6 @@
     scope: "list" | "event";
     /** A volume inside its series' card (docs/series.md): its short name (« T30 »), a smaller row. */
     label?: string | null;
-    /** A volume drawn as a tile of its series' grid: its square on top, its words under it. */
-    tile?: boolean;
     children?: Snippet;
   } = $props();
   const nested = $derived(label !== null);
@@ -57,7 +54,7 @@
 </script>
 
 <!-- Every card keeps its square, with or without an image: titles and buttons line up from card to card -->
-<li class="item" class:card={!nested} class:nested class:tile class:complete>
+<li class="item" class:card={!nested} class:nested class:complete>
   {#if item.image}
     <!-- The link that opens it big carries the words: the thumbnail itself is decorative -->
     <Gallery title={item.title} image={item.image}>
@@ -139,23 +136,10 @@
     {/if}
     {#if webLink(item.url)}
       {@const link = webLink(item.url) ?? ""}
-      <p class:site={tile}>
-        {#if tile}
-          <!-- A tile is narrow: the site's name alone, with the arrow that leaves; the words for a screen reader -->
-          <a
-            href={link}
-            rel="noopener noreferrer nofollow external"
-            target="_blank"
-            aria-label={`${m.seeOn(site(link))}${m.newTab}`}
-            title={m.seeOn(site(link))}
-          >
-            <Icon name="external" size="1rem" /><span>{site(link)}</span>
-          </a>
-        {:else}
-          <a href={link} rel="noopener noreferrer nofollow external" target="_blank">
-            {m.seeOn(site(link))}<span class="visually-hidden">{m.newTab}</span>
-          </a>
-        {/if}
+      <p>
+        <a href={link} rel="noopener noreferrer nofollow external" target="_blank">
+          {m.seeOn(site(link))}<span class="visually-hidden">{m.newTab}</span>
+        </a>
       </p>
     {/if}
     {#if scope === "list" && item.eventIds.length > 0 && !nested}
@@ -338,70 +322,6 @@
   }
   .nested h3 {
     font-size: 1.15rem;
-  }
-  /* A tile of a series' grid: the square on top, the words under it, the button at the foot */
-  .nested.tile {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-    align-items: stretch;
-    gap: 0.5rem;
-    margin: 0;
-    padding: 0.6rem;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-  }
-  .tile .content {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
-  /* The name on its own line, whole words only; the price and the badge under it */
-  .tile .head {
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  .tile h3 {
-    font-size: 1.05rem;
-    line-height: 1.5rem;
-    overflow-wrap: normal;
-    word-break: normal;
-    hyphens: auto;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    overflow: hidden;
-  }
-  .tile .aside {
-    width: 100%;
-    justify-content: space-between;
-  }
-  .site a {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    min-height: 2.75rem;
-    min-width: 0;
-  }
-  .site span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  /* What a guest can do goes to the foot of the tile, at the same height from tile to tile */
-  .tile .content > :global(:last-child) {
-    margin-top: auto;
-  }
-  .tile .content > :global(.give) {
-    padding-top: 0.25rem;
-  }
-  /* Its form open, it takes the whole row and its square goes back beside the words */
-  .nested.tile:has(:global(details[open])) {
-    grid-template-columns: 6rem minmax(0, 1fr);
-    gap: 0 1rem;
-  }
-  .complete.nested.tile {
-    border-style: dashed;
   }
   /* Already given: quieter, without fading the text (contrast stays AA) */
   .complete.card {

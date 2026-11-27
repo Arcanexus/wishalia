@@ -7,9 +7,9 @@
   import Icon from "../Icon.svelte";
   import { useI18n } from "../i18n.ts";
   import Copies from "./Copies.svelte";
-  import ItemCard from "./ItemCard.svelte";
+  import VolumeRow from "./VolumeRow.svelte";
   import type { PublicEvent, PublicItem } from "./types.ts";
-  import { seriesLeft } from "./view.ts";
+  import { cardPrice, seriesLeft } from "./view.ts";
 
   /**
    * A series as the guests see it (docs/series.md): one card, like a gift wanted in several copies,
@@ -40,9 +40,11 @@
   const complete = $derived(left !== null && left.left === 0);
   // Its own image, or the first volume's: the square is never empty when a volume has one
   const image = $derived(series.image ?? volumes.find((entry) => entry.image)?.image ?? null);
+  // What the volumes still to give cost together, once guests may see what is given
+  const leftCents = $derived(left && left.left > 0 ? cardPrice(series, volumes) : null);
   const headingId = $derived(`serie-${series.id}`);
   /**
-   * A volume's name on its tile, the same from tile to tile: « Tome 33 », from the number in its
+   * A volume's name on its line, the same from line to line: « Tome 33 », from the number in its
    * title; without a number, its title without the series' name in front.
    */
   const short = (title: string) => {
@@ -69,7 +71,10 @@
       <span class="picture empty" aria-hidden="true"><Icon name="series" /></span>
     {/if}
     <div class="content">
-      <h2 id={headingId}>{series.title}</h2>
+      <div class="title-row">
+        <h2 id={headingId}>{series.title}</h2>
+        {#if leftCents}<span class="price">{m.series.leftPrice(i18n.fmt.money(leftCents))}</span>{/if}
+      </div>
       <p class="tags">
         <span class="tag with-icon"><Icon name="series" size="1rem" />{m.kind.series}</span>
       </p>
@@ -81,9 +86,11 @@
       {/if}
       {#if left}
         {#if left.total <= 24}
-          <!-- One box per volume, as for a gift wanted in several copies; its words for a screen reader -->
-          <Copies wanted={left.total} taken={left.total - left.left} />
-          <p class="visually-hidden">{m.series.left(left.left, left.total)}</p>
+          <!-- One box per volume, as for a gift wanted in several copies, and « 2 sur 5 offerts » beside them -->
+          <div class="boxes">
+            <Copies wanted={left.total} taken={left.total - left.left} />
+            <p class="standing" class:done={complete}>{m.series.given(left.total - left.left, left.total)}</p>
+          </div>
         {:else}
           <p class="standing" class:done={complete}>{m.series.left(left.left, left.total)}</p>
         {/if}
@@ -98,9 +105,9 @@
       </summary>
       <ul class="volumes" aria-label={m.series.listLabel(series.title)}>
         {#each volumes as entry (entry.id)}
-          <ItemCard item={entry} {events} {scope} tile label={short(entry.title)}>
+          <VolumeRow item={entry} label={short(entry.title)}>
             {@render volume?.(entry)}
-          </ItemCard>
+          </VolumeRow>
         {/each}
       </ul>
       {@render all?.(series)}
@@ -201,17 +208,40 @@
       transition: none;
     }
   }
-  /* The volumes as tiles, as many to a row as fit; the one whose form is open takes a whole row */
+  /* The volumes as a list, one line each, inside a frame */
   .volumes {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
-    gap: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
   }
-  .volumes > :global(li:has(details[open])) {
-    grid-column: 1 / -1;
+  .volumes > :global(li + li) {
+    border-top: 1px solid var(--border);
+  }
+  .fold > :global(:last-child:not(.volumes)) {
+    margin-top: 1rem;
+  }
+  .title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.25rem 1rem;
+    flex-wrap: wrap;
+  }
+  .price {
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .boxes {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.75rem;
+    margin-top: 0.5rem;
+  }
+  .boxes > :global(*) {
+    margin: 0 !important;
   }
   .complete {
     background: transparent;
