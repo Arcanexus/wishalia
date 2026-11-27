@@ -22,12 +22,15 @@
     events,
     scope,
     volume,
+    all,
   }: {
     series: PublicItem;
     volumes: PublicItem[];
     events: PublicEvent[];
     scope: "list" | "event";
     volume?: Snippet<[PublicItem]>;
+    /** What a guest can do with the whole series (« Offrir les N tomes restants »), under the tiles. */
+    all?: Snippet<[PublicItem]>;
   } = $props();
 
   const i18n = useI18n();
@@ -80,18 +83,19 @@
     </div>
   </div>
   {#if volumes.length > 0}
-    <!-- Folded by default: the card stays short, its summary says how many volumes it holds -->
-    <details class="fold">
+    <!-- Open for a short series; folded for a long one, its summary saying how many volumes -->
+    <details class="fold" open={volumes.length <= 10}>
       <summary>
         <Icon name="chevronRight" size="1.2rem" />{m.series.volumes(volumes.length)}
       </summary>
       <ul class="volumes" aria-label={m.series.listLabel(series.title)}>
         {#each volumes as entry (entry.id)}
-          <ItemCard item={entry} {events} {scope} label={volumeLabel(entry.title, series.title)}>
+          <ItemCard item={entry} {events} {scope} tile label={volumeLabel(entry.title, series.title)}>
             {@render volume?.(entry)}
           </ItemCard>
         {/each}
       </ul>
+      {@render all?.(series)}
     </details>
   {/if}
 </li>
@@ -189,14 +193,17 @@
       transition: none;
     }
   }
-  /* The first volume starts right under the summary */
-  .volumes > :global(.nested:first-child) {
-    margin-top: 0;
-  }
+  /* The volumes as tiles, as many to a row as fit; the one whose form is open takes a whole row */
   .volumes {
     list-style: none;
     margin: 0;
     padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+    gap: 0.75rem;
+  }
+  .volumes > :global(li:has(details[open])) {
+    grid-column: 1 / -1;
   }
   .complete {
     background: transparent;

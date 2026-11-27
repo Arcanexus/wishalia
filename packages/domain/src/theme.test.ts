@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { displayChange, nextMode, parseModeChoice, parseThemeChoice, resolveTheme } from "./theme.js";
+import {
+  displayChange,
+  nextMode,
+  parseModeChoice,
+  parseTextSize,
+  parseThemeChoice,
+  resolveTheme,
+} from "./theme.js";
 
 const june = new Date("2026-06-15T12:00:00Z");
 const december = new Date("2026-12-05T12:00:00Z");
@@ -42,10 +49,20 @@ describe("displayChange", () => {
   it("takes the mode or the theme the menu names", () => {
     expect(displayChange("device", { mode: "dark" })).toEqual({ mode: "dark" });
     expect(displayChange("device", { theme: "christmas" })).toEqual({ theme: "christmas" });
+    expect(displayChange("device", { text: "larger" })).toEqual({ text: "larger" });
   });
 
   it("moves on to the next mode when nothing known is named", () => {
     expect(displayChange("light", {})).toEqual({ mode: "dark" });
     expect(displayChange("dark", { mode: "pink", theme: "neon" })).toEqual({ mode: "device" });
+  });
+});
+
+describe("parseTextSize", () => {
+  it("keeps a known size and falls back to the normal one", () => {
+    expect(parseTextSize("large")).toBe("large");
+    expect(parseTextSize("larger")).toBe("larger");
+    expect(parseTextSize("huge")).toBe("normal");
+    expect(parseTextSize(undefined)).toBe("normal");
   });
 });

@@ -10,7 +10,8 @@ export const securityHeaders: Readonly<Record<string, string>> = {
   "x-content-type-options": "nosniff",
   "x-frame-options": "DENY",
   "cross-origin-opener-policy": "same-origin",
-  "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  // The camera only for this site's own pages: the quick add scans barcodes
+  "permissions-policy": "camera=(self), microphone=(), geolocation=(), payment=()",
 };
 
 export function applySecurityHeaders(headers: Headers): void {

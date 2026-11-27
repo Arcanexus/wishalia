@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { fakeApi, fakeCookies, fakeEvent, json, outcome } from "../../test/event.ts";
 import { ApiError, apiFetch, apiJson, apiUrl, forwardSetCookies, safeReturnPath } from "./api.ts";
-import { MODE_COOKIE, readPreferences, THEME_COOKIE, writePreference } from "./preferences.ts";
+import { MODE_COOKIE, readPreferences, TEXT_COOKIE, THEME_COOKIE, writePreference } from "./preferences.ts";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -105,11 +105,17 @@ describe("preferences", () => {
       themeChoice: "christmas",
       mode: "dark",
       localeChoice: "auto",
+      textSize: "normal",
     });
-    expect(readPreferences(fakeCookies({ [MODE_COOKIE]: "neon", "wishalia.locale": "en" }).cookies)).toEqual({
+    expect(
+      readPreferences(
+        fakeCookies({ [MODE_COOKIE]: "neon", "wishalia.locale": "en", [TEXT_COOKIE]: "larger" }).cookies,
+      ),
+    ).toEqual({
       themeChoice: "auto",
       mode: "device",
       localeChoice: "en",
+      textSize: "larger",
     });
   });
 

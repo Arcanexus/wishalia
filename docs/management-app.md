@@ -32,11 +32,18 @@ the bar, ends the session on the API.
 ## The header
 
 The bar keeps the logo and the three places of the app on the left (« Mes listes », « Événements »,
-« Partager »; under the bar on a phone), and two round icons at the top right:
+« Partager »; under the bar on a phone), and three round icons at the top right:
 
+- **the help** (a question mark): « Le guide d'utilisation », which opens the
+  [user guide](user-guide.md) in a new tab, then « Sur cette page », the guide's sections about the
+  page in hand (on a list: adding a wish or a series, putting them in order, sharing, the surprise),
+  each opening at its heading. Beside a few settings (who sees a list, when the secret lifts, the kind
+  of a wish), a small « ? » opens a sentence of help and a link to its section; without JavaScript,
+  the sentence shows under the setting;
 - **the display** (half a disc, a sun or a moon, after the mode in use): a small menu with the mode
-  (« Comme l'appareil », « Clair », « Sombre »), the theme (« Automatique », « Neutre », « Noël »)
-  and the language. The choice in use is ticked and pressed for a screen reader. Each choice is a
+  (« Comme l'appareil », « Clair », « Sombre »), the theme (« Automatique », « Neutre », « Noël »),
+  the language and the **text size** (« Taille du texte »: three « A », normal, large, larger; kept
+  on the device in `wishalia.text`, never with the account, see [Branding](branding.md#themes)). The choice in use is ticked and pressed for a screen reader. Each choice is a
   plain form to `/preferences`, kept with the account and on the device;
 - **the account** (the first letter of the person's name): their name and address, « Réglages du
   compte » and « Se déconnecter ».
@@ -47,7 +54,9 @@ tip, on hover and keyboard focus, and to a screen reader. The guests' pages have
 menu, and the public home page an icon to sign in (an arrow going in), or the account menu once
 signed in ([Public view](public-view.md)).
 
-![The display menu: mode, theme and language](images/app-display-menu.png)
+![The help menu: the guide and the topics of the page](images/app-help.png)
+
+![The display menu: mode, theme, language and text size](images/app-display-menu.png)
 
 ## The foot of the pages
 
@@ -124,6 +133,13 @@ field, a choice of list, and one « Ajouter à ma liste » button. The page neve
 person sees what will be added and confirms with one tap. On iPhone, a Shortcut does the same. See
 [Install the app](install-app.md).
 
+Where the browser reads barcodes (`BarcodeDetector`, on Android and in Chrome) and has a camera, a
+**barcode** icon sits beside the field: « Scanner un code-barres » opens the camera in a dialog,
+with a frame to aim at. A book's EAN-13 (an ISBN, 978 or 979) shows « ISBN 978-2-07-061275-8 » and
+« Ajouter », which adds the Open Library page of the book (`https://openlibrary.org/isbn/<isbn>`),
+completed like any link; another product's code is said back, with « Écrire à la place ». The image
+never leaves the device; the camera stops as the dialog closes. Elsewhere, the icon does not show.
+
 ![An add whose link is already in the list](images/app-quick-add.png)
 
 Wishes kept on another service come in with « Importer une liste » (`/importer`, linked under the
@@ -132,18 +148,24 @@ pasted with one wish per line. The page shows what it found, every wish ticked, 
 unticks what they leave out, then picks a list (a new one, named after the source's list, or one of
 theirs) and confirms. The list page then says how many came in. See [Importing a list](import.md).
 
-A list page shows its items, newest first. Every card has the same grid: the arrows to reorder it,
-a square for its image, its name with what kind of gift it is, its price and the site of its link,
-then its icons, always in the same order and lined up from one card to the next. An item without an
-image keeps its square, an empty frame, so that nothing moves; while its link is read, the square
-breathes. The icons, each with its words in a tip:
+A list page shows its items, newest first. Every card has the same grid: a square for its image,
+its name with what kind of gift it is, its price and the site of its link, then its icons, always
+in the same order and lined up from one card to the next. An item without an image keeps its
+square, an empty frame, so that nothing moves; while its link is read, the square breathes. Two
+icons stay in sight, each with its words in a tip, and the others wait in a menu:
 
 - a **heart**, « Je l'ai reçu »: the item is received;
 - a **pencil**, « Modifier »: the item opens in place, under its card;
-- two **turning arrows**, « Recharger », for an item with a link: its link is read again (a new
-  price, a better photo), and « Recharger les liens », next to the title, does it for the whole list;
-  what the person typed or sent stays ([Reading a link again](enrichment.md#reading-a-link-again));
-- a **box**, « Archiver », and a **bin**, « Supprimer » (after a dialog).
+- **three small rings**, « Plus d'actions »: a menu with « Recharger » for an item with a link (its
+  link is read again, a new price, a better photo; what the person typed or sent stays, see
+  [Reading a link again](enrichment.md#reading-a-link-again)), « Archiver », and « Supprimer », in
+  the danger colour, with « Annuler » for a few seconds after
+  ([Archiving and deleting](archive-delete.md)). « Recharger les liens », next to the title, reads the whole
+  list again.
+
+Past three wishes, a **search** field (a magnifier) sits beside the list's title: it keeps the cards
+whose name, notes or volume names hold every word typed, without accents or case mattering, and says
+how many it found (« 2 envies sur 9 »). The cross empties it.
 
 Over the image's corner, a small pencil leads to the item's images (a « + » on an empty frame), as
 the count of images sits over the other corner. Received and archived items wait under « Reçues et
@@ -152,7 +174,10 @@ change lands in the item's history. See [Archiving and deleting](archive-delete.
 
 ![The items of a list, each in the same grid](images/app-list-items.png)
 
-The open items can be put in any order, the one relatives see them in. Each card has a handle to
+The open items can be put in any order, the one relatives see them in. « Réorganiser » (crossing
+arrows, beside the title; `?ordre`, so it works without JavaScript too) turns the cards into short
+rows, a small square and the name, each with a handle and two arrows, and nothing else to tap;
+« Terminé » brings the cards back, the keyboard on the first card. Each row has a handle to
 drag with a mouse or a finger, as many places up or down as wanted in one go (the cards make room
 as it passes, and the page scrolls along near its edges), and two arrows, « Monter » and
 « Descendre », that move the item one place in a single tap or from the keyboard (they also work
@@ -276,8 +301,12 @@ décide » mode.
 list or an event. A list page (the share button, three linked dots, next to its title) and an event page lead there with that one already chosen. A link may
 end on a chosen day; without one, it works until it is revoked.
 
-The link's address is shown **once**, right after it is made, with « Copier le lien » (and « Envoyer…
-» where the device can share): only its hash is kept, so it can never be shown again. Making a link
+The link's address is shown **once**, right after it is made, with « Envoyer… » (a paper plane,
+where the device can share: the phone's share menu, texts, messages, e-mail), « Copier le lien »
+(the copy icon) and « Montrer le QR code » (a square of squares). The QR code is drawn on the server
+(a single SVG path, black on white in every theme) with the name of the link under it; « Imprimer »
+prints it alone on the page, « Télécharger » saves it as an SVG image. Like the address, it is shown
+only then: only its hash is kept, so it can never be shown again. Making a link
 also marks the device as the owner's (`__Secure-wishalia.owner_device`), so that the public view
 recognises them and spoils nothing, even without a session.
 
@@ -327,7 +356,8 @@ used, and « Révoquer » (the bin) ends it for good. See [REST API v1](rest-api
 
 ## Themes and accessibility
 
-- The header's display menu chooses the device's mode, light or dark, and the theme. The choice is
+- The header's display menu chooses the device's mode, light or dark, the theme and the text size
+  (up to 125 %, every layout reflowing, WCAG 1.4.4). The choice is
   kept with the account and on the device (`wishalia.mode`, `wishalia.theme` cookies), and applied
   by the server, so the page never
   flashes in the wrong colours. A theme forced by a list (`theme` of the list) colours its page, in each

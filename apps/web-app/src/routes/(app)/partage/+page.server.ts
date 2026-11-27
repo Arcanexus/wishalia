@@ -2,6 +2,7 @@ import { fail, redirect } from "@sveltejs/kit";
 import { appMessages } from "@wishalia/i18n/messages/app";
 
 import { ApiError, apiFetch, apiJson, forwardSetCookies } from "#lib/server/api.ts";
+import { qrPath } from "#lib/server/qr.ts";
 import type { CreatedShareLink, List, ShareLink, WishEvent } from "#lib/types.ts";
 
 import type { Actions, PageServerLoad } from "./$types";
@@ -71,7 +72,10 @@ export const actions: Actions = {
       return fail(response.status, { create: { error: code, ...values } });
     }
     forwardSetCookies(event.cookies, response);
-    return { created: { id: payload.id, audience: payload.audience, url: payload.url } };
+    // Shown once, as the address: a QR code to scan from a phone, or to print for a grandparent
+    return {
+      created: { id: payload.id, audience: payload.audience, url: payload.url, qr: qrPath(payload.url) },
+    };
   },
 
   /** Final: the guest's link then answers like an unknown one. */

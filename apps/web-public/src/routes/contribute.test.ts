@@ -63,7 +63,7 @@ const stored: StoredGift = {
   key: KEY,
 };
 
-function event(form?: Record<string, string>, cookies: Record<string, string> = {}) {
+function event(form?: Record<string, string> | [string, string][], cookies: Record<string, string> = {}) {
   const box = jar(cookies);
   return {
     box,
@@ -197,6 +197,83 @@ describe("giving", () => {
       data: { give: { error: "already_reserved", guestName: "Paul" } },
     });
     expect(box.set).toHaveLength(0);
+  });
+
+  it("buys a series' volumes together, each whole, and stops at a refusal", async () => {
+    const SERIES = "5d0c2a4e-6a52-4a6c-9a39-6f4f3c0b9a11";
+    const OTHER = "6e1d3b5f-6a52-4a6c-9a39-6f4f3c0b9a11";
+    const THIRD = "7f2e4c6a-6a52-4a6c-9a39-6f4f3c0b9a11";
+    const calls = api({
+      [`POST /public/items/${ITEM}/contributions`]: () => created({ amountCents: null }),
+      [`POST /public/items/${OTHER}/contributions`]: () =>
+        created({ id: EVENT, itemId: OTHER, amountCents: null }),
+      [`POST /public/items/${THIRD}/contributions`]: () => json({ error: "already_reserved" }, 409),
+    });
+    const together = (ids: string[], extra: [string, string][] = []) =>
+      event([
+        ["seriesId", SERIES],
+        ["way", "whole"],
+        ["guestName", "Mamie"],
+        ...ids.map((id): [string, string] => ["itemId", id]),
+        ...extra,
+      ]);
+    const both = together([ITEM, OTHER], [["amount", "5"]]);
+    expect((await run(actions.give, both.input)).value).toEqual({ given: { itemId: SERIES } });
+    expect(calls.map((call) => call.path)).toEqual([
+      `/public/items/${ITEM}/contributions`,
+      `/public/items/${OTHER}/contributions`,
+    ]);
+    // Whole: an amount typed is never sent
+    expect(calls[0]?.body).toEqual({ guestName: "Mamie", anonymous: false });
+    expect(readGifts(both.box.cookies as never).map((gift) => gift.itemId)).toEqual([ITEM, OTHER]);
+
+    const stopped = together([ITEM, THIRD, OTHER]);
+    expect((await run(actions.give, stopped.input)).value).toMatchObject({
+      status: 409,
+      data: { give: { error: "already_reserved", itemId: SERIES } },
+    });
+    // The one before the refusal is kept, the one after is not tried
+    expect(readGifts(stopped.box.cookies as never).map((gift) => gift.itemId)).toEqual([ITEM]);
+    expect(calls).toHaveLength(4);
+  });
+
+  it("refuses several items without a series, a share of them, a repeat or too many", async () => {
+    const calls = api({});
+    const SERIES = "5d0c2a4e-6a52-4a6c-9a39-6f4f3c0b9a11";
+    const many = Array.from(
+      { length: 21 },
+      (_, index) => `${String(index).padStart(8, "0")}-6a52-4a6c-9a39-6f4f3c0b9a11`,
+    );
+    for (const form of [
+      [
+        ["itemId", ITEM],
+        ["itemId", EVENT],
+      ],
+      [
+        ["seriesId", SERIES],
+        ["way", "part"],
+        ["itemId", ITEM],
+      ],
+      [
+        ["seriesId", "x"],
+        ["way", "whole"],
+        ["itemId", ITEM],
+      ],
+      [
+        ["seriesId", SERIES],
+        ["way", "whole"],
+        ["itemId", ITEM],
+        ["itemId", ITEM],
+      ],
+      [["seriesId", SERIES], ["way", "whole"], ...many.map((id) => ["itemId", id])],
+      [["way", "whole"]],
+    ] as [string, string][][]) {
+      expect((await run(actions.give, event(form).input)).value).toMatchObject({
+        status: 400,
+        data: { give: { error: "invalid_request" } },
+      });
+    }
+    expect(calls).toHaveLength(0);
   });
 
   it("shows the dead-link page when the link died meanwhile", async () => {

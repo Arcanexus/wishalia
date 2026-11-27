@@ -465,3 +465,88 @@ describe("series (docs/series.md)", () => {
     expect(view.gauge([series, t30, t31])).toEqual({ complete: 1, inProgress: 0, free: 1 });
   });
 });
+
+describe("the guests' filter chips", () => {
+  const { cardPrice, filterCards, NO_FILTER, stillToGive } = view;
+  const lamp = item({ id: "lamp", priceCents: 4990, eventIds: ["noel"] });
+  const given = item({ id: "given", priceCents: 1000, funding: funding({ state: "complete" }) });
+  const received = item({ id: "received", status: "received" });
+  const pool = item({ id: "pool", kind: "pool", targetCents: 20000 });
+  const free = item({ id: "free" });
+  const series = item({ id: "s", kind: "series", funding: null });
+  const t1 = item({ id: "t1", parentId: "s", priceCents: 895, funding: funding({ state: "complete" }) });
+  const t2 = item({ id: "t2", parentId: "s", priceCents: 895, eventIds: ["anniv"] });
+  const t3 = item({ id: "t3", parentId: "s", priceCents: 700 });
+  const volumes = new Map([["s", [t1, t2, t3]]]);
+  const cards = [lamp, given, received, pool, free, series];
+  const ids = (list: PublicItem[]) => list.map((entry) => entry.id);
+
+  it("tells what still waits for a gift", () => {
+    expect(stillToGive(lamp)).toBe(true);
+    expect(stillToGive(given)).toBe(false);
+    expect(stillToGive(received)).toBe(false);
+    expect(stillToGive(series, [t1, t2])).toBe(true);
+    expect(stillToGive(series, [t1])).toBe(false);
+    // Funding hidden (a folded page): an open volume still counts
+    expect(stillToGive(series, [item({ funding: null })])).toBe(true);
+    expect(stillToGive(series, [])).toBe(false);
+  });
+
+  it("prices a card: a pool by its target, a series by its volumes left", () => {
+    expect(cardPrice(lamp)).toBe(4990);
+    expect(cardPrice(pool)).toBe(20000);
+    expect(cardPrice(item({ kind: "pool" }))).toBeNull();
+    expect(cardPrice(free)).toBeNull();
+    expect(cardPrice(series, [t1, t2, t3])).toBe(1595);
+    expect(cardPrice(series, [t1])).toBeNull();
+    expect(cardPrice(series)).toBeNull();
+  });
+
+  it("keeps every card in order without a filter", () => {
+    expect(ids(filterCards(cards, volumes, NO_FILTER, new Set()))).toEqual(ids(cards));
+  });
+
+  it("keeps only what is still to give", () => {
+    expect(ids(filterCards(cards, volumes, { ...NO_FILTER, toGive: true }, new Set()))).toEqual([
+      "lamp",
+      "pool",
+      "free",
+      "s",
+    ]);
+  });
+
+  it("keeps the wishes of one occasion, a series by its volumes", () => {
+    expect(ids(filterCards(cards, volumes, { ...NO_FILTER, eventId: "noel" }, new Set()))).toEqual(["lamp"]);
+    expect(ids(filterCards(cards, volumes, { ...NO_FILTER, eventId: "anniv" }, new Set()))).toEqual(["s"]);
+  });
+
+  it("keeps the person's own gifts", () => {
+    const mine = new Set(["given", "t1"]);
+    expect(ids(filterCards(cards, volumes, { ...NO_FILTER, mine: true }, mine))).toEqual(["given", "s"]);
+  });
+
+  it("sorts by price, those without one last, ties in the owner's order", () => {
+    const sorted = filterCards(cards, volumes, { ...NO_FILTER, byPrice: true }, new Set());
+    expect(ids(sorted)).toEqual(["given", "s", "lamp", "pool", "received", "free"]);
+  });
+});
+
+describe("a series' volumes given together", () => {
+  const { givableTogether, MAX_GIVEN_TOGETHER } = view;
+  const guest = { viewer: "guest", event: null };
+  const volume = (id: string, patch: Partial<PublicItem> = {}) => item({ id, parentId: "s", ...patch });
+
+  it("offers the free volumes, at least two", () => {
+    const taken = volume("t1", { funding: funding({ state: "complete", reservedUnits: 1 }) });
+    const started = volume("t2", { funding: funding({ state: "in_progress", totalCents: 300 }) });
+    const free = [volume("t3"), volume("t4")];
+    expect(givableTogether([taken, started, ...free], guest).map((entry) => entry.id)).toEqual(["t3", "t4"]);
+    expect(givableTogether([taken, volume("t3")], guest)).toEqual([]);
+  });
+
+  it("never for the owner, nor too many at once", () => {
+    expect(givableTogether([volume("a"), volume("b")], { viewer: "owner", event: null })).toEqual([]);
+    const many = Array.from({ length: MAX_GIVEN_TOGETHER + 1 }, (_, index) => volume(`v${index}`));
+    expect(givableTogether(many, guest)).toEqual([]);
+  });
+});

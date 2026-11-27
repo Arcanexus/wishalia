@@ -19,6 +19,7 @@
     images,
     small = false,
     volume = false,
+    tile = false,
   }: {
     item: Item;
     listId: string;
@@ -28,6 +29,8 @@
     small?: boolean;
     /** The square of a volume inside its series' card (docs/series.md), with its pencil. */
     volume?: boolean;
+    /** The square of a volume's tile: as wide as its tile. */
+    tile?: boolean;
   } = $props();
 
   const i18n = useI18n();
@@ -36,7 +39,7 @@
   let hidden = $state(false);
 </script>
 
-<div class="thumb" class:small class:volume>
+<div class="thumb" class:small class:volume class:tile>
   {#if item.image}
     <!-- The link that opens it big carries the words: the thumbnail itself is decorative -->
     <Gallery title={item.title} image={item.image} class="thumb-frame">
@@ -87,6 +90,11 @@
       width: 4.5rem;
       height: 4.5rem;
     }
+  }
+  .thumb.tile {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
   }
   .thumb.small {
     width: 3.5rem;

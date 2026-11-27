@@ -18,9 +18,10 @@ export const init: ServerInit = async () => {
 
 export const handle: Handle = async ({ event, resolve }) => {
   const started = performance.now();
-  const { themeChoice, mode, localeChoice } = readPreferences(event.cookies);
+  const { themeChoice, mode, textSize, localeChoice } = readPreferences(event.cookies);
   event.locals.themeChoice = themeChoice;
   event.locals.mode = mode;
+  event.locals.textSize = textSize;
   event.locals.localeChoice = localeChoice;
   event.locals.locale = pageLocale(localeChoice, event.request.headers.get("accept-language"));
   event.locals.listTheme = null;
@@ -41,7 +42,8 @@ export const handle: Handle = async ({ event, resolve }) => {
             today: new Date(),
           }),
         )
-        .replace("%wishalia.mode%", event.locals.mode),
+        .replace("%wishalia.mode%", event.locals.mode)
+        .replace("%wishalia.text%", event.locals.textSize),
   });
   applySecurityHeaders(response.headers);
   response.headers.set("content-language", formatters(event.locals.locale).tag);

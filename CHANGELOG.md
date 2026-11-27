@@ -8,6 +8,31 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Help on every page: a question mark in the header opens the user guide and the guide's sections
+  about the page in hand (« Sur cette page »), and a small « ? » beside a few settings explains them
+  in one sentence.
+- Text size: « Taille du texte » in the display menu (A, A+, A++: 100 %, 112.5 %, 125 %), kept on
+  the device (`wishalia.text`) and applied by the server, on both frontends.
+- Lighter wish cards: the heart and the pencil stay, the rest (read the link again, archive, delete)
+  goes into a « ⋯ » menu. « Réorganiser » turns the list into short rows with a handle and arrows,
+  « Terminé » brings the cards back (`?ordre`, also without JavaScript).
+- A search in one's wishes, past three of them, by name, notes or volume name.
+- A barcode scan in the quick add, where the browser reads barcodes: a book's ISBN adds its Open
+  Library page, completed like any link. The management app's `Permissions-Policy` allows the
+  camera for its own pages (`camera=(self)`).
+- Sharing: « Envoyer… » opens the phone's share menu, and every new link has a QR code, drawn on
+  the server, to print or save as an SVG image.
+- Series: the volumes show as tiles, for the owner (pencil and « ⋯ » menu on each, small tiles with
+  « ‹ » « › » in the reorder mode) and for the guests (« Offrir » on each tile). Guests can buy every
+  free volume at once: « Offrir les 3 tomes restants · 26,85 € » (two to twenty volumes).
+- Several copies: « × 4 » with the copies' icon on the guests' cards, the turning arrows beside
+  « À chaque occasion », and « − » « + » around the number, in the owner's editor and in the
+  guests' form (instead of a list to pick from).
+- Deleting a wish, a series or a volume no longer asks first: it leaves the screen at once, and
+  « Annuler » brings it back for eight seconds (the time stops while the message is pointed at or
+  focused), before anything is sent or any guest is told. A list's deletion keeps its dialog.
+- Filters on the guests' page: « À offrir », an occasion, « Prix » (the cheapest first) and « Mes
+  cadeaux », with how many wishes show. Never for the owner nor on a folded page.
 - The changes made on a list (delete, received, archived, reopened, reordered, a volume moved)
   show at once and are saved in the background, one after the other: moving to another page does
   not stop them, a lost network or a server away makes them wait and go again by themselves, and

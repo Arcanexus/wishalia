@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
   import { publicMessages } from "@wishalia/i18n/messages/public";
+  import Icon from "@wishalia/ui/Icon.svelte";
   import { useI18n } from "@wishalia/ui/i18n.ts";
 
   import type { PublicEvent, PublicItem } from "@wishalia/ui/public/types.ts";
@@ -31,6 +32,8 @@
     needsName,
     guestName,
     failed = null,
+    all = null,
+    short = false,
   }: {
     item: PublicItem;
     /** The open events the gift can be for, on a list link. Empty on an event link. */
@@ -41,12 +44,19 @@
     guestName: string;
     /** What was typed, when the last try for this item failed. */
     failed?: Values | null;
+    /**
+     * A series' volumes still to give, all at once (docs/series.md): each one bought whole, with the
+     * same occasion, name and word. `item` is then the series.
+     */
+    all?: { ids: string[]; label: string } | null;
+    /** A tile of a series' grid: « Offrir », short enough for its width. */
+    short?: boolean;
   } = $props();
 
   const i18n = useI18n();
   const m = $derived(publicMessages(i18n.locale).give);
   let sending = $state(false);
-  const id = $derived(`don-${item.id}`);
+  const id = $derived(`don-${item.id}${all ? "-tous" : ""}`);
   const left = $derived(unitsLeft(item));
   /**
    * A gift given once, with or without a price: bought whole or shared, and only shared once others
@@ -57,11 +67,20 @@
   const partChosen = $derived(failed?.way === "part");
   const price = $derived(priceOf(item));
   const missing = $derived(price === null ? null : (item.funding?.remainingCents ?? price));
+  let count = $state<HTMLInputElement>();
+  /** The stepper's buttons: one more or one less, within what is left. */
+  const step = (by: number) => {
+    if (!count) return;
+    const now = Number(count.value) || 1;
+    count.value = String(Math.min(left, Math.max(1, now + by)));
+  };
 </script>
 
-<details class="give" open={failed !== null} data-live-hold>
+<details class="give" class:all open={failed !== null} data-live-hold>
   <summary class="button secondary">
-    <span class="closed">{giveLabel(i18n.locale)}</span><span class="opened">{m.close}</span>
+    <span class="closed">
+      <Icon name="gift" />{all ? all.label : short ? m.short : giveLabel(i18n.locale)}
+    </span><span class="opened">{m.close}</span>
   </summary>
   <form
     method="POST"
@@ -74,7 +93,13 @@
       };
     }}
   >
-    <input type="hidden" name="itemId" value={item.id} />
+    {#if all}
+      <input type="hidden" name="seriesId" value={item.id} />
+      <input type="hidden" name="way" value="whole" />
+      {#each all.ids as volumeId (volumeId)}<input type="hidden" name="itemId" value={volumeId} />{/each}
+    {:else}
+      <input type="hidden" name="itemId" value={item.id} />
+    {/if}
     {#if failed?.error}
       <p class="notice error" role="alert">{giveError(failed.error, i18n.locale)}</p>
     {/if}
@@ -93,7 +118,9 @@
       </fieldset>
     {/if}
 
-    {#if item.kind === "pool"}
+    {#if all}
+      <p class="muted help">{m.allHelp}</p>
+    {:else if item.kind === "pool"}
       <label for="{id}-montant">{m.amount}</label>
       <input
         id="{id}-montant"
@@ -170,11 +197,39 @@
       </div>
     {:else if item.kind === "quantity" && left > 1}
       <label for="{id}-nombre">{m.units}</label>
-      <select id="{id}-nombre" name="units">
-        {#each Array.from({ length: left }, (_, index) => index + 1) as count (count)}
-          <option value={count} selected={String(count) === (failed?.units ?? "1")}>{count}</option>
-        {/each}
-      </select>
+      <!-- A stepper: the field alone works without JavaScript -->
+      <div class="stepper">
+        <button
+          type="button"
+          class="secondary step"
+          aria-label={m.fewer}
+          title={m.fewer}
+          onclick={() => step(-1)}
+        >
+          <Icon name="minus" />
+        </button>
+        <input
+          bind:this={count}
+          id="{id}-nombre"
+          name="units"
+          type="number"
+          inputmode="numeric"
+          min="1"
+          max={left}
+          value={failed?.units ?? "1"}
+          aria-describedby="{id}-nombre-aide"
+        />
+        <button
+          type="button"
+          class="secondary step"
+          aria-label={m.more}
+          title={m.more}
+          onclick={() => step(1)}
+        >
+          <Icon name="plus" />
+        </button>
+      </div>
+      <p id="{id}-nombre-aide" class="muted help">{m.unitsLeft(left)}</p>
     {/if}
 
     {#if needsName}
@@ -254,8 +309,29 @@
     font-weight: 600;
     margin-bottom: 0.35rem;
   }
-  select {
-    margin-bottom: 1rem;
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.35rem;
+  }
+  .stepper input {
+    width: 5rem;
+    text-align: center;
+    font-weight: 700;
+  }
+  .step {
+    display: inline-grid;
+    place-items: center;
+    width: 3rem;
+    min-width: 3rem;
+    height: 3rem;
+    padding: 0;
+  }
+  .closed {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
   }
   textarea {
     display: block;

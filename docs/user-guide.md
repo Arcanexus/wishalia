@@ -37,6 +37,12 @@ The field at the top of the home page adds a wish in one go: paste a **link** to
 type **a few words** (« A blue jumper, size M »), then Enter. The wish is there at once; with a link,
 Wishalia reads the page and fills in the name, the price and the images by itself.
 
+On a phone, the **barcode** beside the field opens the camera: aim at a book's barcode, and « Add »
+puts it in the list with its title. For a **series** (the volumes of a collection), add the first
+volume as a wish, then pick the kind « A series » (see below).
+
+Past a few wishes, the **magnifier** at the top of the list finds a wish by its name or notes.
+
 ![Adding a wish](images/app-quick-add.png)
 
 ### Editing a wish
@@ -47,7 +53,7 @@ family, its kind. Everything is saved as you type, with no « Save » button.
 The kind says what your relatives can do:
 
 - **A gift**: one person gives it, or several share it;
-- **Several copies**: three pairs of socks, say;
+- **Several copies**: three pairs of socks, say; the − and + buttons set how many;
 - **A pool**: everyone gives what they like, towards an amount;
 - **A series**: the volumes of a collection, given one by one (see below).
 
@@ -60,9 +66,10 @@ from your device, or frame the one shown.
 
 ### Putting the wishes in order
 
-Your relatives see your wishes in the order you choose. Grab a card's **handle** (the six dots) and
-drag it, with a mouse or a finger, as far up or down as you like: it takes its new place in one go.
-The **arrows** beside it move it one place up or down at each tap.
+Your relatives see your wishes in the order you choose. Tap **« Reorder »** at the top of the list:
+each wish becomes a row with its **handle** (the six dots). Drag it, with a mouse or a finger, as far
+up or down as you like, or use the **arrows** that move it one place up or down at each tap.
+« Done » goes back to the list.
 
 ![Dragging a wish to a new place](images/app-reorder.png)
 
@@ -75,16 +82,19 @@ its price, its link, its image, and your relatives give them one by one.
   series » to move in the wishes that belong to it.
 - To add a volume: the field at the bottom of the card (a link or a few words). The card stays open
   and shows the new volume.
-- The volumes fold under « 5 volumes »; the chevron opens and closes them.
+- The volumes show as **tiles**, side by side; the chevron folds them under « 5 volumes ». A tile's
+  pencil edits the volume, its « ⋯ » menu takes it out of the series or deletes it.
 - The series' image is chosen among **every image of its volumes**, or a photo you send.
 
 ![A series and its volumes](images/app-series.png)
 
 ### Received, archive, delete
 
-The **heart** says a wish was received. The **box** archives a wish or a list: it leaves the guests'
-view and comes back whenever you want. The **bin** deletes it for good; the relatives who had planned
-to give it are told.
+The **heart** says a wish was received. The card's **« ⋯ »** menu holds the rest: read its link
+again, archive it, delete it. The **box** archives a wish or a list: it leaves the guests'
+view and comes back whenever you want. The **bin** deletes it: an « Undo » message stays a few seconds at the
+foot of the screen, to bring it back if you slipped. After that it is for good, and the relatives who
+had planned to give it are told.
 
 ## Occasions
 
@@ -99,6 +109,9 @@ to give it are told.
 cousins »). Send it by message or e-mail. A link can be withdrawn at any time, and it never opens
 your settings.
 
+« Send… » opens the phone's share menu (texts, WhatsApp, e-mail…). The **QR code** button shows a
+code to scan with a relative's camera, to print or to save as an image.
+
 The **eye** « Preview », on a list, shows what your relatives will see, with examples in place of the
 real names.
 
@@ -106,11 +119,17 @@ real names.
 
 ## Giving a gift (for relatives)
 
-Open the link you were sent: the list shows, what is left to give first.
+Open the link you were sent: the list shows, what is left to give first. The **filters** above the
+wishes keep only some of them: « To give », an occasion (« Christmas »), « Price » (the cheapest
+first) and « My gifts ». Tap a filter again to remove it.
 
 1. Tap **« Buy / Chip in »** under the wish you chose.
-2. Write your first name and, for a shared gift, the amount you give.
+2. Write your first name and, for a shared gift, the amount you give; for several copies, how many
+   you give, with − and +.
 3. Confirm: the wish is marked as taken for the other relatives, not for the person who receives it.
+
+For a series, each volume has its « Give » button, and « Give the 3 remaining volumes » buys them
+all at once.
 
 « Withdraw » takes your part back as long as the secret is kept. « See on … » opens the shop's page,
 to buy it.
@@ -120,7 +139,10 @@ to buy it.
 ## Display, language and app
 
 - The **display** button (sun, moon or screen), at the top right, sets light or dark mode, the theme
-  (Neutral, Christmas) and the language (French or English).
+  (Neutral, Christmas) and the language (French or English), and the **text size**: A, A+ or A++,
+  kept on the device.
+- The **question mark** opens the help: this guide, and the topics of the page you are on. A small
+  « ? » beside a setting explains it in one sentence.
 - On a phone, Wishalia **installs like an app** from the browser: see
   [Install the app](install-app.md).
 - At the foot of every page: this guide, and Wishalia's **version**, to give when you report a

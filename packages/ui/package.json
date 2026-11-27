@@ -35,6 +35,15 @@
       "default": "./src/Footer.svelte"
     },
     "./footer.ts": "./src/footer.ts",
+    "./help.ts": "./src/help.ts",
+    "./HelpMenu.svelte": {
+      "svelte": "./src/HelpMenu.svelte",
+      "default": "./src/HelpMenu.svelte"
+    },
+    "./HelpTip.svelte": {
+      "svelte": "./src/HelpTip.svelte",
+      "default": "./src/HelpTip.svelte"
+    },
     "./Icon.svelte": {
       "svelte": "./src/Icon.svelte",
       "default": "./src/Icon.svelte"

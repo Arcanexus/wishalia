@@ -80,6 +80,30 @@ export const ICONS = {
     "M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6",
     "M12 17h.01",
   ],
+  /** More actions: three dots, the « ⋯ » of a card. */
+  more: [
+    "M5 11a1 1 0 1 0 0 2 1 1 0 1 0 0-2z",
+    "M12 11a1 1 0 1 0 0 2 1 1 0 1 0 0-2z",
+    "M19 11a1 1 0 1 0 0 2 1 1 0 1 0 0-2z",
+  ],
+  /** Put the wishes in order: arrows to the four sides. */
+  move: ["M12 3v18M3 12h18", "M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"],
+  search: ["M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z", "M20 20l-4-4"],
+  /** Scan a barcode with the camera. */
+  barcode: ["M4 7v10M7 7v10M10 7v10M14 7v10M17 7v10M20 7v10", "M2 4h3M19 4h3M2 20h3M19 20h3"],
+  qr: ["M4 4h6v6H4z", "M14 4h6v6h-6z", "M4 14h6v6H4z", "M14 14h2v2h-2zM18 14h2v2M14 18v2h2M18 18h2v2h-2z"],
+  /** Send with the phone's share menu (SMS, messages, e-mail). */
+  send: ["M12 3v12", "M7 8l5-5 5 5", "M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"],
+  calendar: ["M4 6h16v14H4z", "M4 10h16", "M8 3v4M16 3v4"],
+  /** Sort by price: the cheapest first. */
+  sort: ["M7 4v16", "M4 17l3 3 3-3", "M14 7h6M14 12h4M14 17h2"],
+  print: ["M7 9V3h10v6", "M6 18H4v-8h16v8h-2", "M7 14h10v7H7z"],
+  download: ["M12 4v11", "M7 10l5 5 5-5", "M5 20h14"],
+  /** Several copies of the same gift. */
+  copies: ["M8 8h12v12H8z", "M4 16V4h12"],
+  minus: ["M5 12h14"],
+  up: ["M6 15l6-6 6 6"],
+  down: ["M6 9l6 6 6-6"],
 } as const;
 
 export type IconName = keyof typeof ICONS;

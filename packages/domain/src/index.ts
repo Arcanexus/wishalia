@@ -60,10 +60,13 @@ export {
   displayChange,
   type DisplayChange,
   parseModeChoice,
+  parseTextSize,
   parseThemeChoice,
   resolveTheme,
+  TEXT_SIZES,
   THEME_CHOICES,
   type ModeChoice,
+  type TextSize,
   type ThemeChoice,
   type ThemeContext,
   type ThemeName,
@@ -176,3 +179,4 @@ export {
   type GroupRefusal,
 } from "./series.js";
 export { mergedOrder } from "./order.js";
+export { readScanned, spacedIsbn, validEan13, type Scanned } from "./barcode.js";

@@ -11,6 +11,7 @@
     label,
     tip,
     href,
+    download,
     onclick,
     danger = false,
     opens,
@@ -22,6 +23,8 @@
     label: string;
     tip: string;
     href?: string | undefined;
+    /** The link saves its address as a file of this name. */
+    download?: string | undefined;
     /**
      * Does something on the page instead of sending its form or following its link (the link stays
      * for a page without JavaScript).
@@ -51,6 +54,7 @@
     <a
       class="button secondary icon"
       {href}
+      {download}
       aria-label={label}
       aria-expanded={expanded}
       aria-controls={expanded ? controls : undefined}

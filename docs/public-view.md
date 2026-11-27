@@ -111,11 +111,26 @@ it, the page stays in place and the focus goes back to the title.
 
 ![A visitor nobody knows is asked first](images/public-folded.png)
 
+## Filters
+
+Past three wishes, a guest's page has a row of **chips** above the cards, each an icon and a word,
+pressed or not (`aria-pressed`): « À offrir » (a gift: only what still waits for a gift), one per
+open occasion of a list link when it leaves some wishes out (a calendar: « Noël en famille »),
+« Prix » (the cheapest first, those without a price last; a series by its volumes left) and, once
+the person gives something, « Mes cadeaux » (a heart). They add up; a tap again removes one. A line
+says how many show (« 4 envies sur 7 »), and screen readers hear it. The chips need JavaScript;
+without it, every card shows. The owner's own view and a folded page have none: where the gifts
+stand is not theirs to see.
+
+![The filters on a phone: what is still to give, the cheapest first](images/public-filters.png)
+
 ## A series
 
 A series of volumes (a manga, a comic, a collection) is one card: its name, « Série », one box per
 volume filled once it is given (as for several copies), and its volumes folded under « 5 tomes »,
-each with its own square, price, link, badge and button once unfolded. Each volume is given on its own, like any gift (see [Series](series.md)).
+each a tile with its own square, price, badge and « Offrir » button. Each volume is given on its
+own, like any gift, or all those left at once with « Offrir les N tomes restants » (see
+[Series](series.md#for-the-guests)).
 
 ![A series in the guests' view](images/public-series.png)
 
@@ -135,7 +150,9 @@ form, in the page, that asks only what the gift needs, and sends it with « Vali
   A gift for every occasion is reserved whole each time;
 - for a pool, the amount in euros (« 20 » or « 12,50 »), with what is still missing; giving more
   than the target is allowed;
-- for several copies, how many (up to what is left);
+- for several copies, how many, with « − » and « + » around the number (up to what is left, « Il
+  en reste 2. »); the card shows how many are wanted as « × 4 » beside the copies' icon, and a gift
+  for every occasion has the turning arrows beside « À chaque occasion »;
 - the person's first name, when they have no account (it is kept on the device for the next time);
 - an optional word for the owner (« À lire après l'occasion, avec le cadeau. »), 500 characters at
   most;
@@ -149,6 +166,8 @@ l'occasion. ») and shows their gift on the item: « Vous l'avez réservé. », 
 chip in again.
 
 ![Chipping in to a pool, on a phone](images/public-give.png)
+
+![Several copies: « × 4 », and how many with « − » and « + »](images/public-copies.png)
 
 ![Sharing a gift that has a price, on a phone](images/public-share.png)
 

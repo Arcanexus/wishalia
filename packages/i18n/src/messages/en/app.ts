@@ -85,6 +85,20 @@ export const app: AppMessages = {
     },
     failed: "The add didn't go through. Try again in a moment.",
   },
+  scan: {
+    label: "Scan a barcode with the camera",
+    tip: "Scan a barcode",
+    title: "Scan a barcode",
+    close: "Close",
+    aim: "Aim at the barcode of a book, a game…",
+    noCamera: "The camera is not available: allow it for this site, or write the wish's name.",
+    book: "A book",
+    bookHelp: "Its title and cover come from Open Library, as from a link.",
+    add: "Add",
+    other: "This is not a book",
+    otherHelp: "Other products have no free directory: write its name, or paste a shop's link.",
+    write: "Write its name",
+  },
   list: {
     back: "My lists",
     refreshAll: { label: "Reload the list's links", tip: "Reload the links" },
@@ -152,6 +166,19 @@ export const app: AppMessages = {
     noGiftOutside: "Nobody gave it outside the events.",
     reopen: "Put back in the list",
     reopenLabel: (title) => `Put “${title}” back in the list`,
+    more: (title) => `More actions for “${title}”`,
+    reorder: {
+      start: "Reorder",
+      label: "Reorder the wishes",
+      title: (n) => `Reorder (${n})`,
+      help: "Drag the wishes by their handle, or use the arrows.",
+      done: "Done",
+    },
+    search: {
+      label: "Search my wishes",
+      clear: "Clear the search",
+      found: (n, total) => (n === 0 ? "No wish matches." : `${n} wish${n > 1 ? "es" : ""} of ${total}.`),
+    },
   },
   gifts: {
     copies: (n) => `${n} copies`,
@@ -200,6 +227,10 @@ export const app: AppMessages = {
     failed: "Saving didn't go through. Try again in a moment.",
     name: "Name",
     kindLegend: "What kind of gift?",
+    kindTip: {
+      about: "the kinds of gift",
+      text: "A gift is given once, or by several people if it has a price. Several copies: each gives one or more. A pool takes any amount. A series holds volumes, given one by one.",
+    },
     unique: {
       name: "One gift",
       help: "One person reserves it, or several share it if it has a price.",
@@ -213,6 +244,8 @@ export const app: AppMessages = {
     seriesNow:
       "The wish becomes the first volume of a new series: you then add the other volumes, or wishes of the list.",
     howMany: "How many copies?",
+    fewer: "One copy fewer",
+    more: "One copy more",
     target: "Goal of the kitty, in euros (optional)",
     targetPlaceholder: "For example 320",
     repeatable: {
@@ -240,6 +273,10 @@ export const app: AppMessages = {
     failed: "The change didn't go through. Try again in a moment.",
     name: "Name",
     visibility: "Who can see the list?",
+    visibilityTip: {
+      about: "who can see the list",
+      text: "Private, only the people with your share link see it. Public, it is found by a search. Either way, you never see who gives what.",
+    },
     private: { name: "Private", help: "Only the people you send a share link to can see it." },
     public: {
       name: "Public",
@@ -256,6 +293,10 @@ export const app: AppMessages = {
       christmas: { name: "Christmas", help: "Fir, holly and gold." },
     },
     reveal: "Gifts given with no occasion",
+    revealTip: {
+      about: "when the surprise is lifted",
+      text: "You do not see who gives what before the moment you chose. Your guests do, so that nobody gives the same thing twice.",
+    },
     revealHelp:
       "A relative can give a wish from this list outside any event. When do you find out who gave it?",
     revealReceived: {
@@ -302,6 +343,7 @@ export const app: AppMessages = {
     ungroup: {
       label: (title) => `Undo the series “${title}”`,
       tip: "Undo the series (its volumes stay in the list)",
+      short: "Undo the series",
     },
     moveUp: (title) => `Move “${title}” up in the series`,
     moveDown: (title) => `Move “${title}” down in the series`,
@@ -325,6 +367,13 @@ export const app: AppMessages = {
     seriesHelp:
       "The series and all its volumes leave the list, the events and the share links, with their images. This is final: they cannot be restored.",
     ungroupInstead: "To keep the volumes as wishes of their own, undo the series instead.",
+    undo: {
+      label: "Deletion",
+      done: (title) => `Wish deleted: “${title}”.`,
+      undo: "Undo",
+      undoLabel: (title) => `Undo deleting “${title}”`,
+      back: (title) => `“${title}” is back in the list.`,
+    },
     cancel: "Cancel",
     confirm: "Delete for good",
     failed: "The deletion didn't go through. Try again in a moment.",
@@ -540,6 +589,12 @@ export const app: AppMessages = {
     copy: "Copy the link",
     shareTitle: "My wishes",
     send: "Send…",
+    sendHelp: "« Send… » opens the phone's share menu: text message, chat, e-mail.",
+    qr: { label: "Show the QR code", tip: "QR code", hide: "Hide the QR code" },
+    qrTitle: (who) => `QR code of the link for ${who}`,
+    qrHelp: "To scan with a phone's camera. It won't be shown again either.",
+    print: { label: "Print the QR code", tip: "Print" },
+    download: { label: "Download the QR code", tip: "Download" },
     copiedSaid: "The link is copied.",
     new: "New link",
     errors: {
